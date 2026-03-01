@@ -1071,6 +1071,21 @@ class SecurityConfig(BaseModel):
     ssl_certfile: str = Field(default="", description="Pfad zum SSL-Zertifikat (PEM)")
     ssl_keyfile: str = Field(default="", description="Pfad zum SSL-Privat-Key (PEM)")
 
+    # TTLDict-Defaults für Channel-Dicts
+    channel_dict_ttl_seconds: int = Field(default=86400, ge=300, le=604800)
+    channel_dict_max_size: int = Field(default=10000, ge=100, le=100000)
+
+    # DNS-Cache
+    dns_cache_ttl_seconds: int = Field(default=300, ge=30, le=3600)
+    dns_cache_max_size: int = Field(default=1000, ge=100, le=10000)
+
+    # Circuit Breaker
+    circuit_breaker_failure_threshold: int = Field(default=5, ge=2, le=50)
+    circuit_breaker_recovery_timeout: int = Field(default=60, ge=10, le=600)
+
+    # Shell-Pfad-Validierung
+    shell_validate_paths: bool = Field(default=True)
+
 
 # ============================================================================
 # Datenbank-Konfiguration
@@ -1118,10 +1133,10 @@ class JarvisConfig(BaseModel):
         "ollama", "openai", "anthropic", "gemini",
         "groq", "deepseek", "mistral", "together",
         "openrouter", "xai", "cerebras", "github", "bedrock",
-        "huggingface", "moonshot",
+        "huggingface", "moonshot", "lmstudio",
     ] = Field(
         default="ollama",
-        description="LLM-Backend: 'ollama', 'openai', 'anthropic', 'gemini', 'groq', 'deepseek', 'mistral', 'together', 'openrouter', 'xai', 'cerebras', 'github', 'bedrock', 'huggingface', 'moonshot'",
+        description="LLM-Backend: 'ollama', 'openai', 'anthropic', 'gemini', 'groq', 'deepseek', 'mistral', 'together', 'openrouter', 'xai', 'cerebras', 'github', 'bedrock', 'huggingface', 'moonshot', 'lmstudio'",
     )
     openai_api_key: str = Field(default="", description="API-Key für OpenAI-kompatibles Backend")
     openai_base_url: str = Field(
@@ -1142,6 +1157,8 @@ class JarvisConfig(BaseModel):
     bedrock_api_key: str = Field(default="", description="API-Key für AWS Bedrock (OpenAI-kompatibel via Gateway)")
     huggingface_api_key: str = Field(default="", description="API-Key für Hugging Face Inference")
     moonshot_api_key: str = Field(default="", description="API-Key für Moonshot/Kimi")
+    lmstudio_api_key: str = Field(default="lm-studio", description="API-Key für LM Studio (beliebiger Wert, da lokal)")
+    lmstudio_base_url: str = Field(default="http://localhost:1234/v1", description="Base-URL für LM Studio API")
     vision_model: str = Field(default="openbmb/minicpm-v4.5", description="Standard-Vision-Modell (schnell)")
     vision_model_detail: str = Field(default="qwen3-vl:32b", description="Detail-Vision-Modell (höchste Qualität)")
 

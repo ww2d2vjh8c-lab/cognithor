@@ -568,3 +568,16 @@ class TestMultiProviderAutoAdaptation:
         config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="moonshot", moonshot_api_key="test")
         assert config.models.planner.name == "kimi-k2.5"
         assert config.models.executor.name == "kimi-k2-turbo-preview"
+
+    def test_lmstudio_explicit_backend_keeps_model_names(self, tmp_path: Path) -> None:
+        """LM Studio ändert Modellnamen nicht (kein Provider-Default)."""
+        config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="lmstudio")
+        assert config.llm_backend_type == "lmstudio"
+        # Modellnamen bleiben Ollama-Defaults (kein Auto-Replace)
+        assert config.models.planner.name == "qwen3:32b"
+
+    def test_lmstudio_does_not_set_online_mode(self, tmp_path: Path) -> None:
+        """LM Studio ist lokal → operation_mode bleibt OFFLINE."""
+        config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="lmstudio")
+        from jarvis.models import OperationMode
+        assert config.resolved_operation_mode == OperationMode.OFFLINE

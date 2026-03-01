@@ -82,6 +82,14 @@ class TestOperationModeAutoDetect:
         )
         assert config.resolved_operation_mode == OperationMode.ONLINE
 
+    def test_lmstudio_stays_offline(self, tmp_path: Path) -> None:
+        """LM Studio ist lokal → OFFLINE (nicht ONLINE)."""
+        config = JarvisConfig(
+            jarvis_home=tmp_path,
+            llm_backend_type="lmstudio",
+        )
+        assert config.resolved_operation_mode == OperationMode.OFFLINE
+
 
 # ── Gatekeeper-Tests ──────────────────────────────────────────
 

@@ -55,6 +55,13 @@ async def init_core(config: Any) -> PhaseResult:
                 url=config.ollama.base_url,
                 message="Jarvis startet trotzdem, aber LLM-Funktionen sind eingeschraenkt.",
             )
+        elif llm.backend_type == "lmstudio":
+            log.warning(
+                "llm_not_available",
+                backend=llm.backend_type,
+                url=config.lmstudio_base_url,
+                message="LM Studio nicht erreichbar. Laeuft der Server auf dem konfigurierten Port?",
+            )
         else:
             log.warning(
                 "llm_not_available",

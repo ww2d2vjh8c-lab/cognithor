@@ -85,6 +85,14 @@ def build_vision_message(
 # ── Backend-spezifische Formatierung ─────────────────────────────────
 
 
+# Alle OpenAI-kompatiblen Backends die das image_url Format unterstützen
+_OPENAI_VISION_BACKENDS = frozenset({
+    "openai", "lmstudio", "groq", "together", "deepseek",
+    "mistral", "openrouter", "xai", "cerebras", "github",
+    "bedrock", "huggingface", "moonshot",
+})
+
+
 def format_for_backend(message: MultimodalMessage, backend_type: str) -> dict[str, Any]:
     """Konvertiert eine MultimodalMessage ins Backend-spezifische Format.
 
@@ -100,7 +108,7 @@ def format_for_backend(message: MultimodalMessage, backend_type: str) -> dict[st
 
     if backend_type == "anthropic":
         return _format_anthropic(message)
-    elif backend_type == "openai":
+    elif backend_type in _OPENAI_VISION_BACKENDS:
         return _format_openai(message)
     elif backend_type == "ollama":
         return _format_ollama(message)

@@ -678,6 +678,26 @@ class TestFactory:
         assert isinstance(backend, OpenAIBackend)
         assert "moonshot.cn" in backend._base_url
 
+    def test_create_lmstudio_backend(self) -> None:
+        config = MagicMock()
+        config.llm_backend_type = "lmstudio"
+        config.lmstudio_api_key = "lm-studio"
+        config.lmstudio_base_url = "http://localhost:1234/v1"
+        config.ollama.timeout_seconds = 120
+        backend = create_backend(config)
+        assert isinstance(backend, OpenAIBackend)
+        assert "localhost:1234" in backend._base_url
+
+    def test_create_lmstudio_custom_url(self) -> None:
+        config = MagicMock()
+        config.llm_backend_type = "lmstudio"
+        config.lmstudio_api_key = ""
+        config.lmstudio_base_url = "http://192.168.1.100:1234/v1"
+        config.ollama.timeout_seconds = 120
+        backend = create_backend(config)
+        assert isinstance(backend, OpenAIBackend)
+        assert "192.168.1.100:1234" in backend._base_url
+
 
 # ============================================================================
 # GeminiBackend

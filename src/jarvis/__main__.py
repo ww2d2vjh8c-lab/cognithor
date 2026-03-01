@@ -424,6 +424,8 @@ def _print_banner(config: Any, api_host: str = "127.0.0.1", api_port: int = 8741
     print(f"  API:    {scheme}://{api_host}:{api_port}")
     if backend == "ollama":
         print(f"  Ollama: {config.ollama.base_url}")
+    elif backend == "lmstudio":
+        print(f"  LM Studio: {config.lmstudio_base_url}")
     else:
         print(f"  Backend: {backend}")
     print(f"  Planner: {config.models.planner.name}")

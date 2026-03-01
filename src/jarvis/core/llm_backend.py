@@ -37,6 +37,7 @@ class LLMBackendType(StrEnum):
     OPENAI = "openai"  # OpenAI-kompatible APIs (OpenAI, Together, Groq, vLLM, ...)
     ANTHROPIC = "anthropic"
     GEMINI = "gemini"
+    LMSTUDIO = "lmstudio"
 
 
 @dataclass
@@ -1155,6 +1156,12 @@ def create_backend(config: JarvisConfig) -> LLMBackend:
             return OpenAIBackend(
                 api_key=getattr(config, "moonshot_api_key", ""),
                 base_url="https://api.moonshot.cn/v1",
+                timeout=config.ollama.timeout_seconds,
+            )
+        case "lmstudio":
+            return OpenAIBackend(
+                api_key=getattr(config, "lmstudio_api_key", "lm-studio"),
+                base_url=getattr(config, "lmstudio_base_url", "http://localhost:1234/v1"),
                 timeout=config.ollama.timeout_seconds,
             )
         case _:
