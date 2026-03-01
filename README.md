@@ -253,14 +253,15 @@ cognithor/
 │   └── test_ui_api_integration.py # 55 Control Center API integration tests
 ├── skills/                        # Built-in skill definitions
 ├── scripts/                       # Backup, deployment, utilities
-├── deploy/                        # Docker, systemd, nginx configs
+├── deploy/                        # Docker, systemd, nginx, Caddy, bare-metal installer
 ├── apps/                          # PWA app (legacy)
 ├── start_cognithor.bat             # One-click launcher (Windows)
 ├── config.yaml.example            # Example configuration
 ├── pyproject.toml                 # Python project metadata
 ├── Makefile                       # Build, test, lint commands
 ├── Dockerfile                     # Container image
-├── docker-compose.yml             # Multi-service deployment
+├── docker-compose.yml             # Development compose
+├── docker-compose.prod.yml       # Production compose (5 services + profiles)
 └── install.sh                     # Interactive installer
 ```
 
@@ -503,7 +504,41 @@ make health      # Runtime check (Ollama, disk, memory, audit)
 
 ## Deployment
 
-### As a systemd service
+### One-Click (Windows)
+
+Double-click `start_cognithor.bat` → browser opens → click **Power On** → done.
+
+### Docker (Development)
+
+```bash
+docker compose up -d                         # Core backend
+docker compose --profile webui up -d         # + Web UI
+```
+
+### Docker (Production)
+
+```bash
+cp .env.example .env   # Edit: set JARVIS_API_TOKEN, etc.
+docker compose -f docker-compose.prod.yml up -d
+
+# With optional services
+docker compose -f docker-compose.prod.yml --profile postgres up -d   # + PostgreSQL
+docker compose -f docker-compose.prod.yml --profile nginx up -d      # + Nginx TLS
+```
+
+Services: Jarvis (headless) + WebUI + Ollama + optional PostgreSQL (pgvector) + optional Nginx reverse proxy. GPU support via nvidia-container-toolkit (uncomment in compose file).
+
+### Bare-Metal Server (Ubuntu/Debian)
+
+```bash
+sudo bash deploy/install-server.sh --domain jarvis.example.com --email admin@example.com
+# Or with self-signed cert:
+sudo bash deploy/install-server.sh --domain test.local --self-signed
+```
+
+Installs to `/opt/cognithor/`, data in `/var/lib/cognithor/`, systemd services `cognithor` + `cognithor-webui`.
+
+### Systemd (User-Level)
 
 ```bash
 ./install.sh --systemd
@@ -511,15 +546,7 @@ systemctl --user enable --now cognithor
 journalctl --user -u cognithor -f    # Logs
 ```
 
-### With Docker
-
-```bash
-docker compose up -d                         # Core backend
-docker compose --profile webui up -d         # + Web UI
-docker compose --profile full up -d          # Everything
-```
-
-### With Control Center UI (Development)
+### Control Center UI (Development)
 
 ```bash
 cd ui
@@ -529,6 +556,13 @@ npm run dev          # Starts Vite on :5173, manages backend on :8741
 
 The Vite dev server includes a launcher plugin that automatically spawns, monitors, and stops the Python backend. Use **Power On** / **Power Off** in the dashboard header to control the backend lifecycle.
 
+### Health Checks
+
+```bash
+curl http://localhost:8741/api/v1/health   # Control Center API
+curl http://localhost:8080/api/v1/health   # WebUI (standalone)
+```
+
 ### Backup
 
 ```bash
@@ -536,6 +570,8 @@ The Vite dev server includes a launcher plugin that automatically spawns, monito
 ./scripts/backup.sh --list             # List backups
 ./scripts/backup.sh --restore latest   # Restore
 ```
+
+See [`deploy/README.md`](deploy/README.md) for full deployment documentation (Docker profiles, TLS, Nginx/Caddy, bare-metal install, monitoring, troubleshooting).
 
 ## Recording a Demo
 
@@ -568,6 +604,7 @@ Alternatively, use [terminalizer](https://github.com/faressoft/terminalizer) for
 | **Phase 7** | Control Center UI, API integration, channel auto-detect | Done |
 | **Phase 8** | UI integration into repo, backend launcher, orphan management | Done |
 | **Phase 9** | Security hardening: token encryption, TLS, file-size limits, session persistence | Done |
+| **Phase 10** | Server deployment: Docker prod, bare-metal installer, Nginx/Caddy, health endpoints | Done |
 | **Deploy** | Installer, systemd, Docker, backup, smoke test, one-click launcher | Done |
 
 **Metrics:** ~86,000 LOC source · 53,000+ LOC tests · 4,879 tests · 89% coverage · 0 lint errors

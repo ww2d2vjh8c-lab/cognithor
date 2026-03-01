@@ -56,6 +56,12 @@ def parse_args() -> argparse.Namespace:
         default=8741,
         help="Port für die Control Center API (Default: 8741)",
     )
+    parser.add_argument(
+        "--api-host",
+        type=str,
+        default=None,
+        help="Host für die Control Center API (Default: JARVIS_API_HOST env oder 127.0.0.1)",
+    )
     return parser.parse_args()
 
 
@@ -120,7 +126,8 @@ def main() -> None:
         return
 
     # 5. System-Check -- startup banner (intentional CLI output)
-    _print_banner(config, api_port=args.api_port)
+    _api_host = args.api_host or os.environ.get("JARVIS_API_HOST", "127.0.0.1")
+    _print_banner(config, api_host=_api_host, api_port=args.api_port)
 
     # Phase 0 Checkpoint: Setup OK
     log.info(
@@ -145,6 +152,13 @@ def main() -> None:
             # Alle Subsysteme initialisieren
             await gateway.initialize()
 
+            # SessionStore-Referenz für Channel-Persistenz
+            _session_store = getattr(gateway, "_session_store", None)
+
+            # SSL-Config für TLS-fähige Channels
+            _ssl_cert = config.security.ssl_certfile
+            _ssl_key = config.security.ssl_keyfile
+
             # Control Center API-Server starten (immer, Port 8741)
             try:
                 from fastapi import FastAPI
@@ -153,36 +167,58 @@ def main() -> None:
                 from jarvis.channels.config_routes import create_config_routes
                 from jarvis.config_manager import ConfigManager
 
+                api_host = args.api_host or os.environ.get("JARVIS_API_HOST", "127.0.0.1")
+
+                # CORS: Wenn API-Token gesetzt, Origins einschränken
+                api_token = os.environ.get("JARVIS_API_TOKEN")
+                if api_token:
+                    cors_raw = os.environ.get("JARVIS_API_CORS_ORIGINS", "")
+                    cors_origins = [o.strip() for o in cors_raw.split(",") if o.strip()] if cors_raw else []
+                else:
+                    cors_origins = ["*"]
+
                 api_app = FastAPI(title="Cognithor Control Center API")
                 api_app.add_middleware(
                     CORSMiddleware,
-                    allow_origins=["*"],
+                    allow_origins=cors_origins,
                     allow_methods=["*"],
                     allow_headers=["*"],
                 )
+
+                # Health-Endpoint
+                import time as _time
+                _api_start = _time.monotonic()
+
+                @api_app.get("/api/v1/health")
+                async def _cc_health() -> dict[str, Any]:
+                    return {
+                        "status": "ok",
+                        "version": __version__,
+                        "uptime_seconds": _time.monotonic() - _api_start,
+                    }
+
                 config_mgr = ConfigManager(config=config)
                 create_config_routes(api_app, config_mgr, gateway=gateway)
 
-                uvi_config = uvicorn.Config(
-                    api_app,
-                    host="127.0.0.1",
-                    port=args.api_port,
-                    log_level="warning",
-                )
+                # TLS-Durchreichung
+                uvi_kwargs: dict[str, Any] = {
+                    "app": api_app,
+                    "host": api_host,
+                    "port": args.api_port,
+                    "log_level": "warning",
+                }
+                if _ssl_cert and _ssl_key:
+                    uvi_kwargs["ssl_certfile"] = _ssl_cert
+                    uvi_kwargs["ssl_keyfile"] = _ssl_key
+
+                uvi_config = uvicorn.Config(**uvi_kwargs)
                 api_server = uvicorn.Server(uvi_config)
                 asyncio.create_task(api_server.serve())
-                log.info("control_center_api_started", port=args.api_port)
+                log.info("control_center_api_started", host=api_host, port=args.api_port, tls=bool(_ssl_cert))
             except ImportError:
                 log.warning("control_center_api_requires_fastapi_uvicorn")
             except Exception as exc:
                 log.warning("control_center_api_failed", error=str(exc))
-
-            # SessionStore-Referenz für Channel-Persistenz
-            _session_store = getattr(gateway, "_session_store", None)
-
-            # SSL-Config für TLS-fähige Channels
-            _ssl_cert = config.security.ssl_certfile
-            _ssl_key = config.security.ssl_keyfile
 
             # CLI-Channel registrieren und starten
             if config.channels.cli_enabled and not args.no_cli:
@@ -373,7 +409,7 @@ def main() -> None:
         log.info("jarvis_shutdown_by_user")
 
 
-def _print_banner(config: Any, api_port: int = 8741) -> None:
+def _print_banner(config: Any, api_host: str = "127.0.0.1", api_port: int = 8741) -> None:
     """Print the startup banner to the console.
 
     This is intentional CLI output so we use print() rather than the
@@ -381,10 +417,11 @@ def _print_banner(config: Any, api_port: int = 8741) -> None:
     cleaner and easier to test.
     """
     backend = getattr(config, "llm_backend_type", "ollama")
+    scheme = "https" if config.security.ssl_certfile else "http"
     print(f"\n{'=' * 60}")
     print(f"  COGNITHOR · Agent OS v{__version__}")
     print(f"  Home:   {config.jarvis_home}")
-    print(f"  API:    http://127.0.0.1:{api_port}")
+    print(f"  API:    {scheme}://{api_host}:{api_port}")
     if backend == "ollama":
         print(f"  Ollama: {config.ollama.base_url}")
     else:

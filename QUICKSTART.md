@@ -182,11 +182,34 @@ Logs:
 tail -f ~/.jarvis/logs/jarvis.log
 ```
 
+## 9. Server-Deployment (optional)
+
+Cognithor lässt sich auch auf einem Server betreiben:
+
+### Docker (Production)
+
+```bash
+cp .env.example .env   # Editieren: JARVIS_API_TOKEN setzen
+docker compose -f docker-compose.prod.yml up -d
+
+# Optional: PostgreSQL oder Nginx dazu
+docker compose -f docker-compose.prod.yml --profile postgres --profile nginx up -d
+```
+
+### Bare-Metal (Ubuntu/Debian)
+
+```bash
+sudo bash deploy/install-server.sh --domain jarvis.example.com --email admin@example.com
+```
+
+Siehe [`deploy/README.md`](deploy/README.md) für vollständige Dokumentation.
+
 ## Nächste Schritte
 
 - **Telegram-Bot** einrichten → Token in `~/.jarvis/.env` → `JARVIS_TELEGRAM_TOKEN=...`
 - **Cron-Jobs** aktivieren → Morning Briefing, Weekly Review
 - **Eigene Prozeduren** anlegen → `~/.jarvis/memory/procedures/mein-workflow.md`
 - **CORE.md** personalisieren → Eigene Regeln und Präferenzen ergänzen
+- **Server-Deployment** → `deploy/README.md` für Docker, Bare-Metal, TLS
 
 Bei Problemen: `python scripts/first_boot.py --fix` erneut ausführen.

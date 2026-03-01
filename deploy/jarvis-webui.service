@@ -1,48 +1,58 @@
 # ============================================================================
-# Jarvis · Web-UI Systemd Service (User-Level)
+# Cognithor · Web UI Systemd Service (System-Level)
 # ============================================================================
-# Installation:
-#   cp deploy/jarvis-webui.service ~/.config/systemd/user/
-#   sed -i "s|__VENV__|$HOME/.jarvis/venv|g" ~/.config/systemd/user/jarvis-webui.service
-#   sed -i "s|__JARVIS_HOME__|$HOME/.jarvis|g" ~/.config/systemd/user/jarvis-webui.service
+# Installation (bare-metal):
+#   sudo cp deploy/jarvis-webui.service /etc/systemd/system/cognithor-webui.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now cognithor-webui
+#
+# Installation (user-level, replace paths):
+#   cp deploy/jarvis-webui.service ~/.config/systemd/user/cognithor-webui.service
+#   sed -i "s|/opt/cognithor/venv|$HOME/.jarvis/venv|g" ~/.config/systemd/user/cognithor-webui.service
+#   sed -i "s|/var/lib/cognithor|$HOME/.jarvis|g" ~/.config/systemd/user/cognithor-webui.service
+#   sed -i "s|User=cognithor||; s|Group=cognithor||" ~/.config/systemd/user/cognithor-webui.service
+#   sed -i "s|WantedBy=multi-user.target|WantedBy=default.target|" ~/.config/systemd/user/cognithor-webui.service
 #   systemctl --user daemon-reload
-#   systemctl --user enable --now jarvis-webui
+#   systemctl --user enable --now cognithor-webui
 # ============================================================================
 
 [Unit]
-Description=Jarvis Web-UI (FastAPI + WebSocket)
+Description=Cognithor Web UI (FastAPI + WebSocket)
 Documentation=https://github.com/team-soellner/jarvis
-After=jarvis.service
-BindsTo=jarvis.service
+After=cognithor.service
+BindsTo=cognithor.service
 
 [Service]
 Type=simple
-ExecStart=__VENV__/bin/python -m uvicorn jarvis.channels.webui:create_app \
-    --host 127.0.0.1 \
+User=cognithor
+Group=cognithor
+ExecStart=/opt/cognithor/venv/bin/python -m uvicorn jarvis.channels.webui:create_app \
+    --host 0.0.0.0 \
     --port 8080 \
     --factory \
     --log-level warning
-WorkingDirectory=__JARVIS_HOME__
-EnvironmentFile=-__JARVIS_HOME__/.env
+WorkingDirectory=/var/lib/cognithor
+EnvironmentFile=-/var/lib/cognithor/.env
 
+# Restart on failure
 Restart=on-failure
 RestartSec=5
 
-# Sicherheits-Härtung
+# Security hardening
 NoNewPrivileges=true
 ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=__JARVIS_HOME__ /tmp/jarvis
+ProtectHome=true
+ReadWritePaths=/var/lib/cognithor /tmp
 PrivateTmp=true
 
-# Resource-Limits
+# Resource limits
 MemoryMax=1G
 TasksMax=32
 
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=jarvis-webui
+SyslogIdentifier=cognithor-webui
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

@@ -14,10 +14,10 @@ chcp 65001 >nul 2>&1
 
 echo.
 echo    ____  ___   ____ _   _ ___ _____ _   _  ___  ____
-echo   / ___|/ _ \ / ___| \ | |_ _|_   _| | | |/ _ \|  _ \
-echo  | |  _| | | | |  _|  \| || |  | | | |_| | | | | |_) |
-echo  | |_| | |_| | |_| | |\  || |  | | |  _  | |_| |  _ ^<
-echo   \____|\___/ \____|_| \_|___| |_| |_| |_|\___/|_| \_\
+echo   / ___^|/ _ \ / ___^| \ ^| ^|_ _^|_   _^| ^| ^| ^|/ _ \^|  _ \
+echo  ^| ^|  _^| ^| ^| ^| ^|  _^|  \^| ^|^| ^|  ^| ^| ^| ^|_^| ^| ^| ^| ^| ^|_^) ^|
+echo  ^| ^|_^| ^| ^|_^| ^| ^|_^| ^| ^|\  ^|^| ^|  ^| ^| ^|  _  ^| ^|_^| ^|  _ ^<
+echo   \____^|\___/ \____^|_^| \_^|___^| ^|_^| ^|_^| ^|_^|\___/^|_^| \_\
 echo.
 
 set "REPO_ROOT=%~dp0"
@@ -30,7 +30,7 @@ if "%REPO_ROOT:~-1%"=="\" set "REPO_ROOT=%REPO_ROOT:~0,-1%"
 set "PYTHON_CMD="
 where python >nul 2>&1
 if not errorlevel 1 (
-    :: Teste ob es echtes Python ist (nicht Microsoft Store Stub)
+    REM Teste ob es echtes Python ist, nicht Microsoft Store Stub
     python -c "import sys" >nul 2>&1
     if not errorlevel 1 (
         set "PYTHON_CMD=python"
@@ -106,11 +106,27 @@ if errorlevel 1 (
 )
 
 :: ============================================================
-::  5. Web-UI starten
+::  5. Pruefe node_modules
+:: ============================================================
+if not exist "%REPO_ROOT%\ui\node_modules" (
+    echo.
+    echo   [FEHLER] node_modules nicht gefunden!
+    echo   Bootstrap hat npm install nicht ausgefuehrt.
+    echo   Manuelle Loesung: cd "%REPO_ROOT%\ui" ^&^& npm install
+    echo.
+    pause
+    exit /b 1
+)
+
+:: ============================================================
+::  6. Web-UI starten
 :: ============================================================
 echo.
 echo   Web-UI wird gestartet...
+echo   Oeffne http://localhost:5173 im Browser.
 echo.
 cd /d "%REPO_ROOT%\ui"
-npm run dev
+call npm run dev
+echo.
+echo   Web-UI wurde beendet.
 pause

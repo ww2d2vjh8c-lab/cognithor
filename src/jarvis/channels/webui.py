@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import os
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -763,3 +764,47 @@ class WebUIChannel(Channel):
     def active_connections(self) -> int:
         """Anzahl aktiver WebSocket-Verbindungen."""
         return len(self._connections)
+
+
+# ============================================================================
+# ASGI Factory — für uvicorn --factory / docker-compose / systemd
+# ============================================================================
+
+
+def create_app() -> Any:
+    """ASGI-Factory für Standalone-Deployment.
+
+    Wird von ``uvicorn jarvis.channels.webui:create_app --factory`` aufgerufen
+    (docker-compose.yml, jarvis-webui.service).
+
+    Konfiguration ausschließlich über Umgebungsvariablen:
+      JARVIS_WEBUI_HOST          (default "0.0.0.0")
+      JARVIS_WEBUI_PORT          (default "8080", nur informativ)
+      JARVIS_API_TOKEN           (optional, Bearer-Auth)
+      JARVIS_WEBUI_CORS_ORIGINS  (kommasepariert, default "*")
+      JARVIS_SSL_CERTFILE        (optional, PEM-Pfad)
+      JARVIS_SSL_KEYFILE         (optional, PEM-Pfad)
+
+    Ohne Gateway gibt POST /api/v1/message → 503 zurück (korrekt).
+    """
+    host = os.environ.get("JARVIS_WEBUI_HOST", "0.0.0.0")
+    api_token = os.environ.get("JARVIS_API_TOKEN") or None
+    cors_raw = os.environ.get("JARVIS_WEBUI_CORS_ORIGINS", "*")
+    cors_origins = [o.strip() for o in cors_raw.split(",") if o.strip()]
+    ssl_cert = os.environ.get("JARVIS_SSL_CERTFILE", "")
+    ssl_key = os.environ.get("JARVIS_SSL_KEYFILE", "")
+
+    channel = WebUIChannel(
+        host=host,
+        api_token=api_token,
+        cors_origins=cors_origins,
+        ssl_certfile=ssl_cert,
+        ssl_keyfile=ssl_key,
+    )
+    log.info(
+        "create_app_factory",
+        host=host,
+        cors_origins=cors_origins,
+        tls=bool(ssl_cert),
+    )
+    return channel.app
