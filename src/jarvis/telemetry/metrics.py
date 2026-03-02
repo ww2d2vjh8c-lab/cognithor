@@ -14,6 +14,7 @@ Usage:
 
 from __future__ import annotations
 
+import threading
 import time
 from collections import defaultdict, deque
 from typing import Any
@@ -36,6 +37,7 @@ class MetricsProvider:
                  max_points_per_metric: int = 500) -> None:
         self._service_name = service_name
         self._max_points = max_points_per_metric
+        self._lock = threading.Lock()
         self._counters: dict[str, float] = defaultdict(float)
         self._gauges: dict[str, float] = {}
         self._histograms: dict[str, HistogramDataPoint] = {}
@@ -48,8 +50,9 @@ class MetricsProvider:
     def counter(self, name: str, value: float = 1.0, **labels: str) -> None:
         """Inkrementiert einen Counter."""
         key = self._make_key(name, labels)
-        self._counters[key] += value
-        self._record_point(key, self._counters[key], labels)
+        with self._lock:
+            self._counters[key] += value
+            self._record_point(key, self._counters[key], labels)
 
     def get_counter(self, name: str, **labels: str) -> float:
         key = self._make_key(name, labels)
@@ -60,8 +63,9 @@ class MetricsProvider:
     def gauge(self, name: str, value: float, **labels: str) -> None:
         """Setzt einen Gauge-Wert."""
         key = self._make_key(name, labels)
-        self._gauges[key] = value
-        self._record_point(key, value, labels)
+        with self._lock:
+            self._gauges[key] = value
+            self._record_point(key, value, labels)
 
     def get_gauge(self, name: str, **labels: str) -> float:
         key = self._make_key(name, labels)
@@ -72,10 +76,11 @@ class MetricsProvider:
     def histogram(self, name: str, value: float, **labels: str) -> None:
         """Zeichnet einen Wert in ein Histogram auf."""
         key = self._make_key(name, labels)
-        if key not in self._histograms:
-            self._histograms[key] = HistogramDataPoint(attributes=labels)
-        self._histograms[key].record(value)
-        self._record_point(key, value, labels)
+        with self._lock:
+            if key not in self._histograms:
+                self._histograms[key] = HistogramDataPoint(attributes=labels)
+            self._histograms[key].record(value)
+            self._record_point(key, value, labels)
 
     def get_histogram(self, name: str, **labels: str) -> HistogramDataPoint | None:
         key = self._make_key(name, labels)
@@ -102,15 +107,16 @@ class MetricsProvider:
 
     def snapshot(self) -> dict[str, Any]:
         """Vollständiger Snapshot aller Metriken."""
-        result: dict[str, Any] = {
-            "service": self._service_name,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "counters": dict(self._counters),
-            "gauges": dict(self._gauges),
-            "histograms": {
-                k: v.to_dict() for k, v in self._histograms.items()
-            },
-        }
+        with self._lock:
+            result: dict[str, Any] = {
+                "service": self._service_name,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "counters": dict(self._counters),
+                "gauges": dict(self._gauges),
+                "histograms": {
+                    k: v.to_dict() for k, v in self._histograms.items()
+                },
+            }
         return result
 
     def get_all_metrics(self) -> list[MetricDefinition]:
@@ -231,10 +237,11 @@ class MetricsProvider:
 
     def reset(self) -> None:
         """Setzt alle Metriken zurück."""
-        self._counters.clear()
-        self._gauges.clear()
-        self._histograms.clear()
-        self._time_series.clear()
+        with self._lock:
+            self._counters.clear()
+            self._gauges.clear()
+            self._histograms.clear()
+            self._time_series.clear()
 
     def stats(self) -> dict[str, Any]:
         return {

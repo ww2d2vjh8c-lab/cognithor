@@ -26,7 +26,7 @@ DATA_DIR="/var/lib/cognithor"
 VENV_DIR="${INSTALL_DIR}/venv"
 SERVICE_USER="cognithor"
 SERVICE_GROUP="cognithor"
-PYTHON_MIN="3.11"
+PYTHON_MIN="3.12"
 
 # ── Colors ─────────────────────────────────────────────────────
 RED='\033[0;31m'

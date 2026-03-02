@@ -72,6 +72,35 @@ class TestAgentVault:
         assert stats["total_secrets"] == 1
         assert stats["active"] == 1
 
+    def test_deterministic_key_across_instances(self) -> None:
+        """Gleiche agent_id erzeugt gleichen Encryption Key."""
+        vault1 = AgentVault("agent-deterministic")
+        encrypted = vault1._encrypt("geheim")
+
+        # Zweite Instanz mit gleicher agent_id muss entschlüsseln können
+        vault2 = AgentVault("agent-deterministic")
+        decrypted = vault2._decrypt(encrypted)
+        assert decrypted == "geheim"
+
+    def test_different_agents_different_keys(self) -> None:
+        """Verschiedene agent_ids erzeugen verschiedene Keys."""
+        vault_a = AgentVault("agent-alpha")
+        encrypted = vault_a._encrypt("geheim")
+
+        vault_b = AgentVault("agent-beta")
+        with pytest.raises((ValueError, Exception)):
+            vault_b._decrypt(encrypted)
+
+    def test_store_retrieve_roundtrip_new_instance(self) -> None:
+        """Roundtrip: speichern → neue Instanz → entschlüsseln."""
+        vault1 = AgentVault("roundtrip-agent")
+        secret = vault1.store("my-api-key", "sk-secret-123", SecretType.API_KEY)
+        encrypted_value = secret._encrypted_value
+
+        vault2 = AgentVault("roundtrip-agent")
+        decrypted = vault2._decrypt(encrypted_value)
+        assert decrypted == "sk-secret-123"
+
 
 class TestVaultRotator:
     def test_defaults(self) -> None:

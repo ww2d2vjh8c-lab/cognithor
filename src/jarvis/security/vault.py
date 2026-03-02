@@ -91,7 +91,7 @@ class _SimpleEncryptor:
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt,
-            iterations=480_000,
+            iterations=600_000,
         )
         derived = kdf.derive(hashlib.sha256(key).digest())
         return Fernet(base64.urlsafe_b64encode(derived))

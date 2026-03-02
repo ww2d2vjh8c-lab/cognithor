@@ -261,3 +261,12 @@ class EpisodicStore:
         if self._conn:
             self._conn.close()
             self._conn = None
+
+    def __del__(self) -> None:
+        self.close()
+
+    def __enter__(self) -> "EpisodicStore":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()

@@ -118,11 +118,16 @@ class TestRegisterSynthesisTools:
         assert isinstance(synth, KnowledgeSynthesizer)
 
     def test_handlers_are_callable(self, mock_client: MockMCPClient) -> None:
-        """Alle Handler sind aufrufbar."""
+        """Alle Handler sind aufrufbar und echte Funktionen (keine Mock-Artefakte)."""
         register_synthesis_tools(mock_client)
 
         for name, entry in mock_client.registered.items():
-            assert callable(entry["handler"]), f"Handler für '{name}' nicht aufrufbar"
+            handler = entry["handler"]
+            assert callable(handler), f"Handler für '{name}' nicht aufrufbar"
+            # Stelle sicher, dass es eine echte Funktion ist, kein Mock-Artefakt
+            assert hasattr(handler, "__name__") or hasattr(handler, "__func__"), (
+                f"Handler für '{name}' ist kein echtes Callable: {type(handler)}"
+            )
 
     def test_descriptions_non_empty(self, mock_client: MockMCPClient) -> None:
         """Alle Tools haben eine nicht-leere Beschreibung."""

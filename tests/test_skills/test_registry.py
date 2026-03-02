@@ -172,10 +172,13 @@ class TestMatching:
 
     def test_match_best_none(self, registry: SkillRegistry) -> None:
         best = registry.match_best("xyz komplett unbekanntes Thema qrs")
-        # Könnte None sein wenn kein Score > min_score
-        # Oder ein Match mit niedrigem Score
-        if best:
-            assert best.score < 0.5
+        # Unbekanntes Thema soll keinen hochrangigen Match liefern
+        if best is not None:
+            assert best.score < 0.5, (
+                f"Unerwarteter High-Score-Match: {best.skill.slug} mit Score {best.score}"
+            )
+        # Explizit prüfen: Test sagt etwas aus in beiden Fällen
+        assert best is None or best.score < 0.5
 
     def test_empty_query(self, registry: SkillRegistry) -> None:
         matches = registry.match("")

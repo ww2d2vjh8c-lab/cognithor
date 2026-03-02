@@ -260,6 +260,23 @@ class TestNamespaceIsolation:
         assert ns.validate_path("agent-1", "/data/tenant-1/agent-1/file.txt", "tenant-1")
         assert not ns.validate_path("agent-1", "/data/tenant-2/agent-1/file.txt", "tenant-1")
 
+    def test_validate_path_traversal_attack(self) -> None:
+        """Pfad-Traversal: /data/tenant-1-evil/ darf NICHT auf /data/tenant-1/ matchen."""
+        ns = NamespaceIsolation()
+        ns.create("agent-1", "tenant-1")
+        # Prefix-Angriff: tenant-1-evil beginnt mit tenant-1 aber ist anderer Tenant
+        assert not ns.validate_path(
+            "agent-1", "/data/tenant-1-evil/agent-1/secret.txt", "tenant-1"
+        )
+        # Parent-Traversal
+        assert not ns.validate_path(
+            "agent-1", "/data/tenant-1/agent-1/../agent-2/secret.txt", "tenant-1"
+        )
+        # Nur exakte Unterverzeichnisse erlaubt
+        assert ns.validate_path(
+            "agent-1", "/data/tenant-1/agent-1/sub/deep/file.txt", "tenant-1"
+        )
+
     def test_stats(self) -> None:
         ns = NamespaceIsolation()
         ns.create("a1", "t1")

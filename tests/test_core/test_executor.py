@@ -259,9 +259,14 @@ class TestAgentContext:
         action = PlannedAction(tool="exec_command", params={"command": "echo hi"})
         results = await executor.execute([action], [_allow_decision(action)])
 
-        # Der Mock-MCP-Client speichert die Params — prüfe dass working_dir gesetzt wurde
-        # (Da unser Mock kein echtes Filesystem hat, prüfen wir indirekt)
         assert results[0].success is True
+        # Prüfe dass call_tool mit injiziertem working_dir aufgerufen wurde
+        call_args = executor._mcp_client.call_tool.call_args
+        assert call_args is not None, "call_tool wurde nicht aufgerufen"
+        passed_params = call_args[0][1]  # zweites Positional-Arg = params dict
+        assert passed_params.get("working_dir") == "/tmp/agent/coder", (
+            f"working_dir nicht injiziert: {passed_params}"
+        )
         executor.clear_agent_context()
 
     @pytest.mark.asyncio

@@ -107,14 +107,17 @@ class AgentVault:
         self._secrets: dict[str, AgentSecret] = {}
         self._counter = 0
         self._access_log: list[dict[str, Any]] = []
-        # Derive a Fernet key via PBKDF2-HMAC from agent-specific material.
-        self._salt = os.urandom(16)
-        raw_key_material = f"vault:{agent_id}:{secrets.token_hex(16)}".encode()
+        # Derive a *deterministic* Fernet key from agent_id so that the
+        # same vault always produces the same encryption key.  This lets
+        # encrypted secrets survive process restarts when they are
+        # persisted externally (e.g. via AgentVaultManager).
+        self._salt = hashlib.sha256(f"vault-salt:{agent_id}".encode()).digest()[:16]
+        raw_key_material = f"vault:{agent_id}".encode()
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
             salt=self._salt,
-            iterations=480_000,
+            iterations=600_000,
         )
         fernet_key = base64.urlsafe_b64encode(kdf.derive(raw_key_material))
         self._fernet = Fernet(fernet_key)

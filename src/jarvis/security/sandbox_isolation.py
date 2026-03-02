@@ -351,11 +351,29 @@ class NamespaceIsolation:
         return self._namespaces.get(f"{tenant_id}:{agent_id}")
 
     def validate_path(self, agent_id: str, path: str, tenant_id: str = "default") -> bool:
-        """Prüft ob ein Pfad im erlaubten Namensraum liegt."""
+        """Prüft ob ein Pfad im erlaubten Namensraum liegt.
+
+        Uses proper path containment checks to prevent path traversal
+        attacks (e.g. ``/data/tenant1-evil/`` matching ``/data/tenant1/``).
+        Parent traversal (``..``) is resolved via ``posixpath.normpath``.
+        """
+        import posixpath
+        from pathlib import PurePosixPath
+
         ns = self.get(agent_id, tenant_id)
         if not ns:
             return False
-        return path.startswith(ns.file_root) or path.startswith(ns.memory_prefix)
+        normalized = PurePosixPath(posixpath.normpath(path))
+        try:
+            normalized.relative_to(ns.file_root)
+            return True
+        except ValueError:
+            pass
+        try:
+            normalized.relative_to(ns.memory_prefix)
+            return True
+        except ValueError:
+            return False
 
     def list_namespaces(self, tenant_id: str = "") -> list[Namespace]:
         if tenant_id:

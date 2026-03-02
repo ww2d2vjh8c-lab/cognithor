@@ -521,10 +521,27 @@ class A2AServer:
             return
         self._running = True
         self._start_time = time.time()
+        # Start periodic cleanup of completed tasks
+        self._cleanup_task = asyncio.create_task(self._periodic_cleanup())
         log.info("a2a_server_started", host=self._config.host, port=self._config.port)
+
+    async def _periodic_cleanup(self, interval: int = 300) -> None:
+        """Periodisch abgeschlossene Tasks aufräumen (alle 5 Minuten)."""
+        while self._running:
+            await asyncio.sleep(interval)
+            removed = self.cleanup_completed()
+            if removed:
+                log.info("a2a_tasks_cleaned_up", removed=removed, remaining=len(self._tasks))
 
     async def stop(self) -> None:
         self._running = False
+        if hasattr(self, "_cleanup_task") and not self._cleanup_task.done():
+            self._cleanup_task.cancel()
+            try:
+                await self._cleanup_task
+            except asyncio.CancelledError:
+                pass
+        self.cleanup_completed(max_age_seconds=0)
         log.info("a2a_server_stopped")
 
     @property

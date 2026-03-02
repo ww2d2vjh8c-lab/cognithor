@@ -97,6 +97,23 @@ class TestEpisodicStore:
         assert self.store.get_session_episodes("nonexistent") == []
         assert self.store.get_similar_episodes([]) == []
 
+    def test_context_manager(self):
+        """EpisodicStore kann als Context Manager verwendet werden."""
+        with EpisodicStore() as store:
+            store.store_episode("s1", "Topic", "Content")
+            assert store.get_episode_count() == 1
+        # Nach __exit__ ist Connection geschlossen
+        assert store._conn is None
+
+    def test_del_closes_connection(self):
+        """__del__ schliesst die Connection."""
+        store = EpisodicStore()
+        store.store_episode("s1", "Topic", "Content")
+        conn = store._conn
+        assert conn is not None
+        del store
+        # Connection sollte nach __del__ geschlossen sein
+
 
 class TestEpisodicSummarizer:
     def setup_method(self):

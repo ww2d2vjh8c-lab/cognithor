@@ -644,6 +644,36 @@ class TestA2AServer:
         assert "push_configs" in stats
 
     @pytest.mark.asyncio
+    async def test_cleanup_completed_tasks(self, server):
+        """cleanup_completed() entfernt abgeschlossene Tasks."""
+        r = await server.dispatch("message/send", {
+            "message": {"role": "user", "parts": [{"type": "text", "text": "Clean me"}]},
+        })
+        task = server.get_task(r["id"])
+        task.transition(TaskState.WORKING)
+        task.transition(TaskState.COMPLETED)
+        # Setze alten Timestamp damit max_age greift
+        task.status.timestamp = "2020-01-01T00:00:00Z"
+
+        assert len(server._tasks) >= 1
+        removed = server.cleanup_completed(max_age_seconds=60)
+        assert removed >= 1
+        assert server.get_task(r["id"]) is None
+
+    @pytest.mark.asyncio
+    async def test_stop_cleans_up(self, server):
+        """stop() räumt alle completed Tasks auf."""
+        await server.start()
+        r = await server.dispatch("message/send", {
+            "message": {"role": "user", "parts": [{"type": "text", "text": "Stop test"}]},
+        })
+        task = server.get_task(r["id"])
+        task.transition(TaskState.WORKING)
+        task.transition(TaskState.COMPLETED)
+        await server.stop()
+        assert not server.is_running
+
+    @pytest.mark.asyncio
     async def test_context_tracking(self, server):
         await server.dispatch("message/send", {
             "contextId": "shared-ctx",

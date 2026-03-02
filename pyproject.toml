@@ -106,11 +106,17 @@ postgresql = [
     "psycopg-pool>=3.1",
     "pgvector>=0.2",
 ]
+distributed = [
+    "redis>=5.0,<6",
+]
+browser = [
+    "playwright>=1.40",
+]
 all = [
     "cognithor[memory,vector,mcp,telegram,web,search,cron,postgresql,documents]",
 ]
 full = [
-    "cognithor[all,voice,elevenlabs,google-chat,irc,twitch,dev]",
+    "cognithor[all,voice,elevenlabs,google-chat,irc,twitch,distributed,browser,dev]",
 ]
 
 [project.scripts]

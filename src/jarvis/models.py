@@ -20,7 +20,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PrivateAttr
 
 # ============================================================================
 # Hilfsfunktionen
@@ -338,7 +338,7 @@ class SessionContext(BaseModel):
     # Agent-Loop Steuerung [B§3.4]
     max_iterations: int = 10
     iteration_count: int = 0
-    _blocked_tools: dict[str, int] = {}  # Tool → Block-Counter (private, set in __init__)
+    _blocked_tools: dict[str, int] = PrivateAttr(default_factory=dict)  # Tool → Block-Counter
 
     model_config = {"arbitrary_types_allowed": True}
 

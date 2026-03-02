@@ -82,6 +82,7 @@ class Gateway:
         self._working_memories: dict[str, WorkingMemory] = {}
         self._session_last_accessed: dict[str, float] = {}
         self._last_session_cleanup: float = time.monotonic()
+        self._session_lock = asyncio.Lock()
         self._running = False
         self._context_pipeline = None
         self._message_queue: DurableMessageQueue | None = None

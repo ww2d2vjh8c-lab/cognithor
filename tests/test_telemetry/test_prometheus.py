@@ -514,3 +514,58 @@ class TestSpecialCharacters:
 
         # Newline should be escaped as \n in the label value
         assert r"\n" in output
+
+
+# ── Test: Thread Safety ──────────────────────────────────────────
+
+
+class TestMetricsThreadSafety:
+    """MetricsProvider muss thread-safe sein."""
+
+    def test_concurrent_counter_increments(self):
+        """Parallele Counter-Inkremente dürfen keine Werte verlieren."""
+        import threading
+
+        provider = MetricsProvider()
+        iterations = 1000
+        threads = 4
+
+        def increment():
+            for _ in range(iterations):
+                provider.counter("concurrent_total", 1)
+
+        workers = [threading.Thread(target=increment) for _ in range(threads)]
+        for w in workers:
+            w.start()
+        for w in workers:
+            w.join()
+
+        assert provider.get_counter("concurrent_total") == iterations * threads
+
+    def test_concurrent_gauge_and_snapshot(self):
+        """Snapshot während gleichzeitigem Gauge-Setzen darf nicht crashen."""
+        import threading
+
+        provider = MetricsProvider()
+        errors: list[str] = []
+
+        def set_gauges():
+            for i in range(500):
+                provider.gauge("load", float(i), worker="w1")
+
+        def take_snapshots():
+            for _ in range(500):
+                try:
+                    s = provider.snapshot()
+                    assert "counters" in s
+                except Exception as exc:
+                    errors.append(str(exc))
+
+        t1 = threading.Thread(target=set_gauges)
+        t2 = threading.Thread(target=take_snapshots)
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+
+        assert not errors, f"Errors during concurrent access: {errors}"
