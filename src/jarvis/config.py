@@ -252,6 +252,25 @@ class CodeConfig(BaseModel):
     """Standard-Timeout für Python-Ausführung (Sekunden)."""
 
 
+class PersonalityConfig(BaseModel):
+    """Personality Engine Konfiguration."""
+
+    warmth: float = Field(default=0.7, ge=0.0, le=1.0)
+    """Wärme-Level: 0.0 = neutral/sachlich, 1.0 = sehr warm und empathisch."""
+
+    humor: float = Field(default=0.3, ge=0.0, le=1.0)
+    """Humor-Level: 0.0 = ernst, 1.0 = spielerisch."""
+
+    follow_up_questions: bool = True
+    """Soll Jarvis am Ende Nachfragen stellen?"""
+
+    success_celebration: bool = True
+    """Soll Jarvis erfolgreiche Aktionen positiv bestätigen?"""
+
+    greeting_enabled: bool = True
+    """Soll Jarvis Tageszeit-abhängige Grüße verwenden?"""
+
+
 class ExecutorConfig(BaseModel):
     """Executor Konfiguration."""
 
@@ -1413,6 +1432,7 @@ class JarvisConfig(BaseModel):
     code: CodeConfig = Field(default_factory=CodeConfig)
     executor: ExecutorConfig = Field(default_factory=ExecutorConfig)
     vault: VaultConfig = Field(default_factory=VaultConfig)
+    personality: PersonalityConfig = Field(default_factory=PersonalityConfig)
     context_pipeline: ContextPipelineConfig = Field(default_factory=ContextPipelineConfig)
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)

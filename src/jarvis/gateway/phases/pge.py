@@ -25,6 +25,8 @@ def declare_pge_attrs(config: Any) -> PhaseResult:
         "task_telemetry": None,
         "error_clusterer": None,
         "causal_analyzer": None,
+        "personality_engine": None,
+        "user_pref_store": None,
     }
 
 
@@ -154,6 +156,25 @@ async def init_pge(
         except Exception:
             pass
 
+    # PersonalityEngine (optional)
+    personality_engine = None
+    try:
+        from jarvis.core.personality import PersonalityEngine
+        personality_config = getattr(config, "personality", None)
+        personality_engine = PersonalityEngine(personality_config)
+        log.info("personality_engine_initialized")
+    except Exception:
+        log.debug("personality_engine_init_skipped")
+
+    # UserPreferenceStore (optional)
+    user_pref_store = None
+    try:
+        from jarvis.core.user_preferences import UserPreferenceStore
+        user_pref_store = UserPreferenceStore()
+        log.info("user_pref_store_initialized")
+    except Exception:
+        log.debug("user_pref_store_init_skipped")
+
     # Executor (with retry/backoff + security + profiling + telemetry + gap detection)
     try:
         result["executor"] = Executor(
@@ -178,6 +199,7 @@ async def init_pge(
             causal_analyzer=causal_analyzer,
             task_profiler=task_profiler,
             cost_tracker=cost_tracker,
+            personality_engine=personality_engine,
         )
     except Exception:
         log.error("planner_init_failed", exc_info=True)
@@ -204,5 +226,7 @@ async def init_pge(
     result["error_clusterer"] = error_clusterer
     result["causal_analyzer"] = causal_analyzer
     result["skill_generator"] = skill_generator
+    result["personality_engine"] = personality_engine
+    result["user_pref_store"] = user_pref_store
 
     return result

@@ -24,7 +24,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Any
 
-from jarvis.channels.base import Channel, MessageHandler
+from jarvis.channels.base import Channel, MessageHandler, StatusType
 from jarvis.channels.interactive import (
     AdaptiveCard,
     DiscordMessageBuilder,
@@ -387,3 +387,16 @@ class DiscordChannel(Channel):
                         channel=self.name, text=text, session_id=session_id,
                     )
                 )
+
+    async def send_status(self, session_id: str, status: StatusType, text: str) -> None:
+        """Sendet Typing-Indicator als Status-Feedback in Discord."""
+        client = self._client
+        if not client or not self._running:
+            return
+        try:
+            target_id = self.channel_id
+            channel = client.get_channel(target_id)
+            if channel is not None:
+                await channel.typing()
+        except Exception:
+            pass

@@ -65,6 +65,33 @@ if TYPE_CHECKING:
 
 log = get_logger(__name__)
 
+# ── Tool-Status-Map für Progress-Feedback ────────────────────────
+
+_TOOL_STATUS_MAP: dict[str, str] = {
+    "web_search": "Suche im Web...",
+    "web_news_search": "Suche Nachrichten...",
+    "search_and_read": "Recherchiere im Web...",
+    "web_fetch": "Lade Webseite...",
+    "read_file": "Lese Datei...",
+    "write_file": "Schreibe Datei...",
+    "edit_file": "Bearbeite Datei...",
+    "exec_command": "Führe Befehl aus...",
+    "run_python": "Führe Python-Code aus...",
+    "search_memory": "Durchsuche Wissen...",
+    "save_to_memory": "Speichere Wissen...",
+    "document_export": "Erstelle Dokument...",
+    "media_analyze_image": "Analysiere Bild...",
+    "media_transcribe_audio": "Transkribiere Audio...",
+    "media_extract_text": "Extrahiere Text...",
+    "media_tts": "Erzeuge Sprachausgabe...",
+    "vault_search": "Durchsuche Vault...",
+    "vault_write": "Schreibe in Vault...",
+    "analyze_code": "Analysiere Code...",
+    "list_directory": "Lese Verzeichnis...",
+    "browser_navigate": "Navigiere Browser...",
+    "browser_screenshot": "Erstelle Screenshot...",
+}
+
 
 class Gateway:
     """Central entry point. Connects all Jarvis subsystems. [B§9.1]"""
@@ -580,6 +607,41 @@ class Gateway:
         # veraltetes Trainingswissen zurückgreifen kann.
         presearch_results = await self._maybe_presearch(msg, wm)
 
+        # ── Sentiment Detection (Modul 3) ──
+        try:
+            from jarvis.core.sentiment import detect_sentiment, get_sentiment_system_message, Sentiment
+            sentiment_result = detect_sentiment(msg.text)
+            if sentiment_result.sentiment != Sentiment.NEUTRAL:
+                hint = get_sentiment_system_message(sentiment_result.sentiment)
+                if hint:
+                    wm.add_message(Message(
+                        role=MessageRole.SYSTEM,
+                        content=hint,
+                        channel=msg.channel,
+                    ))
+                    log.info(
+                        "sentiment_detected",
+                        sentiment=sentiment_result.sentiment,
+                        confidence=sentiment_result.confidence,
+                        trigger=sentiment_result.trigger_phrase[:50],
+                    )
+        except Exception:
+            log.debug("sentiment_detection_skipped", exc_info=True)
+
+        # ── User Preferences (Modul 4) ──
+        if hasattr(self, "_user_pref_store") and self._user_pref_store is not None:
+            try:
+                pref = self._user_pref_store.record_interaction(msg.user_id, len(msg.text))
+                verbosity_hint = pref.verbosity_hint
+                if verbosity_hint:
+                    wm.add_message(Message(
+                        role=MessageRole.SYSTEM,
+                        content=verbosity_hint,
+                        channel=msg.channel,
+                    ))
+            except Exception:
+                log.debug("user_preferences_skipped", exc_info=True)
+
         all_results: list[ToolResult] = []
         all_plans: list[ActionPlan] = []
         all_audit: list[AuditEntry] = []
@@ -806,6 +868,31 @@ class Gateway:
 
         return run_id, None
 
+    def _make_status_callback(
+        self,
+        channel_name: str,
+        session_id: str,
+    ) -> Any:
+        """Creates a fire-and-forget status callback for the current channel.
+
+        Returns an async callable (status_type: str, text: str) -> None.
+        """
+        async def _send_status(status_type: str, text: str) -> None:
+            channel = self._channels.get(channel_name)
+            if channel is None:
+                return
+            try:
+                from jarvis.channels.base import StatusType
+                st = StatusType(status_type) if status_type in StatusType.__members__.values() else StatusType.PROCESSING
+                await asyncio.wait_for(
+                    channel.send_status(session_id, st, text),
+                    timeout=2.0,
+                )
+            except Exception:
+                pass  # fire-and-forget
+
+        return _send_status
+
     async def _run_pge_loop(
         self,
         msg: IncomingMessage,
@@ -826,6 +913,9 @@ class Gateway:
         all_audit: list[AuditEntry] = []
         final_response = ""
 
+        # Status callback for progress feedback
+        _status_cb = self._make_status_callback(msg.channel, session.session_id)
+
         while not session.iterations_exhausted and self._running:
             session.iteration_count += 1
 
@@ -839,6 +929,9 @@ class Gateway:
                 chat_messages=len(wm.chat_history),
                 token_estimate=wm.token_count,
             )
+
+            # Status: Thinking
+            await _status_cb("thinking", "Denke nach...")
 
             # Planner
             if session.iteration_count == 1:
@@ -907,8 +1000,21 @@ class Gateway:
                         final_response = escalation
                         break
                 else:
-                    final_response = "Alle geplanten Aktionen wurden vom Gatekeeper blockiert."
+                    try:
+                        from jarvis.utils.error_messages import all_actions_blocked_message
+                        final_response = all_actions_blocked_message(plan.steps, approved_decisions)
+                    except Exception:
+                        final_response = "Alle geplanten Aktionen wurden vom Gatekeeper blockiert."
                 break
+
+            # Status: Tool-specific progress message
+            for step in plan.steps:
+                tool_status = _TOOL_STATUS_MAP.get(step.tool, f"Führe {step.tool} aus...")
+                await _status_cb("executing", tool_status)
+                break  # Only send the first tool's status
+
+            # Set status callback on executor for retry visibility
+            self._executor.set_status_callback(_status_cb)
 
             # Executor
             if route_decision and route_decision.agent.name != "jarvis":
@@ -969,6 +1075,7 @@ class Gateway:
             used_coding_tool = any(r.tool_name in _CODING_TOOLS for r in results)
 
             if has_success and not has_errors and not used_coding_tool:
+                await _status_cb("finishing", "Formuliere Antwort...")
                 final_response = await self._planner.formulate_response(
                     user_message=msg.text,
                     results=all_results,
@@ -977,6 +1084,7 @@ class Gateway:
                 break
 
             if not has_success and session.iteration_count >= 5:
+                await _status_cb("finishing", "Formuliere Antwort...")
                 final_response = await self._planner.formulate_response(
                     user_message=msg.text,
                     results=all_results,
@@ -986,8 +1094,10 @@ class Gateway:
 
         if session.iterations_exhausted and not final_response:
             final_response = (
-                "Ich habe das Iterationslimit erreicht, ohne die Aufgabe abzuschließen. "
-                "Bitte versuche es mit einer spezifischeren Anfrage."
+                "Ich habe leider das Maximum an Verarbeitungsschritten erreicht, "
+                "ohne die Aufgabe vollständig abzuschließen. "
+                "Versuch es bitte mit einer spezifischeren Anfrage oder brich die Aufgabe "
+                "in kleinere Schritte auf -- ich helfe gerne weiter!"
             )
 
         return final_response, all_results, all_plans, all_audit

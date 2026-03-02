@@ -28,7 +28,7 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from jarvis.channels.base import Channel, MessageHandler
+from jarvis.channels.base import Channel, MessageHandler, StatusType
 from jarvis.models import IncomingMessage, OutgoingMessage, PlannedAction
 from jarvis.security.token_store import get_token_store
 from jarvis.utils.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
@@ -462,6 +462,19 @@ class TelegramChannel(Channel):
         # Nachrichten werden als Ganzes über send() gesendet.
         pass
 
+    async def send_status(self, session_id: str, status: StatusType, text: str) -> None:
+        """Sendet Typing-Indicator als Status-Feedback."""
+        if self._app is None:
+            return
+        chat_id = self._session_chat_map.get(session_id) or self._user_chat_map.get(session_id)
+        if chat_id is None:
+            return
+        try:
+            bot = self._app.bot
+            await bot.send_chat_action(chat_id=chat_id, action="typing")
+        except Exception:
+            pass
+
     # === Interne Handler ===
 
     async def _on_telegram_message(self, update: Any, context: Any) -> None:
@@ -758,11 +771,14 @@ class TelegramChannel(Channel):
             )
             await self.send(enriched)
 
-        except Exception:
+        except Exception as exc:
             logger.exception("Fehler bei Telegram-Nachricht von User %d", user_id)
-            await update.effective_message.reply_text(
-                "❌ Ein Fehler ist aufgetreten. Bitte versuche es erneut."
-            )
+            try:
+                from jarvis.utils.error_messages import classify_error_for_user
+                friendly = classify_error_for_user(exc)
+            except Exception:
+                friendly = "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
+            await update.effective_message.reply_text(f"❌ {friendly}")
         finally:
             self._stop_typing(chat_id, typing_task)
 

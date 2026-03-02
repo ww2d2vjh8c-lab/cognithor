@@ -10,12 +10,24 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Coroutine
+from enum import StrEnum
 from typing import Any
 
 from jarvis.models import IncomingMessage, OutgoingMessage, PlannedAction
 
 # Callback-Typ: Empfängt eine IncomingMessage, gibt OutgoingMessage zurück
 MessageHandler = Callable[[IncomingMessage], Coroutine[Any, Any, OutgoingMessage]]
+
+
+class StatusType(StrEnum):
+    """Status types for progress feedback during processing."""
+
+    THINKING = "thinking"
+    SEARCHING = "searching"
+    EXECUTING = "executing"
+    RETRYING = "retrying"
+    PROCESSING = "processing"
+    FINISHING = "finishing"
 
 
 class Channel(ABC):
@@ -78,3 +90,14 @@ class Channel(ABC):
             token: Einzelnes Token (Text-Fragment)
         """
         ...
+
+    async def send_status(self, session_id: str, status: StatusType, text: str) -> None:
+        """Sendet eine Status-Meldung an den User (z.B. 'Denke nach...').
+
+        Default: no-op. Channels können dies überschreiben.
+
+        Args:
+            session_id: Aktive Session-ID
+            status: Art des Status (THINKING, SEARCHING, etc.)
+            text: Menschenlesbarer Status-Text
+        """

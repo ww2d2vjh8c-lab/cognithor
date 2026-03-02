@@ -187,9 +187,18 @@ class TestAudioBuffer:
 
 class TestVADDetector:
     @pytest.mark.asyncio
-    async def test_load_fallback(self, vad: VADDetector) -> None:
+    async def test_load_succeeds(self, vad: VADDetector) -> None:
+        """load() darf nie crashen — Silero ODER Energie-Fallback."""
         await vad.load()
-        assert not vad._use_silero  # Silero nicht verfügbar in Tests
+        # Beide Outcomes sind valide je nach Umgebung
+        assert isinstance(vad._use_silero, bool)
+
+    @pytest.mark.asyncio
+    async def test_load_fallback_without_torch(self, vad: VADDetector) -> None:
+        """Ohne torch → Energie-Fallback."""
+        with patch.dict("sys.modules", {"torch": None}):
+            await vad.load()
+            assert not vad._use_silero
 
     def test_energy_detect_silence(self, vad: VADDetector) -> None:
         silence = make_pcm_silence(100)

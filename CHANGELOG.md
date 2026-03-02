@@ -5,6 +5,42 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.26.5] – 2026-03-03
+
+### Added — Human Feel
+
+**Personality & Sentiment**
+- **Personality Engine** (`core/personality.py`) — Configurable personality injection into SYSTEM_PROMPT. Time-of-day greetings (Morgen/Nachmittag/Abend/Nacht), warmth/humor scaling, follow-up questions, success celebration. `PersonalityConfig` with `warmth`, `humor`, `greeting_enabled`, `follow_up_questions`, `success_celebration`. 13 tests
+- **Sentiment Detection** (`core/sentiment.py`) — Lightweight keyword/regex-based sentiment detection for German text. 5 categories: FRUSTRATED, URGENT, CONFUSED, POSITIVE, NEUTRAL. Confidence scoring, priority-ordered pattern matching. Automatic system-message injection to adapt response style. No ML dependencies. 40 tests
+- **User Preference Store** (`core/user_preferences.py`) — SQLite-backed per-user preference persistence. Auto-learned verbosity (terse/normal/verbose) from message length via exponential moving average. Fields: `greeting_name`, `formality`, `verbosity`, `avg_message_length`, `interaction_count`. Verbosity hint injection into working memory. 16 tests
+- **User-Friendly Error Messages** (`utils/error_messages.py`) — German error message templates replacing raw exceptions across all channels. `classify_error_for_user(exc)` maps Timeout/Connection/Permission/RateLimit/Memory to empathetic messages. `gatekeeper_block_message()` explains why actions were blocked with suggestions. `retry_exhausted_message()` with tool-specific context. `all_actions_blocked_message()` with per-action reasons. `_friendly_tool_name()` mapping for 22+ tools. 18 tests
+
+**Status Callback System**
+- **StatusType Enum** (`channels/base.py`) — 6 status types: THINKING, SEARCHING, EXECUTING, RETRYING, PROCESSING, FINISHING. Default no-op `send_status()` on base Channel class
+- **Gateway Status Callbacks** (`gateway/gateway.py`) — Fire-and-forget status callbacks with 2s timeout in PGE loop. Tool-specific status messages via `_TOOL_STATUS_MAP` (22 mappings). "Denke nach..." before planner, tool-specific before executor, "Formuliere Antwort..." before response
+- **Executor Retry Visibility** (`core/executor.py`) — "Versuch 2 von 3..." status callbacks during retry loop
+- **CLI send_status()** — Rich-formatted italic status messages
+- **Telegram send_status()** — `send_chat_action(typing)` indicator
+- **Discord send_status()** — `channel.typing()` context manager
+- **WebUI send_status()** — WebSocket `STATUS_UPDATE` event with status type and text
+- 6 tests for status callback system
+
+### Fixed
+- **test_voice VAD fallback** — `test_load_fallback` no longer hardcodes `assert not vad._use_silero`. Now environment-agnostic: accepts both Silero and energy-based fallback. Added separate `test_load_fallback_without_torch` with mocked torch for deterministic fallback testing
+- **Executor retry messages** — Now uses `retry_exhausted_message()` instead of raw error strings
+- **Channel error handling** — CLI and Telegram now show `classify_error_for_user()` messages instead of raw `f"Fehler: {exc}"`
+- **Gateway all-blocked message** — Replaced generic "Alle geplanten Aktionen wurden vom Gatekeeper blockiert" with per-action `all_actions_blocked_message()`
+
+### Changed
+- `PersonalityConfig` added to `JarvisConfig` with sensible defaults (warmth=0.7, humor=0.3)
+- `Planner.__init__()` accepts optional `personality_engine` parameter
+- SYSTEM_PROMPT template gains `{personality_section}` placeholder
+- `gateway/phases/pge.py` wires `PersonalityEngine` and `UserPreferenceStore` into initialization
+- `gateway/gateway.py` integrates sentiment detection, user preferences, and status callbacks into `handle_message()` and `_run_pge_loop()`
+- Test count: 8,306 → 8,411 (+105 new tests across 5 new test files)
+- LOC source: ~97,000 → ~98,000
+- LOC tests: ~79,000 → ~80,000
+
 ## [0.26.4] – 2026-03-02
 
 ### Added — Coverage & Skills Infrastructure

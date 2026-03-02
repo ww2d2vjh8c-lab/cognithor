@@ -230,7 +230,7 @@ AUSSCHLIEẞLICH auf den bereitgestellten Suchergebnissen.
 
 ## Aktuelles Datum und Uhrzeit
 {current_datetime}
-
+{personality_section}
 ## Kontext
 {context_section}
 """
@@ -308,6 +308,7 @@ class Planner:
         causal_analyzer: Any = None,
         task_profiler: Any = None,
         cost_tracker: Any = None,
+        personality_engine: Any = None,
     ) -> None:
         """Initialisiert den Planner mit LLM-Client und Model-Router.
 
@@ -320,6 +321,7 @@ class Planner:
             causal_analyzer: Optionaler CausalAnalyzer für Tool-Vorschlaege.
             task_profiler: Optionaler TaskProfiler fuer Selbsteinschaetzung.
             cost_tracker: Optionaler CostTracker fuer LLM-Kosten-Tracking.
+            personality_engine: Optionale PersonalityEngine fuer warme Antworten.
         """
         self._config = config
         self._ollama = ollama
@@ -328,6 +330,7 @@ class Planner:
         self._causal_analyzer = causal_analyzer
         self._task_profiler = task_profiler
         self._cost_tracker = cost_tracker
+        self._personality_engine = personality_engine
 
         # Prompts von Disk laden (mit Fallback auf hardcoded Konstanten)
         self._system_prompt_template = self._load_prompt_from_file(
@@ -438,7 +441,11 @@ class Planner:
             return ActionPlan(
                 goal=user_message,
                 reasoning="LLM-Fehler -- kann nicht planen",
-                direct_response=f"Entschuldigung, ich hatte ein technisches Problem: {exc}",
+                direct_response=(
+                    "Entschuldigung, ich hatte gerade ein technisches Problem und konnte "
+                    "deine Anfrage nicht verarbeiten. Bitte versuch es gleich noch einmal. "
+                    "Wenn das Problem weiterhin besteht, formuliere deine Frage etwas anders."
+                ),
                 confidence=0.0,
             )
 
@@ -510,7 +517,10 @@ class Planner:
             log.error("planner_replan_error", error=str(exc))
             return ActionPlan(
                 goal=original_goal,
-                direct_response="Entschuldigung, ich konnte den Plan nicht fortsetzen.",
+                direct_response=(
+                    "Entschuldigung, ich konnte den Plan leider nicht fortsetzen. "
+                    "Bitte versuch es erneut oder beschreib mir dein Ziel nochmal anders."
+                ),
                 confidence=0.0,
             )
 
@@ -657,7 +667,10 @@ class Planner:
         except OllamaError as exc:
             # Fallback: Fehlermeldung statt roher Ergebnisse (könnten HTML enthalten)
             log.warning("formulate_response_llm_error", error=str(exc))
-            return "Ich konnte die Suchergebnisse leider nicht zusammenfassen. Bitte versuche es erneut."
+            return (
+                "Ich konnte die Ergebnisse leider nicht zusammenfassen. "
+                "Bitte versuch es gleich noch einmal -- manchmal klappt es beim zweiten Anlauf."
+            )
 
     # =========================================================================
     # Private Methoden
@@ -740,11 +753,20 @@ class Planner:
         now = datetime.now()
         current_datetime = now.strftime("%A, %d. %B %Y, %H:%M Uhr")
 
+        # Personality block (optional)
+        personality_section = ""
+        if self._personality_engine is not None:
+            try:
+                personality_section = self._personality_engine.build_personality_block()
+            except Exception:
+                pass
+
         return self._system_prompt_template.format(
             tools_section=tools_section,
             context_section=context_section,
             current_datetime=current_datetime,
             owner_name=self._config.owner_name,
+            personality_section=personality_section,
         )
 
     def _build_messages(

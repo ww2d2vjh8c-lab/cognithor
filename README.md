@@ -11,7 +11,7 @@
   </p>
   <p align="center">
     <a href="#quick-start"><img src="https://img.shields.io/badge/python-%3E%3D3.12-blue?style=flat-square" alt="Python"></a>
-    <a href="#tests"><img src="https://img.shields.io/badge/tests-8%2C306%20passing-brightgreen?style=flat-square" alt="Tests"></a>
+    <a href="#tests"><img src="https://img.shields.io/badge/tests-8%2C411%20passing-brightgreen?style=flat-square" alt="Tests"></a>
     <a href="#tests"><img src="https://img.shields.io/badge/coverage-89%25-brightgreen?style=flat-square" alt="Coverage"></a>
     <a href="#tests"><img src="https://img.shields.io/badge/lint-0%20errors-brightgreen?style=flat-square" alt="Lint"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License"></a>
@@ -24,7 +24,7 @@
 
 - **Your data never leaves your machine.** Runs 100% locally with Ollama or LM Studio — no cloud, no API keys required, full GDPR compliance. Cloud providers are optional, not mandatory.
 - **One system, not twenty tools.** 17 channels, 18+ MCP tool servers, 5-tier memory, knowledge vault, cron, voice, browser automation, distributed locking, durable message queues — integrated from day one. No glue code, no plugin hell.
-- **Production-grade, not a demo.** 8,306 tests, 89% coverage, 4-level sandbox, SHA-256 audit chain, runtime token encryption, Prometheus metrics, and battle-tested deployment options from one-click Windows launcher to Docker Compose to bare-metal servers.
+- **Production-grade, not a demo.** 8,411 tests, 89% coverage, 4-level sandbox, SHA-256 audit chain, runtime token encryption, Prometheus metrics, and battle-tested deployment options from one-click Windows launcher to Docker Compose to bare-metal servers.
 
 ---
 
@@ -58,6 +58,19 @@
 
 ## What's New in v0.26
 
+### v0.26.5 — Human Feel
+
+This update makes Cognithor feel **less robotic and more human**:
+
+- **Status Callbacks** — Real-time progress feedback during processing ("Denke nach...", "Suche im Web...", "Formuliere Antwort..."). Implemented across CLI (Rich), Telegram (typing indicator), Discord (typing), and WebUI (WebSocket events).
+- **Personality Engine** — Configurable warmth, humor, time-of-day greetings, follow-up questions, and success celebration. Injected into SYSTEM_PROMPT via `PersonalityConfig`.
+- **Sentiment Detection** — Lightweight keyword/regex-based detection for German text (frustrated, urgent, confused, positive, neutral). Adapts response style automatically.
+- **User Preferences** — SQLite-backed per-user preference store with auto-learned verbosity (terse/normal/verbose from message length patterns), greeting name, formality level.
+- **Friendly Error Messages** — All channels now show user-friendly German error messages instead of raw exceptions. Gatekeeper blocks explain *why* with suggestions. Retry exhaustion messages are empathetic.
+- **105 new tests** across 5 new test files, bringing the total to **8,411 tests**.
+
+### v0.26.4 — Coverage & Skills
+
 This release focuses on **production scaling** and **operational maturity**:
 
 - **Distributed Locking** — Redis-backed (with file-based fallback) distributed locks for safe multi-instance deployments. Prevents concurrent plan execution and resource contention across nodes.
@@ -66,7 +79,7 @@ This release focuses on **production scaling** and **operational maturity**:
 - **Prometheus /metrics Endpoint** — Full Prometheus-compatible metrics export: request counts, latency histograms, memory usage, queue depths, LLM token consumption. Ships with a ready-made Grafana dashboard JSON.
 - **Skill Marketplace Persistence** — Skill marketplace now backed by SQLite with full CRUD, ratings, search, and a REST API for marketplace operations.
 - **Auto-Dependency Loading** — On startup, Cognithor inspects enabled features and installs missing optional dependencies automatically, eliminating manual `pip install` steps for feature groups.
-- **2,700+ new tests** covering all scaling features, security hardening, and comprehensive coverage improvements, bringing the total to **8,306 tests** at **89% coverage**.
+- **2,700+ new tests** covering all scaling features, security hardening, and comprehensive coverage improvements, bringing the total to **8,411 tests** at **89% coverage**.
 - **LM Studio Support** — LM Studio als zweites lokales Backend neben Ollama. OpenAI-kompatible API auf `localhost:1234`, kein API-Key nötig. Einfach `llm_backend_type: "lmstudio"` setzen.
 
 ---
@@ -90,6 +103,7 @@ This release focuses on **production scaling** and **operational maturity**:
 - **Auto-Dependency Loading** — Missing optional packages detected and installed at startup
 - **Agent-to-Agent Protocol (A2A)** — Linux Foundation RC v1.0 for inter-agent communication
 - **React Control Center** — Full web dashboard (React 19 + Vite 7) with integrated backend launcher, live config editing, agent management, prompt editing, cron jobs, MCP servers, and A2A settings
+- **Human Feel** — Personality Engine (warmth, humor, greetings), sentiment detection (frustrated/urgent/confused/positive), user preference learning, real-time status callbacks, user-friendly German error messages
 - **Auto-Detect Channels** — Channels activate automatically when tokens are present in `.env` — no manual config flags needed
 - **Knowledge Synthesis** — Meta-analysis across Memory + Vault + Web with LLM fusion: `knowledge_synthesize` (full synthesis with confidence ratings), `knowledge_contradictions` (fact-checking), `knowledge_timeline` (causal chains), `knowledge_gaps` (completeness score + research suggestions)
 - **Adaptive Context Pipeline** — Automatic context enrichment before every Planner call: BM25 memory search + vault full-text search + recent episodes, injected into WorkingMemory in <50ms
@@ -97,7 +111,7 @@ This release focuses on **production scaling** and **operational maturity**:
 - **One-Click Start** — Double-click `start_cognithor.bat` -> browser opens -> click **Power On** -> done
 - **Enhanced Web Research** — 4-provider search fallback (SearXNG -> Brave -> Google CSE -> DuckDuckGo), Jina AI Reader for JS-heavy sites, domain filtering, source cross-checking
 - **Procedural Learning** — Reflector auto-synthesizes reusable skills from successful sessions
-- **8,306 tests** · **89% coverage** · **0 lint errors**
+- **8,411 tests** · **89% coverage** · **0 lint errors**
 
 ## Architecture
 
@@ -115,7 +129,8 @@ This release focuses on **production scaling** and **operational maturity**:
 │   WhatsApp · Signal · iMessage · Teams · Matrix · Voice · ...     │
 ├───────────────────────────────────────────────────────────────────┤
 │                     Gateway Layer                                  │
-│      Session Management · Agent Loop · Distributed Lock            │
+│   Session · Agent Loop · Distributed Lock · Status Callbacks       │
+│   Personality · Sentiment · User Preferences                       │
 ├───────────────────────────────────────────────────────────────────┤
 │        Durable Message Queue (SQLite, priorities, DLQ)             │
 ├───────────────────────────────────────────────────────────────────┤
@@ -210,11 +225,11 @@ llm_backend_type: "lmstudio"
 
 | Channel | Protocol | Features |
 |---------|----------|----------|
-| **CLI** | Terminal REPL | Rich formatting, streaming, `/commands` |
-| **Web UI** | WebSocket | Real-time streaming, voice recording, file upload, dark theme |
+| **CLI** | Terminal REPL | Rich formatting, streaming, `/commands`, status feedback |
+| **Web UI** | WebSocket | Real-time streaming, voice recording, file upload, dark theme, status events |
 | **REST API** | FastAPI + SSE | Programmatic access, server-sent events |
-| **Telegram** | Bot API (poll + webhook) | Text, voice messages (Whisper STT), photos, documents, webhook mode (<100ms) |
-| **Discord** | Gateway + REST | Embeds, reactions, thread support |
+| **Telegram** | Bot API (poll + webhook) | Text, voice messages (Whisper STT), photos, documents, webhook mode (<100ms), typing indicator |
+| **Discord** | Gateway + REST | Embeds, reactions, thread support, typing indicator |
 | **Slack** | Socket Mode | Block Kit, interactive buttons, thread support |
 | **WhatsApp** | Meta Cloud API | Text, media, location, contacts |
 | **Signal** | signal-cli bridge | Encrypted messaging, attachments |
@@ -399,6 +414,14 @@ security:
     - "~/.cognithor"
     - "~/Documents"
 
+# Personality (new in v0.26.5)
+personality:
+  warmth: 0.7                    # 0.0 = sachlich, 1.0 = sehr warm
+  humor: 0.3                     # 0.0 = kein Humor, 1.0 = viel Humor
+  greeting_enabled: true          # Tageszeit-Grüße
+  follow_up_questions: true       # Rückfragen anbieten
+  success_celebration: true       # Erfolge feiern
+
 # Scaling (new in v0.26)
 distributed_lock:
   backend: "file"                 # "redis" or "file"
@@ -460,11 +483,11 @@ python -m pytest tests/test_memory/ -v
 python -m pytest tests/test_channels/ -v
 ```
 
-Current status: **8,306 tests** · **100% pass rate** · **89% coverage** · **~97,000 LOC source** · **~79,000 LOC tests**
+Current status: **8,411 tests** · **100% pass rate** · **89% coverage** · **~98,000 LOC source** · **~80,000 LOC tests**
 
 | Area | Tests | Description |
 |------|-------|-------------|
-| Core | 1,422 | Planner, Gatekeeper, Executor, Config, Models, Reflector, Distributed Lock, Model Router, Unified LLM, LLM Backend |
+| Core | 1,491 | Planner, Gatekeeper, Executor, Config, Models, Reflector, Distributed Lock, Model Router, Unified LLM, LLM Backend, Personality, Sentiment, User Preferences |
 | Integration | 1,314 | End-to-end tests, phase wiring, entrypoint, A2A protocol |
 | Channels | 1,360 | CLI, Telegram (incl. Webhook), Discord, Slack, WhatsApp, API, WebUI, Voice, iMessage, Signal, Teams |
 | MCP | 825 | Client, filesystem, shell, memory server, web, media, synthesis, vault, browser, bridge, resources |
@@ -476,7 +499,7 @@ Current status: **8,306 tests** · **100% pass rate** · **89% coverage** · **~
 | Telemetry | 120 | Cost tracking, metrics, tracing, Prometheus export, instrumentation |
 | Other | 247 | HITL, governance, learning, proactive, config manager |
 | Tools | 103 | Refactoring agent, code analyzer, skill CLI developer tools |
-| Utils | 72 | Logging, helper functions |
+| Utils | 90 | Logging, helper functions, error messages |
 | Cron | 63 | Engine, job store, scheduling |
 | UI API | 55 | Control Center endpoints (config, agents, prompts, cron, MCP, A2A) |
 
@@ -507,7 +530,10 @@ cognithor/
 │   │   ├── llm_backend.py         # Multi-provider LLM abstraction (16 backends)
 │   │   ├── orchestrator.py        # High-level agent orchestration
 │   │   ├── reflector.py           # Reflection, fact extraction, skill synthesis
-│   │   └── distributed_lock.py    # Redis/file-based distributed locking
+│   │   ├── distributed_lock.py    # Redis/file-based distributed locking
+│   │   ├── personality.py         # Personality Engine (warmth, humor, greetings)
+│   │   ├── sentiment.py           # Keyword/regex sentiment detection (German)
+│   │   └── user_preferences.py    # SQLite user preference store (auto-learn)
 │   ├── memory/
 │   │   ├── manager.py             # Central memory API (all 5 tiers)
 │   │   ├── core_memory.py         # Tier 1: CORE.md management
@@ -556,7 +582,8 @@ cognithor/
 │   ├── graph/                     # Knowledge graph engine
 │   ├── telemetry/                 # Cost tracking, metrics, tracing, Prometheus export
 │   └── utils/
-│       └── logging.py             # Structured logging (structlog + Rich)
+│       ├── logging.py             # Structured logging (structlog + Rich)
+│       └── error_messages.py      # User-friendly German error templates
 ├── ui/                            # Control Center (React 19 + Vite 7)
 │   ├── vite.config.js             # Dev server with backend launcher plugin
 │   ├── package.json               # Dependencies (react, vite)
@@ -565,7 +592,7 @@ cognithor/
 │       ├── CognithorControlCenter.jsx  # Main dashboard (1,700 LOC)
 │       ├── App.jsx                # App shell
 │       └── main.jsx               # React entry
-├── tests/                         # 8,306 tests, ~77,000 LOC
+├── tests/                         # 8,411 tests, ~77,000 LOC
 │   ├── test_core/                 # Planner, Gatekeeper, Executor, Distributed Lock
 │   ├── test_memory/               # All 5 memory tiers, hybrid search
 │   ├── test_mcp/                  # MCP tools and client
@@ -670,11 +697,13 @@ See [`deploy/README.md`](deploy/README.md) for full deployment documentation (Do
 | **Phase 11** | Scaling: distributed locking, durable message queue, Prometheus metrics, Telegram webhook, skill marketplace persistence, auto-dependency loading | Done |
 | **Deploy** | Installer, systemd, Docker, backup, smoke test, one-click launcher | Done |
 
+| **Phase 12** | Human Feel: personality engine, sentiment detection, user preferences, status callbacks, friendly error messages | Done |
+
 ### What's Next
 
-- **Phase 12** — Horizontal scaling: multi-node Gateway with Redis Streams, auto-sharding of memory tiers, load-balanced LLM backend pools
-- **Phase 13** — Advanced agents: multi-agent collaboration workflows, shared memory spaces, agent specialization profiles
-- **Phase 14** — Mobile: native Android/iOS apps via Capacitor, push notifications, offline mode with local LLM
+- **Phase 13** — Horizontal scaling: multi-node Gateway with Redis Streams, auto-sharding of memory tiers, load-balanced LLM backend pools
+- **Phase 14** — Advanced agents: multi-agent collaboration workflows, shared memory spaces, agent specialization profiles
+- **Phase 15** — Mobile: native Android/iOS apps via Capacitor, push notifications, offline mode with local LLM
 
 ## Recording a Demo
 
@@ -696,7 +725,7 @@ Alternatively, use [terminalizer](https://github.com/faressoft/terminalizer) for
 
 ---
 
-**Metrics:** ~97,000 LOC source · ~79,000 LOC tests · 8,306 tests · 89% coverage · 0 lint errors
+**Metrics:** ~98,000 LOC source · ~80,000 LOC tests · 8,411 tests · 89% coverage · 0 lint errors
 
 ## License
 

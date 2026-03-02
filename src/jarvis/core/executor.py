@@ -118,10 +118,16 @@ class Executor:
         }
         # Agent context tokens (for contextvar reset)
         self._ctx_tokens: list[contextvars.Token] = []
+        # Status callback (set by Gateway for progress feedback)
+        self._status_callback: Any = None
 
     def set_mcp_client(self, client: JarvisMCPClient) -> None:
         """Setzt den MCP-Client (kann nach Initialisierung gesetzt werden)."""
         self._mcp_client = client
+
+    def set_status_callback(self, callback: Any) -> None:
+        """Setzt den Status-Callback für Fortschrittsmeldungen."""
+        self._status_callback = callback
 
     def set_agent_context(
         self,
@@ -456,6 +462,15 @@ class Executor:
                     error=last_error,
                     delay_s=delay,
                 )
+                # Status callback: retry visibility
+                if self._status_callback is not None:
+                    try:
+                        await self._status_callback(
+                            "retrying",
+                            f"Versuch {attempt + 1} von {self._max_retries}...",
+                        )
+                    except Exception:
+                        pass
                 await asyncio.sleep(delay)
 
         # Alle Retries erschöpft
@@ -482,9 +497,15 @@ class Executor:
                 success=False,
                 duration_ms=float(total_duration_ms),
             )
+        # User-friendly error message
+        try:
+            from jarvis.utils.error_messages import retry_exhausted_message
+            friendly_msg = retry_exhausted_message(tool_name, self._max_retries, last_error)
+        except Exception:
+            friendly_msg = f"Fehler nach {self._max_retries} Versuchen: {last_error}"
         return ToolResult(
             tool_name=tool_name,
-            content=(f"Fehler nach {self._max_retries} Versuchen: {last_error}"),
+            content=friendly_msg,
             is_error=True,
             error_type=last_error_type,
             duration_ms=total_duration_ms,

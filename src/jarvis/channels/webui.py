@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from jarvis.channels.base import Channel, MessageHandler
+from jarvis.channels.base import Channel, MessageHandler, StatusType
 from jarvis.models import IncomingMessage, OutgoingMessage, PlannedAction
 from jarvis.security.rate_limiter import RateLimiter
 from jarvis.security.token_store import get_token_store
@@ -60,6 +60,7 @@ class WSMessageType:
     TOOL_START = "tool_start"
     TOOL_RESULT = "tool_result"
     APPROVAL_REQUEST = "approval_request"
+    STATUS_UPDATE = "status_update"
     ERROR = "error"
     PONG = "pong"
 
@@ -214,6 +215,20 @@ class WebUIChannel(Channel):
                 {
                     "type": WSMessageType.STREAM_TOKEN,
                     "token": token,
+                    "session_id": session_id,
+                },
+            )
+
+    async def send_status(self, session_id: str, status: StatusType, text: str) -> None:
+        """Sendet Status-Update über WebSocket."""
+        ws = self._connections.get(session_id)
+        if ws:
+            await self._ws_send(
+                ws,
+                {
+                    "type": WSMessageType.STATUS_UPDATE,
+                    "status": status.value,
+                    "text": text,
                     "session_id": session_id,
                 },
             )

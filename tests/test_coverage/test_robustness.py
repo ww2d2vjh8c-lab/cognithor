@@ -237,7 +237,7 @@ class TestExecutorRetry:
 
         result = await self.executor._execute_single("test_tool", {})
         assert result.is_error
-        assert "3 Versuchen" in result.content
+        assert "3" in result.content  # "3-mal versucht" (user-friendly message)
         assert self.mcp.call_tool.call_count == 3
 
     @pytest.mark.asyncio

@@ -180,6 +180,11 @@ security:
   allowed_paths:                        # Dateizugriff nur hier
     - ~/.jarvis
     - ~/Dokumente
+
+personality:
+  warmth: 0.7                            # Wie warm/empathisch antwortet Jarvis
+  humor: 0.3                             # Humor-Level (0 = sachlich, 1 = viel)
+  greeting_enabled: true                 # Tageszeit-Grüße
 ```
 
 ## 8. Monitoring
@@ -187,7 +192,7 @@ security:
 ```bash
 make smoke        # 26 Installations-Checks
 make health       # Laufzeit-Check (Ollama, Disk, Memory)
-make test         # 5.304+ Tests ausführen
+make test         # 8.411+ Tests ausführen
 ```
 
 Logs:

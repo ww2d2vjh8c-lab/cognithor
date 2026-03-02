@@ -16,7 +16,7 @@ import asyncio
 from rich.console import Console
 from rich.panel import Panel
 
-from jarvis.channels.base import Channel, MessageHandler
+from jarvis.channels.base import Channel, MessageHandler, StatusType
 from jarvis.models import IncomingMessage, OutgoingMessage, PlannedAction
 from jarvis.utils.logging import get_logger
 
@@ -106,7 +106,12 @@ class CliChannel(Channel):
                 response = await self._handler(msg)
                 await self.send(response)
             except Exception as exc:
-                self._console.print(f"[{COLOR_ERROR}]Fehler: {exc}[/{COLOR_ERROR}]")
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = f"Ein Fehler ist aufgetreten: {exc}"
+                self._console.print(f"[{COLOR_ERROR}]{friendly}[/{COLOR_ERROR}]")
                 log.error("cli_handler_error", error=str(exc))
 
     async def stop(self) -> None:
@@ -168,6 +173,10 @@ class CliChannel(Channel):
     async def send_streaming_token(self, session_id: str, token: str) -> None:
         """Gibt ein einzelnes Token aus (für Streaming)."""
         self._console.print(token, end="", highlight=False)
+
+    async def send_status(self, session_id: str, status: StatusType, text: str) -> None:
+        """Zeigt einen Status-Text im Terminal an (dim italic)."""
+        self._console.print(f"  [{COLOR_INFO} italic]{text}[/{COLOR_INFO} italic]", highlight=False)
 
     async def _read_input(self, prompt: str | None = None) -> str | None:
         """Liest User-Input nicht-blockierend.
