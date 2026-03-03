@@ -223,8 +223,17 @@ class IRCChannel(Channel):
         )
 
         if self._handler:
-            response = await self._handler(incoming)
-            await self._send_message(reply_target, response.text)
+            try:
+                response = await self._handler(incoming)
+                await self._send_message(reply_target, response.text)
+            except Exception as exc:
+                logger.error("IRC: Handler-Fehler: %s", exc)
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                await self._send_message(reply_target, friendly)
 
     async def _send_message(self, target: str, text: str) -> None:
         """Sendet eine Nachricht mit Flood Protection und Message-Splitting."""

@@ -422,7 +422,12 @@ class WhatsAppChannel(Channel):
                 await self._send_text(from_number, response.text)
             except Exception as e:
                 logger.error("WhatsApp: Handler-Fehler: %s", e)
-                await self._send_text(from_number, "Ein Fehler ist bei der Verarbeitung aufgetreten.")
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(e)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                await self._send_text(from_number, friendly)
 
     async def _handle_button_response(self, from_number: str, button_id: str) -> None:
         """Verarbeitet Button-Antworten fuer Approval-Workflows."""

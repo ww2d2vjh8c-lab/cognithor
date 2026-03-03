@@ -175,8 +175,17 @@ class GoogleChatChannel(Channel):
         )
 
         if self._handler:
-            response = await self._handler(incoming)
-            return {"text": response.text}
+            try:
+                response = await self._handler(incoming)
+                return {"text": response.text}
+            except Exception as exc:
+                logger.error("Google Chat: Handler-Fehler: %s", exc)
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                return {"text": friendly}
 
         return None
 

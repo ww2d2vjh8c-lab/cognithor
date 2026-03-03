@@ -188,12 +188,25 @@ class MattermostChannel(Channel):
         )
 
         if self._handler:
-            response = await self._handler(incoming)
-            await self._create_post(
-                channel_id=channel_id,
-                message=response.text,
-                root_id=post.get("root_id") or post_id,
-            )
+            try:
+                response = await self._handler(incoming)
+                await self._create_post(
+                    channel_id=channel_id,
+                    message=response.text,
+                    root_id=post.get("root_id") or post_id,
+                )
+            except Exception as exc:
+                logger.error("Mattermost: Handler-Fehler: %s", exc)
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                await self._create_post(
+                    channel_id=channel_id,
+                    message=friendly,
+                    root_id=post.get("root_id") or post_id,
+                )
 
     async def _on_reaction(self, reaction: dict[str, Any]) -> None:
         """Verarbeitet Reactions (für Approvals)."""

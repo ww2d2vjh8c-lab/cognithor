@@ -40,6 +40,35 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_DISCORD_MAX_LENGTH = 2000
+
+
+def _split_discord_message(text: str, limit: int = _DISCORD_MAX_LENGTH) -> list[str]:
+    """Splits a message into chunks that fit Discord's character limit.
+
+    Tries to split on newlines first, then on spaces, then hard-cuts.
+    """
+    if not text:
+        return [""]
+    if len(text) <= limit:
+        return [text]
+
+    chunks: list[str] = []
+    while text:
+        if len(text) <= limit:
+            chunks.append(text)
+            break
+        # Try to split at a newline
+        cut = text.rfind("\n", 0, limit)
+        if cut <= 0:
+            # Try to split at a space
+            cut = text.rfind(" ", 0, limit)
+        if cut <= 0:
+            cut = limit
+        chunks.append(text[:cut])
+        text = text[cut:].lstrip("\n")
+    return chunks
+
 
 class DiscordChannel(Channel):
     """Bidirektionale Discord-Integration für Jarvis.
@@ -173,11 +202,19 @@ class DiscordChannel(Channel):
             )
 
         if self._handler:
-            response = await self._handler(incoming)
             try:
-                await message.channel.send(response.text)
+                async with message.channel.typing():
+                    response = await self._handler(incoming)
+                for chunk in _split_discord_message(response.text):
+                    await message.channel.send(chunk)
             except Exception as exc:
-                logger.error("Discord Antwort fehlgeschlagen: %s", exc)
+                logger.error("Discord: Handler-Fehler: %s", exc)
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                    await message.channel.send(f"❌ {friendly}")
+                except Exception:
+                    pass  # Can't send error message either — silently log
 
     # ------------------------------------------------------------------
     # Approvals via Reactions
@@ -226,7 +263,7 @@ class DiscordChannel(Channel):
         logger.info("DiscordChannel gestoppt")
 
     async def send(self, message: OutgoingMessage) -> None:
-        """Sendet eine Nachricht an Discord."""
+        """Sendet eine Nachricht an Discord (mit automatischem Splitting)."""
         client = self._client
         if not client or not self._running:
             logger.warning("DiscordChannel ist nicht einsatzbereit")
@@ -241,7 +278,8 @@ class DiscordChannel(Channel):
             if channel is None:
                 logger.error("Unbekannter Discord-Channel: %s", target_id)
                 return
-            await self._circuit_breaker.call(channel.send(message.text))
+            for chunk in _split_discord_message(message.text):
+                await self._circuit_breaker.call(channel.send(chunk))
         except CircuitBreakerOpen:
             logger.warning("discord_circuit_open", extra={"channel_id": target_id})
         except Exception:

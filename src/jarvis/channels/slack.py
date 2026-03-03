@@ -193,15 +193,29 @@ class SlackChannel(Channel):
         )
 
         if self._handler:
-            response = await self._handler(incoming)
             try:
-                await self._client.chat_postMessage(
-                    channel=channel_id,
-                    text=response.text,
-                    thread_ts=thread_ts,
-                )
+                response = await self._handler(incoming)
+                try:
+                    await self._client.chat_postMessage(
+                        channel=channel_id,
+                        text=response.text,
+                        thread_ts=thread_ts,
+                    )
+                except Exception as exc:
+                    logger.error("Slack Antwort fehlgeschlagen: %s", exc)
             except Exception as exc:
-                logger.error("Slack Antwort fehlgeschlagen: %s", exc)
+                logger.error("Slack: Handler-Fehler: %s", exc)
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                try:
+                    await self._client.chat_postMessage(
+                        channel=channel_id, text=friendly, thread_ts=thread_ts,
+                    )
+                except Exception:
+                    pass
 
     # ------------------------------------------------------------------
     # Approvals via Block Kit Buttons

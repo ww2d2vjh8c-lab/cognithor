@@ -103,7 +103,11 @@ class CliChannel(Channel):
             )
 
             try:
-                response = await self._handler(msg)
+                with self._console.status(
+                    "[bold cyan]Jarvis denkt nach...[/bold cyan]",
+                    spinner="dots",
+                ):
+                    response = await self._handler(msg)
                 await self.send(response)
             except Exception as exc:
                 try:

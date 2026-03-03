@@ -217,8 +217,17 @@ class TwitchChannel(Channel):
         )
 
         if self._handler:
-            response = await self._handler(incoming)
-            await self._send_chat(response.text)
+            try:
+                response = await self._handler(incoming)
+                await self._send_chat(response.text)
+            except Exception as exc:
+                logger.error("Twitch: Handler-Fehler: %s", exc)
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                await self._send_chat(friendly)
 
     async def _send_chat(self, text: str) -> None:
         """Sendet eine Chat-Nachricht mit Rate Limiting."""

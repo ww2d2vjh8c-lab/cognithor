@@ -417,7 +417,12 @@ class SignalChannel(Channel):
                     await self._send_text(source, response.text)
                 except Exception as exc:
                     logger.error("Signal: Handler-Fehler: %s", exc)
-                    await self._send_text(source, "Ein Fehler ist bei der Verarbeitung aufgetreten.")
+                    try:
+                        from jarvis.utils.error_messages import classify_error_for_user
+                        friendly = classify_error_for_user(exc)
+                    except Exception:
+                        friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                    await self._send_text(source, friendly)
 
         except Exception as exc:
             logger.error("Signal: Payload-Verarbeitung fehlgeschlagen: %s", exc)

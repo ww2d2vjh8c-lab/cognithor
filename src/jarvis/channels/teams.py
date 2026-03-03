@@ -334,9 +334,12 @@ class TeamsChannel(Channel):
 
             except Exception as exc:
                 logger.error("Teams: Handler-Fehler: %s", exc)
-                await turn_context.send_activity(
-                    "Ein Fehler ist bei der Verarbeitung aufgetreten."
-                )
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                await turn_context.send_activity(friendly)
 
     async def _on_invoke(self, turn_context: Any) -> None:
         """Verarbeitet Invoke-Activities (Adaptive Card Actions)."""

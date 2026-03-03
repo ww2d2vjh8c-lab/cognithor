@@ -125,3 +125,73 @@ class TestGatewayStatusCallback:
         callback = gateway._make_status_callback("test", "session-1")
         # Should not raise even when channel raises
         await callback("thinking", "Denke nach...")
+
+
+class TestDiscordMessageSplitting:
+    """Tests für Discord Message-Splitting."""
+
+    def test_short_message_no_split(self) -> None:
+        from jarvis.channels.discord import _split_discord_message
+        result = _split_discord_message("Hello")
+        assert result == ["Hello"]
+
+    def test_empty_message(self) -> None:
+        from jarvis.channels.discord import _split_discord_message
+        result = _split_discord_message("")
+        assert result == [""]
+
+    def test_long_message_splits(self) -> None:
+        from jarvis.channels.discord import _split_discord_message
+        text = "A" * 3000
+        result = _split_discord_message(text, limit=2000)
+        assert len(result) == 2
+        assert len(result[0]) <= 2000
+        assert "".join(result) == text
+
+    def test_splits_at_newline(self) -> None:
+        from jarvis.channels.discord import _split_discord_message
+        text = "A" * 1500 + "\n" + "B" * 1500
+        result = _split_discord_message(text, limit=2000)
+        assert len(result) == 2
+        assert result[0] == "A" * 1500
+
+    def test_splits_at_space(self) -> None:
+        from jarvis.channels.discord import _split_discord_message
+        text = " ".join(["word"] * 500)
+        result = _split_discord_message(text, limit=2000)
+        assert all(len(c) <= 2000 for c in result)
+
+    def test_three_way_split(self) -> None:
+        from jarvis.channels.discord import _split_discord_message
+        text = "X" * 5000
+        result = _split_discord_message(text, limit=2000)
+        assert len(result) == 3
+
+
+class TestToolStatusMap:
+    """Tests für die Tool-Status-Map im Gateway."""
+
+    def test_common_tools_mapped(self) -> None:
+        from jarvis.gateway.gateway import _TOOL_STATUS_MAP
+        assert "web_search" in _TOOL_STATUS_MAP
+        assert "exec_command" in _TOOL_STATUS_MAP
+        assert "read_file" in _TOOL_STATUS_MAP
+        assert len(_TOOL_STATUS_MAP) >= 10
+
+    def test_status_messages_end_with_dots(self) -> None:
+        from jarvis.gateway.gateway import _TOOL_STATUS_MAP
+        for tool, msg in _TOOL_STATUS_MAP.items():
+            assert msg.endswith("..."), f"{tool}: '{msg}'"
+
+
+class TestExecutorStatusCallback:
+    """Tests für Executor set_status_callback."""
+
+    def test_set_status_callback(self) -> None:
+        from jarvis.core.executor import Executor
+        cfg = MagicMock()
+        cfg.executor = None
+        ex = Executor(cfg)
+        cb = AsyncMock()
+        ex.set_status_callback(cb)
+        assert ex._status_callback is cb

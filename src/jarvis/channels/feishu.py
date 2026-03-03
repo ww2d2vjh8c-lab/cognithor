@@ -209,8 +209,17 @@ class FeishuChannel(Channel):
         )
 
         if self._handler:
-            response = await self._handler(incoming)
-            await self._send_text(chat_id, response.text, message_id)
+            try:
+                response = await self._handler(incoming)
+                await self._send_text(chat_id, response.text, message_id)
+            except Exception as exc:
+                logger.error("Feishu: Handler-Fehler: %s", exc)
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                await self._send_text(chat_id, friendly, message_id)
 
     async def _on_card_action(self, event: dict[str, Any]) -> None:
         """Verarbeitet Card-Button-Aktionen (Approvals)."""

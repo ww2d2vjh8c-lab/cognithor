@@ -293,7 +293,12 @@ class MatrixChannel(Channel):
                 await self._send_to_room(room_id, response.text)
             except Exception as exc:
                 logger.error("Matrix: Handler-Fehler: %s", exc)
-                await self._send_to_room(room_id, "Ein Fehler ist bei der Verarbeitung aufgetreten.")
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                await self._send_to_room(room_id, friendly)
 
     async def _on_reaction(self, room: Any, event: Any) -> None:
         """Verarbeitet Reactions fuer Approval-Workflow."""

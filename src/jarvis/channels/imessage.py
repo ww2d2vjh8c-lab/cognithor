@@ -327,7 +327,12 @@ class IMessageChannel(Channel):
                 await self._send_native(handle, response.text)
             except Exception as exc:
                 logger.error("iMessage: Handler-Fehler: %s", exc)
-                await self._send_native(handle, "Ein Fehler ist bei der Verarbeitung aufgetreten.")
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                await self._send_native(handle, friendly)
 
     async def _poll_bluebubbles(self) -> None:
         """Pollt BlueBubbles-API nach neuen Nachrichten."""
@@ -410,7 +415,12 @@ class IMessageChannel(Channel):
                 await self._send_bb(handle, response.text)
             except Exception as exc:
                 logger.error("iMessage: Handler-Fehler: %s", exc)
-                await self._send_bb(handle, "Ein Fehler ist bei der Verarbeitung aufgetreten.")
+                try:
+                    from jarvis.utils.error_messages import classify_error_for_user
+                    friendly = classify_error_for_user(exc)
+                except Exception:
+                    friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
+                await self._send_bb(handle, friendly)
 
     # -- Outbound: Nachrichten senden --------------------------------------------
 
