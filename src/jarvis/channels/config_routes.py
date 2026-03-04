@@ -833,6 +833,87 @@ def _register_memory_routes(
         trails = engine.low_trust_trails(threshold=0.5)
         return {"low_trust_trails": [t.to_dict() for t in trails], "count": len(trails)}
 
+    # -- Knowledge Graph --------------------------------------------------
+
+    @app.get("/api/v1/memory/graph/stats", dependencies=deps)
+    async def knowledge_graph_stats() -> dict[str, Any]:
+        """Wissensgraph-Statistiken."""
+        semantic = getattr(gateway, "_semantic_memory", None)
+        if semantic is None:
+            return {"entities": 0, "relations": 0, "entity_types": {}}
+        try:
+            entities = getattr(semantic, "entities", None) or {}
+            relations = getattr(semantic, "relations", None) or []
+            type_counts: dict[str, int] = {}
+            for e in (entities.values() if isinstance(entities, dict) else entities):
+                etype = getattr(e, "type", None) or getattr(e, "entity_type", "unknown")
+                type_counts[etype] = type_counts.get(etype, 0) + 1
+            return {
+                "entities": len(entities),
+                "relations": len(relations),
+                "entity_types": type_counts,
+            }
+        except Exception:
+            return {"entities": 0, "relations": 0, "entity_types": {}}
+
+    @app.get("/api/v1/memory/graph/entities", dependencies=deps)
+    async def knowledge_graph_entities() -> dict[str, Any]:
+        """Alle Entitäten und Beziehungen im Wissensgraph."""
+        semantic = getattr(gateway, "_semantic_memory", None)
+        if semantic is None:
+            return {"entities": [], "relations": []}
+        try:
+            raw_entities = getattr(semantic, "entities", None) or {}
+            raw_relations = getattr(semantic, "relations", None) or []
+
+            entities = []
+            for eid, e in (raw_entities.items() if isinstance(raw_entities, dict) else enumerate(raw_entities)):
+                entity_id = str(getattr(e, "id", eid))
+                entities.append({
+                    "id": entity_id,
+                    "name": getattr(e, "name", str(e)),
+                    "type": getattr(e, "type", None) or getattr(e, "entity_type", "unknown"),
+                    "confidence": getattr(e, "confidence", 0.5),
+                    "attributes": getattr(e, "attributes", {}),
+                })
+
+            relations = []
+            for r in raw_relations:
+                relations.append({
+                    "source_entity": str(getattr(r, "source_entity", getattr(r, "source_name", ""))),
+                    "target_entity": str(getattr(r, "target_entity", getattr(r, "target_name", ""))),
+                    "relation_type": str(getattr(r, "relation_type", "related_to")),
+                    "confidence": getattr(r, "confidence", 0.5),
+                })
+
+            return {"entities": entities, "relations": relations}
+        except Exception:
+            return {"entities": [], "relations": []}
+
+    @app.get("/api/v1/memory/graph/entities/{entity_id}/relations", dependencies=deps)
+    async def knowledge_graph_entity_relations(entity_id: str) -> dict[str, Any]:
+        """Beziehungen einer bestimmten Entität."""
+        semantic = getattr(gateway, "_semantic_memory", None)
+        if semantic is None:
+            return {"relations": []}
+        try:
+            raw_relations = getattr(semantic, "relations", None) or []
+            entity_rels = []
+            for r in raw_relations:
+                src = str(getattr(r, "source_entity", getattr(r, "source_name", "")))
+                tgt = str(getattr(r, "target_entity", getattr(r, "target_name", "")))
+                if src == entity_id or tgt == entity_id:
+                    entity_rels.append({
+                        "source_entity": src,
+                        "target_entity": tgt,
+                        "target_name": tgt,
+                        "relation_type": str(getattr(r, "relation_type", "related_to")),
+                        "confidence": getattr(r, "confidence", 0.5),
+                    })
+            return {"relations": entity_rels}
+        except Exception:
+            return {"relations": []}
+
 
 # ======================================================================
 # Skill management routes
