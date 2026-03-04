@@ -729,7 +729,9 @@ class TestSkillRoutes:
     async def test_workflow_stats_none(self, registered_app: FakeApp) -> None:
         handler = registered_app.routes["GET /api/v1/workflows/stats"]
         result = await handler()
-        assert result["total"] == 0
+        assert result["templates"] == 0
+        assert result["simple"] == {}
+        assert result["dag_runs"] == 0
 
     @pytest.mark.asyncio
     async def test_model_list_none(self, registered_app: FakeApp) -> None:

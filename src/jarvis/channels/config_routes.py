@@ -76,6 +76,7 @@ def create_config_routes(
     _register_infrastructure_routes(app, deps, gateway)
     _register_portal_routes(app, deps, gateway)
     _register_ui_routes(app, deps, config_manager, gateway)
+    _register_workflow_graph_routes(app, deps, gateway)
 
 
 # ======================================================================
@@ -999,15 +1000,7 @@ def _register_skill_routes(
             return {"total_connectors": 0, "connectors": [], "scope_guard": {"policies": 0, "violations": 0}}
         return reg.stats()
 
-    # -- Workflows --------------------------------------------------------
-
-    @app.get("/api/v1/workflows/templates", dependencies=deps)
-    async def workflow_templates() -> dict[str, Any]:
-        """Alle verfügbaren Workflow-Templates."""
-        lib = getattr(gateway, "_template_library", None)
-        if lib is None:
-            return {"templates": [], "count": 0}
-        return {"templates": lib.list_all(), "count": lib.template_count}
+    # -- Workflows (categories + legacy start — main endpoints in _register_workflow_graph_routes)
 
     @app.get("/api/v1/workflows/templates/categories", dependencies=deps)
     async def workflow_categories() -> dict[str, Any]:
@@ -1019,7 +1012,7 @@ def _register_skill_routes(
 
     @app.post("/api/v1/workflows/start", dependencies=deps)
     async def workflow_start(request: Request) -> dict[str, Any]:
-        """Workflow-Instanz starten."""
+        """Workflow-Instanz starten (legacy endpoint)."""
         try:
             engine = getattr(gateway, "_workflow_engine", None)
             lib = getattr(gateway, "_template_library", None)
@@ -1034,23 +1027,6 @@ def _register_skill_routes(
             return inst.to_dict()
         except Exception as exc:
             return {"error": str(exc)}
-
-    @app.get("/api/v1/workflows/instances", dependencies=deps)
-    async def workflow_instances() -> dict[str, Any]:
-        """Laufende Workflow-Instanzen."""
-        engine = getattr(gateway, "_workflow_engine", None)
-        if engine is None:
-            return {"instances": [], "count": 0}
-        active = engine.active_instances()
-        return {"instances": [i.to_dict() for i in active], "count": len(active)}
-
-    @app.get("/api/v1/workflows/stats", dependencies=deps)
-    async def workflow_stats() -> dict[str, Any]:
-        """Workflow-Engine Statistiken."""
-        engine = getattr(gateway, "_workflow_engine", None)
-        if engine is None:
-            return {"total": 0, "running": 0, "completed": 0, "failed": 0}
-        return engine.stats()
 
     # -- Models -----------------------------------------------------------
 
@@ -2357,3 +2333,143 @@ def _register_ui_routes(
             return {"status": "ok"}
         except Exception as exc:
             return {"error": str(exc), "status": 400}
+
+
+# ======================================================================
+# Workflow Execution Graph API
+# ======================================================================
+
+
+def _register_workflow_graph_routes(
+    app: Any,
+    deps: list[Any],
+    gateway: Any,
+) -> None:
+    """REST endpoints for workflow execution graph visualization."""
+
+    def _get_engines() -> tuple[Any, Any, Any]:
+        """Return (simple_engine, dag_engine, template_library) from gateway."""
+        simple = getattr(gateway, "_workflow_engine", None) if gateway else None
+        dag = getattr(gateway, "_dag_workflow_engine", None) if gateway else None
+        tmpl = getattr(gateway, "_template_library", None) if gateway else None
+        return simple, dag, tmpl
+
+    # -- Templates ---------------------------------------------------------
+
+    @app.get("/api/v1/workflows/templates", dependencies=deps)
+    async def wf_list_templates() -> dict[str, Any]:
+        """List all available workflow templates."""
+        _, _, tmpl = _get_engines()
+        if not tmpl:
+            return {"templates": [], "count": 0}
+        return {"templates": tmpl.list_all(), "count": tmpl.template_count}
+
+    @app.get("/api/v1/workflows/templates/{template_id}", dependencies=deps)
+    async def wf_get_template(template_id: str) -> dict[str, Any]:
+        _, _, tmpl = _get_engines()
+        if not tmpl:
+            return {"error": "Template library unavailable", "status": 503}
+        t = tmpl.get(template_id)
+        if not t:
+            return {"error": "Template not found", "status": 404}
+        return t.to_dict()
+
+    # -- Simple workflow instances -----------------------------------------
+
+    @app.get("/api/v1/workflows/instances", dependencies=deps)
+    async def wf_list_instances() -> dict[str, Any]:
+        """List all workflow instances (simple engine)."""
+        simple, _, _ = _get_engines()
+        if not simple:
+            return {"instances": [], "stats": {}}
+        all_inst = list(simple._instances.values())
+        return {
+            "instances": [i.to_dict() for i in all_inst],
+            "stats": simple.stats(),
+        }
+
+    @app.get("/api/v1/workflows/instances/{instance_id}", dependencies=deps)
+    async def wf_get_instance(instance_id: str) -> dict[str, Any]:
+        simple, _, tmpl = _get_engines()
+        if not simple:
+            return {"error": "Workflow engine unavailable", "status": 503}
+        inst = simple.get(instance_id)
+        if not inst:
+            return {"error": "Instance not found", "status": 404}
+        result = inst.to_dict()
+        result["step_results"] = inst.step_results
+        if tmpl:
+            t = tmpl.get(inst.template_id)
+            if t:
+                result["steps"] = [s.to_dict() for s in t.steps]
+        return result
+
+    @app.post("/api/v1/workflows/instances", dependencies=deps)
+    async def wf_start_instance(request: Request) -> dict[str, Any]:
+        """Start a new workflow from a template."""
+        simple, _, tmpl = _get_engines()
+        if not simple or not tmpl:
+            return {"error": "Workflow engine unavailable", "status": 503}
+        body = await request.json()
+        template_id = body.get("template_id", "")
+        t = tmpl.get(template_id)
+        if not t:
+            return {"error": f"Template '{template_id}' not found", "status": 404}
+        inst = simple.start(t, created_by=body.get("created_by", "ui"))
+        return {"status": "ok", "instance": inst.to_dict()}
+
+    # -- DAG workflow runs -------------------------------------------------
+
+    @app.get("/api/v1/workflows/dag/runs", dependencies=deps)
+    async def wf_list_dag_runs() -> dict[str, Any]:
+        """List DAG workflow runs (checkpoint-based)."""
+        _, dag, _ = _get_engines()
+        if not dag or not dag._checkpoint_dir:
+            return {"runs": []}
+        cp_dir = dag._checkpoint_dir
+        runs = []
+        if cp_dir.exists():
+            for cp_file in sorted(cp_dir.glob("*.json"), reverse=True):
+                try:
+                    data = json.loads(cp_file.read_text(encoding="utf-8"))
+                    runs.append({
+                        "id": data.get("id", ""),
+                        "workflow_id": data.get("workflow_id", ""),
+                        "workflow_name": data.get("workflow_name", ""),
+                        "status": data.get("status", ""),
+                        "started_at": data.get("started_at"),
+                        "completed_at": data.get("completed_at"),
+                        "node_count": len(data.get("node_results", {})),
+                    })
+                except Exception:
+                    continue
+        return {"runs": runs}
+
+    @app.get("/api/v1/workflows/dag/runs/{run_id}", dependencies=deps)
+    async def wf_get_dag_run(run_id: str) -> dict[str, Any]:
+        """Get full DAG workflow run with node graph data."""
+        _, dag, _ = _get_engines()
+        if not dag or not dag._checkpoint_dir:
+            return {"error": "DAG engine unavailable", "status": 503}
+        cp_file = dag._checkpoint_dir / f"{run_id}.json"
+        if not cp_file.exists():
+            return {"error": "Run not found", "status": 404}
+        try:
+            return json.loads(cp_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return {"error": str(exc), "status": 500}
+
+    # -- Combined stats ----------------------------------------------------
+
+    @app.get("/api/v1/workflows/stats", dependencies=deps)
+    async def wf_stats() -> dict[str, Any]:
+        """Combined workflow stats."""
+        simple, dag, tmpl = _get_engines()
+        result: dict[str, Any] = {"templates": 0, "simple": {}, "dag_runs": 0}
+        if tmpl:
+            result["templates"] = tmpl.template_count
+        if simple:
+            result["simple"] = simple.stats()
+        if dag and dag._checkpoint_dir and dag._checkpoint_dir.exists():
+            result["dag_runs"] = len(list(dag._checkpoint_dir.glob("*.json")))
+        return result

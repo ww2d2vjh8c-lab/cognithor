@@ -3,6 +3,7 @@ import { GlobalSearch } from "./components/GlobalSearch";
 import { ThemeToggle, useTheme } from "./components/ThemeToggle";
 import { ConfirmModal } from "./components/ConfirmModal";
 import ChatPage from "./pages/ChatPage";
+import WorkflowGraphPage from "./pages/WorkflowGraphPage";
 
 // ═══════════════════════════════════════════════════════════════════════
 // Cognithor · Control Center v2 — UX-Rewrite mit allen 23 Fixes
@@ -104,6 +105,7 @@ const PAGES = [
   { id: "prompts", label: "Prompts & Policies", icon: I.file, key: null },
   { id: "agents", label: "Agenten", icon: I.bot, key: null },
   { id: "bindings", label: "Bindings", icon: I.link, key: null },
+  { id: "workflows", label: "Workflows", icon: I.workflow, key: null },
   { id: "system", label: "System", icon: I.gear, key: null },
 ];
 
@@ -1514,6 +1516,7 @@ export default function App() {
       case "prompts": return <PromptsPage prompts={prompts} setPrompts={setPrompts} defaultPromptsRef={defaultPromptsRef} />;
       case "agents": return <AgentsPage agents={agents} setAgents={setAgents} />;
       case "bindings": return <BindingsPage bindings={bindings} setBindings={setBindings} agents={agents} />;
+      case "workflows": return <WorkflowGraphPage />;
       case "system": return <SystemPage cfg={cfg} onRestart={restart} onExport={onExport} onImport={onImport} restartState={restartState} presets={presets} onApplyPreset={onApplyPreset} />;
       default: return null;
     }
@@ -1948,7 +1951,7 @@ export default function App() {
       </div>
 
       {/* Fix #1 + #18: Save bar with dirty state + safe area */}
-      <div className="cc-save-bar" style={page === "chat" ? { display: "none" } : undefined}>
+      <div className="cc-save-bar" style={page === "chat" || page === "workflows" ? { display: "none" } : undefined}>
         {hasChanges && <span className="cc-save-hint">Ungespeicherte Änderungen</span>}
         <button
           className={`cc-save-btn ${saveState === "saved" ? "saved" : "primary"}`}
