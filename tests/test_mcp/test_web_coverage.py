@@ -936,10 +936,13 @@ class TestRegisterWebToolsConfig:
         web_cfg.ddg_ratelimit_wait_seconds = 30
         web_cfg.ddg_cache_ttl_seconds = 3600
         web_cfg.search_and_read_max_chars = 5000
+        web_cfg.http_request_max_body_bytes = 1_048_576
+        web_cfg.http_request_timeout_seconds = 30
+        web_cfg.http_request_rate_limit_seconds = 1.0
         config.web = web_cfg
         config.jarvis_home = None
 
         web = register_web_tools(mock_client, config=config)
         assert isinstance(web, WebTools)
         assert web._searxng_url == "http://myhost:8888"
-        assert mock_client.register_builtin_handler.call_count == 4
+        assert mock_client.register_builtin_handler.call_count == 5

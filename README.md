@@ -12,22 +12,22 @@
   <p align="center">
     <img src="https://img.shields.io/badge/status-Beta%20%2F%20Experimental-orange?style=flat-square" alt="Status: Beta">
     <a href="#quick-start"><img src="https://img.shields.io/badge/python-%3E%3D3.12-blue?style=flat-square" alt="Python"></a>
-    <a href="#tests"><img src="https://img.shields.io/badge/tests-9%2C377%20passing-brightgreen?style=flat-square" alt="Tests"></a>
+    <a href="#tests"><img src="https://img.shields.io/badge/tests-9%2C596%20passing-brightgreen?style=flat-square" alt="Tests"></a>
     <a href="#tests"><img src="https://img.shields.io/badge/coverage-89%25-brightgreen?style=flat-square" alt="Coverage"></a>
     <a href="#tests"><img src="https://img.shields.io/badge/lint-0%20errors-brightgreen?style=flat-square" alt="Lint"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License"></a>
   </p>
 </p>
 
-> **Note:** Cognithor is in **active development (Beta)**. While the test suite is extensive (9,377 tests, 89% coverage), the project has not been battle-tested in production environments. Expect rough edges, breaking changes between versions, and some German-language strings in system prompts and error messages. Contributions, bug reports, and feedback are very welcome. See [Status & Maturity](#status--maturity) for details.
+> **Note:** Cognithor is in **active development (Beta)**. While the test suite is extensive (9,596 tests, 89% coverage), the project has not been battle-tested in production environments. Expect rough edges, breaking changes between versions, and some German-language strings in system prompts and error messages. Contributions, bug reports, and feedback are very welcome. See [Status & Maturity](#status--maturity) for details.
 
 ---
 
 ## Why Cognithor?
 
 - **Your data never leaves your machine.** Runs 100% locally with Ollama or LM Studio — no cloud, no API keys required, full GDPR compliance. Cloud providers are optional, not mandatory.
-- **One system, not twenty tools.** 17 channels, 18+ MCP tool servers, 5-tier memory, knowledge vault, cron, voice, browser automation, distributed locking, durable message queues — integrated from day one. No glue code, no plugin hell.
-- **Extensively tested.** 9,377 tests, 89% coverage, 4-level sandbox, SHA-256 audit chain, runtime token encryption, Prometheus metrics, and multiple deployment options from one-click Windows launcher to Docker Compose to bare-metal servers. See [Status & Maturity](#status--maturity) for what this does and does not guarantee.
+- **One system, not twenty tools.** 17 channels, 48 MCP tools, 5-tier memory, knowledge vault, cron, voice, browser automation, distributed locking, durable message queues — integrated from day one. No glue code, no plugin hell.
+- **Extensively tested.** 9,596 tests, 89% coverage, 4-level sandbox, SHA-256 audit chain, runtime token encryption, Prometheus metrics, and multiple deployment options from one-click Windows launcher to Docker Compose to bare-metal servers. See [Status & Maturity](#status--maturity) for what this does and does not guarantee.
 
 ---
 
@@ -47,7 +47,7 @@
 | **Deployment (Docker, bare-metal)** | Beta — tested on limited configurations |
 | **Enterprise features** (GDPR, A2A, Governance) | Alpha — implemented but not audited for compliance |
 
-**What the test suite covers:** Unit tests, integration tests, and mocked end-to-end tests for all modules. The 9,377 tests verify code correctness in controlled environments.
+**What the test suite covers:** Unit tests, integration tests, and mocked end-to-end tests for all modules. The 9,596 tests verify code correctness in controlled environments.
 
 **What the test suite does NOT cover:** Real-world deployment scenarios, network edge cases, long-running stability, multi-user load, hardware-specific voice/GPU issues, or actual LLM response quality.
 
@@ -94,7 +94,7 @@
 
 ### v0.26.6 — Chat, Voice, Agent Infrastructure & Security Hardening
 
-This release brings Cognithor from a CLI-first tool to a full Agent OS with integrated chat, voice mode, 15 new enterprise subsystems, and deep security hardening. **9,377 tests** with 0 failures.
+This release brings Cognithor from a CLI-first tool to a full Agent OS with integrated chat, voice mode, 15 new enterprise subsystems, and deep security hardening. **9,596 tests** with 0 failures.
 
 **Chat & Voice**
 - **Integrated Chat** — Full chat page in the Control Center with WebSocket streaming, tool indicators, canvas panel, approval banners
@@ -114,6 +114,15 @@ This release brings Cognithor from a CLI-first tool to a full Agent OS with inte
 - Race condition fixes (ContextVar, CircuitBreaker), memory optimization, blocking I/O elimination
 - Unicode normalization for prompt injection defense, HMAC-based vault key derivation
 - Credential pattern masking (AWS, PEM, generic secrets), atomic policy rollback
+
+**Wiring & Hardening (v0.26.7)**
+- **DAG-based Parallel Executor** — Executor now builds a PlanGraph from actions and executes independent tool calls concurrently in waves (replaces sequential loop)
+- **http_request Tool** — Full HTTP method support (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS) with SSRF protection, body-size limits, and Gatekeeper ORANGE classification
+- **Sub-Agent Depth Guard** — Configurable `max_sub_agent_depth` (default 3) prevents infinite recursion in handle_message()
+- **Live Config Reload** — UI config changes (PATCH) now propagate immediately to Executor and WebTools without restart
+- **Workflow Adapter** — Bridge from ActionPlan to WorkflowDefinition, making DAG WorkflowEngine usable from the Gateway
+- **Domain Input Validation** — UI DomainListInput component with regex validation (no schemes, no wildcards, no paths)
+- **Secret Masking Verification** — google_cse_api_key, jina_api_key, brave_api_key confirmed masked in config display
 
 **Previous Releases (v0.26.0–v0.26.5)**
 
@@ -136,7 +145,7 @@ This release brings Cognithor from a CLI-first tool to a full Agent OS with inte
 - **Security** — 4-level sandbox, SHA-256 audit chain, EU AI Act compliance module, credential vault, red-teaming, runtime token encryption (Fernet AES-256), TLS support, file-size limits (not independently audited — see [Status & Maturity](#status--maturity))
 - **Knowledge Vault** — Obsidian-compatible Markdown vault with YAML frontmatter, tags, `[[backlinks]]`, full-text search
 - **Document Analysis** — LLM-powered structured analysis of PDF/DOCX/HTML (summary, risks, action items, decisions)
-- **Model Context Protocol (MCP)** — 18+ tool servers (filesystem, shell, memory, web, browser, media, vault, synthesis)
+- **Model Context Protocol (MCP)** — 48 tools across 10 modules (filesystem, shell, memory, web, browser, media, vault, synthesis, code, skills)
 - **Distributed Locking** — Redis-backed (with file-based fallback) locks for multi-instance deployments
 - **Durable Message Queue** — SQLite-backed persistent queue with priorities, DLQ, and automatic retry
 - **Prometheus Metrics** — /metrics endpoint with Grafana dashboard for production observability
@@ -154,7 +163,7 @@ This release brings Cognithor from a CLI-first tool to a full Agent OS with inte
 - **One-Click Start** — Double-click `start_cognithor.bat` -> browser opens -> click **Power On** -> done
 - **Enhanced Web Research** — 4-provider search fallback (SearXNG -> Brave -> Google CSE -> DuckDuckGo), Jina AI Reader for JS-heavy sites, domain filtering, source cross-checking
 - **Procedural Learning** — Reflector auto-synthesizes reusable skills from successful sessions
-- **DAG Workflow Engine** — Directed acyclic graph execution with parallel branches, conditional edges, cycle detection, automatic retry
+- **DAG Workflow Engine** — Directed acyclic graph execution with parallel branches, conditional edges, cycle detection, automatic retry. Now wired into the Executor for parallel tool execution
 - **Distributed Workers** — Capability-based job routing, health monitoring, failover, dead-letter queue
 - **Multi-Agent Collaboration** — Debate, voting, and pipeline patterns for agent teams
 - **Tool Sandbox Hardening** — Per-tool resource limits, network guards, escape detection (8 attack categories)
@@ -164,7 +173,7 @@ This release brings Cognithor from a CLI-first tool to a full Agent OS with inte
 - **Agent SDK** — Decorator-based agent registration (`@agent`, `@tool`, `@hook`), project scaffolding
 - **Plugin Remote Registry** — Remote manifests with SHA-256 checksums, dependency resolution, install/update/rollback
 - **uv Installer Support** — Automatic uv detection for 10x faster installs, transparent pip fallback
-- **9,377 tests** · **89% coverage** · **0 lint errors**
+- **9,596 tests** · **89% coverage** · **0 lint errors**
 
 ## Architecture
 
@@ -192,9 +201,9 @@ This release brings Cognithor from a CLI-first tool to a full Agent OS with inte
 │  Planner    │  Gatekeeper  │  Executor                            │
 │  (LLM)      │  (Policy)    │  (Sandbox)                           │
 ├─────────────┴──────────────┴──────────────────────────────────────┤
-│       DAG Workflow Engine · Agent Benchmark Suite                     │
+│  DAG Workflow Engine · Workflow Adapter · Benchmark Suite             │
 ├───────────────────────────────────────────────────────────────────┤
-│                   MCP Tool Layer (18+)                              │
+│                   MCP Tool Layer (48 tools)                          │
 │   Filesystem · Shell · Memory · Web · Browser · Media · Vault      │
 │   Synthesis · Skills Marketplace · Remote Registry                  │
 ├───────────────────────────────────────────────────────────────────┤
@@ -217,7 +226,7 @@ Every user request passes through three stages:
 
 1. **Planner** — LLM-based understanding and planning. Analyzes the request, searches memory for relevant context, creates structured action plans with tool calls. Supports re-planning on failures.
 2. **Gatekeeper** — Deterministic policy engine. Validates every planned tool call against security rules (risk levels GREEN/YELLOW/ORANGE/RED, sandbox policy, parameter validation). No LLM, no hallucinations, no exceptions.
-3. **Executor** — Executes approved actions in a multi-level sandbox. Shell commands run isolated (Process -> Namespace -> Container), file access restricted to allowed paths.
+3. **Executor** — Executes approved actions via DAG-based parallel scheduling (independent actions run concurrently in waves). Shell commands run isolated (Process -> Namespace -> Container), file access restricted to allowed paths.
 
 ### 5-Tier Cognitive Memory
 
@@ -526,6 +535,8 @@ Cognithor implements multi-layered security (not independently audited):
 | **File-Size Limits** | Upload/processing limits on all paths: 50 MB documents, 100 MB audio, 1 MB code execution, 50 MB WebUI uploads |
 | **Session Persistence** | Channel-to-session mappings stored in SQLite (WAL mode). Survives restarts — no lost Telegram/Discord sessions |
 | **Input Sanitization** | Injection protection for shell commands and file paths |
+| **Sub-Agent Depth Guard** | Configurable `max_sub_agent_depth` (default 3) prevents infinite handle_message() recursion |
+| **SSRF Protection** | Private IP blocking for http_request and web_fetch tools |
 | **EU AI Act** | Compliance module, impact assessments, transparency reports |
 | **Red-Teaming** | Automated offensive security tests (1,425 LOC) |
 
@@ -536,7 +547,7 @@ Cognithor implements multi-layered security (not independently audited):
 | **Filesystem** | read, write, edit, list, delete | Path-sandboxed file operations |
 | **Shell** | exec_command | Sandboxed command execution with timeout |
 | **Memory** | search, save, get_entity, add_entity, ... | 10 memory tools across all 5 tiers |
-| **Web** | web_search, web_fetch, search_and_read, web_news_search | 4-provider search (SearXNG -> Brave -> Google CSE -> DDG), Jina Reader fallback, domain filtering, cross-check |
+| **Web** | web_search, web_fetch, search_and_read, web_news_search, http_request | 4-provider search (SearXNG -> Brave -> Google CSE -> DDG), Jina Reader fallback, domain filtering, cross-check, full HTTP method support (POST/PUT/PATCH/DELETE) |
 | **Browser** | navigate, screenshot, click, fill_form, execute_js, get_page_content | Playwright-based browser automation |
 | **Media** | transcribe_audio, analyze_image, extract_text, analyze_document, convert_audio, resize_image, tts, document_export | Multimodal pipeline + LLM-powered document analysis (all local) |
 | **Vault** | vault_save, vault_search, vault_list, vault_read, vault_update, vault_link | Obsidian-compatible Knowledge Vault with frontmatter, tags, backlinks |
@@ -557,7 +568,7 @@ python -m pytest tests/test_memory/ -v
 python -m pytest tests/test_channels/ -v
 ```
 
-Current status: **9,377 tests** · **100% pass rate** · **89% coverage** · **~106,000 LOC source** · **~90,000 LOC tests**
+Current status: **9,596 tests** · **100% pass rate** · **89% coverage** · **~109,000 LOC source** · **~92,000 LOC tests**
 
 | Area | Tests | Description |
 |------|-------|-------------|
@@ -600,7 +611,7 @@ cognithor/
 │   ├── core/
 │   │   ├── planner.py             # LLM planner with re-planning
 │   │   ├── gatekeeper.py          # Deterministic policy engine (no LLM)
-│   │   ├── executor.py            # Sandboxed tool executor with audit trail
+│   │   ├── executor.py            # DAG-based parallel tool executor with audit trail
 │   │   ├── model_router.py        # Model selection by task type
 │   │   ├── llm_backend.py         # Multi-provider LLM abstraction (16 backends)
 │   │   ├── orchestrator.py        # High-level agent orchestration
@@ -633,7 +644,7 @@ cognithor/
 │   │   ├── filesystem.py          # File tools (path sandbox)
 │   │   ├── shell.py               # Shell execution (timeout, sandbox)
 │   │   ├── memory_server.py       # Memory as 10 MCP tools
-│   │   ├── web.py                 # Enhanced web search (4 providers) and URL fetch (Jina fallback)
+│   │   ├── web.py                 # Enhanced web search (4 providers), URL fetch (Jina fallback), http_request
 │   │   ├── vault.py               # Knowledge Vault (Obsidian-compatible, 6 tools)
 │   │   ├── synthesis.py           # Knowledge Synthesis (4 tools: synthesize, contradictions, timeline, gaps)
 │   │   ├── browser.py             # Browser automation (Playwright, 6 tools)
@@ -693,7 +704,7 @@ cognithor/
 │       │   └── useVoiceMode.js    # Voice mode hook (wake word, STT, TTS)
 │       ├── App.jsx                # App shell
 │       └── main.jsx               # React entry
-├── tests/                         # 9,377 tests, ~90,000 LOC
+├── tests/                         # 9,596 tests, ~92,000 LOC
 │   ├── test_core/                 # Planner, Gatekeeper, Executor, Distributed Lock
 │   ├── test_memory/               # All 5 memory tiers, hybrid search
 │   ├── test_mcp/                  # MCP tools and client
@@ -851,7 +862,7 @@ Alternatively, use [terminalizer](https://github.com/faressoft/terminalizer) for
 
 ---
 
-**Metrics:** ~106,000 LOC source · ~90,000 LOC tests · 9,377 tests · 89% coverage · 0 lint errors · **Status: Beta**
+**Metrics:** ~109,000 LOC source · ~92,000 LOC tests · 9,596 tests · 89% coverage · 0 lint errors · **Status: Beta**
 
 ## Contributors
 

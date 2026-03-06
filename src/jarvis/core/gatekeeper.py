@@ -373,6 +373,7 @@ class Gatekeeper:
             "email_send",
             "delete_file",
             "fetch_url",
+            "http_request",
         }
         if tool in orange_tools:
             return RiskLevel.ORANGE

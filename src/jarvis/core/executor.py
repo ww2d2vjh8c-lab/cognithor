@@ -18,11 +18,13 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from jarvis.models import (
+    ActionPlan,
     GateDecision,
     GateStatus,
     PlannedAction,
     ToolResult,
 )
+from jarvis.core.plan_graph import PlanGraph
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -108,6 +110,7 @@ class Executor:
         self._max_retries: int = getattr(_exec, "max_retries", 3)
         self._base_delay: float = getattr(_exec, "backoff_base_delay_seconds", 1.0)
         self._max_output: int = getattr(_exec, "max_output_chars", 10000)
+        self._max_parallel: int = getattr(_exec, "max_parallel_tools", 4)
         # Längere Timeouts für Tools, die große Modelle laden (z.B. Vision 20 GB+)
         self._tool_timeouts: dict[str, int] = {
             "media_analyze_image": getattr(_exec, "media_analyze_image_timeout", 180),
@@ -120,6 +123,27 @@ class Executor:
         self._ctx_tokens: list[contextvars.Token] = []
         # Status callback (set by Gateway for progress feedback)
         self._status_callback: Any = None
+
+    def reload_config(self, config: JarvisConfig) -> None:
+        """Aktualisiert Executor-Limits aus neuer Config (Live-Reload).
+
+        Wird vom Gateway aufgerufen wenn der User Einstellungen im UI ändert.
+        """
+        self._config = config
+        _exec = getattr(config, "executor", None)
+        self._default_timeout = getattr(_exec, "default_timeout_seconds", 30)
+        self._max_retries = getattr(_exec, "max_retries", 3)
+        self._base_delay = getattr(_exec, "backoff_base_delay_seconds", 1.0)
+        self._max_output = getattr(_exec, "max_output_chars", 10000)
+        self._max_parallel = getattr(_exec, "max_parallel_tools", 4)
+        self._tool_timeouts = {
+            "media_analyze_image": getattr(_exec, "media_analyze_image_timeout", 180),
+            "media_transcribe_audio": getattr(_exec, "media_transcribe_audio_timeout", 120),
+            "media_extract_text": getattr(_exec, "media_extract_text_timeout", 120),
+            "media_tts": getattr(_exec, "media_tts_timeout", 120),
+            "run_python": getattr(_exec, "run_python_timeout", 120),
+        }
+        log.info("executor_config_reloaded")
 
     def set_mcp_client(self, client: JarvisMCPClient) -> None:
         """Setzt den MCP-Client (kann nach Initialisierung gesetzt werden)."""
@@ -170,17 +194,20 @@ class Executor:
         self,
         actions: list[PlannedAction],
         decisions: list[GateDecision],
+        *,
+        max_parallel: int | None = None,
     ) -> list[ToolResult]:
-        """Führt alle genehmigten Aktionen sequentiell aus.
+        """Führt genehmigte Aktionen DAG-basiert parallel aus.
 
-        Respektiert Dependencies (depends_on) und Gatekeeper-Entscheidungen.
-        Nur ALLOW und INFORM Aktionen werden ausgeführt.
-        APPROVE Aktionen müssen vorher vom User bestätigt worden sein.
+        Baut einen PlanGraph aus den Actions, respektiert Dependencies
+        und führt unabhängige Aktionen parallel in Wellen aus.
+        Nur ALLOW, INFORM und MASK Aktionen werden ausgeführt.
         BLOCK und ungenehmigte Aktionen werden übersprungen.
 
         Args:
             actions: Liste der geplanten Aktionen
             decisions: Korrespondierende Gatekeeper-Entscheidungen
+            max_parallel: Maximale Anzahl parallel laufender Tools
 
         Returns:
             Liste von ToolResults (ein Ergebnis pro Aktion).
@@ -190,13 +217,32 @@ class Executor:
                 f"Anzahl Aktionen ({len(actions)}) ≠ Entscheidungen ({len(decisions)})"
             )
 
-        results: list[ToolResult] = []
-        completed_indices: set[int] = set()
+        if not actions:
+            return []
 
-        for i, (action, decision) in enumerate(zip(actions, decisions, strict=False)):
-            # --- Nur erlaubte Aktionen ausführen ---
+        if max_parallel is None:
+            max_parallel = self._max_parallel
+
+        # --- Build DAG from actions ---
+        plan = ActionPlan(goal="execution", steps=actions)
+        graph = PlanGraph.from_action_plan(plan)
+
+        # Map node_id → (original_index, action, decision)
+        node_ids = list(graph._nodes.keys())
+        node_map: dict[str, tuple[int, PlannedAction, GateDecision]] = {}
+        for i, node_id in enumerate(node_ids):
+            node_map[node_id] = (i, actions[i], decisions[i])
+
+        results: list[ToolResult | None] = [None] * len(actions)
+        completed_ids: set[str] = set()
+        semaphore = asyncio.Semaphore(max_parallel)
+
+        # --- Pre-pass: Mark blocked actions and add to completed_ids ---
+        # Blocked actions count as "completed" for dependency resolution,
+        # so their dependents CAN proceed. The blocked action itself is
+        # recorded as GatekeeperBlock error, but doesn't block the DAG.
+        for node_id, (idx, action, decision) in node_map.items():
             if decision.status not in (GateStatus.ALLOW, GateStatus.INFORM, GateStatus.MASK):
-                # Audit: Gatekeeper-Blockierung protokollieren
                 if self._audit_logger:
                     self._audit_logger.log_gatekeeper(
                         decision.status.value,
@@ -204,45 +250,30 @@ class Executor:
                         tool_name=action.tool,
                         agent_name=_agent_name_var.get(),
                     )
-                results.append(
-                    ToolResult(
-                        tool_name=action.tool,
-                        content=f"Aktion übersprungen: {decision.status.value} -- {decision.reason}",
-                        is_error=True,
-                        error_type="GatekeeperBlock",
-                    )
+                results[idx] = ToolResult(
+                    tool_name=action.tool,
+                    content=f"Aktion übersprungen: {decision.status.value} -- {decision.reason}",
+                    is_error=True,
+                    error_type="GatekeeperBlock",
                 )
-                continue
+                completed_ids.add(node_id)
 
-            # --- Dependencies prüfen ---
-            unmet_deps = [dep for dep in action.depends_on if dep not in completed_indices]
-            if unmet_deps:
-                results.append(
-                    ToolResult(
-                        tool_name=action.tool,
-                        content=(
-                            f"Aktion übersprungen: Abhängigkeiten nicht erfüllt ({unmet_deps})"
-                        ),
-                        is_error=True,
-                        error_type="DependencyError",
-                    )
-                )
-                continue
-
-            # --- Aktion ausführen ---
-            # Bei MASK: maskierte Params verwenden (Kopie um frozen Model nicht zu mutieren)
+        # --- Wave loop ---
+        async def _run_with_sem(nid: str) -> None:
+            idx, action, decision = node_map[nid]
+            # Use masked params when MASK
             if decision.status == GateStatus.MASK and decision.masked_params:
                 params = dict(decision.masked_params)
             else:
                 params = dict(action.params)
 
-            result = await self._execute_single(action.tool, params)
-            results.append(result)
+            async with semaphore:
+                result = await self._execute_single(action.tool, params)
 
+            results[idx] = result
             if result.success:
-                completed_indices.add(i)
+                completed_ids.add(nid)
 
-            # Logging
             log.info(
                 "executor_tool_result",
                 tool=action.tool,
@@ -251,7 +282,44 @@ class Executor:
                 content_length=len(result.content),
             )
 
-        return results
+        while True:
+            ready = [
+                nid for nid in graph.get_ready_nodes(completed_ids)
+                if results[node_map[nid][0]] is None
+            ]
+
+            pending = [
+                nid for nid in node_ids
+                if nid not in completed_ids
+                and results[node_map[nid][0]] is None
+            ]
+
+            if not ready:
+                if pending:
+                    # Deadlock: remaining nodes have unresolvable deps
+                    for nid in pending:
+                        idx, action, _dec = node_map[nid]
+                        results[idx] = ToolResult(
+                            tool_name=action.tool,
+                            content="Aktion übersprungen: Abhängigkeiten nicht erfüllt (Deadlock)",
+                            is_error=True,
+                            error_type="DependencyError",
+                        )
+                break
+
+            await asyncio.gather(*[_run_with_sem(nid) for nid in ready])
+
+        # --- Fill any remaining None slots (safety net) ---
+        for i, r in enumerate(results):
+            if r is None:
+                results[i] = ToolResult(
+                    tool_name=actions[i].tool,
+                    content="Aktion übersprungen: Abhängigkeiten nicht erfüllt",
+                    is_error=True,
+                    error_type="DependencyError",
+                )
+
+        return results  # type: ignore[return-value]
 
     async def _execute_single(
         self,

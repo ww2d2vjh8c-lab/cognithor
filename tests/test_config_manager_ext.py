@@ -69,6 +69,28 @@ class TestIsSecretField:
         assert _is_secret_field("temperature") is False
         assert _is_secret_field("log_level") is False
 
+    # --- Web API Keys: Verifizierung dass sie als Secret erkannt werden ---
+
+    def test_google_cse_api_key_is_secret(self) -> None:
+        """google_cse_api_key enthält 'key' → muss als Secret maskiert werden."""
+        assert _is_secret_field("google_cse_api_key") is True
+
+    def test_jina_api_key_is_secret(self) -> None:
+        """jina_api_key enthält 'key' → muss als Secret maskiert werden."""
+        assert _is_secret_field("jina_api_key") is True
+
+    def test_brave_api_key_is_secret(self) -> None:
+        """brave_api_key enthält 'key' → muss als Secret maskiert werden."""
+        assert _is_secret_field("brave_api_key") is True
+
+    def test_google_cse_cx_is_not_secret(self) -> None:
+        """google_cse_cx ist kein Secret (enthält kein Pattern)."""
+        assert _is_secret_field("google_cse_cx") is False
+
+    def test_searxng_url_is_not_secret(self) -> None:
+        """searxng_url ist kein Secret."""
+        assert _is_secret_field("searxng_url") is False
+
 
 # ============================================================================
 # _mask_secrets depth guard

@@ -480,6 +480,9 @@ def _register_config_routes(
             except ValueError as exc:
                 results.append({"key": key, "status": "error", "error": str(exc)})
         config_manager.save()
+        # Trigger live-reload of runtime components
+        if gateway is not None and hasattr(gateway, "reload_components"):
+            gateway.reload_components(config=True)
         return {"results": results}
 
     @app.post("/api/v1/config/reload", dependencies=deps)
@@ -606,6 +609,9 @@ def _register_config_routes(
         try:
             config_manager.update_section(section, cleaned)
             config_manager.save()
+            # Trigger live-reload of runtime components (executor, web tools)
+            if gateway is not None and hasattr(gateway, "reload_components"):
+                gateway.reload_components(config=True)
             return {"status": "ok", "section": section, "updated_keys": list(cleaned.keys())}
         except ValueError as exc:
             return {"error": str(exc), "status": 400}

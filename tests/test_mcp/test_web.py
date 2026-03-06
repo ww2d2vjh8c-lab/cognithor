@@ -510,14 +510,14 @@ class TestSearchAndRead:
 class TestRegisterWebTools:
     """Tests für die MCP-Client-Registrierung."""
 
-    def test_registers_four_tools(self) -> None:
-        """Alle 4 Web-Tools werden registriert."""
+    def test_registers_five_tools(self) -> None:
+        """Alle 5 Web-Tools werden registriert."""
 
         mock_client = MagicMock()
         web = register_web_tools(mock_client, searxng_url="http://localhost:8888")
 
         assert isinstance(web, WebTools)
-        assert mock_client.register_builtin_handler.call_count == 4
+        assert mock_client.register_builtin_handler.call_count == 5
 
         # Tool-Namen prüfen
         registered = [call.args[0] for call in mock_client.register_builtin_handler.call_args_list]
@@ -525,6 +525,7 @@ class TestRegisterWebTools:
         assert "web_news_search" in registered
         assert "web_fetch" in registered
         assert "search_and_read" in registered
+        assert "http_request" in registered
 
     def test_passes_config(self) -> None:
         """Config wird an WebTools weitergegeben."""
@@ -550,3 +551,135 @@ class TestRegisterWebTools:
             # Können als args oder kwargs übergeben werden
             desc = call.args[2] if len(call.args) >= 3 else kwargs.get("description", "")
             assert desc, f"Tool {call.args[0]} hat keine description"
+
+
+# ── http_request ──────────────────────────────────────────────────────────
+
+
+class TestHttpRequest:
+    """Tests für das http_request Tool."""
+
+    @pytest.fixture()
+    def web(self) -> WebTools:
+        return WebTools()
+
+    @pytest.mark.asyncio
+    async def test_http_request_get(self, web: WebTools) -> None:
+        """GET-Request funktioniert."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.headers = {"content-type": "application/json"}
+        mock_response.text = '{"ok": true}'
+
+        mock_client = AsyncMock()
+        mock_client.request = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+
+        with patch.object(web, "_validate_url", return_value="https://api.example.com/data"), \
+             patch("jarvis.mcp.web.httpx.AsyncClient", return_value=mock_client):
+            result = await web.http_request("https://api.example.com/data")
+
+        assert "HTTP 200" in result
+        assert '{"ok": true}' in result
+
+    @pytest.mark.asyncio
+    async def test_http_request_post_with_body(self, web: WebTools) -> None:
+        """POST mit JSON-Body."""
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.headers = {"content-type": "application/json"}
+        mock_response.text = '{"id": 42}'
+
+        mock_client = AsyncMock()
+        mock_client.request = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+
+        with patch.object(web, "_validate_url", return_value="https://api.example.com/items"), \
+             patch("jarvis.mcp.web.httpx.AsyncClient", return_value=mock_client):
+            result = await web.http_request(
+                "https://api.example.com/items",
+                method="POST",
+                body='{"name": "test"}',
+                headers={"Content-Type": "application/json"},
+            )
+
+        assert "HTTP 201" in result
+        mock_client.request.assert_called_once()
+        call_kwargs = mock_client.request.call_args
+        assert call_kwargs[0][0] == "POST"
+
+    @pytest.mark.asyncio
+    async def test_http_request_invalid_method(self, web: WebTools) -> None:
+        """Ungültige Methode → WebError."""
+        with pytest.raises(WebError, match="Ungültige HTTP-Methode"):
+            await web.http_request("https://example.com", method="FOOBAR")
+
+    @pytest.mark.asyncio
+    async def test_http_request_private_ip_blocked(self, web: WebTools) -> None:
+        """Private IP → SSRF-Schutz."""
+        with patch.object(web, "_validate_url", return_value="https://192.168.1.1/admin"):
+            with pytest.raises(WebError, match="private Adresse"):
+                await web.http_request("https://192.168.1.1/admin")
+
+    @pytest.mark.asyncio
+    async def test_http_request_timeout(self, web: WebTools) -> None:
+        """Timeout-Handling."""
+        mock_client = AsyncMock()
+        mock_client.request = AsyncMock(side_effect=httpx.ReadTimeout("timeout"))
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+
+        with patch.object(web, "_validate_url", return_value="https://slow.example.com"), \
+             patch("jarvis.mcp.web.httpx.AsyncClient", return_value=mock_client):
+            with pytest.raises(WebError, match="Timeout"):
+                await web.http_request("https://slow.example.com", timeout_seconds=1)
+
+    def test_http_request_gatekeeper_orange(self, tmp_path) -> None:
+        """_classify_risk() → ORANGE für http_request."""
+        from jarvis.config import JarvisConfig
+        from jarvis.core.gatekeeper import Gatekeeper
+        from jarvis.models import PlannedAction, RiskLevel
+
+        config = JarvisConfig(jarvis_home=tmp_path)
+        gk = Gatekeeper(config)
+        action = PlannedAction(tool="http_request", params={"url": "https://example.com"})
+
+        risk = gk._classify_risk(action)
+        assert risk == RiskLevel.ORANGE
+
+    def test_http_request_config_values(self, tmp_path) -> None:
+        """http_request nutzt Config-Werte für Limits."""
+        from jarvis.config import JarvisConfig
+
+        config = JarvisConfig(
+            jarvis_home=tmp_path,
+            web={
+                "http_request_max_body_bytes": 2048,
+                "http_request_timeout_seconds": 60,
+                "http_request_rate_limit_seconds": 0.0,
+            },
+        )
+        web = WebTools(config=config)
+        assert web._http_request_max_body == 2048
+        assert web._http_request_timeout == 60
+        assert web._http_request_rate_limit == 0.0
+
+    @pytest.mark.asyncio
+    async def test_http_request_body_too_large_uses_config(self, tmp_path) -> None:
+        """Body-Limit wird aus Config geladen."""
+        from jarvis.config import JarvisConfig
+
+        config = JarvisConfig(
+            jarvis_home=tmp_path,
+            web={"http_request_max_body_bytes": 1024},
+        )
+        web = WebTools(config=config)
+        with patch.object(web, "_validate_url", return_value="https://api.example.com"):
+            with pytest.raises(WebError, match="zu groß"):
+                await web.http_request(
+                    "https://api.example.com",
+                    method="POST",
+                    body="x" * 2000,
+                )

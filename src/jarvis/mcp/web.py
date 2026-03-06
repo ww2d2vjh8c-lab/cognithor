@@ -149,6 +149,12 @@ class WebTools:
         self._ddg_cache_ttl: int = _DEFAULT_DDG_CACHE_TTL
         self._search_and_read_max_chars: int = _DEFAULT_SEARCH_AND_READ_MAX_CHARS
 
+        # HTTP Request Tool
+        self._http_request_max_body: int = 1_048_576  # 1 MB
+        self._http_request_timeout: int = 30
+        self._http_request_rate_limit: float = 1.0
+        self._http_request_last_call: float = 0.0
+
         # Aus Config laden falls vorhanden
         if config is not None:
             web_cfg = getattr(config, "web", None)
@@ -173,6 +179,11 @@ class WebTools:
                 self._ddg_cache_ttl = getattr(web_cfg, "ddg_cache_ttl_seconds", self._ddg_cache_ttl)
                 self._search_and_read_max_chars = getattr(web_cfg, "search_and_read_max_chars", self._search_and_read_max_chars)
 
+                # HTTP Request Tool
+                self._http_request_max_body = getattr(web_cfg, "http_request_max_body_bytes", self._http_request_max_body)
+                self._http_request_timeout = getattr(web_cfg, "http_request_timeout_seconds", self._http_request_timeout)
+                self._http_request_rate_limit = getattr(web_cfg, "http_request_rate_limit_seconds", self._http_request_rate_limit)
+
             # Cache-Verzeichnis: ~/.jarvis/cache/web_search/
             jarvis_home = getattr(config, "jarvis_home", None)
             if jarvis_home:
@@ -181,10 +192,49 @@ class WebTools:
         if self._ddg_cache_dir is None:
             self._ddg_cache_dir = Path.home() / ".jarvis" / "cache" / "web_search"
 
+        # Referenz auf Config fuer Live-Reload
+        self._config = config
+
         # DNS-Cache: vermeidet wiederholte DNS-Auflösung pro Request
         self._dns_cache: TTLDict[str, list[str]] = TTLDict(
             max_size=1000, ttl_seconds=300, cleanup_interval=60,
         )
+
+    def reload_config(self, config: "JarvisConfig") -> None:
+        """Aktualisiert WebTools-Parameter aus neuer Config (Live-Reload).
+
+        Wird vom Gateway aufgerufen wenn der User Einstellungen im UI ändert.
+        API-Keys, Domain-Listen und Limits werden sofort aktualisiert.
+        """
+        self._config = config
+        web_cfg = getattr(config, "web", None)
+        if web_cfg is None:
+            return
+
+        self._searxng_url = getattr(web_cfg, "searxng_url", "") or ""
+        self._brave_api_key = getattr(web_cfg, "brave_api_key", "") or ""
+        self._google_cse_api_key = getattr(web_cfg, "google_cse_api_key", "") or ""
+        self._google_cse_cx = getattr(web_cfg, "google_cse_cx", "") or ""
+        self._jina_api_key = getattr(web_cfg, "jina_api_key", "") or ""
+        self._duckduckgo_enabled = getattr(web_cfg, "duckduckgo_enabled", True)
+        self._domain_blocklist = list(getattr(web_cfg, "domain_blocklist", []))
+        self._domain_allowlist = list(getattr(web_cfg, "domain_allowlist", []))
+
+        self._max_fetch_bytes = getattr(web_cfg, "max_fetch_bytes", self._max_fetch_bytes)
+        self._max_text_chars = getattr(web_cfg, "max_text_chars", self._max_text_chars)
+        self._fetch_timeout = getattr(web_cfg, "fetch_timeout_seconds", self._fetch_timeout)
+        self._search_timeout = getattr(web_cfg, "search_timeout_seconds", self._search_timeout)
+        self._max_search_results = getattr(web_cfg, "max_search_results", self._max_search_results)
+        self._ddg_min_delay = getattr(web_cfg, "ddg_min_delay_seconds", self._ddg_min_delay)
+        self._ddg_ratelimit_wait = getattr(web_cfg, "ddg_ratelimit_wait_seconds", self._ddg_ratelimit_wait)
+        self._ddg_cache_ttl = getattr(web_cfg, "ddg_cache_ttl_seconds", self._ddg_cache_ttl)
+        self._search_and_read_max_chars = getattr(web_cfg, "search_and_read_max_chars", self._search_and_read_max_chars)
+
+        self._http_request_max_body = getattr(web_cfg, "http_request_max_body_bytes", self._http_request_max_body)
+        self._http_request_timeout = getattr(web_cfg, "http_request_timeout_seconds", self._http_request_timeout)
+        self._http_request_rate_limit = getattr(web_cfg, "http_request_rate_limit_seconds", self._http_request_rate_limit)
+
+        log.info("web_tools_config_reloaded")
 
     def _validate_url(self, url: str) -> str:
         """Validiert eine URL gegen SSRF-Angriffe.
@@ -837,6 +887,95 @@ class WebTools:
 
         return _truncate_text(text, max_chars, url)
 
+    # ── http_request ────────────────────────────────────────────────────────
+
+    async def http_request(
+        self,
+        url: str,
+        method: str = "GET",
+        headers: dict[str, str] | None = None,
+        body: str | None = None,
+        timeout_seconds: int = 30,
+    ) -> str:
+        """Führt einen HTTP-Request aus (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS).
+
+        Args:
+            url: Ziel-URL.
+            method: HTTP-Methode.
+            headers: Optionale HTTP-Headers.
+            body: Request-Body (für POST/PUT/PATCH).
+            timeout_seconds: Timeout in Sekunden (1-120).
+
+        Returns:
+            Formatierte Response mit Status-Code und Body.
+        """
+        allowed_methods = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+        method = method.upper()
+        if method not in allowed_methods:
+            raise WebError(
+                f"Ungültige HTTP-Methode: {method}. "
+                f"Erlaubt: {', '.join(sorted(allowed_methods))}"
+            )
+
+        validated = self._validate_url(url)
+
+        # Domain-Filter prüfen
+        parsed = urlparse(validated)
+        hostname = (parsed.hostname or "").lower()
+        self._check_domain_allowed(hostname)
+
+        # SSRF-Schutz
+        if _is_private_host(hostname):
+            raise WebError(f"Zugriff auf private Adresse blockiert: {hostname}")
+
+        # Body-Größe limitieren
+        max_body = self._http_request_max_body
+        if body and len(body) > max_body:
+            raise WebError(
+                f"Request-Body zu groß: {len(body)} Bytes (max {max_body} Bytes)"
+            )
+
+        # Timeout: Default aus Config, clampen auf 1-120
+        if timeout_seconds == 30:
+            timeout_seconds = self._http_request_timeout
+        timeout_seconds = min(max(timeout_seconds, 1), 120)
+
+        # Rate-Limiting
+        if self._http_request_rate_limit > 0:
+            import anyio
+            now = time.monotonic()
+            elapsed = now - self._http_request_last_call
+            if elapsed < self._http_request_rate_limit:
+                wait = self._http_request_rate_limit - elapsed
+                log.debug("http_request_rate_limit_wait", wait_s=round(wait, 2))
+                await anyio.sleep(wait)
+        self._http_request_last_call = time.monotonic()
+
+        max_chars = self._max_text_chars
+
+        try:
+            async with httpx.AsyncClient(
+                timeout=float(timeout_seconds),
+                follow_redirects=True,
+                max_redirects=5,
+                headers={"User-Agent": DEFAULT_USER_AGENT},
+            ) as client:
+                resp = await client.request(
+                    method,
+                    validated,
+                    headers=headers,
+                    content=body,
+                )
+        except httpx.TimeoutException as exc:
+            raise WebError(f"Timeout nach {timeout_seconds}s für {url}") from exc
+        except httpx.RequestError as exc:
+            raise WebError(f"Request fehlgeschlagen für {url}: {exc}") from exc
+
+        ct = resp.headers.get("content-type", "")
+        body_text = resp.text[:max_chars] if resp.text else ""
+
+        return f"HTTP {resp.status_code}\nContent-Type: {ct}\n\n{body_text}"
+
     async def _fetch_via_jina(self, url: str) -> str:
         """Fetcht eine URL über den Jina AI Reader Service.
 
@@ -1325,5 +1464,44 @@ def register_web_tools(
         },
     )
 
-    log.info("web_tools_registered", tools=["web_search", "web_news_search", "web_fetch", "search_and_read"])
+    mcp_client.register_builtin_handler(
+        "http_request",
+        web.http_request,
+        description=(
+            "HTTP-Request ausführen (GET/POST/PUT/PATCH/DELETE). "
+            "Für API-Aufrufe, Webhooks und REST-Interaktionen."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "Ziel-URL",
+                },
+                "method": {
+                    "type": "string",
+                    "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+                    "description": "HTTP-Methode (Default: GET)",
+                    "default": "GET",
+                },
+                "headers": {
+                    "type": "object",
+                    "description": "HTTP-Headers als Key-Value-Paare",
+                    "additionalProperties": {"type": "string"},
+                },
+                "body": {
+                    "type": "string",
+                    "description": "Request-Body (für POST/PUT/PATCH)",
+                },
+                "timeout_seconds": {
+                    "type": "integer",
+                    "description": "Timeout in Sekunden (1-120, Default: 30)",
+                    "default": 30,
+                },
+            },
+            "required": ["url"],
+        },
+    )
+
+    log.info("web_tools_registered", tools=["web_search", "web_news_search", "web_fetch", "search_and_read", "http_request"])
     return web

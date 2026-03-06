@@ -5,6 +5,35 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.26.7] – 2026-03-07
+
+### Wiring & Hardening
+
+Closes 7 wiring gaps identified by capability-matrix analysis. Full suite at 9,596 tests (0 failures).
+
+### Added
+
+- **DAG-based Parallel Executor** — `execute()` now builds a `PlanGraph` from actions and runs independent tool calls concurrently in waves via `asyncio.gather()` + `asyncio.Semaphore`. Replaces sequential `for i, ...` loop. Backwards-compatible for linear dependencies
+- **http_request Tool** (`mcp/web.py`) — Full HTTP method support (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS) with SSRF protection (`_is_private_ip()`), body-size limit (1 MB), timeout clamping, and domain validation. Classified as ORANGE in Gatekeeper
+- **Workflow Adapter** (`core/workflow_adapter.py`) — Bridge function `action_plan_to_workflow()` converts `ActionPlan` to `WorkflowDefinition`, making DAG WorkflowEngine usable from Gateway via `execute_action_plan_as_workflow()`
+- **Sub-Agent Depth Guard** — `max_sub_agent_depth` field in `SecurityConfig` (default: 3, range 1–10). `handle_message()` checks depth from `msg.metadata` and rejects if exceeded. `_agent_runner` increments depth per call
+- **Live Config Reload** — `reload_config()` methods on Executor and WebTools. PATCH routes in `config_routes.py` call `gateway.reload_components(config=True)` to propagate changes immediately without restart
+- **DomainListInput UI Component** — Regex-validated domain input in CognithorControlCenter. Rejects schemes, paths, wildcards, spaces. Used for `domain_blocklist` and `domain_allowlist`
+- **Secret Masking Verification** — Explicit tests confirming `google_cse_api_key`, `jina_api_key`, `brave_api_key` are correctly masked by `_is_secret_field()` pattern matching
+
+### Changed
+
+- Blocked actions now count as "completed" in DAG dependency resolution, allowing their dependents to proceed
+- `_dag_workflow_engine` attribute declared and initialized in `advanced.py` phase
+- Orchestrator runner wired in Gateway (creates `IncomingMessage` with `channel="sub_agent"`)
+- DAG WorkflowEngine wired with `_mcp_client` and `_gatekeeper` in Gateway `apply_phase()`
+- `SecurityPage` in UI gains `max_sub_agent_depth` NumberInput
+- Test count: 9,357 → **9,596** (+239 tests across 9 test files)
+- LOC source: ~106,000 → ~109,000
+- MCP tool count: 47 → **48** (added http_request)
+
+---
+
 ## [0.26.6] – 2026-03-05
 
 ### Chat, Voice, Agent Infrastructure & Security Hardening

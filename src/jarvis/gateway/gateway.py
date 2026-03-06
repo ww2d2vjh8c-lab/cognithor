@@ -64,6 +64,7 @@ from jarvis.utils.logging import get_logger, setup_logging
 if TYPE_CHECKING:
     from jarvis.channels.base import Channel
     from jarvis.core.message_queue import DurableMessageQueue
+    from jarvis.models import SubAgentConfig
 
 log = get_logger(__name__)
 
@@ -237,6 +238,51 @@ class Gateway:
         apply_phase(self, pge_result)
         apply_phase(self, agents_result)
 
+        # Wire Orchestrator runner (Sub-Agent execution via handle_message)
+        if getattr(self, "_orchestrator", None):
+            try:
+                async def _agent_runner(
+                    config: "SubAgentConfig", agent_name: str,
+                ) -> "AgentResult":
+                    msg = IncomingMessage(
+                        channel="sub_agent",
+                        user_id=f"agent:{agent_name}",
+                        text=config.task,
+                        metadata={
+                            "agent_type": config.agent_type.value,
+                            "parent_agent": agent_name,
+                            "max_iterations": config.max_iterations,
+                            "depth": config.depth + 1,
+                        },
+                    )
+                    try:
+                        response = await asyncio.wait_for(
+                            self.handle_message(msg),
+                            timeout=config.timeout_seconds,
+                        )
+                        return AgentResult(
+                            response=response.text,
+                            success=True,
+                            model_used=config.model,
+                        )
+                    except asyncio.TimeoutError:
+                        return AgentResult(
+                            response="",
+                            success=False,
+                            error=f"Sub-Agent Timeout nach {config.timeout_seconds}s",
+                        )
+                    except Exception as exc:
+                        return AgentResult(
+                            response="",
+                            success=False,
+                            error=str(exc),
+                        )
+
+                self._orchestrator.set_runner(_agent_runner)
+                log.info("orchestrator_runner_wired")
+            except Exception:
+                log.debug("orchestrator_runner_wiring_skipped", exc_info=True)
+
         # --- Phase F: Advanced (depends on PGE + tools) ---
         advanced_result = await init_advanced(
             self._config,
@@ -248,6 +294,14 @@ class Gateway:
             gatekeeper=self._gatekeeper,
         )
         apply_phase(self, advanced_result)
+
+        # Wire DAG WorkflowEngine with MCP client + Gatekeeper
+        if getattr(self, "_dag_workflow_engine", None):
+            try:
+                self._dag_workflow_engine._mcp_client = self._mcp_client
+                self._dag_workflow_engine._gatekeeper = self._gatekeeper
+            except Exception:
+                log.debug("dag_workflow_engine_wiring_skipped", exc_info=True)
 
         # Wire prompt_evolution to planner (created in advanced, after PGE)
         if getattr(self, "_prompt_evolution", None) and getattr(self, "_planner", None):
@@ -574,6 +628,68 @@ class Gateway:
 
         log.info("gateway_shutdown_complete")
 
+    async def execute_workflow(self, workflow_yaml: str) -> dict[str, Any]:
+        """Execute a workflow via the DAG WorkflowEngine.
+
+        Parses a YAML workflow definition and runs it through the wired
+        WorkflowEngine. Returns the WorkflowRun as a dictionary.
+
+        Args:
+            workflow_yaml: YAML string defining the workflow.
+
+        Returns:
+            Dict with workflow run results.
+
+        Raises:
+            RuntimeError: If DAG WorkflowEngine is not available.
+        """
+        engine = getattr(self, "_dag_workflow_engine", None)
+        if engine is None:
+            raise RuntimeError("DAG WorkflowEngine ist nicht verfügbar")
+
+        from jarvis.core.workflow_schema import WorkflowDefinition
+        workflow = WorkflowDefinition.from_yaml(workflow_yaml)
+
+        errors = engine.validate(workflow)
+        if errors:
+            return {"success": False, "errors": errors}
+
+        run = await engine.execute(workflow)
+        return run.model_dump(mode="json")
+
+    async def execute_action_plan_as_workflow(self, plan: ActionPlan) -> dict[str, Any]:
+        """Execute an ActionPlan through the DAG WorkflowEngine.
+
+        Bridges PGE-style ActionPlans with the full WorkflowEngine.
+        Useful for complex multi-step plans that benefit from the
+        engine's checkpoint/resume, retry strategies, and status callbacks.
+
+        Args:
+            plan: PGE ActionPlan to execute.
+
+        Returns:
+            Dict with workflow run results.
+
+        Raises:
+            RuntimeError: If DAG WorkflowEngine is not available.
+        """
+        engine = getattr(self, "_dag_workflow_engine", None)
+        if engine is None:
+            raise RuntimeError("DAG WorkflowEngine ist nicht verfügbar")
+
+        from jarvis.core.workflow_adapter import action_plan_to_workflow
+        workflow = action_plan_to_workflow(
+            plan,
+            max_parallel=getattr(self._config.executor, "max_parallel_tools", 4),
+        )
+
+        errors = engine.validate(workflow)
+        if errors:
+            return {"success": False, "errors": errors}
+
+        run = await engine.execute(workflow)
+        return run.model_dump(mode="json")
+
     def reload_components(self, *, prompts: bool = False, policies: bool = False,
                           config: bool = False, core_memory: bool = False,
                           skills: bool = False) -> dict:
@@ -606,6 +722,33 @@ class Gateway:
             except Exception:
                 log.warning("skills_reload_failed", exc_info=True)
         if config:
+            # Reload config.yaml from disk
+            try:
+                new_config = load_config(self._config.config_file)
+                self._config = new_config
+            except Exception:
+                log.debug("config_file_reload_failed", exc_info=True)
+                new_config = self._config
+
+            # Live-update Executor runtime parameters
+            if self._executor and hasattr(self._executor, "reload_config"):
+                try:
+                    self._executor.reload_config(new_config)
+                except Exception:
+                    log.debug("executor_config_reload_failed", exc_info=True)
+
+            # Live-update WebTools runtime parameters
+            web_tools = None
+            if self._mcp_client:
+                handler = self._mcp_client.get_handler("web_search")
+                if handler is not None:
+                    web_tools = getattr(handler, "__self__", None)
+            if web_tools and hasattr(web_tools, "reload_config"):
+                try:
+                    web_tools.reload_config(new_config)
+                except Exception:
+                    log.debug("web_tools_config_reload_failed", exc_info=True)
+
             reloaded.append("config")
         log.info("gateway_components_reloaded", components=reloaded)
         return {"reloaded": reloaded}
@@ -619,6 +762,25 @@ class Gateway:
             OutgoingMessage mit der Jarvis-Antwort.
         """
         _handle_start = time.monotonic()
+
+        # --- Sub-Agent depth guard ---
+        # The _agent_runner passes depth in msg.metadata. Enforce max depth
+        # to prevent infinite recursive sub-agent delegation.
+        _depth = msg.metadata.get("depth", 0) if msg.metadata else 0
+        _max_depth = getattr(self._config.security, "max_sub_agent_depth", 3)
+        if _depth > _max_depth:
+            log.warning(
+                "sub_agent_depth_exceeded",
+                depth=_depth,
+                max_depth=_max_depth,
+                channel=msg.channel,
+                user_id=msg.user_id,
+            )
+            return OutgoingMessage(
+                channel=msg.channel,
+                text=f"Sub-Agent Rekursion abgebrochen: Tiefe {_depth} überschreitet Maximum {_max_depth}.",
+                is_final=True,
+            )
 
         # Prometheus: Zähle eingehende Requests
         self._record_metric("requests_total", 1, channel=msg.channel)

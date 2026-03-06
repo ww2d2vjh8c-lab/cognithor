@@ -95,6 +95,7 @@ const PAGES = [
   { id: "providers", label: "LLM Provider", icon: I.llm, key: "2" },
   { id: "models", label: "Modelle", icon: I.model, key: "3" },
   { id: "planner", label: "PGE Trinity", icon: I.brain, key: "4" },
+  { id: "executor", label: "Executor", icon: I.terminal, key: null },
   { id: "memory", label: "Memory", icon: I.mem, key: "5" },
   { id: "channels", label: "Channels", icon: I.ch, key: "6" },
   { id: "security", label: "Sicherheit", icon: I.shield, key: "7" },
@@ -153,8 +154,9 @@ const defaults = () => ({
     voice_enabled: false,
     voice_config: { tts_backend: "piper", elevenlabs_api_key: "", elevenlabs_voice_id: "hJAaR77ekN23CNyp0byH", elevenlabs_model: "eleven_multilingual_v2", wake_word_enabled: false, wake_word: "jarvis", wake_word_backend: "vosk", talk_mode_enabled: false, talk_mode_auto_listen: false },
   },
-  security: { max_iterations: 10, allowed_paths: ["~/.jarvis/","/tmp/jarvis/"], blocked_commands: ["rm\\s+-rf\\s+/","mkfs\\b","dd\\s+if=/dev"], credential_patterns: ["sk-[a-zA-Z0-9]{20,}","token_[a-zA-Z0-9]+"] },
-  web: { searxng_url: "", brave_api_key: "", duckduckgo_enabled: true },
+  security: { max_iterations: 10, allowed_paths: ["~/.jarvis/","/tmp/jarvis/"], blocked_commands: ["rm\\s+-rf\\s+/","mkfs\\b","dd\\s+if=/dev"], credential_patterns: ["sk-[a-zA-Z0-9]{20,}","token_[a-zA-Z0-9]+"], max_sub_agent_depth: 3 },
+  executor: { default_timeout_seconds: 30, max_output_chars: 10000, max_retries: 3, backoff_base_delay_seconds: 1.0, max_parallel_tools: 4, media_analyze_image_timeout: 180, media_transcribe_audio_timeout: 120, media_extract_text_timeout: 120, media_tts_timeout: 120, run_python_timeout: 120 },
+  web: { searxng_url: "", brave_api_key: "", google_cse_api_key: "", google_cse_cx: "", jina_api_key: "", duckduckgo_enabled: true, domain_blocklist: [], domain_allowlist: [], max_fetch_bytes: 500000, max_text_chars: 20000, fetch_timeout_seconds: 15, search_timeout_seconds: 10, max_search_results: 10, ddg_min_delay_seconds: 2.0, ddg_ratelimit_wait_seconds: 30, ddg_cache_ttl_seconds: 3600, search_and_read_max_chars: 5000, http_request_max_body_bytes: 1048576, http_request_timeout_seconds: 30, http_request_rate_limit_seconds: 1.0 },
   logging: { level: "INFO", json_logs: false, console: true },
   database: { backend: "sqlite", pg_host: "localhost", pg_port: 5432, pg_dbname: "jarvis", pg_user: "jarvis", pg_password: "", pg_pool_min: 2, pg_pool_max: 10 },
   dashboard: { enabled: false, port: 9090 },
@@ -369,6 +371,56 @@ function ListInput({ label, value = [], onChange, desc, placeholder }) {
         <input className="cc-input" value={draft} onChange={e => setDraft(e.target.value)} placeholder={placeholder || "Hinzufügen…"} onKeyDown={e => e.key === "Enter" && add()} />
         <button className="cc-btn-sm" onClick={add} type="button">{I.plus}</button>
       </div>
+    </div>
+  );
+}
+
+// Domain-validated ListInput: only accepts valid hostnames (no scheme, no paths, no wildcards)
+const _DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
+function DomainListInput({ label, value = [], onChange, desc, placeholder }) {
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState("");
+  const validate = (d) => {
+    if (!d) return "Domain darf nicht leer sein";
+    if (d.includes("://")) return "Kein Schema (http/https) angeben — nur Hostname";
+    if (d.includes("/")) return "Kein Pfad erlaubt — nur Hostname (z.B. example.com)";
+    if (d.includes("*")) return "Keine Wildcards erlaubt — nur exakte Domains";
+    if (d.includes(" ")) return "Keine Leerzeichen erlaubt";
+    if (!_DOMAIN_RE.test(d)) return "Ungültiges Domain-Format (z.B. example.com)";
+    if (value.some(v => v.toLowerCase() === d.toLowerCase())) return "Domain bereits vorhanden";
+    return "";
+  };
+  const add = () => {
+    const d = draft.trim().toLowerCase();
+    const err = validate(d);
+    if (err) { setError(err); return; }
+    onChange([...value, d]);
+    setDraft("");
+    setError("");
+  };
+  return (
+    <div className="cc-field">
+      <div className="cc-label">{label}</div>
+      {desc && <div className="cc-desc">{desc}</div>}
+      <div className="cc-list-items">
+        {value.map((v, i) => (
+          <div key={i} className="cc-list-item">
+            <span className="mono">{v}</span>
+            <button className="cc-btn-icon" onClick={() => onChange(value.filter((_, j) => j !== i))} type="button">{I.trash}</button>
+          </div>
+        ))}
+      </div>
+      <div className="cc-list-add">
+        <input
+          className={`cc-input${error ? " cc-input-error" : ""}`}
+          value={draft}
+          onChange={e => { setDraft(e.target.value); if (error) setError(""); }}
+          placeholder={placeholder || "example.com"}
+          onKeyDown={e => e.key === "Enter" && add()}
+        />
+        <button className="cc-btn-sm" onClick={add} type="button">{I.plus}</button>
+      </div>
+      {error && <div className="cc-error">{error}</div>}
     </div>
   );
 }
@@ -832,6 +884,7 @@ function SecurityPage({ cfg, set }) {
     <Section title="Sicherheit" desc="Iterations-Limits, Pfade, blockierte Befehle, Credential-Patterns" />
     <Card title="Gatekeeper Limits">
       <NumberInput label="Max Iterationen" value={s.max_iterations} onChange={v => set("security.max_iterations", v)} min={1} max={50} desc="Endlosschleifen-Schutz" />
+      <NumberInput label="Max Sub-Agent Tiefe" value={s.max_sub_agent_depth} onChange={v => set("security.max_sub_agent_depth", v)} min={1} max={10} desc="Maximale Rekursionstiefe fuer Sub-Agent-Delegationen" />
     </Card>
     <Card title="Gatekeeper Dateisystem">
       <ListInput label="Erlaubte Pfade" value={s.allowed_paths} onChange={v => set("security.allowed_paths", v)} placeholder="~/.jarvis/" />
@@ -845,19 +898,70 @@ function SecurityPage({ cfg, set }) {
   </>);
 }
 
+// ── Executor ──────────────────────────────────────────────────────────
+function ExecutorPage({ cfg, set }) {
+  const e = cfg.executor || {};
+  return (<>
+    <Section title="Executor" desc="Tool-Ausführung: Timeouts, Retries, Parallelität" />
+    <Card title="Allgemein">
+      <NumberInput label="Standard-Timeout (Sekunden)" value={e.default_timeout_seconds} onChange={v => set("executor.default_timeout_seconds", v)} min={5} max={600} desc="Timeout für einzelne Tool-Aufrufe" />
+      <NumberInput label="Max. Output (Zeichen)" value={e.max_output_chars} onChange={v => set("executor.max_output_chars", v)} min={1000} max={100000} desc="Tool-Output wird ab dieser Länge abgeschnitten" />
+      <NumberInput label="Max. Retries" value={e.max_retries} onChange={v => set("executor.max_retries", v)} min={0} max={10} desc="Wiederholungsversuche bei transienten Fehlern" />
+      <SliderInput label="Backoff-Basis (Sekunden)" value={e.backoff_base_delay_seconds} onChange={v => set("executor.backoff_base_delay_seconds", v)} min={0.1} max={30} step={0.1} desc="Basis-Verzögerung für exponentiellen Backoff" />
+    </Card>
+    <Card title="DAG-Parallelität">
+      <NumberInput label="Max. parallele Tools" value={e.max_parallel_tools} onChange={v => set("executor.max_parallel_tools", v)} min={1} max={16} desc="Maximale Anzahl gleichzeitig ausgeführter Tools (DAG-basiert)" />
+    </Card>
+    <Card title="Tool-spezifische Timeouts">
+      <NumberInput label="Bildanalyse (Sekunden)" value={e.media_analyze_image_timeout} onChange={v => set("executor.media_analyze_image_timeout", v)} min={30} max={600} desc="Vision-Modelle brauchen länger (20+ GB VRAM)" />
+      <NumberInput label="Audio-Transkription (Sekunden)" value={e.media_transcribe_audio_timeout} onChange={v => set("executor.media_transcribe_audio_timeout", v)} min={30} max={600} />
+      <NumberInput label="Text-Extraktion (Sekunden)" value={e.media_extract_text_timeout} onChange={v => set("executor.media_extract_text_timeout", v)} min={30} max={600} />
+      <NumberInput label="Text-to-Speech (Sekunden)" value={e.media_tts_timeout} onChange={v => set("executor.media_tts_timeout", v)} min={30} max={600} />
+      <NumberInput label="Python-Ausführung (Sekunden)" value={e.run_python_timeout} onChange={v => set("executor.run_python_timeout", v)} min={30} max={600} />
+    </Card>
+  </>);
+}
+
 // ── Web Tools ──────────────────────────────────────────────────────────
 function WebPage({ cfg, set }) {
   const w = cfg.web || {};
   return (<>
-    <Section title="Web-Tools" desc="Such-Backends: SearXNG → Brave → DuckDuckGo" />
+    <Section title="Web-Tools" desc="Such-Backends, Limits, Rate-Limiting, HTTP-Requests" />
     <Card title="SearXNG (Self-hosted)">
       <TextInput label="SearXNG URL" value={w.searxng_url} onChange={v => set("web.searxng_url", v)} mono placeholder="http://localhost:8888" desc="Höchste Priorität" />
     </Card>
     <Card title="Brave Search">
       <TextInput label="API Key" value={w.brave_api_key} onChange={v => set("web.brave_api_key", v)} type="password" desc="2000 Anfragen/Monat kostenlos" />
     </Card>
+    <Card title="Google Custom Search Engine">
+      <TextInput label="API Key" value={w.google_cse_api_key} onChange={v => set("web.google_cse_api_key", v)} type="password" desc="100 Anfragen/Tag kostenlos" />
+      <TextInput label="Search Engine ID (cx)" value={w.google_cse_cx} onChange={v => set("web.google_cse_cx", v)} mono placeholder="a1b2c3d4e5f6g7h8i" />
+    </Card>
+    <Card title="Jina AI Reader">
+      <TextInput label="API Key" value={w.jina_api_key} onChange={v => set("web.jina_api_key", v)} type="password" desc="Optional — Free-Tier funktioniert ohne Key" />
+    </Card>
     <Card title="DuckDuckGo">
       <Toggle label="DuckDuckGo aktiviert" value={w.duckduckgo_enabled} onChange={v => set("web.duckduckgo_enabled", v)} desc="Kostenloser Fallback" />
+      <SliderInput label="Mindestabstand (Sekunden)" value={w.ddg_min_delay_seconds} onChange={v => set("web.ddg_min_delay_seconds", v)} min={0.5} max={10} step={0.5} desc="Rate-Limiting zwischen DuckDuckGo-Suchen" />
+      <NumberInput label="Rate-Limit-Wartezeit (Sekunden)" value={w.ddg_ratelimit_wait_seconds} onChange={v => set("web.ddg_ratelimit_wait_seconds", v)} min={5} max={120} desc="Wartezeit bei 429-Fehler" />
+      <NumberInput label="Cache-TTL (Sekunden)" value={w.ddg_cache_ttl_seconds} onChange={v => set("web.ddg_cache_ttl_seconds", v)} min={60} max={86400} desc="Wie lange Suchergebnisse gecached werden" />
+    </Card>
+    <Card title="Fetch-Limits">
+      <NumberInput label="Max. Fetch-Größe (Bytes)" value={w.max_fetch_bytes} onChange={v => set("web.max_fetch_bytes", v)} min={10000} max={10000000} desc="Maximale Antwortgröße beim URL-Fetch" />
+      <NumberInput label="Max. Text-Zeichen" value={w.max_text_chars} onChange={v => set("web.max_text_chars", v)} min={1000} max={200000} desc="Maximale Zeichenzahl des extrahierten Textes" />
+      <NumberInput label="Fetch-Timeout (Sekunden)" value={w.fetch_timeout_seconds} onChange={v => set("web.fetch_timeout_seconds", v)} min={5} max={120} />
+      <NumberInput label="Such-Timeout (Sekunden)" value={w.search_timeout_seconds} onChange={v => set("web.search_timeout_seconds", v)} min={5} max={60} />
+      <NumberInput label="Max. Suchergebnisse" value={w.max_search_results} onChange={v => set("web.max_search_results", v)} min={1} max={50} />
+      <NumberInput label="search_and_read Max. Zeichen/Seite" value={w.search_and_read_max_chars} onChange={v => set("web.search_and_read_max_chars", v)} min={1000} max={50000} />
+    </Card>
+    <Card title="HTTP Request Tool">
+      <NumberInput label="Max. Body-Größe (Bytes)" value={w.http_request_max_body_bytes} onChange={v => set("web.http_request_max_body_bytes", v)} min={1024} max={10485760} desc="Maximale Größe des Request-Body" />
+      <NumberInput label="Standard-Timeout (Sekunden)" value={w.http_request_timeout_seconds} onChange={v => set("web.http_request_timeout_seconds", v)} min={1} max={120} />
+      <SliderInput label="Rate-Limit (Sekunden)" value={w.http_request_rate_limit_seconds} onChange={v => set("web.http_request_rate_limit_seconds", v)} min={0} max={30} step={0.5} desc="Mindestabstand zwischen Requests. 0 = kein Limit." />
+    </Card>
+    <Card title="Domain-Filter">
+      <DomainListInput label="Blocklist" value={w.domain_blocklist} onChange={v => set("web.domain_blocklist", v)} placeholder="example.com" desc="Diese Domains werden beim Fetch blockiert" />
+      <DomainListInput label="Allowlist" value={w.domain_allowlist} onChange={v => set("web.domain_allowlist", v)} placeholder="trusted.com" desc="Wenn nicht leer: NUR diese Domains sind erlaubt (Whitelist)" />
     </Card>
   </>);
 }
@@ -1373,7 +1477,7 @@ export default function App() {
 
     setSaveState("saving");
     const errors = [];
-    const sections = ["ollama","models","gatekeeper","planner","memory","channels","sandbox","logging","security","heartbeat","plugins","dashboard","model_overrides","web","database"];
+    const sections = ["ollama","models","gatekeeper","planner","memory","channels","sandbox","logging","security","heartbeat","plugins","dashboard","model_overrides","web","database","executor"];
     const sectionPromises = sections.map(async (s) => {
       if (cfg[s]) {
         const r = await api("PATCH", `/config/${s}`, cfg[s]);
@@ -1569,6 +1673,7 @@ export default function App() {
       case "providers": return <ProvidersPage cfg={cfg} set={set} />;
       case "models": return <ModelsPage cfg={cfg} set={set} setValidationErrors={setValidationErrors} />;
       case "planner": return <PlannerPage cfg={cfg} set={set} setValidationErrors={setValidationErrors} />;
+      case "executor": return <ExecutorPage cfg={cfg} set={set} />;
       case "memory": return <MemoryPage cfg={cfg} set={set} />;
       case "channels": return <ChannelsPage cfg={cfg} set={set} />;
       case "security": return <SecurityPage cfg={cfg} set={set} />;

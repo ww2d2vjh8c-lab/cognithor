@@ -93,6 +93,7 @@ _EDITABLE_SECTIONS = frozenset({
     "database",
     "prompt_evolution",
     "improvement",
+    "executor",
 })
 
 # Top-Level-Felder die editierbar sind

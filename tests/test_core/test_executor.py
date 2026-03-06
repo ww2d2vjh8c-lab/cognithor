@@ -148,19 +148,20 @@ class TestMaskedExecution:
 
 class TestDependencies:
     @pytest.mark.asyncio
-    async def test_unmet_dependency_skipped(self, executor: Executor) -> None:
+    async def test_blocked_dep_allows_downstream(self, executor: Executor) -> None:
+        """Blocked action counts as completed → dependent CAN execute."""
         action1 = PlannedAction(tool="read_file", params={"path": "/a"})
         action2 = PlannedAction(tool="write_file", params={"path": "/b"}, depends_on=[0])
 
-        # Nur action2 erlaubt, action1 blockiert → dependency nicht erfüllt
+        # action1 blockiert, action2 erlaubt → action2 läuft trotzdem
         results = await executor.execute(
             [action1, action2],
             [_block_decision(action1), _allow_decision(action2)],
         )
         assert len(results) == 2
         assert results[0].is_error  # Blockiert
-        assert results[1].is_error  # Dependency nicht erfüllt
-        assert "Abhängigkeiten" in results[1].content
+        assert results[0].error_type == "GatekeeperBlock"
+        assert results[1].success  # Dependent executes despite blocked dep
 
     @pytest.mark.asyncio
     async def test_met_dependency_executes(self, executor: Executor) -> None:
@@ -310,3 +311,122 @@ class TestAgentContext:
         assert "write_file" in Executor.WORKSPACE_TOOLS
         assert "read_file" in Executor.WORKSPACE_TOOLS
         assert "web_search" not in Executor.WORKSPACE_TOOLS
+
+
+# ============================================================================
+# DAG-basierte parallele Execution
+# ============================================================================
+
+
+class TestParallelExecution:
+    @pytest.mark.asyncio
+    async def test_parallel_independent_actions(self, executor: Executor, mock_mcp: AsyncMock) -> None:
+        """3 unabhängige Aktionen werden alle ausgeführt."""
+        actions = [
+            PlannedAction(tool="read_file", params={"path": "/a"}),
+            PlannedAction(tool="read_file", params={"path": "/b"}),
+            PlannedAction(tool="read_file", params={"path": "/c"}),
+        ]
+        decisions = [_allow_decision(a) for a in actions]
+
+        results = await executor.execute(actions, decisions)
+
+        assert len(results) == 3
+        assert all(r.success for r in results)
+        assert mock_mcp.call_tool.call_count == 3
+
+    @pytest.mark.asyncio
+    async def test_parallel_wave_execution(self, executor: Executor, mock_mcp: AsyncMock) -> None:
+        """A→(B,C)→D: B+C parallel nach A, D nach B+C."""
+        actions = [
+            PlannedAction(tool="read_file", params={"path": "/a"}),           # 0: A
+            PlannedAction(tool="read_file", params={"path": "/b"}, depends_on=[0]),  # 1: B
+            PlannedAction(tool="read_file", params={"path": "/c"}, depends_on=[0]),  # 2: C
+            PlannedAction(tool="write_file", params={"path": "/d"}, depends_on=[1, 2]),  # 3: D
+        ]
+        decisions = [_allow_decision(a) for a in actions]
+
+        results = await executor.execute(actions, decisions)
+
+        assert len(results) == 4
+        assert all(r.success for r in results)
+        assert mock_mcp.call_tool.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_parallel_blocked_dep_allows_downstream(self, executor: Executor, mock_mcp: AsyncMock) -> None:
+        """A blockiert → B (depends_on=[0]) läuft trotzdem (blocked = completed für DAG)."""
+        actions = [
+            PlannedAction(tool="exec_command", params={"command": "rm -rf /"}),  # 0: blocked
+            PlannedAction(tool="read_file", params={"path": "/b"}, depends_on=[0]),  # 1: depends on 0
+        ]
+        decisions = [_block_decision(actions[0]), _allow_decision(actions[1])]
+
+        results = await executor.execute(actions, decisions)
+
+        assert len(results) == 2
+        assert results[0].is_error
+        assert results[0].error_type == "GatekeeperBlock"
+        assert results[1].success  # Dependent runs because blocked counts as completed
+
+    @pytest.mark.asyncio
+    async def test_parallel_gatekeeper_block_in_wave(self, executor: Executor, mock_mcp: AsyncMock) -> None:
+        """Blocked Action in Wave als GatekeeperBlock, andere laufen weiter."""
+        actions = [
+            PlannedAction(tool="read_file", params={"path": "/a"}),
+            PlannedAction(tool="exec_command", params={"command": "rm -rf /"}),
+            PlannedAction(tool="read_file", params={"path": "/c"}),
+        ]
+        decisions = [
+            _allow_decision(actions[0]),
+            _block_decision(actions[1]),
+            _allow_decision(actions[2]),
+        ]
+
+        results = await executor.execute(actions, decisions)
+
+        assert len(results) == 3
+        assert results[0].success
+        assert results[1].is_error
+        assert results[1].error_type == "GatekeeperBlock"
+        assert results[2].success
+
+    @pytest.mark.asyncio
+    async def test_parallel_backwards_compatible(self, executor: Executor, mock_mcp: AsyncMock) -> None:
+        """Lineare Deps → identisches Verhalten wie sequentiell."""
+        actions = [
+            PlannedAction(tool="read_file", params={"path": "/a"}),
+            PlannedAction(tool="write_file", params={"path": "/b"}, depends_on=[0]),
+            PlannedAction(tool="read_file", params={"path": "/c"}, depends_on=[1]),
+        ]
+        decisions = [_allow_decision(a) for a in actions]
+
+        results = await executor.execute(actions, decisions)
+
+        assert len(results) == 3
+        assert all(r.success for r in results)
+        # All 3 executed in correct order
+        assert mock_mcp.call_tool.call_count == 3
+
+
+# ============================================================================
+# Config-basierter max_parallel
+# ============================================================================
+
+
+class TestMaxParallelFromConfig:
+    def test_max_parallel_from_config(self, tmp_path) -> None:
+        """max_parallel_tools wird aus ExecutorConfig gelesen."""
+        from jarvis.config import JarvisConfig
+
+        config = JarvisConfig(jarvis_home=tmp_path)
+        config.executor.max_parallel_tools = 8
+        executor = Executor(config, AsyncMock())
+        assert executor._max_parallel == 8
+
+    def test_max_parallel_default(self, tmp_path) -> None:
+        """Default max_parallel_tools ist 4."""
+        from jarvis.config import JarvisConfig
+
+        config = JarvisConfig(jarvis_home=tmp_path)
+        executor = Executor(config, AsyncMock())
+        assert executor._max_parallel == 4

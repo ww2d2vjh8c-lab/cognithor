@@ -581,3 +581,114 @@ class TestMultiProviderAutoAdaptation:
         config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="lmstudio")
         from jarvis.models import OperationMode
         assert config.resolved_operation_mode == OperationMode.OFFLINE
+
+
+# ============================================================================
+# ExecutorConfig neue Felder
+# ============================================================================
+
+
+class TestExecutorConfig:
+    """Tests für ExecutorConfig Felder."""
+
+    def test_max_parallel_tools_default(self, tmp_path: Path) -> None:
+        config = JarvisConfig(jarvis_home=tmp_path)
+        assert config.executor.max_parallel_tools == 4
+
+    def test_max_parallel_tools_custom(self, tmp_path: Path) -> None:
+        config = JarvisConfig(
+            jarvis_home=tmp_path,
+            executor={"max_parallel_tools": 8},
+        )
+        assert config.executor.max_parallel_tools == 8
+
+    def test_max_parallel_tools_bounds(self, tmp_path: Path) -> None:
+        import pydantic
+        with __import__("pytest").raises(pydantic.ValidationError):
+            JarvisConfig(jarvis_home=tmp_path, executor={"max_parallel_tools": 0})
+        with __import__("pytest").raises(pydantic.ValidationError):
+            JarvisConfig(jarvis_home=tmp_path, executor={"max_parallel_tools": 20})
+
+
+# ============================================================================
+# WebConfig neue Felder
+# ============================================================================
+
+
+class TestWebConfigHttpRequest:
+    """Tests für WebConfig HTTP-Request Felder."""
+
+    def test_http_request_defaults(self, tmp_path: Path) -> None:
+        config = JarvisConfig(jarvis_home=tmp_path)
+        assert config.web.http_request_max_body_bytes == 1_048_576
+        assert config.web.http_request_timeout_seconds == 30
+        assert config.web.http_request_rate_limit_seconds == 1.0
+
+    def test_http_request_custom(self, tmp_path: Path) -> None:
+        config = JarvisConfig(
+            jarvis_home=tmp_path,
+            web={
+                "http_request_max_body_bytes": 2_000_000,
+                "http_request_timeout_seconds": 60,
+                "http_request_rate_limit_seconds": 5.0,
+            },
+        )
+        assert config.web.http_request_max_body_bytes == 2_000_000
+        assert config.web.http_request_timeout_seconds == 60
+        assert config.web.http_request_rate_limit_seconds == 5.0
+
+
+# ============================================================================
+# ConfigManager editable sections
+# ============================================================================
+
+
+class TestEditableSections:
+    """Tests für ConfigManager._EDITABLE_SECTIONS."""
+
+    def test_executor_is_editable(self) -> None:
+        from jarvis.config_manager import _EDITABLE_SECTIONS
+        assert "executor" in _EDITABLE_SECTIONS
+
+    def test_web_is_editable(self) -> None:
+        from jarvis.config_manager import _EDITABLE_SECTIONS
+        assert "web" in _EDITABLE_SECTIONS
+
+
+# ============================================================================
+# Live-Reload
+# ============================================================================
+
+
+class TestLiveReload:
+    """Tests für Executor.reload_config() und SecurityConfig.max_sub_agent_depth."""
+
+    def test_executor_reload_config(self, tmp_path) -> None:
+        """Executor.reload_config() aktualisiert runtime-Werte."""
+        from unittest.mock import AsyncMock
+        from jarvis.core.executor import Executor
+
+        config = JarvisConfig(jarvis_home=tmp_path)
+        executor = Executor(config, AsyncMock())
+        assert executor._max_parallel == 4
+        assert executor._default_timeout == 30
+
+        # Neue Config mit geänderten Werten
+        config2 = JarvisConfig(jarvis_home=tmp_path)
+        config2.executor.max_parallel_tools = 8
+        config2.executor.default_timeout_seconds = 60
+
+        executor.reload_config(config2)
+        assert executor._max_parallel == 8
+        assert executor._default_timeout == 60
+
+    def test_max_sub_agent_depth_default(self, tmp_path) -> None:
+        """SecurityConfig.max_sub_agent_depth hat Default 3."""
+        config = JarvisConfig(jarvis_home=tmp_path)
+        assert config.security.max_sub_agent_depth == 3
+
+    def test_max_sub_agent_depth_configurable(self, tmp_path) -> None:
+        """max_sub_agent_depth ist konfigurierbar."""
+        config = JarvisConfig(jarvis_home=tmp_path)
+        config.security.max_sub_agent_depth = 5
+        assert config.security.max_sub_agent_depth == 5

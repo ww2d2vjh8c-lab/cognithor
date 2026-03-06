@@ -52,6 +52,7 @@ def declare_advanced_attrs(config: Any) -> PhaseResult:
         "replay_engine": None,
         "improvement_gate": None,
         "prompt_evolution": None,
+        "dag_workflow_engine": None,
     }
 
     # Phase 5: Live-Monitoring
@@ -91,6 +92,13 @@ def declare_advanced_attrs(config: Any) -> PhaseResult:
         result["template_library"] = TemplateLibrary()
     except Exception:
         log.debug("workflow_engine_init_skipped", exc_info=True)
+
+    # Phase 16b: DAG WorkflowEngine
+    try:
+        from jarvis.core.workflow_engine import WorkflowEngine as DAGWorkflowEngine
+        result["dag_workflow_engine"] = DAGWorkflowEngine()
+    except Exception:
+        log.debug("dag_workflow_engine_init_skipped", exc_info=True)
 
     # Phase 17: Ecosystem-Policy
     try:

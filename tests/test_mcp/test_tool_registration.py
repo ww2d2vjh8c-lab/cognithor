@@ -1,4 +1,4 @@
-"""Tests für die Tool-Registrierungsfunktionen (Browser + Media)."""
+"""Tests für die Tool-Registrierungsfunktionen (Browser + Media + Web)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import pytest
 
 from jarvis.mcp.browser import BROWSER_TOOL_SCHEMAS, register_browser_tools
 from jarvis.mcp.media import MEDIA_TOOL_SCHEMAS, register_media_tools
+from jarvis.mcp.web import register_web_tools
 
 
 class MockMCPClient:
@@ -89,3 +90,56 @@ class TestRegisterMediaTools:
         client = MockMCPClient()
         register_media_tools(client)
         assert len(client.registered) == 8
+
+
+# Expected web tool names
+WEB_TOOL_NAMES = frozenset({
+    "web_search", "web_fetch", "search_and_read", "web_news_search", "http_request",
+})
+
+
+class TestRegisterWebTools:
+    def test_all_tools_registered(self) -> None:
+        client = MockMCPClient()
+        web = register_web_tools(client)
+
+        assert web is not None
+        for name in WEB_TOOL_NAMES:
+            assert name in client.registered, f"Web-Tool '{name}' nicht registriert"
+
+    def test_expected_tool_count(self) -> None:
+        client = MockMCPClient()
+        register_web_tools(client)
+        assert len(client.registered) == 5
+
+    def test_handlers_are_callable(self) -> None:
+        client = MockMCPClient()
+        register_web_tools(client)
+
+        for name, entry in client.registered.items():
+            assert callable(entry["handler"]), f"Handler für '{name}' nicht aufrufbar"
+
+    def test_descriptions_non_empty(self) -> None:
+        client = MockMCPClient()
+        register_web_tools(client)
+
+        for name, entry in client.registered.items():
+            assert entry["description"], f"Description für '{name}' ist leer"
+
+    def test_schemas_present(self) -> None:
+        client = MockMCPClient()
+        register_web_tools(client)
+
+        for name, entry in client.registered.items():
+            assert entry["input_schema"] is not None, f"Schema für '{name}' fehlt"
+
+    def test_http_request_schema_has_method_enum(self) -> None:
+        """http_request Schema muss method enum mit allen Methoden haben."""
+        client = MockMCPClient()
+        register_web_tools(client)
+
+        schema = client.registered["http_request"]["input_schema"]
+        method_prop = schema["properties"]["method"]
+        assert "enum" in method_prop
+        assert "POST" in method_prop["enum"]
+        assert "DELETE" in method_prop["enum"]

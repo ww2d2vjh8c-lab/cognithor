@@ -167,6 +167,16 @@ class WebConfig(BaseModel):
     search_and_read_max_chars: int = Field(default=5000, ge=1000, le=50_000)
     """Maximale Zeichenzahl pro Seite bei search_and_read."""
 
+    # ── HTTP Request Tool ──────────────────────────────────────────────────
+    http_request_max_body_bytes: int = Field(default=1_048_576, ge=1024, le=10_485_760)
+    """Maximale Body-Größe für http_request (Bytes). Standard: 1 MB."""
+
+    http_request_timeout_seconds: int = Field(default=30, ge=1, le=120)
+    """Standard-Timeout für http_request (Sekunden)."""
+
+    http_request_rate_limit_seconds: float = Field(default=1.0, ge=0.0, le=30.0)
+    """Mindestabstand zwischen http_request-Aufrufen (Sekunden). 0 = kein Limit."""
+
 
 class BrowserConfig(BaseModel):
     """Browser-Automation Konfiguration (Playwright)."""
@@ -285,6 +295,9 @@ class ExecutorConfig(BaseModel):
 
     backoff_base_delay_seconds: float = Field(default=1.0, ge=0.1, le=30.0)
     """Basis-Verzögerung für exponentiellen Backoff (Sekunden)."""
+
+    max_parallel_tools: int = Field(default=4, ge=1, le=16)
+    """Maximale Anzahl parallel ausgeführter Tools (DAG-Execution)."""
 
     # Tool-spezifische Timeouts
     media_analyze_image_timeout: int = Field(default=180, ge=30, le=600)
@@ -1307,6 +1320,10 @@ class SecurityConfig(BaseModel):
             r"api_key\s*[:=]\s*\S+",
         ]
     )
+    # Maximale Rekursionstiefe für Sub-Agent-Delegationen
+    max_sub_agent_depth: int = Field(default=3, ge=1, le=10)
+    """Maximale Verschachtelungstiefe für Sub-Agent-Aufrufe via handle_message."""
+
     # TLS-Konfiguration für Webhook-Server und API
     ssl_certfile: str = Field(default="", description="Pfad zum SSL-Zertifikat (PEM)")
     ssl_keyfile: str = Field(default="", description="Pfad zum SSL-Privat-Key (PEM)")
