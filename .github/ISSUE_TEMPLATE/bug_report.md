@@ -6,6 +6,19 @@ labels: bug
 assignees: ''
 ---
 
+<!-- Thanks for reporting! This template was inspired by @TomiWebPro's thorough Ubuntu testing. -->
+
+## Environment
+
+| Field | Value |
+|-------|-------|
+| **OS** | <!-- e.g., Windows 11 23H2, Ubuntu 24.04 LTS, macOS 15.2 --> |
+| **Cognithor version** | <!-- run: python -c "import jarvis; print(jarvis.__version__)" --> |
+| **Python version** | <!-- run: python3 --version --> |
+| **Install method** | <!-- install.sh / manual pip / Docker / start_cognithor.bat --> |
+| **LLM backend** | <!-- Ollama / LM Studio / OpenAI / Anthropic / other --> |
+| **Channel** | <!-- CLI / Web UI / Telegram / Discord / other --> |
+
 ## Description
 
 A clear and concise description of the bug.
@@ -22,22 +35,29 @@ What you expected to happen.
 
 ## Actual Behavior
 
-What actually happened.
-
-## Environment
-
-- **OS:** (e.g., Windows 11, Ubuntu 24.04, macOS 15)
-- **Python:** (e.g., 3.12.4)
-- **Cognithor version:** (e.g., 0.26.0)
-- **LLM backend:** (e.g., Ollama, OpenAI, Anthropic)
-- **Channel:** (e.g., CLI, Telegram, Discord)
+What actually happened. Include the exact error message if there is one.
 
 ## Logs
 
+<details>
+<summary>Click to expand log output</summary>
+
 ```
-Paste relevant log output here (from ~/.jarvis/logs/)
+Paste relevant log output here.
+
+Logs are located at:
+  - Linux/macOS: ~/.jarvis/logs/jarvis.log
+  - Windows: %USERPROFILE%\.jarvis\logs\jarvis.log
+
+For install issues, paste the full terminal output.
 ```
+
+</details>
+
+## Screenshots
+
+<!-- If applicable, add screenshots to help explain the problem. -->
 
 ## Additional Context
 
-Any other context, screenshots, or config snippets.
+<!-- Any other context: config snippets, hardware details, workarounds you tried. -->

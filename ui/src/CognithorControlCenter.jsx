@@ -506,6 +506,67 @@ function Spinner() {
 // Pages
 // ═══════════════════════════════════════════════════════════════════════
 
+// ── Prompt-Evolution Card ──────────────────────────────────────────────
+function PromptEvolutionCard() {
+  const [stats, setStats] = useState(null);
+  const [evolving, setEvolving] = useState(false);
+  const [evolveResult, setEvolveResult] = useState(null);
+
+  const refresh = useCallback(async () => {
+    const r = await api("GET", "/prompt-evolution/stats");
+    if (!r.error) setStats(r);
+  }, []);
+
+  useEffect(() => {
+    refresh();
+    const id = setInterval(refresh, 10000);
+    return () => clearInterval(id);
+  }, [refresh]);
+
+  const handleToggle = async (val) => {
+    await api("POST", "/prompt-evolution/toggle", { enabled: val });
+    await refresh();
+  };
+
+  const handleEvolve = async () => {
+    setEvolving(true);
+    setEvolveResult(null);
+    const r = await api("POST", "/prompt-evolution/evolve");
+    setEvolveResult(r);
+    setEvolving(false);
+    await refresh();
+  };
+
+  const enabled = stats?.enabled ?? false;
+
+  return (
+    <Card title="Prompt-Evolution (A/B)" open={enabled}>
+      <Toggle label="Prompt-Evolution aktiviert" value={enabled} onChange={handleToggle} />
+      {enabled && stats && (<>
+        <ReadOnly label="Aktive Version" value={stats.active_version_id || "–"} />
+        <ReadOnly label="Versionen" value={String(stats.version_count ?? 0)} />
+        <ReadOnly label="Sessions gesamt" value={String(stats.total_sessions ?? 0)} />
+        <ReadOnly label="Laufende Tests" value={String(stats.running_tests ?? 0)} />
+        <ReadOnly label="Abgeschlossene Tests" value={String(stats.completed_tests ?? 0)} />
+        <div style={{ marginTop: 8 }}>
+          <button className="cc-btn cc-btn-sm" onClick={handleEvolve} disabled={evolving}>
+            {evolving ? "Evolviert…" : "Jetzt evolvieren"}
+          </button>
+          {evolveResult && (
+            <span style={{ marginLeft: 8, fontSize: 13 }}>
+              {evolveResult.error
+                ? `Fehler: ${evolveResult.error}`
+                : evolveResult.evolved
+                  ? `Neue Version: ${evolveResult.version_id}`
+                  : "Keine Evolution (noch nicht genug Daten)"}
+            </span>
+          )}
+        </div>
+      </>)}
+    </Card>
+  );
+}
+
 // ── General ────────────────────────────────────────────────────────────
 function GeneralPage({ cfg, set }) {
   return (<>
@@ -524,6 +585,7 @@ function GeneralPage({ cfg, set }) {
       <Toggle label="Dashboard aktiviert" value={cfg.dashboard?.enabled} onChange={v => set("dashboard.enabled", v)} desc="Web-basiertes Monitoring-Dashboard" />
       <NumberInput label="Port" value={cfg.dashboard?.port} onChange={v => set("dashboard.port", v)} min={1024} max={65535} />
     </Card>
+    <PromptEvolutionCard />
   </>);
 }
 

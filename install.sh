@@ -4,6 +4,7 @@
 # ============================================================================
 #
 # Nutzung:
+#   chmod +x install.sh
 #   ./install.sh              Vollinstallation (interaktiv)
 #   ./install.sh --minimal    Nur Core (kein Web, kein Telegram)
 #   ./install.sh --full       Alles inkl. Voice
@@ -37,31 +38,59 @@ OLLAMA_URL="${JARVIS_OLLAMA_BASE_URL:-http://localhost:11434}"
 USE_UV=false
 PKG_INSTALLER=""  # "uv" or "pip", set in detect_installer
 
+# --- Error Tracker ---
+INSTALL_FAILED=false
+
 # ============================================================================
 # Hilfsfunktionen
 # ============================================================================
 
-info()    { echo -e "${BLUE}ℹ${NC}  $*"; }
-success() { echo -e "${GREEN}✓${NC}  $*"; }
-warn()    { echo -e "${YELLOW}⚠${NC}  $*"; }
-error()   { echo -e "${RED}✗${NC}  $*" >&2; }
-fatal()   { error "$*"; exit 1; }
-header()  { echo -e "\n${BOLD}${CYAN}═══ $* ═══${NC}\n"; }
+info()    { echo -e "${BLUE}[i]${NC}  $*"; }
+success() { echo -e "${GREEN}[OK]${NC}  $*"; }
+warn()    { echo -e "${YELLOW}[!]${NC}  $*"; }
+error()   { echo -e "${RED}[X]${NC}  $*" >&2; }
+fatal()   {
+    error "$*"
+    INSTALL_FAILED=true
+    show_error_submission
+    exit 1
+}
+header()  { echo -e "\n${BOLD}${CYAN}=== $* ===${NC}\n"; }
 
 check_command() {
     command -v "$1" &>/dev/null
 }
 
 version_ge() {
-    # Prüft ob Version $1 >= $2
+    # Prueft ob Version $1 >= $2
     printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1 | grep -qF "$2"
 }
 
 # ============================================================================
-# Banner
+# Error Submission Helper (Fix #9)
+# ============================================================================
+
+show_error_submission() {
+    echo ""
+    echo -e "${RED}${BOLD}[X] Installation fehlgeschlagen.${NC}"
+    echo ""
+    echo "  Bitte oeffne ein Issue auf GitHub:"
+    echo "  https://github.com/Alex8791-cyber/cognithor/issues/new"
+    echo ""
+    echo "  Fuege die obige Ausgabe als Log bei."
+    echo ""
+}
+
+# ============================================================================
+# Banner (Fix #7: dynamic version from pyproject.toml)
 # ============================================================================
 
 show_banner() {
+    local version="unknown"
+    if [[ -f "$REPO_DIR/pyproject.toml" ]]; then
+        version=$(grep '^version' "$REPO_DIR/pyproject.toml" | head -1 | cut -d'"' -f2)
+    fi
+
     echo -e "${BOLD}${CYAN}"
     cat << 'BANNER'
 
@@ -71,9 +100,9 @@ show_banner() {
   ██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
   ╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║
    ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
-           Agent OS · v0.1.0 · Installer
-
 BANNER
+    echo -e "           Agent OS · v${version} · Installer"
+    echo ""
     echo -e "${NC}"
 }
 
@@ -115,22 +144,35 @@ detect_installer() {
         return 0
     fi
 
-    # Fallback: pip
+    # Fallback: pip (Fix #2: abort with helpful message if missing)
     if python3 -m pip --version &>/dev/null; then
         PKG_INSTALLER="pip"
         success "pip wird verwendet"
         return 0
     fi
 
-    fatal "Weder uv noch pip gefunden"
+    echo ""
+    error "pip nicht gefunden!"
+    echo ""
+    echo "  Installiere pip mit:"
+    echo ""
+    echo "    sudo apt install python3-pip"
+    echo ""
+    echo "  Danach erneut ausfuehren:"
+    echo ""
+    echo "    ./install.sh"
+    echo ""
+    INSTALL_FAILED=true
+    show_error_submission
+    exit 1
 }
 
 # ============================================================================
-# Schritt 1: Systemvoraussetzungen prüfen
+# Schritt 1: Systemvoraussetzungen pruefen
 # ============================================================================
 
 check_prerequisites() {
-    header "Systemvoraussetzungen prüfen"
+    header "Systemvoraussetzungen pruefen"
     local errors=0
 
     # Python
@@ -140,38 +182,46 @@ check_prerequisites() {
         if version_ge "$py_version" "$MIN_PYTHON"; then
             success "Python $py_version gefunden"
         else
-            error "Python $py_version zu alt (mindestens $MIN_PYTHON benötigt)"
-            ((errors++))
+            error "Python $py_version zu alt (mindestens $MIN_PYTHON benoetigt)"
+            errors=$((errors + 1))
         fi
     else
         error "Python3 nicht gefunden"
         info  "Installiere mit: sudo apt install python3.12 python3.12-venv"
-        ((errors++))
+        errors=$((errors + 1))
     fi
 
-    # pip
-    if python3 -m pip --version &>/dev/null; then
-        success "pip verfügbar"
-    else
-        error "pip nicht gefunden"
-        info  "Installiere mit: sudo apt install python3-pip"
-        ((errors++))
+    # pip (Fix #2: abort immediately with exact fix command)
+    if [[ "$USE_UV" != true ]]; then
+        if python3 -m pip --version &>/dev/null; then
+            success "pip verfuegbar"
+        else
+            error "pip nicht gefunden"
+            echo ""
+            echo "  Behebe mit:"
+            echo "    sudo apt install python3-pip"
+            echo ""
+            fatal "pip ist eine Pflicht-Abhaengigkeit. Bitte installieren und erneut starten."
+        fi
     fi
 
     # venv
     if python3 -m venv --help &>/dev/null; then
-        success "venv-Modul verfügbar"
+        success "venv-Modul verfuegbar"
     else
         error "venv nicht gefunden"
-        info  "Installiere mit: sudo apt install python3.12-venv"
-        ((errors++))
+        echo ""
+        echo "  Behebe mit:"
+        echo "    sudo apt install python3.12-venv"
+        echo ""
+        fatal "python3-venv ist eine Pflicht-Abhaengigkeit. Bitte installieren und erneut starten."
     fi
 
     # git (optional)
     if check_command git; then
-        success "git verfügbar"
+        success "git verfuegbar"
     else
-        warn "git nicht gefunden (optional, für Updates empfohlen)"
+        warn "git nicht gefunden (optional, fuer Updates empfohlen)"
     fi
 
     # Ollama
@@ -180,7 +230,7 @@ check_prerequisites() {
         ollama_version=$(ollama --version 2>/dev/null | head -1 || echo "unbekannt")
         success "Ollama installiert ($ollama_version)"
     else
-        warn "Ollama nicht gefunden – LLM-Funktionen sind ohne Ollama eingeschränkt"
+        warn "Ollama nicht gefunden -- LLM-Funktionen sind ohne Ollama eingeschraenkt"
         info "Installiere: curl -fsSL https://ollama.com/install.sh | sh"
     fi
 
@@ -198,17 +248,17 @@ check_prerequisites() {
 }
 
 # ============================================================================
-# Schritt 2: Ollama-Modelle
+# Schritt 2: Ollama-Modelle (Fix #4: optional, never blocking)
 # ============================================================================
 
 ensure_ollama_models() {
-    header "Ollama-Modelle prüfen"
+    header "Ollama-Modelle pruefen"
 
     if ! curl -sf "${OLLAMA_URL}/api/version" &>/dev/null; then
-        warn "Ollama nicht erreichbar – Modelle manuell herunterladen:"
+        warn "Ollama nicht erreichbar -- Modelle manuell herunterladen:"
         info "  ollama pull qwen3:8b"
         info "  ollama pull nomic-embed-text"
-        info "  ollama pull qwen3:32b     (optional, wenn ≥24GB VRAM)"
+        info "  ollama pull qwen3:32b     (optional, wenn >=24GB VRAM)"
         return 0
     fi
 
@@ -221,18 +271,18 @@ for m in data.get('models', []):
     print(m['name'])
 " 2>/dev/null || echo "")
 
-    # Pflicht-Modelle
+    # Pflicht-Modelle (Fix #4: nur pruefen, nicht automatisch downloaden)
     local required_models=("qwen3:8b" "nomic-embed-text")
     local optional_models=("qwen3:32b")
+    local missing_required=()
 
     for model in "${required_models[@]}"; do
-        # Prüfe ob Modell-Name (ohne Tag-Variante) installiert ist
         local base_name="${model%%:*}"
         if echo "$installed" | grep -q "$base_name"; then
             success "$model bereits installiert"
         else
-            info "Lade $model herunter (Pflicht-Modell)..."
-            ollama pull "$model" || warn "Download von $model fehlgeschlagen – manuell nachholen"
+            warn "$model FEHLT (Pflicht-Modell)"
+            missing_required+=("$model")
         fi
     done
 
@@ -241,10 +291,22 @@ for m in data.get('models', []):
         if echo "$installed" | grep -q "$base_name"; then
             success "$model bereits installiert"
         else
-            info "$model nicht installiert (optional, für bessere Qualität)"
-            info "  Installiere später mit: ollama pull $model"
+            info "$model nicht installiert (optional, fuer bessere Qualitaet)"
         fi
     done
+
+    # Zusammenfassung fehlender Modelle
+    if [[ ${#missing_required[@]} -gt 0 ]]; then
+        echo ""
+        warn "Fehlende Pflicht-Modelle! Bitte manuell herunterladen:"
+        echo ""
+        for model in "${missing_required[@]}"; do
+            echo "    ollama pull $model"
+        done
+        echo ""
+        info "Die Installation wird fortgesetzt -- Modelle koennen spaeter geladen werden."
+        echo ""
+    fi
 }
 
 # ============================================================================
@@ -254,26 +316,40 @@ for m in data.get('models', []):
 setup_venv() {
     header "Python Virtual Environment"
 
+    # Fix #3: If venv dir exists but activate is missing, it's corrupted
     if [[ -d "$VENV_DIR" ]]; then
-        info "Bestehendes venv gefunden: $VENV_DIR"
-        # shellcheck disable=SC1091
-        source "$VENV_DIR/bin/activate"
-        success "venv aktiviert"
-    else
-        if [[ "$PKG_INSTALLER" == "uv" ]]; then
-            info "Erstelle venv mit uv in $VENV_DIR ..."
-            uv venv "$VENV_DIR" --python python3
+        if [[ -f "$VENV_DIR/bin/activate" ]]; then
+            info "Bestehendes venv gefunden: $VENV_DIR"
+            # shellcheck disable=SC1091
+            source "$VENV_DIR/bin/activate"
+            success "venv aktiviert"
+            return 0
         else
-            info "Erstelle venv in $VENV_DIR ..."
-            python3 -m venv "$VENV_DIR"
+            warn "Korruptes venv erkannt (bin/activate fehlt) -- wird neu erstellt"
+            rm -rf "$VENV_DIR"
         fi
-        # shellcheck disable=SC1091
-        source "$VENV_DIR/bin/activate"
-        if [[ "$PKG_INSTALLER" == "pip" ]]; then
-            pip install --upgrade pip setuptools wheel --quiet
-        fi
-        success "venv erstellt und aktiviert"
     fi
+
+    # Create fresh venv
+    if [[ "$PKG_INSTALLER" == "uv" ]]; then
+        info "Erstelle venv mit uv in $VENV_DIR ..."
+        uv venv "$VENV_DIR" --python python3
+    else
+        info "Erstelle venv in $VENV_DIR ..."
+        python3 -m venv "$VENV_DIR"
+    fi
+
+    # Verify activate exists before sourcing
+    if [[ ! -f "$VENV_DIR/bin/activate" ]]; then
+        fatal "venv-Erstellung fehlgeschlagen: $VENV_DIR/bin/activate nicht gefunden"
+    fi
+
+    # shellcheck disable=SC1091
+    source "$VENV_DIR/bin/activate"
+    if [[ "$PKG_INSTALLER" == "pip" ]]; then
+        pip install --upgrade pip setuptools wheel --quiet
+    fi
+    success "venv erstellt und aktiviert"
 }
 
 install_jarvis() {
@@ -289,60 +365,111 @@ install_jarvis() {
         info "Installiere jarvis[$install_extras] mit uv aus $REPO_DIR ..."
         uv pip install -e "$spec" --quiet 2>&1 | tail -5
     else
+        # Fix #5: progress feedback for pip
+        echo ""
         info "Installiere jarvis[$install_extras] mit pip aus $REPO_DIR ..."
-        pip install -e "$spec" --quiet 2>&1 | tail -5
+        info "Installiere Pakete... (kann 2-5 Minuten dauern)"
+        echo ""
+        pip install -e "$spec" --progress-bar on 2>&1 | tail -20
     fi
 
     # Verifiziere Installation
     if python3 -c "import jarvis; print(f'Jarvis v{jarvis.__version__}')" 2>/dev/null; then
         success "Jarvis erfolgreich installiert"
     else
-        fatal "Installation fehlgeschlagen"
+        fatal "Installation fehlgeschlagen -- pip install hat Fehler verursacht"
     fi
 
-    # Jarvis-CLI prüfen
+    # Jarvis-CLI pruefen
     if "$VENV_DIR/bin/jarvis" --version &>/dev/null; then
         local ver
         ver=$("$VENV_DIR/bin/jarvis" --version 2>&1)
-        success "CLI verfügbar: $ver"
+        success "CLI verfuegbar: $ver"
     else
-        warn "CLI 'jarvis' nicht im PATH – nutze: $VENV_DIR/bin/jarvis"
+        warn "CLI 'jarvis' nicht im PATH -- nutze: $VENV_DIR/bin/jarvis"
     fi
 }
 
 # ============================================================================
-# Schritt 4: Verzeichnisstruktur + Config
+# Schritt 4: Verzeichnisstruktur + Config (Fix #6: verbose + timeout + perms)
 # ============================================================================
+
+create_directory_safe() {
+    # Creates a single directory with error handling and verbose output
+    local dir="$1"
+    if [[ -d "$dir" ]]; then
+        info "  [vorhanden] $dir"
+        return 0
+    fi
+    local err_file
+    err_file=$(mktemp "${TMPDIR:-/tmp}/jarvis_mkdir_XXXXXX" 2>/dev/null || echo "/tmp/jarvis_mkdir_err")
+    if mkdir -p "$dir" 2>"$err_file"; then
+        success "  [erstellt]  $dir"
+        rm -f "$err_file" 2>/dev/null
+    else
+        local err
+        err=$(cat "$err_file" 2>/dev/null || echo "unbekannter Fehler")
+        rm -f "$err_file" 2>/dev/null
+        error "Verzeichnis konnte nicht erstellt werden: $dir"
+        error "Fehler: $err"
+        echo ""
+        echo "  Behebe mit:"
+        echo "    sudo mkdir -p $dir"
+        echo "    sudo chown \$(whoami) $dir"
+        echo ""
+        fatal "Verzeichnis-Erstellung fehlgeschlagen. Berechtigungen pruefen."
+    fi
+}
 
 setup_directories() {
     header "Verzeichnisstruktur erstellen"
 
-    # Jarvis --init-only erstellt alles
+    # Core directories that Jarvis needs
+    local dirs=(
+        "$JARVIS_HOME"
+        "$JARVIS_HOME/memory"
+        "$JARVIS_HOME/memory/semantic"
+        "$JARVIS_HOME/memory/episodic"
+        "$JARVIS_HOME/memory/procedures"
+        "$JARVIS_HOME/memory/knowledge"
+        "$JARVIS_HOME/logs"
+        "$JARVIS_HOME/cache"
+        "$JARVIS_HOME/index"
+        "$JARVIS_HOME/workspace"
+        "$JARVIS_HOME/workspace/tmp"
+    )
+
+    for dir in "${dirs[@]}"; do
+        create_directory_safe "$dir"
+    done
+
+    # Additionally run jarvis --init-only for any extra setup
+    info "Fuehre jarvis --init-only aus..."
     "$VENV_DIR/bin/jarvis" --init-only 2>/dev/null || true
-    success "Verzeichnisstruktur in $JARVIS_HOME erstellt"
+    success "Verzeichnisstruktur in $JARVIS_HOME vollstaendig"
 
     # Config-Datei
     local config_file="$JARVIS_HOME/config.yaml"
     if [[ -f "$config_file" ]]; then
-        info "config.yaml bereits vorhanden – wird nicht überschrieben"
+        info "config.yaml bereits vorhanden -- wird nicht ueberschrieben"
     else
-        cp "$REPO_DIR/config.yaml.example" "$config_file"
-        success "config.yaml erstellt aus Vorlage"
+        if [[ -f "$REPO_DIR/config.yaml.example" ]]; then
+            cp "$REPO_DIR/config.yaml.example" "$config_file"
+            success "config.yaml erstellt aus Vorlage"
+        else
+            warn "config.yaml.example nicht gefunden -- uebersprungen"
+        fi
     fi
 
     # .env (optional)
     local env_file="$JARVIS_HOME/.env"
     if [[ ! -f "$env_file" ]]; then
-        cp "$REPO_DIR/.env.example" "$env_file"
-        chmod 600 "$env_file"
-        success ".env erstellt (Berechtigungen: 600)"
+        if [[ -f "$REPO_DIR/.env.example" ]]; then
+            cp "$REPO_DIR/.env.example" "$env_file"
+            chmod 600 "$env_file"
+            success ".env erstellt (Berechtigungen: 600)"
+        fi
     fi
-
-    # Verzeichnis-Übersicht
-    info "Struktur:"
-    find "$JARVIS_HOME" -maxdepth 2 -type d | sort | head -20 | while read -r dir; do
-        echo "    ${dir#$HOME/}"
-    done
 }
 
 # ============================================================================
@@ -468,7 +595,7 @@ ${JARVIS_HOME}/logs/*.jsonl {
 }
 CONF
     success "logrotate-Konfiguration erstellt"
-    info "Für System-Logrotate: sudo ln -s $logrotate_dir/jarvis /etc/logrotate.d/jarvis"
+    info "Fuer System-Logrotate: sudo ln -s $logrotate_dir/jarvis /etc/logrotate.d/jarvis"
 }
 
 # ============================================================================
@@ -478,10 +605,14 @@ CONF
 run_smoke_test() {
     header "Smoke-Test"
 
-    "$VENV_DIR/bin/python" "$REPO_DIR/scripts/smoke_test.py" \
-        --jarvis-home "$JARVIS_HOME" \
-        --ollama-url "$OLLAMA_URL" \
-        --venv "$VENV_DIR"
+    if [[ -f "$REPO_DIR/scripts/smoke_test.py" ]]; then
+        "$VENV_DIR/bin/python" "$REPO_DIR/scripts/smoke_test.py" \
+            --jarvis-home "$JARVIS_HOME" \
+            --ollama-url "$OLLAMA_URL" \
+            --venv "$VENV_DIR"
+    else
+        warn "smoke_test.py nicht gefunden -- uebersprungen"
+    fi
 }
 
 # ============================================================================
@@ -510,10 +641,10 @@ setup_shell_integration() {
                 echo "$activate_line"
                 echo "$alias_line"
             } >> "$shell_rc"
-            success "Alias 'jarvis' zu $shell_rc hinzugefügt"
+            success "Alias 'jarvis' zu $shell_rc hinzugefuegt"
         fi
     else
-        info "Kein .bashrc/.zshrc gefunden – füge manuell hinzu:"
+        info "Kein .bashrc/.zshrc gefunden -- fuege manuell hinzu:"
         info "  $alias_line"
     fi
 }
@@ -548,17 +679,18 @@ uninstall() {
         success "Virtual Environment entfernt"
     fi
 
-    # Shell-Alias entfernen
+    # Shell-Alias entfernen (portable: works on GNU sed and BSD/macOS sed)
     for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
-        if [[ -f "$rc" ]]; then
-            sed -i '/Jarvis Agent OS/d' "$rc"
-            sed -i "/jarvis.*venv.*bin.*jarvis/d" "$rc"
+        if [[ -f "$rc" ]] && grep -q "Jarvis Agent OS\|jarvis.*venv.*bin.*jarvis" "$rc" 2>/dev/null; then
+            grep -v "Jarvis Agent OS" "$rc" | grep -v "jarvis.*venv.*bin.*jarvis" > "${rc}.jarvis_tmp" \
+                && mv "${rc}.jarvis_tmp" "$rc" \
+                || rm -f "${rc}.jarvis_tmp"
         fi
     done
 
     success "Jarvis deinstalliert"
-    info "Daten in $JARVIS_HOME wurden NICHT gelöscht"
-    info "Zum vollständigen Entfernen: rm -rf $JARVIS_HOME"
+    info "Daten in $JARVIS_HOME wurden NICHT geloescht"
+    info "Zum vollstaendigen Entfernen: rm -rf $JARVIS_HOME"
 }
 
 # ============================================================================
@@ -570,7 +702,7 @@ show_summary() {
 
     echo -e "${GREEN}${BOLD}"
     cat << 'DONE'
-  ✓ Jarvis Agent OS erfolgreich installiert!
+  [OK] Jarvis Agent OS erfolgreich installiert!
 DONE
     echo -e "${NC}"
 
@@ -588,8 +720,8 @@ DONE
     echo "    $JARVIS_HOME/memory/                # Alle Erinnerungen"
     echo "    $JARVIS_HOME/logs/                  # Logs + Audit"
     echo ""
-    echo "  Nächste Schritte:"
-    echo "    1. config.yaml prüfen und anpassen"
+    echo "  Naechste Schritte:"
+    echo "    1. config.yaml pruefen und anpassen"
     echo "    2. jarvis starten und testen"
     echo "    3. Optional: Telegram/WebUI aktivieren"
     echo ""

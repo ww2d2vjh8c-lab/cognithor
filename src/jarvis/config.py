@@ -1357,6 +1357,33 @@ class QueueConfig(BaseModel):
     )
 
 
+class ImprovementGovernanceConfig(BaseModel):
+    """Steuerung der Self-Improvement-Domains (SAFE_DOMAINS)."""
+
+    enabled: bool = True
+    auto_domains: list[str] = Field(
+        default_factory=lambda: ["prompt_tuning", "tool_parameters", "workflow_order"],
+    )
+    hitl_domains: list[str] = Field(
+        default_factory=lambda: ["memory_weights", "model_selection"],
+    )
+    blocked_domains: list[str] = Field(
+        default_factory=lambda: ["code_generation"],
+    )
+    cooldown_minutes: int = Field(default=30, ge=5, le=1440)
+    max_changes_per_hour: int = Field(default=5, ge=1, le=50)
+
+
+class PromptEvolutionConfig(BaseModel):
+    """A/B-Test-basierte Prompt-Evolution."""
+
+    enabled: bool = False  # Opt-in Feature
+    min_sessions_per_arm: int = Field(default=20, ge=5, le=200)
+    significance_threshold: float = Field(default=0.05, ge=0.01, le=0.5)
+    evolution_interval_hours: int = Field(default=6, ge=1, le=168)
+    max_concurrent_tests: int = Field(default=1, ge=1, le=3)
+
+
 # ============================================================================
 # Haupt-Konfiguration
 # ============================================================================
@@ -1447,6 +1474,8 @@ class JarvisConfig(BaseModel):
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     queue: QueueConfig = Field(default_factory=QueueConfig)
     marketplace: MarketplaceConfig = Field(default_factory=MarketplaceConfig)
+    improvement: ImprovementGovernanceConfig = Field(default_factory=ImprovementGovernanceConfig)
+    prompt_evolution: PromptEvolutionConfig = Field(default_factory=PromptEvolutionConfig)
 
     # Heartbeat- und Plugin-Konfigurationen
     # Die HeartbeatConfig steuert einen periodischen Check (Heartbeat), der
@@ -2175,6 +2204,13 @@ def ensure_directory_structure(config: JarvisConfig) -> list[str]:
     Idempotent -- kann beliebig oft aufgerufen werden.
     Erstellt nur was fehlt, überschreibt nie vorhandene Dateien.
 
+    Raises:
+        PermissionError: Wenn Verzeichnisse/Dateien nicht erstellt werden
+            koennen (fehlende Berechtigungen). Die Fehlermeldung enthaelt
+            den Fix-Befehl (z.B. sudo chown).
+        OSError: Wenn die Festplatte voll ist oder ein anderes
+            Dateisystem-Problem vorliegt.
+
     Returns:
         Liste der neu erstellten Pfade (für Logging).
     """
@@ -2206,7 +2242,7 @@ def ensure_directory_structure(config: JarvisConfig) -> list[str]:
 
     for d in dirs:
         if not d.exists():
-            d.mkdir(parents=True, exist_ok=True)
+            _safe_mkdir(d)
             created.append(str(d))
 
     # Default-Dateien (nur wenn nicht vorhanden)
@@ -2222,14 +2258,70 @@ def ensure_directory_structure(config: JarvisConfig) -> list[str]:
 
     for path, content in default_files:
         if not path.exists():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding="utf-8")
+            _safe_mkdir(path.parent)
+            _safe_write(path, content)
             created.append(str(path))
 
     # Starter-Prozeduren aus data/procedures/ kopieren (nur wenn Verzeichnis leer)
     _install_starter_procedures(config.procedures_dir, created)
 
     return created
+
+
+def _safe_mkdir(d: Path) -> None:
+    """mkdir mit PermissionError/disk-full Handling und nutzerfreundlichen Meldungen."""
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        home = d
+        # Finde das hoechste nicht-existierende Verzeichnis fuer den Fix-Befehl
+        while home.parent != home and not home.parent.exists():
+            home = home.parent
+        fix = (
+            f"Verzeichnis '{d}' konnte nicht erstellt werden (fehlende Berechtigung).\n"
+            f"  Beheben mit:\n"
+            f"    sudo mkdir -p {d}\n"
+            f"    sudo chown -R $(whoami) {home}"
+        )
+        log.error("directory_permission_error: %s", d)
+        raise PermissionError(fix) from None
+    except OSError as exc:
+        # errno 28 = ENOSPC (disk full), errno 30 = EROFS (read-only FS)
+        if exc.errno == 28:
+            fix = (
+                f"Festplatte voll -- Verzeichnis '{d}' konnte nicht erstellt werden.\n"
+                f"  Freien Speicher pruefen: df -h {d.parent}\n"
+                f"  Mindestens 500 MB freier Speicher werden benoetigt."
+            )
+            log.error("disk_full: %s", d)
+            raise OSError(fix) from None
+        log.error("directory_creation_failed: %s — %s", d, exc)
+        raise
+
+
+def _safe_write(path: Path, content: str) -> None:
+    """write_text mit PermissionError/disk-full Handling."""
+    try:
+        path.write_text(content, encoding="utf-8")
+    except PermissionError:
+        fix = (
+            f"Datei '{path}' konnte nicht geschrieben werden (fehlende Berechtigung).\n"
+            f"  Beheben mit:\n"
+            f"    sudo chown $(whoami) {path.parent}"
+        )
+        log.error("file_permission_error: %s", path)
+        raise PermissionError(fix) from None
+    except OSError as exc:
+        if exc.errno == 28:
+            fix = (
+                f"Festplatte voll -- Datei '{path}' konnte nicht geschrieben werden.\n"
+                f"  Freien Speicher pruefen: df -h {path.parent}\n"
+                f"  Mindestens 500 MB freier Speicher werden benoetigt."
+            )
+            log.error("disk_full_write: %s", path)
+            raise OSError(fix) from None
+        log.error("file_write_failed: %s — %s", path, exc)
+        raise
 
 
 def _install_starter_procedures(procedures_dir: Path, created: list[str]) -> None:

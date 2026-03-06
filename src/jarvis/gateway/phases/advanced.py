@@ -50,6 +50,8 @@ def declare_advanced_attrs(config: Any) -> PhaseResult:
         "run_recorder": None,
         "governance_agent": None,
         "replay_engine": None,
+        "improvement_gate": None,
+        "prompt_evolution": None,
     }
 
     # Phase 5: Live-Monitoring
@@ -218,6 +220,32 @@ async def init_advanced(
         log.info("governance_agent_initialized", db=gov_db)
     except Exception:
         log.debug("governance_agent_init_skipped", exc_info=True)
+
+    # ImprovementGate
+    try:
+        from jarvis.governance.improvement_gate import ImprovementGate
+        gate = ImprovementGate(config.improvement)
+        if result.get("governance_agent"):
+            result["governance_agent"].improvement_gate = gate
+        result["improvement_gate"] = gate
+        log.info("improvement_gate_initialized")
+    except Exception:
+        log.debug("improvement_gate_init_skipped", exc_info=True)
+
+    # PromptEvolutionEngine
+    try:
+        from jarvis.learning.prompt_evolution import PromptEvolutionEngine
+        if config.prompt_evolution.enabled:
+            pe_db = str(config.db_path.with_name("memory_prompt_evolution.db"))
+            result["prompt_evolution"] = PromptEvolutionEngine(
+                db_path=pe_db,
+                min_sessions_per_arm=config.prompt_evolution.min_sessions_per_arm,
+                significance_threshold=config.prompt_evolution.significance_threshold,
+                max_concurrent_tests=config.prompt_evolution.max_concurrent_tests,
+            )
+            log.info("prompt_evolution_initialized", db=pe_db)
+    except Exception:
+        log.debug("prompt_evolution_init_skipped", exc_info=True)
 
     # ReplayEngine (needs Gatekeeper for policy re-evaluation)
     if gatekeeper is not None:

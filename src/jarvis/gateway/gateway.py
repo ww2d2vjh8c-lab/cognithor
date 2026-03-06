@@ -249,6 +249,34 @@ class Gateway:
         )
         apply_phase(self, advanced_result)
 
+        # Wire prompt_evolution to planner (created in advanced, after PGE)
+        if getattr(self, "_prompt_evolution", None) and getattr(self, "_planner", None):
+            self._planner._prompt_evolution = self._prompt_evolution
+
+        # Wire prompt_evolution LLM client (meta-prompt generation)
+        if getattr(self, "_prompt_evolution", None) and self._llm and self._model_router:
+            try:
+                async def _pe_llm_call(prompt: str) -> str:
+                    model = self._model_router.select_model("planning", "high")
+                    resp = await self._llm.chat(
+                        model=model,
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.8,
+                    )
+                    return resp.get("message", {}).get("content", "")
+                self._prompt_evolution._llm_client = _pe_llm_call
+            except Exception:
+                log.debug("prompt_evolution_llm_wiring_skipped", exc_info=True)
+
+        # Wire prompt_evolution interval from config
+        if getattr(self, "_prompt_evolution", None):
+            try:
+                self._prompt_evolution.set_evolution_interval_hours(
+                    self._config.prompt_evolution.evolution_interval_hours
+                )
+            except Exception:
+                log.debug("prompt_evolution_interval_config_skipped", exc_info=True)
+
         # --- Phase G: Compliance validation ---
         compliance_attrs = {
             k: getattr(self, f"_{k}", None)
@@ -272,6 +300,21 @@ class Gateway:
                 )
             except Exception:
                 log.debug("governance_cron_registration_skipped", exc_info=True)
+
+        # Prompt-Evolution-Cron-Job registrieren
+        if self._cron_engine and getattr(self, "_prompt_evolution", None):
+            try:
+                from jarvis.cron.jobs import prompt_evolution_check
+                interval_h = self._config.prompt_evolution.evolution_interval_hours
+                cron_expr = f"0 */{interval_h} * * *" if interval_h < 24 else f"0 {interval_h % 24} * * *"
+                self._cron_engine.add_system_job(
+                    name="prompt_evolution_check",
+                    schedule=cron_expr,
+                    callback=prompt_evolution_check,
+                    args=[self],
+                )
+            except Exception:
+                log.debug("prompt_evolution_cron_registration_skipped", exc_info=True)
 
         log.info(
             "gateway_init_complete",
@@ -1270,6 +1313,24 @@ class Gateway:
                 )
             except Exception:
                 log.debug("run_recorder_finish_failed", exc_info=True)
+
+        # Prompt-Evolution: Record session reward for A/B testing
+        if getattr(self, "_prompt_evolution", None) and self._planner:
+            try:
+                version_id = getattr(self._planner, "_current_prompt_version_id", None)
+                if version_id:
+                    reward_score = (
+                        agent_result.reflection.success_score
+                        if agent_result.reflection
+                        else (0.8 if agent_result.success else 0.3)
+                    )
+                    self._prompt_evolution.record_session(
+                        session_id=session.session_id,
+                        prompt_version_id=version_id,
+                        reward=reward_score,
+                    )
+            except Exception:
+                log.debug("prompt_evolution_record_failed", exc_info=True)
 
         # Self-Learning: Process actionable skill gaps (auto-generate new tools)
         if hasattr(self, "_skill_generator") and self._skill_generator:

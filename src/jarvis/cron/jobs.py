@@ -76,6 +76,26 @@ async def governance_analysis(gateway: Any) -> None:
         logger.warning("governance_analysis_failed: %s", exc)
 
 
+async def prompt_evolution_check(gateway: Any) -> None:
+    """Periodisch: Prompt-Evolution pruefen und ggf. neue Variante erzeugen."""
+    engine = getattr(gateway, "_prompt_evolution", None)
+    if engine is None:
+        return
+    gate = getattr(gateway, "_improvement_gate", None)
+    if gate is not None:
+        from jarvis.governance.improvement_gate import GateVerdict, ImprovementDomain
+        verdict = gate.check(ImprovementDomain.PROMPT_TUNING)
+        if verdict != GateVerdict.ALLOWED:
+            logger.debug("prompt_evolution_gate_blocked: %s", verdict.value)
+            return
+    try:
+        result = await engine.maybe_evolve("system_prompt")
+        if result:
+            logger.info("prompt_evolution_evolved: %s", result)
+    except Exception as exc:
+        logger.warning("prompt_evolution_check_failed: %s", exc)
+
+
 class JobStore:
     """Lädt und verwaltet CronJob-Definitionen aus einer YAML-Datei.
 

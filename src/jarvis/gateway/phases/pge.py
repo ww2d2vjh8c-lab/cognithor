@@ -39,6 +39,7 @@ async def init_pge(
     audit_logger: Any,
     memory_manager: Any = None,
     cost_tracker: Any = None,
+    prompt_evolution: Any = None,
 ) -> PhaseResult:
     """Initialize the PGE trinity (Planner, Executor, Reflector).
 
@@ -200,6 +201,7 @@ async def init_pge(
             task_profiler=task_profiler,
             cost_tracker=cost_tracker,
             personality_engine=personality_engine,
+            prompt_evolution=prompt_evolution,
         )
     except Exception:
         log.error("planner_init_failed", exc_info=True)

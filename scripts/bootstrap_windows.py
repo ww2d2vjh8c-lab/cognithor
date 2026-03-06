@@ -316,6 +316,19 @@ TIER_MODELS: dict[str, list[str]] = {
 }
 
 
+def _print_model_pull_commands(tier: str) -> None:
+    """Zeigt die manuellen ollama pull Kommandos fuer den Tier an."""
+    needed = TIER_MODELS.get(tier, TIER_MODELS["minimal"])
+    print()
+    info("Modelle manuell herunterladen:")
+    print()
+    for model in needed:
+        print(f"    ollama pull {model}")
+    print()
+    info("Danach Cognithor neu starten.")
+    print()
+
+
 def ensure_models(tier: str, result: BootResult, ollama_path: str) -> list[str]:
     """Stellt sicher dass die Tier-Modelle vorhanden sind."""
     needed = TIER_MODELS.get(tier, TIER_MODELS["minimal"])
@@ -496,7 +509,7 @@ def _detect_python_installer(repo_root: str) -> tuple[str, list[str]]:
 
 
 # ── Erster Start (13 Schritte) ─────────────────────────────────────────────
-def first_start(repo_root: str) -> bool:
+def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
     result = BootResult()
     t0 = time.time()
 
@@ -560,10 +573,14 @@ def first_start(repo_root: str) -> bool:
     # ── 4. Ollama-Modelle ──────────────────────────────────────────────
     header("4/13  Modelle")
     models_installed: list[str] = []
-    if ollama_ready and ollama_path:
+    if skip_models:
+        info("Modell-Download uebersprungen (--skip-models)")
+        _print_model_pull_commands(hw.tier)
+    elif ollama_ready and ollama_path:
         models_installed = ensure_models(hw.tier, result, ollama_path)
     else:
         result.add_warn("Modell-Download uebersprungen (Ollama nicht bereit)")
+        _print_model_pull_commands(hw.tier)
 
     # ── 5. Python-Abhaengigkeiten ──────────────────────────────────────
     header("5/13  Python-Abhaengigkeiten")
@@ -743,7 +760,7 @@ def first_start(repo_root: str) -> bool:
 
 
 # ── Folgestart (4 Schritte) ────────────────────────────────────────────────
-def quick_start(repo_root: str) -> bool:
+def quick_start(repo_root: str, *, skip_models: bool = False) -> bool:
     result = BootResult()
     t0 = time.time()
 
@@ -790,28 +807,16 @@ def quick_start(repo_root: str) -> bool:
             result.add_warn(f"Ollama-Installation fehlgeschlagen: {e}")
 
     # ── 2. Modelle pruefen ─────────────────────────────────────────────
-    if ollama_is_running():
+    if skip_models:
+        info("Modell-Check uebersprungen (--skip-models)")
+    elif ollama_is_running():
         models = get_installed_models()
         has_qwen = any("qwen3" in m.lower() for m in models)
         if has_qwen:
             result.add_pass(f"Modelle OK ({len(models)} installiert)")
         else:
-            # Auto-fix: Fehlende Modelle automatisch pullen
-            info("Kein qwen3-Modell gefunden -- starte automatischen Download...")
-            if ollama_path:
-                for model_name in ["qwen3:8b", "qwen3:32b"]:
-                    if pull_model(model_name, ollama_path):
-                        result.add_pass(f"Modell installiert: {model_name}")
-                    else:
-                        result.add_warn(
-                            f"Modell {model_name} konnte nicht geladen werden. "
-                            f"Manuell: ollama pull {model_name}"
-                        )
-            else:
-                result.add_warn(
-                    "Kein qwen3-Modell gefunden und Ollama-Binary nicht auffindbar. "
-                    "Manuell: ollama pull qwen3:8b"
-                )
+            result.add_warn("Kein qwen3-Modell gefunden.")
+            _print_model_pull_commands("minimal")
     else:
         result.add_warn("Modell-Check uebersprungen (Ollama nicht erreichbar)")
 
@@ -933,6 +938,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Cognithor Windows Bootstrap")
     parser.add_argument("--repo-root", required=True, help="Pfad zum Repository-Root")
     parser.add_argument("--force", action="store_true", help="Erster Start erzwingen")
+    parser.add_argument(
+        "--skip-models", action="store_true",
+        help="Ollama-Modell-Download ueberspringen (manuell mit 'ollama pull' nachholen)",
+    )
     args = parser.parse_args()
 
     repo_root = os.path.abspath(args.repo_root)
@@ -950,10 +959,10 @@ def main() -> int:
         # Erster Start oder Re-Init
         if marker is not None and needs_reinit(marker):
             info("Re-Initialisierung wird durchgefuehrt...")
-        success = first_start(repo_root)
+        success = first_start(repo_root, skip_models=args.skip_models)
     else:
         # Folgestart
-        success = quick_start(repo_root)
+        success = quick_start(repo_root, skip_models=args.skip_models)
 
     return 0 if success else 1
 

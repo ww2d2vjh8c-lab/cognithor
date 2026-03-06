@@ -73,6 +73,7 @@ def create_config_routes(
     _register_prometheus_routes(app, _get_hub, gateway)
     _register_security_routes(app, deps, gateway)
     _register_governance_routes(app, deps, gateway)
+    _register_prompt_evolution_routes(app, deps, gateway)
     _register_infrastructure_routes(app, deps, gateway)
     _register_portal_routes(app, deps, gateway)
     _register_ui_routes(app, deps, config_manager, gateway)
@@ -1908,6 +1909,84 @@ def _register_governance_routes(
         if ia is None:
             return {"total": 0}
         return ia.mitigations.stats()
+
+
+# ======================================================================
+# Prompt-Evolution routes
+# ======================================================================
+
+
+def _register_prompt_evolution_routes(
+    app: Any,
+    deps: list[Any],
+    gateway: Any,
+) -> None:
+    """Stats, manual evolve trigger, and enable/disable toggle."""
+
+    @app.get("/api/v1/prompt-evolution/stats", dependencies=deps)
+    async def prompt_evolution_stats() -> dict[str, Any]:
+        engine = getattr(gateway, "_prompt_evolution", None)
+        enabled = engine is not None
+        stats: dict[str, Any] = {"enabled": enabled}
+        if engine:
+            try:
+                stats.update(engine.get_stats("system_prompt"))
+            except Exception:
+                pass
+        return stats
+
+    @app.post("/api/v1/prompt-evolution/evolve", dependencies=deps)
+    async def prompt_evolution_evolve() -> dict[str, Any]:
+        engine = getattr(gateway, "_prompt_evolution", None)
+        if engine is None:
+            return {"error": "prompt_evolution is disabled"}
+        # Check ImprovementGate
+        gate = getattr(gateway, "_improvement_gate", None)
+        if gate is not None:
+            from jarvis.governance.improvement_gate import GateVerdict, ImprovementDomain
+            verdict = gate.check(ImprovementDomain.PROMPT_TUNING)
+            if verdict != GateVerdict.ALLOWED:
+                return {"error": f"gate_blocked: {verdict.value}"}
+        try:
+            result = await engine.maybe_evolve("system_prompt")
+            return {"evolved": result is not None, "version_id": result}
+        except Exception as exc:
+            return {"error": str(exc)}
+
+    @app.post("/api/v1/prompt-evolution/toggle", dependencies=deps)
+    async def prompt_evolution_toggle(request: Request) -> dict[str, Any]:
+        body = await request.json()
+        enabled = body.get("enabled", False)
+
+        if enabled:
+            if getattr(gateway, "_prompt_evolution", None) is None:
+                try:
+                    from jarvis.learning.prompt_evolution import PromptEvolutionEngine
+                    cfg = gateway._config
+                    pe_db = str(cfg.db_path.with_name("memory_prompt_evolution.db"))
+                    engine = PromptEvolutionEngine(
+                        db_path=pe_db,
+                        min_sessions_per_arm=cfg.prompt_evolution.min_sessions_per_arm,
+                        significance_threshold=cfg.prompt_evolution.significance_threshold,
+                        max_concurrent_tests=cfg.prompt_evolution.max_concurrent_tests,
+                    )
+                    engine.set_evolution_interval_hours(
+                        cfg.prompt_evolution.evolution_interval_hours
+                    )
+                    gateway._prompt_evolution = engine
+                    planner = getattr(gateway, "_planner", None)
+                    if planner:
+                        planner._prompt_evolution = engine
+                except Exception as exc:
+                    return {"error": str(exc), "enabled": False}
+        else:
+            # Disable: disconnect from planner but keep engine for stats
+            planner = getattr(gateway, "_planner", None)
+            if planner:
+                planner._prompt_evolution = None
+            gateway._prompt_evolution = None
+
+        return {"enabled": getattr(gateway, "_prompt_evolution", None) is not None}
 
 
 # ======================================================================

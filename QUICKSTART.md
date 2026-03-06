@@ -15,6 +15,7 @@ Diese Anleitung bringt Jarvis in 10 Minuten zum Laufen.
 ```bash
 git clone <repo-url> jarvis
 cd jarvis
+chmod +x install.sh
 ./install.sh
 ```
 

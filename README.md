@@ -332,6 +332,7 @@ git clone https://github.com/Alex8791-cyber/cognithor.git
 cd cognithor
 
 # Recommended: Interactive installation (venv, Ollama check, systemd, smoke test)
+chmod +x install.sh
 ./install.sh
 
 # Or: Manual installation (no C compiler needed)
@@ -851,6 +852,17 @@ Alternatively, use [terminalizer](https://github.com/faressoft/terminalizer) for
 ---
 
 **Metrics:** ~106,000 LOC source · ~90,000 LOC tests · 9,377 tests · 89% coverage · 0 lint errors · **Status: Beta**
+
+## Contributors
+
+| Contributor | Role | Focus |
+|-------------|------|-------|
+| [@Alex8791-cyber](https://github.com/Alex8791-cyber) | Creator & Maintainer | Architecture, Core Development |
+| [@TomiWebPro](https://github.com/TomiWebPro) | Core Contributor & QA Lead | Ubuntu Deployment & Real-World Testing |
+
+### Special Thanks
+
+[@TomiWebPro](https://github.com/TomiWebPro) — First community QA partner and the reason Cognithor's Ubuntu deployment actually works. His meticulous testing on real Ubuntu systems uncovered 9 critical install bugs that are now fixed with full test coverage.
 
 ## License
 

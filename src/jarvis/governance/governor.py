@@ -24,12 +24,14 @@ class GovernanceAgent:
         cost_tracker: Any = None,
         run_recorder: Any = None,
         db_path: str = "governance.db",
+        improvement_gate: Any = None,
     ) -> None:
         self.task_telemetry = task_telemetry
         self.error_clusterer = error_clusterer
         self.task_profiler = task_profiler
         self.cost_tracker = cost_tracker
         self.run_recorder = run_recorder
+        self.improvement_gate = improvement_gate
         self.db_path = db_path
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -376,12 +378,38 @@ class GovernanceAgent:
         return [self._row_to_proposal(row) for row in rows]
 
     def approve_proposal(self, proposal_id: int) -> PolicyChange:
-        """Approve a proposal and return a PolicyChange to be applied."""
+        """Approve a proposal and return a PolicyChange to be applied.
+
+        If an ImprovementGate is configured, the proposal's category is mapped
+        to an ImprovementDomain and checked. BLOCKED/COOLDOWN verdicts cause
+        automatic rejection; NEEDS_APPROVAL passes through for human review.
+        """
         row = self._conn.execute(
             "SELECT * FROM proposals WHERE id = ?", (proposal_id,)
         ).fetchone()
         if row is None:
             raise ValueError(f"Proposal {proposal_id} not found")
+
+        # ImprovementGate check
+        if self.improvement_gate is not None:
+            try:
+                from jarvis.governance.improvement_gate import (
+                    CATEGORY_DOMAIN_MAP,
+                    GateVerdict,
+                )
+
+                category = row["category"]
+                domain = CATEGORY_DOMAIN_MAP.get(category)
+                if domain is not None:
+                    verdict = self.improvement_gate.check(domain)
+                    if verdict in (GateVerdict.BLOCKED, GateVerdict.COOLDOWN):
+                        reason = f"ImprovementGate: {verdict.value} for domain {domain.value}"
+                        self.reject_proposal(proposal_id, reason)
+                        raise ValueError(reason)
+            except ValueError:
+                raise
+            except Exception:
+                logger.debug("improvement_gate_check_error", exc_info=True)
 
         self._conn.execute(
             "UPDATE proposals SET status = 'approved', decision_reason = 'Approved' "

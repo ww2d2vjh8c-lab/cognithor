@@ -317,6 +317,7 @@ class Planner:
         task_profiler: Any = None,
         cost_tracker: Any = None,
         personality_engine: Any = None,
+        prompt_evolution: Any = None,
     ) -> None:
         """Initialisiert den Planner mit LLM-Client und Model-Router.
 
@@ -330,6 +331,7 @@ class Planner:
             task_profiler: Optionaler TaskProfiler fuer Selbsteinschaetzung.
             cost_tracker: Optionaler CostTracker fuer LLM-Kosten-Tracking.
             personality_engine: Optionale PersonalityEngine fuer warme Antworten.
+            prompt_evolution: Optionale PromptEvolutionEngine fuer A/B-Tests.
         """
         self._config = config
         self._ollama = ollama
@@ -339,6 +341,8 @@ class Planner:
         self._task_profiler = task_profiler
         self._cost_tracker = cost_tracker
         self._personality_engine = personality_engine
+        self._prompt_evolution = prompt_evolution
+        self._current_prompt_version_id: str | None = None
 
         # Tool-Descriptions-Cache (#40 Optimierung)
         self._cached_tools_section: str | None = None
@@ -831,6 +835,23 @@ class Planner:
                 personality_section = self._personality_engine.build_personality_block()
             except Exception:
                 pass
+
+        # Prompt-Evolution A/B-Test (wenn aktiv)
+        if self._prompt_evolution is not None:
+            try:
+                version_id, template = self._prompt_evolution.get_active_version(
+                    "system_prompt", getattr(working_memory, "session_id", None) or "default",
+                )
+                self._current_prompt_version_id = version_id
+                return template.format(
+                    tools_section=tools_section,
+                    context_section=context_section,
+                    current_datetime=current_datetime,
+                    owner_name=self._config.owner_name,
+                    personality_section=personality_section,
+                )
+            except Exception:
+                pass  # Fallback auf Standard-Template
 
         return self._system_prompt_template.format(
             tools_section=tools_section,

@@ -91,6 +91,8 @@ _EDITABLE_SECTIONS = frozenset({
     "model_overrides",
     "web",
     "database",
+    "prompt_evolution",
+    "improvement",
 })
 
 # Top-Level-Felder die editierbar sind

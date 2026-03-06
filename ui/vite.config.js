@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { spawn, execSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import http from 'node:http'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, join } from 'node:path'
+import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -101,16 +103,49 @@ function jarvisLauncher() {
   }
 
   // Spawn the Jarvis backend as a child process
-  function startBackend() {
+  // Fix: prefer venv Python (has jarvis installed) over system Python
+  function findPythonCmd() {
+    // 1. Check repo-local .venv (manual install per QUICKSTART.md)
+    const isWin = process.platform === 'win32'
+    const localVenv = isWin
+      ? resolve(BACKEND_DIR, '.venv', 'Scripts', 'python.exe')
+      : resolve(BACKEND_DIR, '.venv', 'bin', 'python')
+    if (existsSync(localVenv)) return localVenv
+
+    // 2. Check ~/.jarvis/venv (install.sh)
+    const homeVenv = isWin
+      ? join(homedir(), '.jarvis', 'venv', 'Scripts', 'python.exe')
+      : join(homedir(), '.jarvis', 'venv', 'bin', 'python')
+    if (existsSync(homeVenv)) return homeVenv
+
+    // 3. Fall back to system Python
+    return isWin ? 'python' : 'python3'
+  }
+
+  const pythonCmd = findPythonCmd()
+
+  function startBackend(retryWithFallback = true) {
     if (backendProcess) return
-    console.log('\n  Starting Jarvis backend...\n')
-    backendProcess = spawn('python', ['-m', 'jarvis', '--no-cli'], {
+    const cmd = retryWithFallback ? pythonCmd : (pythonCmd === 'python' ? 'python3' : 'python')
+    console.log(`\n  Starting Jarvis backend (${cmd})...\n`)
+    backendProcess = spawn(cmd, ['-m', 'jarvis', '--no-cli'], {
       cwd: BACKEND_DIR,
       stdio: ['ignore', 'inherit', 'inherit'],
     })
     backendProcess.on('error', (err) => {
-      console.error('  Failed to start Jarvis:', err.message)
       backendProcess = null
+      if (err.code === 'ENOENT' && retryWithFallback) {
+        const fallback = cmd === 'python' ? 'python3' : 'python'
+        console.warn(`  "${cmd}" not found, trying "${fallback}"...`)
+        startBackend(false)
+      } else {
+        console.error(
+          `\n  [ERROR] Failed to start Jarvis backend: ${err.message}\n` +
+          `  Make sure Python 3.12+ is installed and available as "${pythonCmd}" in your PATH.\n` +
+          `  On Ubuntu/Debian: sudo apt install python3.12\n` +
+          `  On macOS: brew install python@3.12\n`
+        )
+      }
     })
     backendProcess.on('exit', (code) => {
       console.log(`\n  Jarvis backend exited (code ${code})\n`)
