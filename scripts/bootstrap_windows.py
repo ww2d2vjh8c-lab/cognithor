@@ -610,10 +610,11 @@ def first_start(repo_root: str) -> bool:
         ok("node_modules vorhanden")
     else:
         info("Installiere Node-Abhaengigkeiten (npm install)...")
+        npm_cmd = "npm.cmd" if sys.platform == "win32" else "npm"
         npm_proc = subprocess.run(
-            ["npm", "install"],
+            [npm_cmd, "install"],
             capture_output=True, text=True, timeout=300,
-            cwd=ui_dir, shell=True,
+            cwd=ui_dir,
         )
         if npm_proc.returncode == 0:
             result.add_pass("Node-Abhaengigkeiten installiert")
@@ -909,6 +910,7 @@ def print_summary(result: BootResult, elapsed: float, first: bool = True) -> Non
 
     if result.success:
         ok("System bereit -- UI wird gestartet!")
+        info("Tipp: Nutze 'python -m jarvis --lite' fuer minimalen VRAM-Verbrauch (6 GB).")
     else:
         fail("System nicht bereit. Bitte Fehler oben beheben.")
 

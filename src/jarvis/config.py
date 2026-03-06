@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 class OllamaConfig(BaseModel):
     """Ollama-Server Konfiguration."""
 
-    base_url: str = "http://localhost:11434"
+    base_url: str = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
     timeout_seconds: int = Field(default=120, ge=10, le=600)
     keep_alive: str = "30m"  # Wie lange Modelle im VRAM bleiben
 
@@ -1281,7 +1281,7 @@ class SecurityConfig(BaseModel):
     allowed_paths: list[str] = Field(
         default_factory=lambda: [
             "~/.jarvis/",
-            str(Path(tempfile.gettempdir()) / "jarvis") + "/",
+            str(Path(tempfile.gettempdir()) / "jarvis") + os.sep,
         ]
     )
     # Regex-Patterns für destruktive Shell-Befehle [B§3.2]

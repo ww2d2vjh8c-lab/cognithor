@@ -12,14 +12,14 @@
   <p align="center">
     <img src="https://img.shields.io/badge/status-Beta%20%2F%20Experimental-orange?style=flat-square" alt="Status: Beta">
     <a href="#quick-start"><img src="https://img.shields.io/badge/python-%3E%3D3.12-blue?style=flat-square" alt="Python"></a>
-    <a href="#tests"><img src="https://img.shields.io/badge/tests-9%2C357%20passing-brightgreen?style=flat-square" alt="Tests"></a>
+    <a href="#tests"><img src="https://img.shields.io/badge/tests-9%2C377%20passing-brightgreen?style=flat-square" alt="Tests"></a>
     <a href="#tests"><img src="https://img.shields.io/badge/coverage-89%25-brightgreen?style=flat-square" alt="Coverage"></a>
     <a href="#tests"><img src="https://img.shields.io/badge/lint-0%20errors-brightgreen?style=flat-square" alt="Lint"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License"></a>
   </p>
 </p>
 
-> **Note:** Cognithor is in **active development (Beta)**. While the test suite is extensive (9,357 tests, 89% coverage), the project has not been battle-tested in production environments. Expect rough edges, breaking changes between versions, and some German-language strings in system prompts and error messages. Contributions, bug reports, and feedback are very welcome. See [Status & Maturity](#status--maturity) for details.
+> **Note:** Cognithor is in **active development (Beta)**. While the test suite is extensive (9,377 tests, 89% coverage), the project has not been battle-tested in production environments. Expect rough edges, breaking changes between versions, and some German-language strings in system prompts and error messages. Contributions, bug reports, and feedback are very welcome. See [Status & Maturity](#status--maturity) for details.
 
 ---
 
@@ -27,7 +27,7 @@
 
 - **Your data never leaves your machine.** Runs 100% locally with Ollama or LM Studio — no cloud, no API keys required, full GDPR compliance. Cloud providers are optional, not mandatory.
 - **One system, not twenty tools.** 17 channels, 18+ MCP tool servers, 5-tier memory, knowledge vault, cron, voice, browser automation, distributed locking, durable message queues — integrated from day one. No glue code, no plugin hell.
-- **Extensively tested.** 9,357 tests, 89% coverage, 4-level sandbox, SHA-256 audit chain, runtime token encryption, Prometheus metrics, and multiple deployment options from one-click Windows launcher to Docker Compose to bare-metal servers. See [Status & Maturity](#status--maturity) for what this does and does not guarantee.
+- **Extensively tested.** 9,377 tests, 89% coverage, 4-level sandbox, SHA-256 audit chain, runtime token encryption, Prometheus metrics, and multiple deployment options from one-click Windows launcher to Docker Compose to bare-metal servers. See [Status & Maturity](#status--maturity) for what this does and does not guarantee.
 
 ---
 
@@ -47,7 +47,7 @@
 | **Deployment (Docker, bare-metal)** | Beta — tested on limited configurations |
 | **Enterprise features** (GDPR, A2A, Governance) | Alpha — implemented but not audited for compliance |
 
-**What the test suite covers:** Unit tests, integration tests, and mocked end-to-end tests for all modules. The 9,357 tests verify code correctness in controlled environments.
+**What the test suite covers:** Unit tests, integration tests, and mocked end-to-end tests for all modules. The 9,377 tests verify code correctness in controlled environments.
 
 **What the test suite does NOT cover:** Real-world deployment scenarios, network edge cases, long-running stability, multi-user load, hardware-specific voice/GPU issues, or actual LLM response quality.
 
@@ -94,7 +94,7 @@
 
 ### v0.26.6 — Chat, Voice, Agent Infrastructure & Security Hardening
 
-This release brings Cognithor from a CLI-first tool to a full Agent OS with integrated chat, voice mode, 15 new enterprise subsystems, and deep security hardening. **9,357 tests** with 0 failures.
+This release brings Cognithor from a CLI-first tool to a full Agent OS with integrated chat, voice mode, 15 new enterprise subsystems, and deep security hardening. **9,377 tests** with 0 failures.
 
 **Chat & Voice**
 - **Integrated Chat** — Full chat page in the Control Center with WebSocket streaming, tool indicators, canvas panel, approval banners
@@ -164,7 +164,7 @@ This release brings Cognithor from a CLI-first tool to a full Agent OS with inte
 - **Agent SDK** — Decorator-based agent registration (`@agent`, `@tool`, `@hook`), project scaffolding
 - **Plugin Remote Registry** — Remote manifests with SHA-256 checksums, dependency resolution, install/update/rollback
 - **uv Installer Support** — Automatic uv detection for 10x faster installs, transparent pip fallback
-- **9,357 tests** · **89% coverage** · **0 lint errors**
+- **9,377 tests** · **89% coverage** · **0 lint errors**
 
 ## Architecture
 
@@ -322,19 +322,30 @@ python demo.py --fast    # Speed run (~15 seconds)
 ### Step 1: Clone and Install (~2 min)
 
 ```bash
-# Clone the repository
+# Option A: Install from PyPI (simplest)
+pip install cognithor          # Core features
+pip install cognithor[all]     # All features (recommended)
+pip install cognithor[full]    # Everything including voice + PostgreSQL
+
+# Option B: Clone the repository (for development / latest changes)
 git clone https://github.com/Alex8791-cyber/cognithor.git
 cd cognithor
 
 # Recommended: Interactive installation (venv, Ollama check, systemd, smoke test)
 ./install.sh
 
-# Or: Manual installation
+# Or: Manual installation (no C compiler needed)
 pip install -e ".[all,dev]"
 
 # Individual feature groups (install only what you need)
 pip install -e ".[telegram,voice,web,cron]"
 ```
+
+> **Windows One-Click:** Run `install.bat` (double-click) or `.\install.ps1` in PowerShell. Both handle Python, venv, Ollama, and model downloads automatically.
+
+> **No git?** [Download the ZIP](https://github.com/Alex8791-cyber/cognithor/archive/refs/heads/main.zip) instead, extract it, and open a terminal in the extracted folder.
+
+> **`[all]` vs `[full]`:** `[all]` installs all features that work out of the box on any platform without a C compiler. `[full]` additionally includes `voice` (faster-whisper, piper-tts, sounddevice) and `postgresql` (psycopg, pgvector) which may require build tools on some systems.
 
 The installer offers five modes: `--minimal` (core only), `--full` (all features), `--use-uv` (10x faster installs with [uv](https://docs.astral.sh/uv/)), `--systemd` (+ service installation), `--uninstall` (removal). Without flags, it starts in interactive mode. If `uv` is installed, it is auto-detected and preferred over pip.
 
@@ -352,21 +363,26 @@ No GPU? Use smaller models (`qwen3:8b` for both) or a cloud provider — just se
 
 ### Step 3: Start (~10 sec)
 
-**Option A: One-Click (Windows)**
+**Option A: One-Click (Windows)** — requires [Node.js](https://nodejs.org/) for the Web UI
 
 ```
 Double-click  start_cognithor.bat  ->  Browser opens  ->  Click "Power On"  ->  Done.
 ```
 
+> No Node.js? Skip to **Option B** — the CLI works without it.
+
 **Option B: CLI**
 
 ```bash
 cognithor                          # Interactive CLI
-# or: python -m jarvis
+python -m jarvis                   # Same thing (always works, no PATH needed)
 
+python -m jarvis --lite            # Lite mode: qwen3:8b only (6 GB VRAM)
 python -m jarvis --no-cli          # Headless mode (API only)
 JARVIS_HOME=~/my-cognithor cognithor  # Custom home directory
 ```
+
+> **Windows:** If `cognithor` is not recognized after `pip install`, use `python -m jarvis` instead — this always works regardless of PATH configuration. Alternatively, add Python's `Scripts` directory to your PATH (typically `%APPDATA%\Python\PythonXY\Scripts` or the `Scripts` folder inside your venv).
 
 **Option C: Control Center UI (Development)**
 
@@ -540,7 +556,7 @@ python -m pytest tests/test_memory/ -v
 python -m pytest tests/test_channels/ -v
 ```
 
-Current status: **9,357 tests** · **100% pass rate** · **89% coverage** · **~106,000 LOC source** · **~90,000 LOC tests**
+Current status: **9,377 tests** · **100% pass rate** · **89% coverage** · **~106,000 LOC source** · **~90,000 LOC tests**
 
 | Area | Tests | Description |
 |------|-------|-------------|
@@ -676,7 +692,7 @@ cognithor/
 │       │   └── useVoiceMode.js    # Voice mode hook (wake word, STT, TTS)
 │       ├── App.jsx                # App shell
 │       └── main.jsx               # React entry
-├── tests/                         # 9,357 tests, ~90,000 LOC
+├── tests/                         # 9,377 tests, ~90,000 LOC
 │   ├── test_core/                 # Planner, Gatekeeper, Executor, Distributed Lock
 │   ├── test_memory/               # All 5 memory tiers, hybrid search
 │   ├── test_mcp/                  # MCP tools and client
@@ -834,7 +850,7 @@ Alternatively, use [terminalizer](https://github.com/faressoft/terminalizer) for
 
 ---
 
-**Metrics:** ~106,000 LOC source · ~90,000 LOC tests · 9,357 tests · 89% coverage · 0 lint errors · **Status: Beta**
+**Metrics:** ~106,000 LOC source · ~90,000 LOC tests · 9,377 tests · 89% coverage · 0 lint errors · **Status: Beta**
 
 ## License
 

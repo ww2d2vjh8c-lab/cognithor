@@ -87,11 +87,11 @@ class ContextPipeline:
             )
 
         # Parallel sammeln
-        memory_task = asyncio.get_event_loop().run_in_executor(
+        memory_task = asyncio.get_running_loop().run_in_executor(
             None, self._search_memory, user_message,
         )
         vault_task = self._search_vault(user_message)
-        episode_task = asyncio.get_event_loop().run_in_executor(
+        episode_task = asyncio.get_running_loop().run_in_executor(
             None, self._get_episodes,
         )
 

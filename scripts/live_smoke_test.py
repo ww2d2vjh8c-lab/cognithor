@@ -21,6 +21,7 @@ import argparse
 import asyncio
 import contextlib
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -467,12 +468,12 @@ async def main() -> int:
     parser.add_argument(
         "--home",
         default=None,
-        help="Jarvis Home-Verzeichnis (default: /tmp/jarvis-smoke-test)",
+        help="Jarvis Home-Verzeichnis (default: <tempdir>/jarvis-smoke-test)",
     )
     parser.add_argument("--skip-llm", action="store_true", help="LLM-Tests überspringen")
     args = parser.parse_args()
 
-    jarvis_home = Path(args.home) if args.home else Path("/tmp/jarvis-smoke-test")
+    jarvis_home = Path(args.home) if args.home else Path(tempfile.gettempdir()) / "jarvis-smoke-test"
 
     print("=" * 60)
     print("  🏠 Jarvis · Live Smoke-Test")

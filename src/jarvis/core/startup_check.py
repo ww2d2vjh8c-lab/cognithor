@@ -72,14 +72,14 @@ OPTIONAL_GROUPS: dict[str, list[str]] = {
     "mcp": ["mcp"],
     "telegram": ["python-telegram-bot"],
     "web": ["fastapi", "uvicorn", "websockets"],
-    "voice": ["faster-whisper", "piper-tts", "sounddevice", "webrtcvad"],
+    "voice": ["faster-whisper", "piper-tts", "sounddevice"],
     "search": ["trafilatura", "ddgs"],
     "documents": ["fpdf2", "python-docx"],
     "cron": ["apscheduler", "croniter"],
 }
 
 # Default Ollama URL
-_OLLAMA_URL = "http://localhost:11434"
+_OLLAMA_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
 
 # ============================================================================
@@ -598,7 +598,7 @@ class StartupChecker:
                 return candidate2
         else:
             # Linux/macOS common paths
-            for p in ["/usr/local/bin/ollama", "/usr/bin/ollama"]:
+            for p in ["/usr/local/bin/ollama", "/usr/bin/ollama", "/opt/homebrew/bin/ollama"]:
                 if os.path.isfile(p):
                     return p
 

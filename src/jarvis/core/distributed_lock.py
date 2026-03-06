@@ -186,7 +186,7 @@ class FileLockBackend(DistributedLock):
 
         while True:
             try:
-                acquired = await asyncio.get_event_loop().run_in_executor(
+                acquired = await asyncio.get_running_loop().run_in_executor(
                     None, self._try_lock, path, name
                 )
                 if acquired:
@@ -225,7 +225,7 @@ class FileLockBackend(DistributedLock):
         fh = self._handles.pop(name, None)
         if fh is None:
             return
-        await asyncio.get_event_loop().run_in_executor(None, self._unlock, fh, name)
+        await asyncio.get_running_loop().run_in_executor(None, self._unlock, fh, name)
 
     def _unlock(self, fh: object, name: str) -> None:
         """Release the file lock (runs in thread executor)."""

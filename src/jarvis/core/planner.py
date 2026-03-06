@@ -468,12 +468,25 @@ class Planner:
             )
         except OllamaError as exc:
             _plan_ms = int((time.monotonic() - _plan_start) * 1000)
-            log.error("planner_llm_error", error=str(exc))
+            log.error("planner_llm_error", error=str(exc), status_code=exc.status_code)
             if self._audit_logger:
                 self._audit_logger.log_tool_call(
                     "llm_plan", {"model": model, "goal": user_message[:100]},
                     result=f"ERROR: {exc}", success=False,
                     duration_ms=float(_plan_ms),
+                )
+            # Specific message for model-not-found (404)
+            if exc.status_code == 404:
+                return ActionPlan(
+                    goal=user_message,
+                    reasoning=f"Modell '{model}' nicht gefunden (HTTP 404)",
+                    direct_response=(
+                        f"Das Sprachmodell '{model}' ist nicht installiert. "
+                        f"Bitte lade es herunter:\n\n"
+                        f"  ollama pull {model}\n\n"
+                        f"Danach starte mich neu oder versuch es einfach erneut."
+                    ),
+                    confidence=0.0,
                 )
             return ActionPlan(
                 goal=user_message,

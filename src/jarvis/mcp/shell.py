@@ -14,6 +14,7 @@ Bibel-Referenz: §5.3 (jarvis-shell Server), §4.3 (Sandbox)
 
 from __future__ import annotations
 
+import os
 import re
 import shlex
 from pathlib import Path

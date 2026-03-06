@@ -94,6 +94,26 @@ def classify_error_for_user(exc: BaseException) -> str:
     exc_type = type(exc).__name__
     exc_str = str(exc)[:200]
 
+    # Ollama-specific errors (model not found, connection refused)
+    if exc_type == "OllamaError":
+        status_code = getattr(exc, "status_code", None)
+        if status_code == 404:
+            return _t(
+                "Das benoetigte Sprachmodell ist nicht installiert. "
+                "Bitte lade es herunter mit: ollama pull <modellname>\n"
+                "Details: " + exc_str,
+                "The required language model is not installed. "
+                "Please download it with: ollama pull <modelname>\n"
+                "Details: " + exc_str,
+            )
+        if "nicht erreichbar" in exc_str.lower() or "connect" in exc_str.lower():
+            return _t(
+                "Das Sprachmodell (Ollama) ist nicht erreichbar. "
+                "Bitte starte Ollama: ollama serve",
+                "The language model (Ollama) is not reachable. "
+                "Please start Ollama: ollama serve",
+            )
+
     if exc_type in ("TimeoutError", "asyncio.TimeoutError") or "timeout" in exc_str.lower():
         return _t(
             "Die Verarbeitung hat leider zu lange gedauert. "

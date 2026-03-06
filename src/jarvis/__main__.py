@@ -13,6 +13,7 @@ import argparse
 import contextlib
 from pathlib import Path
 import os
+import sys
 from typing import Any
 
 from jarvis import __version__
@@ -72,11 +73,38 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Host für die Control Center API (Default: JARVIS_API_HOST env oder 127.0.0.1)",
     )
+    parser.add_argument(
+        "--lite",
+        action="store_true",
+        help="Lite-Modus: qwen3:8b als Planner und Executor (6 GB statt 26 GB VRAM)",
+    )
     return parser.parse_args()
+
+
+def _check_python_version() -> None:
+    """Sicherstellen, dass Python >= 3.12 läuft."""
+    if sys.version_info < (3, 12):
+        sys.exit(
+            f"Cognithor benötigt Python >= 3.12, "
+            f"aktuell: {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\n"
+            f"Bitte installiere eine neuere Python-Version: https://www.python.org/downloads/"
+        )
 
 
 def main() -> None:
     """Haupteintrittspunkt für Jarvis."""
+    _check_python_version()
+
+    # Windows: stdout/stderr auf UTF-8 umstellen, damit Umlaute in cmd.exe
+    # (ohne chcp 65001) nicht zu Encoding-Crashes fuehren.
+    if sys.platform == "win32":
+        for stream in (sys.stdout, sys.stderr):
+            if hasattr(stream, "reconfigure"):
+                try:
+                    stream.reconfigure(encoding="utf-8", errors="replace")
+                except Exception:
+                    pass
+
     args = parse_args()
 
     # 0. .env-Datei laden (Secrets aus ~/.jarvis/.env oder Projekt-Root)
@@ -93,6 +121,11 @@ def main() -> None:
     from jarvis.config import ensure_directory_structure, load_config
 
     config = load_config(args.config)
+
+    # 1.5 Lite-Modus: kleinere Modelle fuer niedrigen VRAM-Verbrauch
+    if args.lite:
+        config.models.planner.name = "qwen3:8b"
+        config.models.coder.name = "qwen2.5-coder:7b"
 
     # 2. Verzeichnisstruktur sicherstellen
     created = ensure_directory_structure(config)
@@ -147,7 +180,7 @@ def main() -> None:
 
     # 5. System-Check -- startup banner (intentional CLI output)
     _api_host = args.api_host or os.environ.get("JARVIS_API_HOST", "127.0.0.1")
-    _print_banner(config, api_host=_api_host, api_port=args.api_port)
+    _print_banner(config, api_host=_api_host, api_port=args.api_port, lite=args.lite)
 
     # Phase 0 Checkpoint: Setup OK
     log.info(
@@ -171,6 +204,36 @@ def main() -> None:
         try:
             # Alle Subsysteme initialisieren
             await gateway.initialize()
+
+            # LLM-Erreichbarkeit pruefen und prominent warnen
+            _llm = getattr(gateway, "_llm", None)
+            if _llm and not await _llm.is_available():
+                _backend = getattr(_llm, "backend_type", "ollama")
+                print()
+                print("!" * 60)
+                print("  WARNUNG: Sprachmodell nicht erreichbar!")
+                print("!" * 60)
+                if _backend == "ollama":
+                    _ollama_url = config.ollama.base_url
+                    print(f"  Ollama antwortet nicht unter {_ollama_url}")
+                    print()
+                    print("  Bitte starte Ollama:")
+                    print("    ollama serve")
+                    print()
+                    print("  Falls noch keine Modelle installiert sind:")
+                    print(f"    ollama pull {config.models.planner.name}")
+                    print(f"    ollama pull {config.models.executor.name}")
+                elif _backend == "lmstudio":
+                    print(f"  LM Studio ist nicht erreichbar unter {config.lmstudio_base_url}")
+                    print("  Bitte starte LM Studio und lade ein Modell.")
+                else:
+                    print(f"  LLM-Backend '{_backend}' ist nicht erreichbar.")
+                    print("  Bitte pruefe deine API-Keys und Netzwerkverbindung.")
+                print()
+                print("  Jarvis startet trotzdem, aber Anfragen werden fehlschlagen")
+                print("  bis das Sprachmodell erreichbar ist.")
+                print("!" * 60)
+                print()
 
             # SessionStore-Referenz für Channel-Persistenz
             _session_store = getattr(gateway, "_session_store", None)
@@ -444,7 +507,7 @@ def main() -> None:
                             txt_input_path = txt_tmp.name
 
                         cmd = [
-                            "python", "-m", "piper",
+                            sys.executable, "-m", "piper",
                             "--model", str(model_path),
                             "--output_file", tmp_path,
                             "--length-scale", str(length_scale),
@@ -504,7 +567,7 @@ def main() -> None:
                         urllib.request.urlretrieve(onnx_url, str(dest / f"{voice}.onnx"))
                         urllib.request.urlretrieve(json_url, str(dest / f"{voice}.onnx.json"))
 
-                    await asyncio.get_event_loop().run_in_executor(None, _dl)
+                    await asyncio.get_running_loop().run_in_executor(None, _dl)
                     log.info("piper_voice_downloaded", voice=voice)
 
                 log.info("cc_tts_endpoint_registered")
@@ -729,7 +792,12 @@ def main() -> None:
         log.info("jarvis_shutdown_by_user")
 
 
-def _print_banner(config: Any, api_host: str = "127.0.0.1", api_port: int = 8741) -> None:
+def _print_banner(
+    config: Any,
+    api_host: str = "127.0.0.1",
+    api_port: int = 8741,
+    lite: bool = False,
+) -> None:
     """Print the startup banner to the console.
 
     This is intentional CLI output so we use print() rather than the
@@ -738,8 +806,9 @@ def _print_banner(config: Any, api_host: str = "127.0.0.1", api_port: int = 8741
     """
     backend = getattr(config, "llm_backend_type", "ollama")
     scheme = "https" if config.security.ssl_certfile else "http"
+    lite_tag = " [LITE]" if lite else ""
     print(f"\n{'=' * 60}")
-    print(f"  COGNITHOR · Agent OS v{__version__}")
+    print(f"  COGNITHOR · Agent OS v{__version__}{lite_tag}")
     print(f"  Home:   {config.jarvis_home}")
     print(f"  API:    {scheme}://{api_host}:{api_port}")
     if backend == "ollama":

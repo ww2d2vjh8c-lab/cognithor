@@ -170,6 +170,12 @@ class OllamaClient:
 
             if resp.status_code != 200:
                 body = resp.text[:500]
+                if resp.status_code == 404:
+                    raise OllamaError(
+                        f"Modell '{model}' nicht gefunden. "
+                        f"Bitte zuerst herunterladen: ollama pull {model}",
+                        status_code=404,
+                    )
                 raise OllamaError(
                     f"Ollama HTTP {resp.status_code}: {body}",
                     status_code=resp.status_code,

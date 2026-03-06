@@ -13,6 +13,7 @@ Design principles:
 
 from __future__ import annotations
 
+import os
 import tempfile
 import uuid
 from datetime import UTC, date, datetime
@@ -306,7 +307,7 @@ class SandboxConfig(BaseModel):
     allowed_paths: list[str] = Field(
         default_factory=lambda: [
             "~/.jarvis/workspace/",
-            str(Path(tempfile.gettempdir()) / "jarvis") + "/",
+            str(Path(tempfile.gettempdir()) / "jarvis") + os.sep,
         ]
     )
     network_access: bool = False

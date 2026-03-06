@@ -686,9 +686,42 @@ class JarvisMCPServer:
 
         log.info("mcp_server_stdio_started")
 
+        loop = asyncio.get_running_loop()
+
+        if sys.platform == "win32":
+            # ProactorEventLoop doesn't support connect_read_pipe;
+            # use a thread to read stdin line-by-line instead.
+            import concurrent.futures
+            _executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+            def _read_line() -> bytes:
+                return sys.stdin.buffer.readline()
+
+            while self._running:
+                try:
+                    line = await asyncio.wait_for(
+                        loop.run_in_executor(_executor, _read_line),
+                        timeout=1.0,
+                    )
+                    if not line:
+                        break
+                except asyncio.TimeoutError:
+                    continue
+                except json.JSONDecodeError as exc:
+                    log.warning("mcp_server_invalid_json", error=str(exc))
+                    continue
+                else:
+                    message = json.loads(line.decode("utf-8").strip())
+                    response = await self.process_jsonrpc_message(message)
+                    if response is not None:
+                        sys.stdout.write(json.dumps(response) + "\n")
+                        sys.stdout.flush()
+            _executor.shutdown(wait=False)
+            return
+
         reader = asyncio.StreamReader()
         protocol = asyncio.StreamReaderProtocol(reader)
-        await asyncio.get_running_loop().connect_read_pipe(lambda: protocol, sys.stdin)
+        await loop.connect_read_pipe(lambda: protocol, sys.stdin)
 
         while self._running:
             try:

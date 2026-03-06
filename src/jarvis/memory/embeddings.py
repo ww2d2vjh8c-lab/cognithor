@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -22,7 +23,7 @@ logger = logging.getLogger("jarvis.memory.embeddings")
 
 # Default: nomic-embed-text via Ollama
 DEFAULT_MODEL = "nomic-embed-text"
-DEFAULT_BASE_URL = "http://localhost:11434"
+DEFAULT_BASE_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 DEFAULT_DIMENSIONS = 768
 
 

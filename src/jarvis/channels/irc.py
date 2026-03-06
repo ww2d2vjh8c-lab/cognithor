@@ -295,7 +295,7 @@ class IRCChannel(Channel):
         prompt = f"[Approval] Tool: {tool} — Grund: {reason}. Antwort mit 'ja' oder 'nein'."
         await self._send_message(reply_target, prompt)
 
-        future: asyncio.Future[bool] = asyncio.get_event_loop().create_future()
+        future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
         async with self._approval_lock:
             self._approval_futures[session_id] = future
 

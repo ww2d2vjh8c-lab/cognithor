@@ -78,16 +78,9 @@ if errorlevel 1 (
 :: ============================================================
 ::  3. Node.js im PATH?
 :: ============================================================
+set "HAS_NODE=0"
 where node >nul 2>&1
-if errorlevel 1 (
-    echo   [FEHLER] Node.js wurde nicht gefunden!
-    echo.
-    echo   Bitte installiere Node.js 18+:
-    echo   https://nodejs.org/
-    echo.
-    pause
-    exit /b 1
-)
+if not errorlevel 1 set "HAS_NODE=1"
 
 :: ============================================================
 ::  4. Bootstrap ausfuehren
@@ -106,16 +99,17 @@ if errorlevel 1 (
 )
 
 :: ============================================================
-::  5. Pruefe node_modules
+::  5. Node.js vorhanden? -> Web-UI, sonst CLI-Fallback
 :: ============================================================
+if "%HAS_NODE%"=="0" goto :cli_fallback
 if not exist "%REPO_ROOT%\ui\node_modules" (
     echo.
-    echo   [FEHLER] node_modules nicht gefunden!
-    echo   Bootstrap hat npm install nicht ausgefuehrt.
-    echo   Manuelle Loesung: cd "%REPO_ROOT%\ui" ^&^& npm install
-    echo.
-    pause
-    exit /b 1
+    echo   [WARNUNG] node_modules nicht gefunden.
+    echo   Versuche npm install...
+    cd /d "%REPO_ROOT%\ui"
+    call npm install >nul 2>&1
+    if errorlevel 1 goto :cli_fallback
+    cd /d "%REPO_ROOT%"
 )
 
 :: ============================================================
@@ -129,4 +123,20 @@ cd /d "%REPO_ROOT%\ui"
 call npm run dev
 echo.
 echo   Web-UI wurde beendet.
+pause
+exit /b 0
+
+:: ============================================================
+::  CLI-Fallback (kein Node.js oder npm install fehlgeschlagen)
+:: ============================================================
+:cli_fallback
+echo.
+echo   Node.js nicht gefunden -- starte im CLI-Modus.
+echo   Fuer die Web-UI installiere Node.js 18+: https://nodejs.org/
+echo.
+echo   ============================================================
+cd /d "%REPO_ROOT%"
+%PYTHON_CMD% -m jarvis
+echo.
+echo   Cognithor wurde beendet.
 pause

@@ -74,7 +74,6 @@ voice = [
     "faster-whisper>=1.0",
     "piper-tts>=1.0",
     "sounddevice>=0.5",
-    "webrtcvad>=2.0",
 ]
 elevenlabs = [
     "elevenlabs>=1.0",
@@ -82,6 +81,24 @@ elevenlabs = [
 google-chat = [
     "google-auth>=2.0",
     "google-api-core>=2.0",
+]
+discord = [
+    "discord.py>=2.0",
+]
+slack = [
+    "slack-sdk>=3.0",
+]
+matrix = [
+    "matrix-nio>=0.24",
+]
+whatsapp = [
+    "aiohttp>=3.9",
+]
+signal = [
+    "aiohttp>=3.9",
+]
+teams = [
+    "aiohttp>=3.9",
 ]
 irc = [
     "irc>=20.0",
@@ -113,11 +130,16 @@ browser = [
     "playwright>=1.40",
 ]
 all = [
-    "cognithor[memory,vector,mcp,telegram,web,search,cron,postgresql,documents,voice]",
+    "cognithor[memory,vector,mcp,telegram,web,search,cron,documents]",
 ]
 full = [
-    "cognithor[all,voice,elevenlabs,google-chat,irc,twitch,distributed,browser,dev]",
+    "cognithor[all,voice,elevenlabs,postgresql,google-chat,discord,slack,matrix,whatsapp,signal,teams,irc,twitch,distributed,browser,dev]",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Alex8791-cyber/cognithor"
+Repository = "https://github.com/Alex8791-cyber/cognithor"
+"Bug Tracker" = "https://github.com/Alex8791-cyber/cognithor/issues"
 
 [project.scripts]
 cognithor = "jarvis.__main__:main"

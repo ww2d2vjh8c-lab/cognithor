@@ -287,7 +287,7 @@ class TwitchChannel(Channel):
         prompt = f"[Approval] Tool: {tool} — {reason}. Antworte 'ja' oder 'nein'."
         await self._send_chat(prompt)
 
-        future: asyncio.Future[bool] = asyncio.get_event_loop().create_future()
+        future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
         async with self._approval_lock:
             self._approval_futures[session_id] = future
 

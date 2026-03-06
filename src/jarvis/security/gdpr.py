@@ -648,7 +648,9 @@ class AuditExporter:
 
     def save_json(self, path: str | Path, *, user_id: str = "") -> None:
         """Save audit trail as JSON file."""
-        Path(path).write_text(self.to_json(user_id=user_id), encoding="utf-8")
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(self.to_json(user_id=user_id), encoding="utf-8")
 
     def to_markdown(self, *, user_id: str = "") -> str:
         """Export audit trail as Markdown."""
