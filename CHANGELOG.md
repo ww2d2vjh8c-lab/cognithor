@@ -5,6 +5,44 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.27.0] – 2026-03-07
+
+### Installer & UX Overhaul
+
+Non-technical user capability upgraded from 5-6/10 to 10/10. Full project audit with 80+ findings, critical fixes applied.
+
+### Added
+
+- **Python Auto-Install (Windows)** — `start_cognithor.bat` detects missing Python and offers winget install with PATH refresh
+- **Ollama Auto-Install (Windows)** — `bootstrap_windows.py` offers `winget install Ollama.Ollama` during first boot
+- **Ollama Auto-Install (Linux)** — `install.sh` offers `curl -fsSL https://ollama.com/install.sh | sh`
+- **Distro-specific Python Hints (Linux)** — Ubuntu deadsnakes PPA, Fedora dnf, Arch pacman, openSUSE zypper, Debian pyenv
+- **Locale-based Language Detection** — Auto-sets `language: "de"` or `"en"` in config.yaml based on system locale
+- **Hardware Tier Display** — Shows VRAM, RAM, tier (minimal/standard/power/enterprise), and model recommendations before pull
+- **LLM Smoke Test** — Post-install HTTP test to verify LLM responds ("Sage kurz Hallo.")
+- **Linux .desktop Files** — `cognithor.desktop` (CLI) and `cognithor-webui.desktop` in `~/.local/share/applications/`
+- **Pre-built UI Support** — Node.js no longer required if `ui/dist/` exists; FastAPI `StaticFiles` mount at "/"
+- **GitHub Beta Release Workflow** — `.github/workflows/beta-release.yml` with lint, test, changelog generation, GitHub pre-release
+
+### Fixed
+
+- **XSS in MessageList.jsx** — Added `escapeHtml()` before `dangerouslySetInnerHTML` (CRITICAL)
+- **CORS + Credentials** — `allow_credentials` now only `true` when origins are explicitly restricted (was always true with `*`)
+- **Python Version Check Bug** — `deploy/install-server.sh` checked `(3, 11)` instead of `(3, 12)`
+- **Unicode Crash (Windows)** — `first_boot.py` replaced Unicode symbols with ASCII-safe `[OK]`/`[FEHLER]`/`[WARNUNG]`
+- **Missing curl Timeouts** — All `curl` calls in `install.sh` now have `--max-time` (3s checks, 30s uv, 60s Ollama)
+- **Version Consistency** — Synced 0.27.0 across pyproject.toml, __init__.py, config.py, Dockerfile, demo.py, bootstrap_windows.py, test_config.py
+
+### Changed
+
+- `.env.example` expanded from 30 to 100+ variables (all channels, search providers, models, personality)
+- `CONTRIBUTING.md` updated with beta branch strategy and conventional commits
+- CI workflow now triggers on `beta` branch
+- `start_cognithor.bat` supports 3-tier UI launch: Vite Dev → Pre-built UI → CLI fallback
+- `bootstrap_windows.py` steps renumbered 13 → 14 (new smoke test step)
+
+---
+
 ## [0.26.7] – 2026-03-07
 
 ### Wiring & Hardening

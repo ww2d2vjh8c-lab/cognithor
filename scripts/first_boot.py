@@ -44,23 +44,23 @@ RESET = "\033[0m"
 
 
 def ok(msg: str) -> None:
-    print(f"  {GREEN}✓{RESET} {msg}")
+    print(f"  {GREEN}[OK]{RESET}      {msg}")
 
 
 def fail(msg: str) -> None:
-    print(f"  {RED}✗{RESET} {msg}")
+    print(f"  {RED}[FEHLER]{RESET}  {msg}")
 
 
 def warn(msg: str) -> None:
-    print(f"  {YELLOW}⚠{RESET} {msg}")
+    print(f"  {YELLOW}[WARNUNG]{RESET} {msg}")
 
 
 def info(msg: str) -> None:
-    print(f"  {BLUE}→{RESET} {msg}")
+    print(f"  {BLUE}[INFO]{RESET}    {msg}")
 
 
 def header(msg: str) -> None:
-    print(f"\n{BOLD}{'─' * 60}{RESET}")
+    print(f"\n{BOLD}{'-' * 60}{RESET}")
     print(f"{BOLD}  {msg}{RESET}")
     print(f"{BOLD}{'─' * 60}{RESET}")
 

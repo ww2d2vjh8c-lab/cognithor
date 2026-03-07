@@ -260,16 +260,50 @@ def main() -> None:
                 else:
                     cors_origins = ["*"]
 
+                # allow_credentials nur wenn Origins explizit eingeschränkt
+                _allow_creds = cors_origins != ["*"]
+
                 api_app = FastAPI(title="Cognithor Control Center API")
                 api_app.add_middleware(
                     CORSMiddleware,
                     allow_origins=cors_origins,
+                    allow_credentials=_allow_creds,
                     allow_methods=["*"],
                     allow_headers=["*"],
                 )
 
-                # Health-Endpoint
+                # ── Rate Limiting Middleware ──────────────────────────────
                 import time as _time
+                from collections import defaultdict as _defaultdict
+                from starlette.middleware.base import BaseHTTPMiddleware
+                from starlette.responses import JSONResponse as _JSONResponse
+
+                _rate_limit = int(os.environ.get("JARVIS_API_RATE_LIMIT", "60"))
+                _rate_window = 60.0  # seconds
+                _rate_exempt = {"/api/v1/health"}
+                _rate_hits: dict[str, list[float]] = _defaultdict(list)
+
+                class _RateLimitMiddleware(BaseHTTPMiddleware):
+                    async def dispatch(self, request, call_next):
+                        if request.url.path in _rate_exempt:
+                            return await call_next(request)
+                        client = request.client.host if request.client else "unknown"
+                        now = _time.monotonic()
+                        hits = _rate_hits[client]
+                        # Purge expired entries
+                        cutoff = now - _rate_window
+                        _rate_hits[client] = hits = [t for t in hits if t > cutoff]
+                        if len(hits) >= _rate_limit:
+                            return _JSONResponse(
+                                {"error": "Too many requests", "retry_after_seconds": int(_rate_window)},
+                                status_code=429,
+                            )
+                        hits.append(now)
+                        return await call_next(request)
+
+                api_app.add_middleware(_RateLimitMiddleware)
+
+                # Health-Endpoint
                 _api_start = _time.monotonic()
 
                 @api_app.get("/api/v1/health")

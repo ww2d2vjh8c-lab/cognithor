@@ -13,11 +13,11 @@ assignees: ''
 | Field | Value |
 |-------|-------|
 | **OS** | <!-- e.g., Windows 11 23H2, Ubuntu 24.04 LTS, macOS 15.2 --> |
-| **Cognithor version** | <!-- run: python -c "import jarvis; print(jarvis.__version__)" --> |
+| **Cognithor version** | <!-- run: cognithor --version  OR  python -c "import jarvis; print(jarvis.__version__)" --> |
 | **Python version** | <!-- run: python3 --version --> |
-| **Install method** | <!-- install.sh / manual pip / Docker / start_cognithor.bat --> |
-| **LLM backend** | <!-- Ollama / LM Studio / OpenAI / Anthropic / other --> |
-| **Channel** | <!-- CLI / Web UI / Telegram / Discord / other --> |
+| **Install method** | <!-- start_cognithor.bat / install.sh / bootstrap_windows.py / manual pip / Docker --> |
+| **LLM backend** | <!-- Ollama / LM Studio / OpenAI / Anthropic / Gemini / Groq / DeepSeek / other --> |
+| **Channel** | <!-- CLI / Web UI / Telegram / Discord / Slack / WhatsApp / Signal / Teams / Matrix / Voice / iMessage / Google Chat / Mattermost / Feishu / IRC / Twitch / REST API --> |
 
 ## Description
 
@@ -56,8 +56,8 @@ For install issues, paste the full terminal output.
 
 ## Screenshots
 
-<!-- If applicable, add screenshots to help explain the problem. -->
+<!-- If applicable, add screenshots to help explain the problem. Especially useful for Web UI / Control Center issues. -->
 
 ## Additional Context
 
-<!-- Any other context: config snippets, hardware details, workarounds you tried. -->
+<!-- Any other context: config snippets, hardware details (GPU, VRAM), workarounds you tried. -->

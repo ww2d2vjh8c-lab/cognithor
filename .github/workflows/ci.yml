@@ -25,7 +25,7 @@ jobs:
         run: ruff check src/ tests/ --select=F821,F811 --no-fix
 
       - name: Ruff format check
-        run: ruff format --check src/ tests/ || true
+        run: ruff format --check src/ tests/
 
   test:
     name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.12", "3.13"]
 
     steps:
@@ -67,6 +67,18 @@ jobs:
           pip install -e ".[telegram]" || echo "::warning::telegram extras failed"
           echo "::endgroup::"
 
+          echo "::group::discord"
+          pip install -e ".[discord]" || echo "::warning::discord extras failed"
+          echo "::endgroup::"
+
+          echo "::group::slack"
+          pip install -e ".[slack]" || echo "::warning::slack extras failed"
+          echo "::endgroup::"
+
+          echo "::group::matrix"
+          pip install -e ".[matrix]" || echo "::warning::matrix extras failed"
+          echo "::endgroup::"
+
           echo "::group::web"
           pip install -e ".[web]" || echo "::warning::web extras failed"
           echo "::endgroup::"
@@ -87,10 +99,20 @@ jobs:
           pip install -e ".[postgresql]" || echo "::warning::postgresql extras failed"
           echo "::endgroup::"
 
+          echo "::group::irc"
+          pip install -e ".[irc]" || echo "::warning::irc extras failed"
+          echo "::endgroup::"
+
+          echo "::group::twitch"
+          pip install -e ".[twitch]" || echo "::warning::twitch extras failed"
+          echo "::endgroup::"
+
       - name: Show installed packages
         run: pip list --format=columns | head -60
 
       - name: Run tests
+        # test_voice_ws_bridge.py is excluded because it requires system audio
+        # devices (microphone/speaker) which are not available in CI runners.
         run: python -m pytest tests/ -x -q --tb=short --ignore=tests/test_channels/test_voice_ws_bridge.py
         env:
           JARVIS_TEST_MODE: "1"

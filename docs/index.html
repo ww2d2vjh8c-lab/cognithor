@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cognithor · Agent OS</title>
-  <meta name="description" content="Local-first autonomous agent operating system. 16 LLM providers, 17 channels, 5-tier cognitive memory, React Control Center, enterprise security.">
-  <meta property="og:title" content="Cognithor · Agent OS">
-  <meta property="og:description" content="Local-first autonomous agent operating system with 16 LLM providers, 17 channels, and a React Control Center.">
+  <title>Cognithor &middot; Agent OS</title>
+  <meta name="description" content="Lokales Agent OS mit 16 LLM-Providern, 17 Channels, 48 MCP-Tools, 5-Tier Memory, React Control Center und Enterprise-Security. Laeuft komplett auf deinem Rechner.">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:title" content="Cognithor &middot; Agent OS">
+  <meta property="og:description" content="Local-first autonomous agent operating system. 16 LLM providers, 17 channels, 48 MCP tools, React Control Center.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://alex8791-cyber.github.io/cognithor/">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Cognithor · Agent OS">
-  <meta name="twitter:description" content="Local-first autonomous agent OS. 16 LLM providers, 17 channels, 5-tier memory.">
+  <meta name="twitter:title" content="Cognithor &middot; Agent OS">
+  <meta name="twitter:description" content="Local-first autonomous agent OS. 16 LLM providers, 17 channels, 48 MCP tools, 5-tier memory.">
   <style>
     :root {
       --bg: #0d1117;
@@ -84,6 +86,19 @@
     }
     .cta .secondary:hover { border-color: var(--accent); text-decoration: none; }
 
+    /* Version badge */
+    .version-badge {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 6px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .version-badge strong { color: var(--green); }
+
     /* Stats bar */
     .stats {
       display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
@@ -137,7 +152,7 @@
       border-radius: 12px;
       padding: 24px;
       overflow-x: auto;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       line-height: 1.5;
       color: var(--text-muted);
     }
@@ -148,7 +163,13 @@
       margin: 0 auto;
       padding: 48px 20px 64px;
     }
-    .quickstart h2 { text-align: center; font-size: 2rem; margin-bottom: 32px; }
+    .quickstart h2 { text-align: center; font-size: 2rem; margin-bottom: 12px; }
+    .quickstart .intro {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      font-size: 0.95rem;
+    }
     .quickstart pre {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -157,10 +178,17 @@
       overflow-x: auto;
       font-size: 0.9rem;
       line-height: 1.6;
+      margin-bottom: 16px;
     }
     .quickstart pre code { color: var(--text); }
     .quickstart .comment { color: var(--text-muted); }
     .quickstart .cmd { color: var(--green); }
+    .quickstart .note {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 8px;
+    }
 
     /* Footer */
     footer {
@@ -183,12 +211,12 @@
 <body>
 
 <section class="hero">
-  <h1><span>Cognithor</span> · Agent OS</h1>
+  <h1><span>Cognithor</span> &middot; Agent OS</h1>
   <p class="tagline">Local-first, autonomous agent operating system for personal AI assistance.</p>
-  <p class="sub">Cognition + Thor — Intelligence with Power</p>
+  <p class="sub">Cognition + Thor &mdash; Intelligence with Power</p>
   <div class="badges">
     <img src="https://img.shields.io/badge/python-%3E%3D3.12-blue?style=flat-square" alt="Python">
-    <img src="https://img.shields.io/badge/tests-9%2C357%20passing-brightgreen?style=flat-square" alt="Tests">
+    <img src="https://img.shields.io/badge/tests-9%2C596%20passing-brightgreen?style=flat-square" alt="Tests">
     <img src="https://img.shields.io/badge/coverage-89%25-brightgreen?style=flat-square" alt="Coverage">
     <img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License">
     <img src="https://img.shields.io/github/v/release/Alex8791-cyber/cognithor?style=flat-square&color=blue" alt="Release">
@@ -197,13 +225,14 @@
     <a class="primary" href="https://github.com/Alex8791-cyber/cognithor">View on GitHub</a>
     <a class="secondary" href="https://github.com/Alex8791-cyber/cognithor/releases/latest">Download Latest</a>
   </div>
+  <div class="version-badge">v0.27.0 &mdash; <strong>Full Audit</strong>, Installer Overhaul, XSS Fix, Rate Limiting</div>
 </section>
 
 <section class="stats">
   <div class="stat"><div class="num">16</div><div class="label">LLM Providers</div></div>
   <div class="stat"><div class="num">17</div><div class="label">Channels</div></div>
-  <div class="stat"><div class="num">5</div><div class="label">Memory Tiers</div></div>
-  <div class="stat"><div class="num">9,357</div><div class="label">Tests</div></div>
+  <div class="stat"><div class="num">48</div><div class="label">MCP Tools</div></div>
+  <div class="stat"><div class="num">9,596</div><div class="label">Tests</div></div>
   <div class="stat"><div class="num">89%</div><div class="label">Coverage</div></div>
 </section>
 
@@ -211,49 +240,64 @@
   <h2>Features</h2>
   <div class="grid">
     <div class="card">
-      <div class="icon">🧠</div>
+      <div class="icon">&#x1F9E0;</div>
       <h3>16 LLM Providers</h3>
-      <p>Ollama (local), LM Studio (local), OpenAI, Anthropic, Gemini, Groq, DeepSeek, Mistral, Together, OpenRouter, xAI, Cerebras, GitHub Models, AWS Bedrock, Hugging Face, Moonshot. Auto-detects from API key.</p>
+      <p>Ollama, LM Studio (both local), OpenAI, Anthropic, Gemini, Groq, DeepSeek, Mistral, Together, OpenRouter, xAI, Cerebras, GitHub Models, AWS Bedrock, Hugging Face, Moonshot. Auto-detects from API key.</p>
     </div>
     <div class="card">
-      <div class="icon">📡</div>
+      <div class="icon">&#x1F4E1;</div>
       <h3>17 Channels</h3>
-      <p>CLI, Web UI, REST API, Telegram, Discord, Slack, WhatsApp, Signal, iMessage, Teams, Matrix, Google Chat, Mattermost, Feishu, IRC, Twitch, Voice (STT/TTS). Auto-detect from tokens.</p>
+      <p>CLI, Web UI, REST API, Telegram (poll + webhook), Discord, Slack, WhatsApp, Signal, iMessage, Teams, Matrix, Google Chat, Mattermost, Feishu, IRC, Twitch, Voice (STT/TTS with wake word).</p>
     </div>
     <div class="card">
-      <div class="icon">💾</div>
+      <div class="icon">&#x1F4BE;</div>
       <h3>5-Tier Cognitive Memory</h3>
-      <p>Core identity, episodic logs, semantic knowledge graph, procedural skills, working memory. 3-channel hybrid search: BM25 + vector + graph.</p>
+      <p>Core identity, episodic logs, semantic knowledge graph, procedural skills, working memory. 3-channel hybrid search: BM25 + vector embeddings + graph traversal.</p>
     </div>
     <div class="card">
-      <div class="icon">🛡️</div>
-      <h3>Security</h3>
-      <p>Deterministic Gatekeeper (4 risk levels), multi-level sandbox, SHA-256 audit chain, encrypted credential vault, EU AI Act compliance, red-teaming suite.</p>
+      <div class="icon">&#x1F6E1;&#xFE0F;</div>
+      <h3>Security &amp; Audit</h3>
+      <p>Deterministic Gatekeeper (4 risk levels), 4-level sandbox, SHA-256 audit chain, Fernet AES-256 token encryption, API rate limiting, CORS hardening, XSS prevention. 80-item audit with 0 remaining.</p>
     </div>
     <div class="card">
-      <div class="icon">🎛️</div>
+      <div class="icon">&#x1F39B;&#xFE0F;</div>
       <h3>React Control Center</h3>
-      <p>Full web dashboard (React 19 + Vite 7) with backend launcher, live config editing, agent management, prompt editing, cron jobs, MCP servers, A2A settings.</p>
+      <p>Full dashboard (React 19 + Vite 7) with integrated chat, voice mode, live config editing, agent management, prompt editing, cron jobs, MCP servers, A2A settings. Pre-built UI ships with the installer.</p>
     </div>
     <div class="card">
-      <div class="icon">🔧</div>
-      <h3>MCP + A2A Protocols</h3>
-      <p>13+ MCP tool servers (filesystem, shell, memory, web, browser, media). Agent-to-Agent protocol (Linux Foundation RC v1.0) for inter-agent communication.</p>
+      <div class="icon">&#x1F50C;</div>
+      <h3>48 MCP Tools &amp; A2A</h3>
+      <p>10 tool modules: filesystem, shell, memory, web, browser, media, vault, synthesis, code, skills. Agent-to-Agent protocol (Linux Foundation RC v1.0) for inter-agent communication.</p>
     </div>
     <div class="card">
-      <div class="icon">⚙️</div>
+      <div class="icon">&#x2699;&#xFE0F;</div>
       <h3>PGE Architecture</h3>
-      <p>Planner (LLM) → Gatekeeper (deterministic policy) → Executor (sandboxed). No hallucinated tool calls — every action is policy-checked before execution.</p>
+      <p>Planner (LLM) &#x2192; Gatekeeper (deterministic policy) &#x2192; Executor (DAG-based parallel sandbox). No hallucinated tool calls &mdash; every action is policy-checked before execution.</p>
     </div>
     <div class="card">
-      <div class="icon">🔒</div>
+      <div class="icon">&#x1F50A;</div>
+      <h3>Voice &amp; Chat</h3>
+      <p>Wake word ("Jarvis") with Levenshtein + phonetic matching, Konversationsmodus, Piper TTS (Thorsten Emotional), Whisper STT, integrated chat with WebSocket streaming.</p>
+    </div>
+    <div class="card">
+      <div class="icon">&#x1F4DA;</div>
+      <h3>Knowledge Vault</h3>
+      <p>Obsidian-compatible Markdown vault with YAML frontmatter, tags, backlinks, full-text search. Knowledge synthesis with confidence ratings, contradiction detection, and gap analysis.</p>
+    </div>
+    <div class="card">
+      <div class="icon">&#x1F510;</div>
       <h3>100% Local-First</h3>
-      <p>All data stays on your machine. No cloud required — Ollama runs fully local. Optional cloud LLM providers available. Full GDPR compliance.</p>
+      <p>All data stays on your machine. No cloud required &mdash; Ollama runs fully local. Optional cloud LLM providers available. Full GDPR compliance toolkit.</p>
     </div>
     <div class="card">
-      <div class="icon">📚</div>
+      <div class="icon">&#x1F916;</div>
+      <h3>Human Feel</h3>
+      <p>Personality Engine (warmth, humor, greetings), sentiment detection (frustrated/urgent/confused/positive), user preference learning, real-time status callbacks, friendly German error messages.</p>
+    </div>
+    <div class="card">
+      <div class="icon">&#x1F4D6;</div>
       <h3>Procedural Learning</h3>
-      <p>Reflector auto-synthesizes reusable skills from successful sessions. Learned procedures are suggested for future similar requests.</p>
+      <p>Reflector auto-synthesizes reusable skills from successful sessions. Learned procedures are suggested for future similar requests. Skill marketplace with ratings and remote registry.</p>
     </div>
   </div>
 </section>
@@ -261,52 +305,61 @@
 <section class="arch">
   <h2>Architecture</h2>
   <pre>
-┌──────────────────────────────────────────────────────────────┐
-│           Control Center UI (React 19 + Vite 7)              │
-├──────────────────────────────────────────────────────────────┤
-│          REST API (FastAPI, 20+ endpoints, port 8741)        │
-├──────────────────────────────────────────────────────────────┤
-│                      Channels (17)                           │
-│  CLI · Web · Telegram · Discord · Slack · WhatsApp · Signal  │
-├──────────────────────────────────────────────────────────────┤
-│                    Gateway Layer                              │
-│            Session Management · Agent Loop                    │
-├────────────┬──────────────┬──────────────────────────────────┤
-│  Planner   │  Gatekeeper  │  Executor                        │
-│  (LLM)     │  (Policy)    │  (Sandbox)                       │
-├────────────┴──────────────┴──────────────────────────────────┤
-│              MCP Tool Layer (13+) + A2A Protocol              │
-├──────────────────────────────────────────────────────────────┤
-│              Multi-LLM Backend Layer (16)                     │
-├──────────────────────────────────────────────────────────────┤
-│              5-Tier Cognitive Memory                          │
-│  Core · Episodic · Semantic · Procedural · Working            │
-└──────────────────────────────────────────────────────────────┘</pre>
+&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502;          Control Center UI (React 19 + Vite 7)              &#x2502;
+&#x2502;  Config &#x00B7; Agents &#x00B7; Chat &#x00B7; Voice &#x00B7; Prompts &#x00B7; Cron &#x00B7; MCP &#x00B7; A2A  &#x2502;
+&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;
+&#x2502;        REST API (FastAPI, 20+ endpoints, port 8741)         &#x2502;
+&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;
+&#x2502;                     Channels (17)                          &#x2502;
+&#x2502;  CLI &#x00B7; Web &#x00B7; Telegram &#x00B7; Discord &#x00B7; Slack &#x00B7; WhatsApp &#x00B7; Voice  &#x2502;
+&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;
+&#x2502;                   Gateway Layer                            &#x2502;
+&#x2502;  Session &#x00B7; Agent Loop &#x00B7; Personality &#x00B7; Sentiment &#x00B7; Prefs    &#x2502;
+&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;
+&#x2502;      Context Pipeline (Memory &#x00B7; Vault &#x00B7; Episodes)          &#x2502;
+&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;
+&#x2502;  Planner   &#x2502;  Gatekeeper  &#x2502;  Executor (DAG parallel)       &#x2502;
+&#x2502;  (LLM)     &#x2502;  (Policy)    &#x2502;  (Sandbox)                     &#x2502;
+&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;
+&#x2502;              MCP Tool Layer (48 tools, 10 modules)          &#x2502;
+&#x2502;  Filesystem &#x00B7; Shell &#x00B7; Memory &#x00B7; Web &#x00B7; Browser &#x00B7; Media       &#x2502;
+&#x2502;  Vault &#x00B7; Synthesis &#x00B7; Code &#x00B7; Skills Marketplace              &#x2502;
+&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;
+&#x2502;              Multi-LLM Backend Layer (16)                   &#x2502;
+&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;
+&#x2502;              5-Tier Cognitive Memory                        &#x2502;
+&#x2502;  Core &#x00B7; Episodic &#x00B7; Semantic &#x00B7; Procedural &#x00B7; Working          &#x2502;
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;</pre>
 </section>
 
 <section class="quickstart">
   <h2>Quick Start</h2>
-  <pre><code><span class="comment"># Clone and install</span>
+  <p class="intro">From clone to running agent in under 5 minutes.</p>
+  <pre><code><span class="comment"># Option A: One-Click (Windows) — no Node.js needed</span>
+<span class="comment"># Double-click start_cognithor.bat -> Browser opens -> Power On -> Done.</span>
+<span class="comment"># Auto-installs Python + Ollama via winget if missing.</span>
+
+<span class="comment"># Option B: Manual install</span>
 <span class="cmd">git clone https://github.com/Alex8791-cyber/cognithor.git</span>
 <span class="cmd">cd cognithor</span>
 <span class="cmd">pip install -e ".[all,dev]"</span>
 
 <span class="comment"># Pull Ollama models</span>
-<span class="cmd">ollama pull qwen3:32b</span>
-<span class="cmd">ollama pull qwen3:8b</span>
-<span class="cmd">ollama pull nomic-embed-text</span>
+<span class="cmd">ollama pull qwen3:32b</span>       <span class="comment"># Planner (20 GB VRAM)</span>
+<span class="cmd">ollama pull qwen3:8b</span>        <span class="comment"># Executor (6 GB VRAM)</span>
+<span class="cmd">ollama pull nomic-embed-text</span> <span class="comment"># Embeddings</span>
 
-<span class="comment"># Start CLI</span>
-<span class="cmd">cognithor</span>
-
-<span class="comment"># Or start the Control Center UI</span>
-<span class="cmd">cd ui && npm install && npm run dev</span></code></pre>
+<span class="comment"># Start</span>
+<span class="cmd">cognithor</span>                    <span class="comment"># Interactive CLI</span>
+<span class="cmd">cognithor --lite</span>             <span class="comment"># Lite mode (6 GB VRAM total)</span></code></pre>
+  <p class="note">No GPU? Use <code>cognithor --lite</code> or set a cloud API key. See <a href="https://github.com/Alex8791-cyber/cognithor#llm-providers">LLM Providers</a> for all 16 options.</p>
 </section>
 
 <footer>
   <p>
-    <a href="https://github.com/Alex8791-cyber/cognithor">GitHub</a> ·
-    <a href="https://github.com/Alex8791-cyber/cognithor/releases">Releases</a> ·
+    <a href="https://github.com/Alex8791-cyber/cognithor">GitHub</a> &middot;
+    <a href="https://github.com/Alex8791-cyber/cognithor/releases">Releases</a> &middot;
     <a href="https://github.com/Alex8791-cyber/cognithor/blob/main/LICENSE">Apache 2.0</a>
   </p>
   <p style="margin-top: 8px;">&copy; 2026 Alexander Soellner. Built with Cognithor.</p>

@@ -120,7 +120,7 @@ detect_installer() {
             return 0
         else
             warn "uv nicht gefunden, installiere automatisch..."
-            if curl -LsSf https://astral.sh/uv/install.sh | sh 2>/dev/null; then
+            if curl -LsSf --max-time 30 https://astral.sh/uv/install.sh | sh 2>/dev/null; then
                 # Pfad aktualisieren
                 export PATH="$HOME/.local/bin:$PATH"
                 if check_command uv; then
@@ -276,21 +276,25 @@ check_prerequisites() {
         read -rp "  Ollama jetzt installieren? [j/N] " _ollama_answer
         if [[ "$_ollama_answer" =~ ^[jJyY]$ ]]; then
             info "Installiere Ollama..."
-            if curl -fsSL https://ollama.com/install.sh | sh; then
+            if curl -fsSL --max-time 60 https://ollama.com/install.sh | sh; then
                 success "Ollama installiert"
                 # Ollama-Server starten
                 nohup ollama serve &>/dev/null &
                 info "Warte auf Ollama-Server..."
-                local _ollama_wait=0
-                while [[ $_ollama_wait -lt 15 ]]; do
-                    if curl -sf "${OLLAMA_URL}/api/version" &>/dev/null; then
+                local _ollama_delay=1
+                local _ollama_total=0
+                while [[ $_ollama_total -lt 15 ]]; do
+                    if curl -sf --max-time 2 "${OLLAMA_URL}/api/version" &>/dev/null; then
                         success "Ollama-Server gestartet"
                         break
                     fi
-                    sleep 1
-                    _ollama_wait=$((_ollama_wait + 1))
+                    sleep "$_ollama_delay"
+                    _ollama_total=$((_ollama_total + _ollama_delay))
+                    # Exponential backoff: 1, 2, 4 (capped)
+                    _ollama_delay=$((_ollama_delay * 2))
+                    [[ $_ollama_delay -gt 4 ]] && _ollama_delay=4
                 done
-                if [[ $_ollama_wait -ge 15 ]]; then
+                if [[ $_ollama_total -ge 15 ]]; then
                     warn "Ollama-Server nicht erreichbar nach 15s -- manuell starten: ollama serve"
                 fi
             else
@@ -303,7 +307,7 @@ check_prerequisites() {
     fi
 
     # Ollama-Server erreichbar?
-    if curl -sf "${OLLAMA_URL}/api/version" &>/dev/null; then
+    if curl -sf --max-time 3 "${OLLAMA_URL}/api/version" &>/dev/null; then
         success "Ollama-Server erreichbar (${OLLAMA_URL})"
     else
         warn "Ollama-Server nicht erreichbar auf ${OLLAMA_URL}"
@@ -784,7 +788,7 @@ run_smoke_test() {
     fi
 
     # LLM-Rauchtest: Kurze Anfrage an Ollama
-    if curl -sf "${OLLAMA_URL}/api/version" &>/dev/null; then
+    if curl -sf --max-time 3 "${OLLAMA_URL}/api/version" &>/dev/null; then
         info "LLM-Rauchtest..."
         local _llm_response
         _llm_response=$(curl -sf --max-time 30 "${OLLAMA_URL}/api/chat" \

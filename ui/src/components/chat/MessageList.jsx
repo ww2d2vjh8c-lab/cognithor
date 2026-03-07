@@ -37,6 +37,14 @@ function renderMarkdown(text) {
   });
 }
 
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function renderInline(text) {
   // Split by inline code first
   const parts = text.split(/(`[^`]+`)/g);
@@ -44,8 +52,10 @@ function renderInline(text) {
     if (seg.startsWith("`") && seg.endsWith("`")) {
       return <code key={i} className="cc-msg-inline-code">{seg.slice(1, -1)}</code>;
     }
+    // Escape HTML entities FIRST to prevent XSS, then apply formatting
+    let safe = escapeHtml(seg);
     // Bold
-    let result = seg.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    let result = safe.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
     // Italic (single *)
     result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>");
     return <span key={i} dangerouslySetInnerHTML={{ __html: result }} />;

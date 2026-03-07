@@ -25,9 +25,9 @@
 
 ## Why Cognithor?
 
-- **Your data never leaves your machine.** Runs 100% locally with Ollama or LM Studio — no cloud, no API keys required, full GDPR compliance. Cloud providers are optional, not mandatory.
-- **One system, not twenty tools.** 17 channels, 48 MCP tools, 5-tier memory, knowledge vault, cron, voice, browser automation, distributed locking, durable message queues — integrated from day one. No glue code, no plugin hell.
-- **Extensively tested.** 9,596 tests, 89% coverage, 4-level sandbox, SHA-256 audit chain, runtime token encryption, Prometheus metrics, and multiple deployment options from one-click Windows launcher to Docker Compose to bare-metal servers. See [Status & Maturity](#status--maturity) for what this does and does not guarantee.
+Most AI assistants send your data to the cloud. Cognithor runs entirely on your machine — with Ollama or LM Studio, no API keys required. Cloud providers are optional, not mandatory.
+
+It replaces a patchwork of tools with one integrated system: 17 channels, 48 MCP tools, 5-tier memory, knowledge vault, voice, browser automation, and more — all wired together from day one. 9,596 tests at 89% coverage keep it honest. See [Status & Maturity](#status--maturity) for what that does and does not guarantee.
 
 ---
 
@@ -92,46 +92,23 @@
 
 ## What's New
 
-### v0.26.6 — Chat, Voice, Agent Infrastructure & Security Hardening
+### v0.27.0 — Full Audit, Installer Overhaul & Hardening
 
-This release brings Cognithor from a CLI-first tool to a full Agent OS with integrated chat, voice mode, 15 new enterprise subsystems, and deep security hardening. **9,596 tests** with 0 failures.
+A comprehensive 80-item audit of the entire codebase — every finding verified, every real issue fixed.
 
-**Chat & Voice**
-- **Integrated Chat** — Full chat page in the Control Center with WebSocket streaming, tool indicators, canvas panel, approval banners
-- **Voice Mode** — Wake word ("Jarvis") with Levenshtein + phonetic matching, Konversationsmodus (continuous listening)
-- **Piper TTS (Thorsten Emotional)** — German speech synthesis, automatic model download
-- **Natural Language Responses** — System prompt for spoken, human responses
+- **Installer Overhaul** — `start_cognithor.bat` now auto-installs Python and Ollama via winget, ships a pre-built UI (Node.js no longer required), and bundles a preflight check
+- **XSS Fix** — `dangerouslySetInnerHTML` in MessageList.jsx now uses `escapeHtml()` before regex formatting
+- **CORS Fix** — `allow_credentials` is now conditional on explicit origins (no more `*` + credentials)
+- **React ErrorBoundary** — Uncaught errors show a dark-theme fallback instead of a white screen
+- **API Rate Limiting** — Configurable middleware (60 req/min default, `JARVIS_API_RATE_LIMIT`), health endpoint exempt
+- **Version Consistency** — All 7 version references aligned to 0.27.0
 
-**Agent Infrastructure (15 Subsystems)**
-- DAG Workflow Engine, Distributed Worker Runtime, Multi-Agent Collaboration (debate/voting/pipeline)
-- Policy-as-Code Governance, Tool Sandbox Hardening, GDPR Compliance Toolkit
-- Agent Benchmark Suite, Deterministic Replay, Plugin Marketplace Remote Registry
-- Agent SDK, Knowledge Graph Layer, Memory Consolidation, Execution Graph UI
-- Agent Delegation Engine, Installer Modernization (uv support)
+**Previous Releases**
 
-**Security & Performance Hardening**
-- Path traversal prevention, Gatekeeper bypass protection, WebSocket authentication
-- Race condition fixes (ContextVar, CircuitBreaker), memory optimization, blocking I/O elimination
-- Unicode normalization for prompt injection defense, HMAC-based vault key derivation
-- Credential pattern masking (AWS, PEM, generic secrets), atomic policy rollback
-
-**Wiring & Hardening (v0.26.7)**
-- **DAG-based Parallel Executor** — Executor now builds a PlanGraph from actions and executes independent tool calls concurrently in waves (replaces sequential loop)
-- **http_request Tool** — Full HTTP method support (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS) with SSRF protection, body-size limits, and Gatekeeper ORANGE classification
-- **Sub-Agent Depth Guard** — Configurable `max_sub_agent_depth` (default 3) prevents infinite recursion in handle_message()
-- **Live Config Reload** — UI config changes (PATCH) now propagate immediately to Executor and WebTools without restart
-- **Workflow Adapter** — Bridge from ActionPlan to WorkflowDefinition, making DAG WorkflowEngine usable from the Gateway
-- **Domain Input Validation** — UI DomainListInput component with regex validation (no schemes, no wildcards, no paths)
-- **Secret Masking Verification** — google_cse_api_key, jina_api_key, brave_api_key confirmed masked in config display
-
-**Previous Releases (v0.26.0–v0.26.5)**
-
+- **v0.26.6** — Chat & Voice: Integrated chat page, voice mode with wake word, Piper TTS, 15 agent infrastructure subsystems (DAG engine, distributed workers, multi-agent collaboration, GDPR toolkit, agent SDK, benchmark suite, and more), deep security hardening
+- **v0.26.7** — Wiring: DAG-based parallel executor, http_request tool with SSRF protection, sub-agent depth guard, live config reload, workflow adapter
 - **v0.26.5** — Human Feel: Personality Engine, sentiment detection, user preferences, status callbacks, friendly error messages
-- **v0.26.4** — Coverage & Skills: 255 new tests, BaseSkill, skill package init
-- **v0.26.3** — Scaling: distributed locking, durable message queue, Prometheus metrics, Telegram webhook, skill marketplace, auto-dependency loading
-- **v0.26.2** — LM Studio backend
-- **v0.26.1** — Docker prod, bare-metal installer, Nginx/Caddy, health endpoints
-- **v0.26.0** — Security hardening: token encryption, TLS, file-size limits, session persistence
+- **v0.26.0–v0.26.4** — Security hardening, Docker prod, LM Studio backend, scaling (distributed locking, message queue, Prometheus), coverage & skills
 
 ---
 
@@ -373,13 +350,13 @@ No GPU? Use smaller models (`qwen3:8b` for both) or a cloud provider — just se
 
 ### Step 3: Start (~10 sec)
 
-**Option A: One-Click (Windows)** — requires [Node.js](https://nodejs.org/) for the Web UI
+**Option A: One-Click (Windows)** — includes a pre-built Web UI, no Node.js needed
 
 ```
 Double-click  start_cognithor.bat  ->  Browser opens  ->  Click "Power On"  ->  Done.
 ```
 
-> No Node.js? Skip to **Option B** — the CLI works without it.
+> The launcher auto-installs Python and Ollama via winget if missing. Node.js is only needed for UI development (`npm run dev`).
 
 **Option B: CLI**
 
@@ -497,7 +474,7 @@ security:
     - "~/.cognithor"
     - "~/Documents"
 
-# Personality (new in v0.26.5)
+# Personality
 personality:
   warmth: 0.7                    # 0.0 = sachlich, 1.0 = sehr warm
   humor: 0.3                     # 0.0 = kein Humor, 1.0 = viel Humor
@@ -505,7 +482,7 @@ personality:
   follow_up_questions: true       # Rückfragen anbieten
   success_celebration: true       # Erfolge feiern
 
-# Scaling (new in v0.26)
+# Scaling
 distributed_lock:
   backend: "file"                 # "redis" or "file"
   # redis_url: "redis://localhost:6379/0"
