@@ -168,6 +168,47 @@ detect_installer() {
 }
 
 # ============================================================================
+# Helper: Distro-spezifischer Python-Installationshinweis
+# ============================================================================
+
+_python_install_hint() {
+    local distro_id=""
+    if [[ -f /etc/os-release ]]; then
+        distro_id=$(. /etc/os-release && echo "${ID:-}")
+    fi
+
+    echo ""
+    info "Python ${MIN_PYTHON}+ installieren:"
+    echo ""
+    case "$distro_id" in
+        ubuntu)
+            echo "    sudo add-apt-repository ppa:deadsnakes/ppa"
+            echo "    sudo apt update"
+            echo "    sudo apt install python3.12 python3.12-venv python3.12-dev"
+            ;;
+        debian)
+            echo "    # Option 1: Backports aktivieren"
+            echo "    # Option 2: pyenv verwenden:"
+            echo "    curl https://pyenv.run | bash"
+            echo "    pyenv install 3.12"
+            ;;
+        fedora|rhel|centos|rocky|alma)
+            echo "    sudo dnf install python3.12 python3.12-devel"
+            ;;
+        arch|manjaro)
+            echo "    sudo pacman -S python"
+            ;;
+        opensuse*|sles)
+            echo "    sudo zypper install python312 python312-devel"
+            ;;
+        *)
+            echo "    https://www.python.org/downloads/"
+            ;;
+    esac
+    echo ""
+}
+
+# ============================================================================
 # Schritt 1: Systemvoraussetzungen pruefen
 # ============================================================================
 
@@ -183,11 +224,12 @@ check_prerequisites() {
             success "Python $py_version gefunden"
         else
             error "Python $py_version zu alt (mindestens $MIN_PYTHON benoetigt)"
+            _python_install_hint
             errors=$((errors + 1))
         fi
     else
         error "Python3 nicht gefunden"
-        info  "Installiere mit: sudo apt install python3.12 python3.12-venv"
+        _python_install_hint
         errors=$((errors + 1))
     fi
 
@@ -231,7 +273,33 @@ check_prerequisites() {
         success "Ollama installiert ($ollama_version)"
     else
         warn "Ollama nicht gefunden -- LLM-Funktionen sind ohne Ollama eingeschraenkt"
-        info "Installiere: curl -fsSL https://ollama.com/install.sh | sh"
+        read -rp "  Ollama jetzt installieren? [j/N] " _ollama_answer
+        if [[ "$_ollama_answer" =~ ^[jJyY]$ ]]; then
+            info "Installiere Ollama..."
+            if curl -fsSL https://ollama.com/install.sh | sh; then
+                success "Ollama installiert"
+                # Ollama-Server starten
+                nohup ollama serve &>/dev/null &
+                info "Warte auf Ollama-Server..."
+                local _ollama_wait=0
+                while [[ $_ollama_wait -lt 15 ]]; do
+                    if curl -sf "${OLLAMA_URL}/api/version" &>/dev/null; then
+                        success "Ollama-Server gestartet"
+                        break
+                    fi
+                    sleep 1
+                    _ollama_wait=$((_ollama_wait + 1))
+                done
+                if [[ $_ollama_wait -ge 15 ]]; then
+                    warn "Ollama-Server nicht erreichbar nach 15s -- manuell starten: ollama serve"
+                fi
+            else
+                error "Ollama-Installation fehlgeschlagen"
+                info "Manuell installieren: curl -fsSL https://ollama.com/install.sh | sh"
+            fi
+        else
+            info "Installiere spaeter: curl -fsSL https://ollama.com/install.sh | sh"
+        fi
     fi
 
     # Ollama-Server erreichbar?
@@ -251,8 +319,68 @@ check_prerequisites() {
 # Schritt 2: Ollama-Modelle (Fix #4: optional, never blocking)
 # ============================================================================
 
+detect_hardware_tier() {
+    # Ermittelt Hardware-Tier basierend auf VRAM und RAM
+    local vram_mb=0
+    local ram_mb=0
+    local vram_str="keine GPU"
+
+    # VRAM via nvidia-smi
+    if check_command nvidia-smi; then
+        vram_mb=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -d ' ' || echo "0")
+        if [[ "$vram_mb" -gt 0 ]]; then
+            local vram_gb=$(( vram_mb / 1024 ))
+            vram_str="${vram_gb} GB VRAM"
+        fi
+    fi
+
+    # RAM via /proc/meminfo
+    if [[ -f /proc/meminfo ]]; then
+        local ram_kb
+        ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+        ram_mb=$(( ram_kb / 1024 ))
+    fi
+
+    local ram_gb=$(( ram_mb / 1024 ))
+    local cpu_cores
+    cpu_cores=$(nproc 2>/dev/null || echo "4")
+
+    # Tier bestimmen
+    local tier="minimal"
+    if [[ $ram_gb -ge 64 && $cpu_cores -ge 16 && $vram_mb -ge 49152 ]]; then
+        tier="enterprise"
+    elif [[ $vram_mb -ge 16384 && $ram_gb -ge 32 ]]; then
+        tier="power"
+    elif [[ $vram_mb -ge 8192 && $ram_gb -ge 16 ]]; then
+        tier="standard"
+    fi
+
+    # Anzeige
+    echo ""
+    info "Dein System: ${vram_str}, ${ram_gb} GB RAM"
+    info "Hardware-Tier: ${BOLD}$(echo "$tier" | tr '[:lower:]' '[:upper:]')${NC}"
+
+    case "$tier" in
+        minimal)
+            info "Modelle: qwen3:8b, nomic-embed-text"
+            info "Tipp: Fuer bessere Qualitaet mindestens 8 GB VRAM empfohlen"
+            ;;
+        standard)
+            info "Modelle: qwen3:8b, qwen3:32b, nomic-embed-text"
+            info "Tipp: 'cognithor --lite' fuer nur 6 GB VRAM"
+            ;;
+        power|enterprise)
+            info "Modelle: qwen3:8b, qwen3:32b, qwen3-coder:32b, nomic-embed-text"
+            info "Tipp: 'cognithor --lite' fuer nur 6 GB VRAM"
+            ;;
+    esac
+    echo ""
+}
+
 ensure_ollama_models() {
     header "Ollama-Modelle pruefen"
+
+    detect_hardware_tier
 
     if ! curl -sf "${OLLAMA_URL}/api/version" &>/dev/null; then
         warn "Ollama nicht erreichbar -- Modelle manuell herunterladen:"
@@ -388,6 +516,30 @@ install_jarvis() {
     else
         warn "CLI 'jarvis' nicht im PATH -- nutze: $VENV_DIR/bin/jarvis"
     fi
+
+    # Web-UI Build (Node.js optional)
+    local ui_dir="$REPO_DIR/ui"
+    local ui_dist="$ui_dir/dist/index.html"
+    if check_command node && check_command npm; then
+        if [[ ! -d "$ui_dir/node_modules" ]]; then
+            info "Installiere UI-Abhaengigkeiten (npm install)..."
+            (cd "$ui_dir" && npm install --silent 2>&1 | tail -5) || true
+        fi
+        if [[ ! -f "$ui_dist" ]]; then
+            info "Erstelle UI-Build (npm run build)..."
+            if (cd "$ui_dir" && npm run build --silent 2>&1 | tail -5); then
+                success "UI-Build erstellt (ui/dist/)"
+            else
+                warn "npm run build fehlgeschlagen -- CLI-Modus verfuegbar"
+            fi
+        else
+            success "UI-Build vorhanden (ui/dist/)"
+        fi
+    elif [[ -f "$ui_dist" ]]; then
+        success "Pre-built UI vorhanden (Node.js nicht noetig)"
+    else
+        info "Node.js nicht gefunden -- Web-UI nicht erstellt (CLI-Modus verfuegbar)"
+    fi
 }
 
 # ============================================================================
@@ -459,6 +611,23 @@ setup_directories() {
         else
             warn "config.yaml.example nicht gefunden -- uebersprungen"
         fi
+    fi
+
+    # Locale-basierte Spracherkennung
+    if [[ -f "$config_file" ]] && ! grep -q "^language:" "$config_file" 2>/dev/null; then
+        local _lang_code="${LANG%%_*}"
+        _lang_code="${_lang_code:-de}"
+        local _detected_lang="en"
+        if [[ "$_lang_code" == "de" ]]; then
+            _detected_lang="de"
+        fi
+        # Sprache an den Anfang der config.yaml schreiben
+        local _tmp_cfg
+        _tmp_cfg=$(mktemp "${TMPDIR:-/tmp}/jarvis_cfg_XXXXXX")
+        echo "language: \"${_detected_lang}\"" > "$_tmp_cfg"
+        cat "$config_file" >> "$_tmp_cfg"
+        mv "$_tmp_cfg" "$config_file"
+        success "Sprache erkannt: ${_detected_lang} (Locale: ${_lang_code})"
     fi
 
     # .env (optional)
@@ -613,6 +782,34 @@ run_smoke_test() {
     else
         warn "smoke_test.py nicht gefunden -- uebersprungen"
     fi
+
+    # LLM-Rauchtest: Kurze Anfrage an Ollama
+    if curl -sf "${OLLAMA_URL}/api/version" &>/dev/null; then
+        info "LLM-Rauchtest..."
+        local _llm_response
+        _llm_response=$(curl -sf --max-time 30 "${OLLAMA_URL}/api/chat" \
+            -d '{"model":"qwen3:8b","messages":[{"role":"user","content":"Sage kurz Hallo."}],"stream":false}' \
+            2>/dev/null)
+        if [[ -n "$_llm_response" ]]; then
+            local _llm_answer
+            _llm_answer=$(echo "$_llm_response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data.get('message', {}).get('content', '').strip()[:80])
+except: pass
+" 2>/dev/null)
+            if [[ -n "$_llm_answer" ]]; then
+                success "LLM antwortet: $_llm_answer"
+            else
+                warn "LLM antwortete leer -- Modell evtl. noch nicht bereit"
+            fi
+        else
+            warn "LLM-Rauchtest: Keine Antwort (Timeout oder Modell nicht geladen)"
+        fi
+    else
+        info "LLM-Rauchtest uebersprungen (Ollama nicht erreichbar)"
+    fi
 }
 
 # ============================================================================
@@ -646,6 +843,53 @@ setup_shell_integration() {
     else
         info "Kein .bashrc/.zshrc gefunden -- fuege manuell hinzu:"
         info "  $alias_line"
+    fi
+}
+
+# ============================================================================
+# Schritt 8b: .desktop-Dateien (Linux Desktop-Integration)
+# ============================================================================
+
+create_desktop_entry() {
+    header "Desktop-Integration"
+
+    local apps_dir="$HOME/.local/share/applications"
+    mkdir -p "$apps_dir"
+
+    # CLI-Launcher
+    cat > "$apps_dir/cognithor.desktop" << DESKTOP
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Cognithor (CLI)
+Comment=Cognithor Agent OS - Terminal
+Exec=${VENV_DIR}/bin/jarvis
+Icon=utilities-terminal
+Terminal=true
+Categories=Utility;Development;
+StartupNotify=false
+DESKTOP
+    success "cognithor.desktop erstellt"
+
+    # Web-UI Launcher
+    cat > "$apps_dir/cognithor-webui.desktop" << DESKTOP
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Cognithor Web-UI
+Comment=Cognithor Agent OS - Web-Interface
+Exec=bash -c '${VENV_DIR}/bin/python -m jarvis --no-cli & sleep 3 && xdg-open http://localhost:8741; wait'
+Icon=applications-internet
+Terminal=false
+Categories=Utility;Development;
+StartupNotify=true
+DESKTOP
+    success "cognithor-webui.desktop erstellt"
+
+    # Desktop-Datenbank aktualisieren
+    if check_command update-desktop-database; then
+        update-desktop-database "$apps_dir" 2>/dev/null || true
+        success "Desktop-Datenbank aktualisiert"
     fi
 }
 
@@ -771,6 +1015,7 @@ main() {
             install_systemd
             setup_logrotate
             setup_shell_integration
+            create_desktop_entry
             run_smoke_test
             show_summary
             ;;
@@ -796,6 +1041,7 @@ main() {
             install_systemd
             setup_logrotate
             setup_shell_integration
+            create_desktop_entry
             run_smoke_test
             show_summary
             ;;

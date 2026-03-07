@@ -149,7 +149,7 @@ apt-get install -y -qq \
 
 # Check Python version
 PYTHON_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-if python3 -c "import sys; exit(0 if sys.version_info >= (3, 11) else 1)"; then
+if python3 -c "import sys; exit(0 if sys.version_info >= (3, 12) else 1)"; then
     log_info "Python ${PYTHON_VER} OK (>= ${PYTHON_MIN})"
 else
     log_error "Python ${PYTHON_VER} is too old. Need >= ${PYTHON_MIN}"

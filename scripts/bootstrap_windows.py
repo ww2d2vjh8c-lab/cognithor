@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 # ── Version (muss mit pyproject.toml uebereinstimmen) ─────────────────────
-BOOTSTRAP_VERSION = "0.26.6"
+BOOTSTRAP_VERSION = "0.27.0"
 
 # ── Pfade ──────────────────────────────────────────────────────────────────
 JARVIS_HOME = Path(os.environ.get("JARVIS_HOME", Path.home() / ".jarvis"))
@@ -508,13 +508,13 @@ def _detect_python_installer(repo_root: str) -> tuple[str, list[str]]:
     ]
 
 
-# ── Erster Start (13 Schritte) ─────────────────────────────────────────────
+# ── Erster Start (14 Schritte) ─────────────────────────────────────────────
 def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
     result = BootResult()
     t0 = time.time()
 
     # ── 1. Python-Version ──────────────────────────────────────────────
-    header("1/13  Python-Version")
+    header("1/14  Python-Version")
     v = sys.version_info
     if v >= (3, 12):
         result.add_pass(f"Python {v.major}.{v.minor}.{v.micro}")
@@ -523,7 +523,7 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
         return False
 
     # ── 2. Hardware-Erkennung ──────────────────────────────────────────
-    header("2/13  Hardware-Erkennung")
+    header("2/14  Hardware-Erkennung")
     hw = detect_hardware(repo_root)
 
     if hw.gpu.cuda_available:
@@ -548,14 +548,56 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
     info(f"Hardware-Tier: {BOLD}{hw.tier.upper()}{RESET}")
 
     # ── 3. Ollama pruefen ──────────────────────────────────────────────
-    header("3/13  Ollama")
+    header("3/14  Ollama")
     ollama_path = find_ollama()
 
     if ollama_path is None:
-        result.add_warn(
-            "Ollama nicht gefunden. Bitte installieren: https://ollama.com/download"
-        )
+        # Versuche Ollama via winget zu installieren
         ollama_ready = False
+        winget_available = shutil.which("winget") is not None
+        if winget_available:
+            try:
+                answer = input("  Ollama nicht gefunden. Jetzt installieren? [J/n]: ").strip().lower()
+            except EOFError:
+                answer = "n"
+            if answer in ("", "j", "y", "ja", "yes"):
+                info("Installiere Ollama via winget...")
+                try:
+                    winget_proc = subprocess.run(
+                        ["winget", "install", "--id", "Ollama.Ollama", "-e",
+                         "--accept-source-agreements", "--accept-package-agreements"],
+                        capture_output=True, text=True, timeout=600,
+                    )
+                    if winget_proc.returncode == 0:
+                        ok("Ollama via winget installiert")
+                        ollama_path = find_ollama()
+                        if ollama_path:
+                            info("Starte Ollama...")
+                            if start_ollama(ollama_path):
+                                ok("Ollama gestartet")
+                                ollama_ready = True
+                            else:
+                                result.add_warn("Ollama installiert, konnte aber nicht gestartet werden")
+                        else:
+                            result.add_warn(
+                                "Ollama installiert, aber nicht im PATH. "
+                                "Bitte Fenster schliessen und neu starten."
+                            )
+                    else:
+                        result.add_warn(
+                            "winget-Installation fehlgeschlagen. "
+                            "Bitte manuell installieren: https://ollama.com/download"
+                        )
+                except Exception as e:
+                    result.add_warn(f"Ollama-Installation fehlgeschlagen: {e}")
+            else:
+                result.add_warn(
+                    "Ollama nicht gefunden. Bitte installieren: https://ollama.com/download"
+                )
+        else:
+            result.add_warn(
+                "Ollama nicht gefunden. Bitte installieren: https://ollama.com/download"
+            )
     else:
         ok(f"Ollama gefunden: {ollama_path}")
         if ollama_is_running():
@@ -571,7 +613,20 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
                 ollama_ready = False
 
     # ── 4. Ollama-Modelle ──────────────────────────────────────────────
-    header("4/13  Modelle")
+    header("4/14  Modelle")
+
+    # Hardware-Tier und Modell-Empfehlung anzeigen
+    _tier_models_display = TIER_MODELS.get(hw.tier, TIER_MODELS["minimal"])
+    _vram_str = f"{hw.gpu.vram_gb} GB VRAM" if hw.gpu.cuda_available else "keine GPU"
+    print(f"  Dein System: {_vram_str}, {hw.ram_gb} GB RAM")
+    print(f"  Hardware-Tier: {BOLD}{hw.tier.upper()}{RESET}")
+    print(f"  Modelle: {', '.join(_tier_models_display)}")
+    if hw.tier == "minimal":
+        print(f"  {DIM}Tipp: Fuer bessere Qualitaet mindestens 8 GB VRAM empfohlen{RESET}")
+    elif hw.tier in ("standard", "power", "enterprise"):
+        print(f"  {DIM}Tipp: 'cognithor --lite' fuer nur 6 GB VRAM{RESET}")
+    print()
+
     models_installed: list[str] = []
     if skip_models:
         info("Modell-Download uebersprungen (--skip-models)")
@@ -583,7 +638,7 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
         _print_model_pull_commands(hw.tier)
 
     # ── 5. Python-Abhaengigkeiten ──────────────────────────────────────
-    header("5/13  Python-Abhaengigkeiten")
+    header("5/14  Python-Abhaengigkeiten")
 
     # Pruefe ob jarvis bereits importierbar ist
     jarvis_ok = False
@@ -618,34 +673,57 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
             )
             return False
 
-    # ── 6. Node-Abhaengigkeiten ────────────────────────────────────────
-    header("6/13  Node-Abhaengigkeiten")
+    # ── 6. Web-UI (Node.js optional) ──────────────────────────────────
+    header("6/14  Web-UI")
     ui_dir = os.path.join(repo_root, "ui")
-    node_modules = os.path.join(ui_dir, "node_modules")
+    ui_dist = os.path.join(ui_dir, "dist", "index.html")
+    npm_cmd = "npm.cmd" if sys.platform == "win32" else "npm"
+    has_node = shutil.which("node") is not None
 
-    if os.path.isdir(node_modules):
-        ok("node_modules vorhanden")
-    else:
-        info("Installiere Node-Abhaengigkeiten (npm install)...")
-        npm_cmd = "npm.cmd" if sys.platform == "win32" else "npm"
-        npm_proc = subprocess.run(
-            [npm_cmd, "install"],
-            capture_output=True, text=True, timeout=300,
-            cwd=ui_dir,
-        )
-        if npm_proc.returncode == 0:
-            result.add_pass("Node-Abhaengigkeiten installiert")
-        else:
-            stderr = npm_proc.stderr.strip()[-300:] if npm_proc.stderr else ""
-            result.add_fail(
-                "npm install fehlgeschlagen",
-                f"Manuell ausfuehren: cd \"{ui_dir}\" && npm install\n"
-                f"  Fehler: {stderr}"
+    if has_node:
+        # Node.js vorhanden → npm install + npm run build
+        node_modules = os.path.join(ui_dir, "node_modules")
+        if not os.path.isdir(node_modules):
+            info("Installiere Node-Abhaengigkeiten (npm install)...")
+            npm_proc = subprocess.run(
+                [npm_cmd, "install"],
+                capture_output=True, text=True, timeout=300,
+                cwd=ui_dir,
             )
-            return False
+            if npm_proc.returncode == 0:
+                ok("Node-Abhaengigkeiten installiert")
+            else:
+                stderr = npm_proc.stderr.strip()[-300:] if npm_proc.stderr else ""
+                result.add_warn(
+                    f"npm install fehlgeschlagen: {stderr}"
+                )
+        else:
+            ok("node_modules vorhanden")
+
+        # Build erstellen falls nicht vorhanden
+        if not os.path.isfile(ui_dist):
+            info("Erstelle UI-Build (npm run build)...")
+            build_proc = subprocess.run(
+                [npm_cmd, "run", "build"],
+                capture_output=True, text=True, timeout=300,
+                cwd=ui_dir,
+            )
+            if build_proc.returncode == 0:
+                ok("UI-Build erstellt (ui/dist/)")
+            else:
+                result.add_warn("npm run build fehlgeschlagen -- Vite Dev Server wird benoetigt")
+        else:
+            ok("UI-Build vorhanden (ui/dist/)")
+    elif os.path.isfile(ui_dist):
+        ok("Pre-built UI vorhanden (Node.js nicht noetig)")
+    else:
+        result.add_warn(
+            "Node.js nicht gefunden und kein Pre-built UI vorhanden. "
+            "CLI-Modus aktiv. Fuer Web-UI: https://nodejs.org/"
+        )
 
     # ── 7. Verzeichnisstruktur ─────────────────────────────────────────
-    header("7/13  Verzeichnisstruktur")
+    header("7/14  Verzeichnisstruktur")
     try:
         init_proc = subprocess.run(
             [sys.executable, "-m", "jarvis", "--init-only"],
@@ -662,7 +740,7 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
         ok("Verzeichnisstruktur manuell erstellt")
 
     # ── 8. Konfiguration ───────────────────────────────────────────────
-    header("8/13  Konfiguration")
+    header("8/14  Konfiguration")
     config_dest = JARVIS_HOME / "config.yaml"
     config_src = Path(repo_root) / "config.yaml.example"
     if not config_dest.exists() and config_src.exists():
@@ -672,6 +750,24 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
         ok("config.yaml bereits vorhanden")
     else:
         result.add_warn("config.yaml.example nicht gefunden -- uebersprungen")
+
+    # Locale-basierte Spracherkennung
+    if config_dest.exists():
+        _cfg_text = config_dest.read_text(encoding="utf-8")
+        if "language:" not in _cfg_text:
+            import locale as _locale_mod
+            try:
+                _sys_locale = _locale_mod.getdefaultlocale()[0] or ""
+                _lang_code = _sys_locale[:2].lower() if len(_sys_locale) >= 2 else "de"
+            except Exception:
+                _lang_code = "de"
+            _detected_lang = "de" if _lang_code == "de" else "en"
+            # Sprache an den Anfang der config.yaml schreiben
+            config_dest.write_text(
+                f'language: "{_detected_lang}"\n' + _cfg_text,
+                encoding="utf-8",
+            )
+            ok(f"Sprache erkannt: {_detected_lang} (Locale: {_lang_code})")
 
     env_dest = JARVIS_HOME / ".env"
     env_src = Path(repo_root) / ".env.example"
@@ -684,7 +780,7 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
         result.add_warn(".env.example nicht gefunden -- uebersprungen")
 
     # ── 9. Piper TTS Voice-Modell ────────────────────────────────────
-    header("9/13  Piper TTS Voice-Modell")
+    header("9/14  Piper TTS Voice-Modell")
     voices_dir = JARVIS_HOME / "voices"
     voices_dir.mkdir(parents=True, exist_ok=True)
     piper_voice = "de_DE-pavoque-low"
@@ -714,7 +810,7 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
             result.add_warn(f"Piper-Voice Download fehlgeschlagen: {e}")
 
     # ── 10. Schnelltest ─────────────────────────────────────────────────
-    header("10/13  Schnelltest")
+    header("10/14  Schnelltest")
     try:
         qt = subprocess.run(
             [sys.executable, "-c",
@@ -734,7 +830,7 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
         result.add_warn("Ollama nicht erreichbar")
 
     # ── 11. Desktop-Verknuepfung ───────────────────────────────────────
-    header("11/13  Desktop-Verknuepfung")
+    header("11/14  Desktop-Verknuepfung")
     bat_path = os.path.join(repo_root, "start_cognithor.bat")
     shortcut_ok = False
     if os.path.isfile(bat_path):
@@ -747,11 +843,40 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
         result.add_warn(f"start_cognithor.bat nicht gefunden: {bat_path}")
 
     # ── 12. Marker schreiben ───────────────────────────────────────────
-    header("12/13  Marker")
+    header("12/14  Marker")
     write_marker(hw, models_installed, shortcut_ok)
     ok(f"Marker geschrieben: {MARKER_FILE}")
 
-    # ── 13. Zusammenfassung ────────────────────────────────────────────
+    # ── 13. LLM-Rauchtest ─────────────────────────────────────────────
+    header("13/14  LLM-Rauchtest")
+    if ollama_ready:
+        try:
+            _smoke_payload = json.dumps({
+                "model": "qwen3:8b",
+                "messages": [{"role": "user", "content": "Sage kurz Hallo."}],
+                "stream": False,
+            }).encode("utf-8")
+            _smoke_req = urllib.request.Request(
+                f"{OLLAMA_URL}/api/chat",
+                data=_smoke_payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(_smoke_req, timeout=30) as _smoke_resp:
+                _smoke_data = json.loads(_smoke_resp.read().decode())
+                _smoke_answer = _smoke_data.get("message", {}).get("content", "").strip()
+                if _smoke_answer:
+                    # Kuerzen auf max 80 Zeichen fuer Anzeige
+                    _display = _smoke_answer[:80] + ("..." if len(_smoke_answer) > 80 else "")
+                    ok(f"LLM antwortet: {_display}")
+                else:
+                    result.add_warn("LLM antwortete leer -- Modell evtl. noch nicht bereit")
+        except Exception as e:
+            result.add_warn(f"LLM-Rauchtest fehlgeschlagen: {e}")
+    else:
+        info("LLM-Rauchtest uebersprungen (Ollama nicht bereit)")
+
+    # ── 14. Zusammenfassung ────────────────────────────────────────────
     elapsed = time.time() - t0
     result.timings["total"] = elapsed
     print_summary(result, elapsed, first=True)
@@ -759,7 +884,7 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
     return result.success
 
 
-# ── Folgestart (4 Schritte) ────────────────────────────────────────────────
+# ── Folgestart (5 Schritte) ────────────────────────────────────────────────
 def quick_start(repo_root: str, *, skip_models: bool = False) -> bool:
     result = BootResult()
     t0 = time.time()

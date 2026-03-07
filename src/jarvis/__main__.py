@@ -572,6 +572,13 @@ def main() -> None:
 
                 log.info("cc_tts_endpoint_registered")
 
+                # Mount pre-built React UI at / (catch-all, MUSS als letztes)
+                _ui_dist = Path(__file__).resolve().parent.parent.parent / "ui" / "dist"
+                if _ui_dist.is_dir() and (_ui_dist / "index.html").exists():
+                    from fastapi.staticfiles import StaticFiles
+                    api_app.mount("/", StaticFiles(directory=str(_ui_dist), html=True), name="ui")
+                    log.info("prebuilt_ui_mounted", path=str(_ui_dist))
+
                 # TLS-Durchreichung
                 uvi_kwargs: dict[str, Any] = {
                     "app": api_app,
