@@ -118,20 +118,19 @@ def validate_model_path_containment(
     Raises:
         ValueError: If the resolved path escapes the allowed directory.
     """
-    try:
-        resolved = model_path.resolve()
-        allowed_resolved = allowed_dir.resolve()
-        resolved.relative_to(allowed_resolved)
-    except (ValueError, OSError) as exc:
+    import os.path as _osp
+    resolved_str = _osp.normpath(_osp.realpath(str(model_path)))
+    allowed_str = _osp.normpath(_osp.realpath(str(allowed_dir)))
+    if not resolved_str.startswith(allowed_str + _osp.sep) and resolved_str != allowed_str:
         log.warning(
             "model_path_containment_violation",
             model_path=str(model_path),
             allowed_dir=str(allowed_dir),
         )
         raise ValueError(
-            f"Model path {model_path} escapes allowed directory {allowed_dir}"
-        ) from exc
-    return resolved
+            f"Model path escapes allowed directory"
+        )
+    return Path(resolved_str)
 
 
 # ============================================================================
