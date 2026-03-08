@@ -23,7 +23,7 @@ if "aiohttp" not in sys.modules:
             self.text = text
             self.body = body
 
-    def _fake_json_response(data: Any, **kwargs: Any) -> _FakeResponse:
+    def _fake_json_response(data, **kwargs) -> _FakeResponse:
         return _FakeResponse(status=200, body=json.dumps(data).encode())
 
     _mock_aiohttp_web = MagicMock()
