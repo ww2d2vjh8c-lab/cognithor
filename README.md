@@ -21,7 +21,7 @@
   </p>
 </p>
 
-> **Note:** Cognithor is in **active development (Beta)**. While the test suite is extensive (10,165 tests, 89% coverage), the project has not been battle-tested in production environments. Expect rough edges, breaking changes between versions, and some German-language strings in system prompts and error messages. Contributions, bug reports, and feedback are very welcome. See [Status & Maturity](#status--maturity) for details.
+> **Note:** Cognithor is in **active development (Beta)**. While the test suite is extensive (10,178 tests, 89% coverage), the project has not been battle-tested in production environments. Expect rough edges, breaking changes between versions, and some German-language strings in system prompts and error messages. Contributions, bug reports, and feedback are very welcome. See [Status & Maturity](#status--maturity) for details.
 
 ---
 
@@ -29,7 +29,7 @@
 
 Most AI assistants send your data to the cloud. Cognithor runs entirely on your machine — with Ollama or LM Studio, no API keys required. Cloud providers are optional, not mandatory.
 
-It replaces a patchwork of tools with one integrated system: 17 channels, 48 MCP tools, 5-tier memory, knowledge vault, voice, browser automation, and more — all wired together from day one. 10,165 tests at 89% coverage keep it honest. See [Status & Maturity](#status--maturity) for what that does and does not guarantee.
+It replaces a patchwork of tools with one integrated system: 17 channels, 48 MCP tools, 5-tier memory, knowledge vault, voice, browser automation, and more — all wired together from day one. 10,178 tests at 89% coverage keep it honest. See [Status & Maturity](#status--maturity) for what that does and does not guarantee.
 
 ---
 
@@ -49,7 +49,7 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 48 MCP
 | **Deployment (Docker, bare-metal)** | Beta — tested on limited configurations |
 | **Enterprise features** (GDPR, A2A, Governance) | Alpha — implemented but not audited for compliance |
 
-**What the test suite covers:** Unit tests, integration tests, and mocked end-to-end tests for all modules. The 10,165 tests verify code correctness in controlled environments.
+**What the test suite covers:** Unit tests, integration tests, and mocked end-to-end tests for all modules. The 10,178 tests verify code correctness in controlled environments.
 
 **What the test suite does NOT cover:** Real-world deployment scenarios, network edge cases, long-running stability, multi-user load, hardware-specific voice/GPU issues, or actual LLM response quality.
 
@@ -104,7 +104,7 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 48 MCP
 **Previous Releases**
 
 - **v0.28.0** — Vite IPv6 fix, Qwen3-Coder model update, Python 3.15 locale compat
-- **v0.27.5** "BugHunt" — 60+ CodeQL fixes, CI stability, thread-safe EpisodicStore, 10,165 tests
+- **v0.27.5** "BugHunt" — 60+ CodeQL fixes, CI stability, thread-safe EpisodicStore, 10,178 tests
 - **v0.27.3** — CWE-22 Path Traversal fix in TTS API, multi-GPU installer fix, `--init-only` hang fix
 - **v0.27.1** — Community Skill Marketplace, ToolEnforcer runtime sandboxing, 5-check validation pipeline, 13 autonomy fixes
 - **v0.27.0** — Full Audit, Installer Overhaul: 80-item audit, XSS fix, CORS hardening, rate limiting, auto-install Python/Ollama
@@ -154,7 +154,7 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 48 MCP
 - **Agent SDK** — Decorator-based agent registration (`@agent`, `@tool`, `@hook`), project scaffolding
 - **Plugin Remote Registry** — Remote manifests with SHA-256 checksums, dependency resolution, install/update/rollback
 - **uv Installer Support** — Automatic uv detection for 10x faster installs, transparent pip fallback
-- **10,165 tests** · **89% coverage** · **0 lint errors** · **0 CodeQL alerts**
+- **10,178 tests** · **89% coverage** · **0 lint errors** · **0 CodeQL alerts**
 
 ## Architecture
 
@@ -549,7 +549,7 @@ python -m pytest tests/test_memory/ -v
 python -m pytest tests/test_channels/ -v
 ```
 
-Current status: **10,165 tests** · **100% pass rate** · **89% coverage** · **~118,000 LOC source** · **~108,000 LOC tests**
+Current status: **10,178 tests** · **100% pass rate** · **89% coverage** · **~118,000 LOC source** · **~108,000 LOC tests**
 
 | Area | Tests | Description |
 |------|-------|-------------|
@@ -685,7 +685,7 @@ cognithor/
 │       │   └── useVoiceMode.js    # Voice mode hook (wake word, STT, TTS)
 │       ├── App.jsx                # App shell
 │       └── main.jsx               # React entry
-├── tests/                         # 10,165 tests, ~92,000 LOC
+├── tests/                         # 10,178 tests, ~92,000 LOC
 │   ├── test_core/                 # Planner, Gatekeeper, Executor, Distributed Lock
 │   ├── test_memory/               # All 5 memory tiers, hybrid search
 │   ├── test_mcp/                  # MCP tools and client
@@ -843,7 +843,7 @@ Alternatively, use [terminalizer](https://github.com/faressoft/terminalizer) for
 
 ---
 
-**Metrics:** ~118,000 LOC source · ~108,000 LOC tests · 10,165 tests · 89% coverage · 0 lint errors · **Status: Beta**
+**Metrics:** ~118,000 LOC source · ~108,000 LOC tests · 10,178 tests · 89% coverage · 0 lint errors · **Status: Beta**
 
 ## Contributors
 
