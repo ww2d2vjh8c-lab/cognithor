@@ -128,7 +128,7 @@ const defaults = () => ({
   models: {
     planner: { name: "qwen3:32b", context_window: 32768, vram_gb: 20, strengths: ["reasoning","planning","reflection","german"], speed: "medium" },
     executor: { name: "qwen3:8b", context_window: 32768, vram_gb: 6, strengths: ["tool-calling","simple-tasks"], speed: "fast" },
-    coder: { name: "qwen2.5-coder:32b", context_window: 32768, vram_gb: 20, strengths: ["code-generation","debugging","testing"], speed: "medium" },
+    coder: { name: "qwen3-coder:30b", context_window: 32768, vram_gb: 20, strengths: ["code-generation","debugging","testing"], speed: "medium" },
     embedding: { name: "nomic-embed-text", context_window: 8192, vram_gb: 0.5, strengths: ["semantic-search"], speed: "fast" },
   },
   model_overrides: { skill_models: {} },

@@ -5,6 +5,15 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.28.0] – 2026-03-08
+
+### Fixed
+- **Vite dev server unreachable**: Explicit `host: '127.0.0.1'` binding prevents IPv6/IPv4 mismatch on newer Node.js versions where `localhost` resolves to `::1`
+- **Deprecated `locale.getdefaultlocale()`**: Replaced with `getlocale()` in bootstrap to fix Python 3.13+ deprecation warning (removal in 3.15)
+
+### Changed
+- **Coder model updated**: `qwen3-coder:32b` (non-existent) → `qwen3-coder:30b` (official Qwen3-Coder MoE, 18 GB) across all configs, docs, and bootstrap tiers
+
 ## [0.27.5] "BugHunt" – 2026-03-08
 
 ### CodeQL Security Sweep & CI Stability

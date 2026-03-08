@@ -147,7 +147,7 @@ class TestOverrideAffectsSelectModel:
         self, router: ModelRouter, config: JarvisConfig
     ) -> None:
         """With override set, select_model returns the override for all non-embedding types."""
-        override_model = "qwen3-coder:32b"
+        override_model = "qwen3-coder:30b"
         router.set_coding_override(override_model)
 
         for task_type in (

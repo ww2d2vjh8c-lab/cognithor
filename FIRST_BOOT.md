@@ -46,7 +46,7 @@ ollama serve &
 # Modelle laden
 ollama pull qwen3:32b           # Planner — 20 GB, ~2 Min
 ollama pull qwen3:8b            # Executor — 6 GB, ~30 Sek
-ollama pull qwen3-coder:32b     # Coder — 20 GB, ~2 Min
+ollama pull qwen3-coder:30b     # Coder — 20 GB, ~2 Min
 ollama pull nomic-embed-text    # Embeddings — 300 MB, ~5 Sek
 ```
 

@@ -425,7 +425,7 @@ except: pass
             info "Tipp: 'cognithor --lite' fuer nur 6 GB VRAM"
             ;;
         power|enterprise)
-            info "Modelle: qwen3:8b, qwen3:32b, qwen3-coder:32b, nomic-embed-text"
+            info "Modelle: qwen3:8b, qwen3:32b, qwen3-coder:30b, nomic-embed-text"
             info "Tipp: 'cognithor --lite' fuer nur 6 GB VRAM"
             ;;
     esac

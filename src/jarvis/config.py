@@ -61,7 +61,7 @@ class ModelsConfig(BaseModel):
     )
     coder: ModelConfig = Field(
         default_factory=lambda: ModelConfig(
-            name="qwen2.5-coder:32b",
+            name="qwen3-coder:30b",
             context_window=32768,
             vram_gb=20.0,
             strengths=["code-generation", "debugging", "testing"],
@@ -648,7 +648,7 @@ class ModelOverrideConfig(BaseModel):
 _OLLAMA_DEFAULT_MODEL_NAMES = {
     "qwen3:32b",
     "qwen3:8b",
-    "qwen2.5-coder:32b",
+    "qwen3-coder:30b",
     "qwen2.5-coder:7b",
     "nomic-embed-text",
     "llava:13b",

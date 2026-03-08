@@ -259,9 +259,10 @@ function jarvisLauncher() {
 export default defineConfig({
   plugins: [react(), jarvisLauncher()],
   server: {
+    host: '127.0.0.1',
     proxy: {
-      '/api': { target: `http://localhost:${BACKEND_PORT}`, changeOrigin: true },
-      '/ws':  { target: `http://localhost:${BACKEND_PORT}`, ws: true, changeOrigin: true },
+      '/api': { target: `http://127.0.0.1:${BACKEND_PORT}`, changeOrigin: true },
+      '/ws':  { target: `http://127.0.0.1:${BACKEND_PORT}`, ws: true, changeOrigin: true },
     },
   },
 })

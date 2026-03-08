@@ -94,18 +94,15 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 48 MCP
 
 ## What's New
 
-### v0.27.5 "BugHunt" — CodeQL Security Sweep & CI Stability
+### v0.28.0 — Vite IPv6 Fix, Qwen3-Coder, Python 3.15 Compat
 
-Systematic elimination of all GitHub CodeQL security alerts, cross-platform CI stability fixes, and thread-safety hardening.
-
-- **60+ CodeQL Alerts Resolved** — CWE-209 (information exposure via exceptions), CWE-22 (path traversal), CWE-1333 (ReDoS), CWE-312 (cleartext storage), workflow permissions hardening
-- **Path Traversal Hardened** — All user-supplied paths now validated with `os.path.normpath()` + `startswith()` pattern (CodeQL-recognized), covering TTS voices, model downloads, and sanitizer
-- **CI Cross-Platform Fixes** — Windows path escaping (`\a` -> `\x07`), PowerShell compatibility, aiohttp mock scoping, nio mock consistency, checkpoint ordering determinism
-- **Thread-Safe EpisodicStore** — All SQLite reads now serialized with `_write_lock` to prevent corruption under concurrent access
-- **10,165 Tests** — Up from 9,596 (+569 new tests), ~118,000 LOC source, ~108,000 LOC tests
+- **Vite Dev Server Fix** — Explicit `host: '127.0.0.1'` binding prevents IPv6/IPv4 mismatch (`localhost` → `::1`) on newer Node.js, fixing "localhost:5173 unreachable"
+- **Qwen3-Coder** — Updated coder model from non-existent `qwen3-coder:32b` to official `qwen3-coder:30b` (MoE, 18 GB) across all configs, docs, and bootstrap
+- **Python 3.15 Ready** — Replaced deprecated `locale.getdefaultlocale()` with `getlocale()` in bootstrap
 
 **Previous Releases**
 
+- **v0.27.5** "BugHunt" — 60+ CodeQL fixes, CI stability, thread-safe EpisodicStore, 10,165 tests
 - **v0.27.3** — CWE-22 Path Traversal fix in TTS API, multi-GPU installer fix, `--init-only` hang fix
 - **v0.27.1** — Community Skill Marketplace, ToolEnforcer runtime sandboxing, 5-check validation pipeline, 13 autonomy fixes
 - **v0.27.0** — Full Audit, Installer Overhaul: 80-item audit, XSS fix, CORS hardening, rate limiting, auto-install Python/Ollama
@@ -348,7 +345,7 @@ ollama pull qwen3:32b           # Planner (20 GB VRAM)
 ollama pull qwen3:8b            # Executor (6 GB VRAM)
 ollama pull nomic-embed-text    # Embeddings (300 MB VRAM)
 # Optional:
-ollama pull qwen3-coder:32b     # Code tasks (20 GB VRAM)
+ollama pull qwen3-coder:30b     # Code tasks (20 GB VRAM)
 ```
 
 No GPU? Use smaller models (`qwen3:8b` for both) or a cloud provider — just set one API key.

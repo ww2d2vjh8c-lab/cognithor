@@ -311,8 +311,8 @@ def pull_model(name: str, ollama_path: str, timeout: int = 1800) -> bool:
 TIER_MODELS: dict[str, list[str]] = {
     "minimal":    ["qwen3:8b", "nomic-embed-text"],
     "standard":   ["qwen3:8b", "qwen3:32b", "nomic-embed-text"],
-    "power":      ["qwen3:8b", "qwen3:32b", "qwen3-coder:32b", "nomic-embed-text"],
-    "enterprise": ["qwen3:8b", "qwen3:32b", "qwen3-coder:32b", "nomic-embed-text"],
+    "power":      ["qwen3:8b", "qwen3:32b", "qwen3-coder:30b", "nomic-embed-text"],
+    "enterprise": ["qwen3:8b", "qwen3:32b", "qwen3-coder:30b", "nomic-embed-text"],
 }
 
 
@@ -758,7 +758,7 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
         if "language:" not in _cfg_text:
             import locale as _locale_mod
             try:
-                _sys_locale = _locale_mod.getdefaultlocale()[0] or ""
+                _sys_locale = _locale_mod.getlocale()[0] or ""
                 _lang_code = _sys_locale[:2].lower() if len(_sys_locale) >= 2 else "de"
             except Exception:
                 _lang_code = "de"

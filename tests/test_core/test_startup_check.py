@@ -38,7 +38,7 @@ def mock_config() -> MagicMock:
     # Models
     config.models.planner.name = "qwen3:32b"
     config.models.executor.name = "qwen3:8b"
-    config.models.coder.name = "qwen2.5-coder:32b"
+    config.models.coder.name = "qwen3-coder:30b"
     config.models.embedding.name = "nomic-embed-text"
 
     return config
@@ -382,7 +382,7 @@ class TestCheckModels:
             "models": [
                 {"name": "qwen3:32b"},
                 {"name": "qwen3:8b"},
-                {"name": "qwen2.5-coder:32b"},
+                {"name": "qwen3-coder:30b"},
                 {"name": "nomic-embed-text:latest"},
             ]
         }

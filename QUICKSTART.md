@@ -42,7 +42,7 @@ ollama pull qwen3:8b             # Executor — schnelle Ausführung (6 GB VRAM)
 ollama pull nomic-embed-text     # Embeddings — Vektor-Suche (300 MB VRAM)
 
 # Optional (für Code-Aufgaben)
-ollama pull qwen3-coder:32b      # Code-Spezialist (20 GB VRAM)
+ollama pull qwen3-coder:30b      # Code-Spezialist (20 GB VRAM)
 ```
 
 Ollama starten (falls nicht automatisch):
