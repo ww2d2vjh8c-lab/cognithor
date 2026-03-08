@@ -5,6 +5,21 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.29.0] – 2026-03-08
+
+### Fixed
+- **UI layout wiggle**: Added `scrollbar-gutter: stable` to prevent horizontal content shift when scrollbar appears/disappears on page navigation
+- **Unsaved changes false positives**: Snapshot now captured directly from fetched API data in `loadAllConfig()`, eliminating React batching race condition; removed redundant SPA navigation guard (page switch preserves state)
+- **Keyboard shortcuts inconsistent**: Sequential `Cmd+1`..`Cmd+0` mapping for first 10 pages; Executor now accessible via `Cmd+6`; key lookup by field instead of array index
+- **token_estimate always 0**: `WorkingMemory.add_message()` now updates `token_count` with word-based token estimation (compound-aware); `clear_for_compaction()` recalculates after pruning
+- **SkillTester subprocess fails**: Safe environment now includes `PYTHONPATH`, `APPDATA`, and `VIRTUAL_ENV` so pytest subprocess can find installed packages
+
+### Added
+- **SQLite encryption (optional)**: SQLCipher support with OS keyring key storage (`pip install cognithor[encryption]`); new `database.encryption_enabled` toggle in UI; `src/jarvis/db/encryption.py` module with `open_sqlite()`, `init_encryption()`, `get_encryption_key()`, `remove_encryption_key()`
+
+### Removed
+- **Speed field from Models UI**: Was a metadata-only field with no runtime effect; removed to avoid user confusion
+
 ## [0.28.0] – 2026-03-08
 
 ### Fixed

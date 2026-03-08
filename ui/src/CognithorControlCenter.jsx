@@ -90,17 +90,17 @@ const I = {
 
 // ── Navigation ─────────────────────────────────────────────────────────
 const PAGES = [
-  { id: "chat", label: "Chat", icon: I.chat, key: "0" },
-  { id: "general", label: "Allgemein", icon: I.home, key: "1" },
-  { id: "providers", label: "LLM Provider", icon: I.llm, key: "2" },
-  { id: "models", label: "Modelle", icon: I.model, key: "3" },
-  { id: "planner", label: "PGE Trinity", icon: I.brain, key: "4" },
-  { id: "executor", label: "Executor", icon: I.terminal, key: null },
-  { id: "memory", label: "Memory", icon: I.mem, key: "5" },
-  { id: "channels", label: "Channels", icon: I.ch, key: "6" },
-  { id: "security", label: "Sicherheit", icon: I.shield, key: "7" },
-  { id: "web", label: "Web-Tools", icon: I.web, key: "8" },
-  { id: "mcp", label: "MCP & A2A", icon: I.plug, key: "9" },
+  { id: "chat", label: "Chat", icon: I.chat, key: "1" },
+  { id: "general", label: "Allgemein", icon: I.home, key: "2" },
+  { id: "providers", label: "LLM Provider", icon: I.llm, key: "3" },
+  { id: "models", label: "Modelle", icon: I.model, key: "4" },
+  { id: "planner", label: "PGE Trinity", icon: I.brain, key: "5" },
+  { id: "executor", label: "Executor", icon: I.terminal, key: "6" },
+  { id: "memory", label: "Memory", icon: I.mem, key: "7" },
+  { id: "channels", label: "Channels", icon: I.ch, key: "8" },
+  { id: "security", label: "Sicherheit", icon: I.shield, key: "9" },
+  { id: "web", label: "Web-Tools", icon: I.web, key: "0" },
+  { id: "mcp", label: "MCP & A2A", icon: I.plug, key: null },
   { id: "cron", label: "Cron & Heartbeat", icon: I.clock, key: null },
   { id: "database", label: "Datenbank", icon: I.db, key: null },
   { id: "logging", label: "Logging", icon: I.terminal, key: null },
@@ -158,7 +158,7 @@ const defaults = () => ({
   executor: { default_timeout_seconds: 30, max_output_chars: 10000, max_retries: 3, backoff_base_delay_seconds: 1.0, max_parallel_tools: 4, media_analyze_image_timeout: 180, media_transcribe_audio_timeout: 120, media_extract_text_timeout: 120, media_tts_timeout: 120, run_python_timeout: 120 },
   web: { searxng_url: "", brave_api_key: "", google_cse_api_key: "", google_cse_cx: "", jina_api_key: "", duckduckgo_enabled: true, domain_blocklist: [], domain_allowlist: [], max_fetch_bytes: 500000, max_text_chars: 20000, fetch_timeout_seconds: 15, search_timeout_seconds: 10, max_search_results: 10, ddg_min_delay_seconds: 2.0, ddg_ratelimit_wait_seconds: 30, ddg_cache_ttl_seconds: 3600, search_and_read_max_chars: 5000, http_request_max_body_bytes: 1048576, http_request_timeout_seconds: 30, http_request_rate_limit_seconds: 1.0 },
   logging: { level: "INFO", json_logs: false, console: true },
-  database: { backend: "sqlite", pg_host: "localhost", pg_port: 5432, pg_dbname: "jarvis", pg_user: "jarvis", pg_password: "", pg_pool_min: 2, pg_pool_max: 10 },
+  database: { backend: "sqlite", encryption_enabled: false, pg_host: "localhost", pg_port: 5432, pg_dbname: "jarvis", pg_user: "jarvis", pg_password: "", pg_pool_min: 2, pg_pool_max: 10 },
   dashboard: { enabled: false, port: 9090 },
   heartbeat: { enabled: false, interval_minutes: 30, checklist_file: "HEARTBEAT.md", channel: "cli", model: "qwen3:8b" },
   plugins: { skills_dir: "skills", auto_update: false },
@@ -698,7 +698,6 @@ function ProvidersPage({ cfg, set }) {
 
 // ── Models ─────────────────────────────────────────────────────────────
 const ROLES = ["planner","executor","coder","embedding"];
-const SPEEDS = ["slow","medium","fast"];
 
 function ModelsPage({ cfg, set, setValidationErrors }) {
   return (<>
@@ -710,7 +709,6 @@ function ModelsPage({ cfg, set, setValidationErrors }) {
         <NumberInput label="VRAM (GB)" value={cfg.models?.[r]?.vram_gb} onChange={v => set(`models.${r}.vram_gb`, v)} min={0} max={80} step={0.5} />
         <SliderInput label="Temperature" value={cfg.models?.[r]?.temperature} onChange={v => set(`models.${r}.temperature`, v)} min={0} max={2} step={0.05} desc="Kreativität (0=deterministisch, 2=wild)" />
         <SliderInput label="Top P" value={cfg.models?.[r]?.top_p} onChange={v => set(`models.${r}.top_p`, v)} min={0} max={1} step={0.05} desc="Nucleus Sampling" />
-        <SelectInput label="Speed" value={cfg.models?.[r]?.speed} onChange={v => set(`models.${r}.speed`, v)} options={SPEEDS} />
         <ListInput label="Stärken" value={cfg.models?.[r]?.strengths} onChange={v => set(`models.${r}.strengths`, v)} placeholder="z.B. reasoning" />
       </Card>
     ))}
@@ -1147,6 +1145,20 @@ function DatabasePage({ cfg, set }) {
         <NumberInput label="Pool Max" value={d.pg_pool_max} onChange={v => set("database.pg_pool_max", v)} min={1} max={100} />
       </Card>
     )}
+    {d.backend !== "postgresql" && (
+      <Card title="Verschlüsselung" open={false}>
+        <Toggle label="SQLite-Verschlüsselung (SQLCipher)" value={d.encryption_enabled} onChange={v => set("database.encryption_enabled", v)} desc="Verschlüsselt alle SQLite-Datenbanken mit SQLCipher. Der Schlüssel wird sicher im OS-Keyring gespeichert." />
+        {d.encryption_enabled && (
+          <div className="cc-desc" style={{marginTop:8,lineHeight:1.5}}>
+            Der Verschlüsselungsschlüssel wird automatisch im System-Keyring verwaltet
+            (Windows Credential Locker / macOS Keychain / Linux SecretService).
+            Beim ersten Aktivieren wird ein neuer Schlüssel generiert.
+            <br/><br/>
+            <strong>Voraussetzung:</strong> <code style={{fontSize:12,background:"var(--bg3)",padding:"2px 6px",borderRadius:4}}>pip install cognithor[encryption]</code>
+          </div>
+        )}
+      </Card>
+    )}
   </>);
 }
 
@@ -1356,26 +1368,42 @@ export default function App() {
   const loadAllConfig = useCallback(async () => {
     const data = await api("GET", "/config");
     if (!data || data.error) return false;
-    setCfg(prev => ({ ...prev, ...data }));
+    const mergedCfg = { ...defaults(), ...data };
+    setCfg(mergedCfg);
     const agentData = await api("GET", "/agents");
-    if (agentData?.agents?.length) setAgents(agentData.agents);
+    const loadedAgents = agentData?.agents?.length ? agentData.agents : [];
+    if (loadedAgents.length) setAgents(loadedAgents);
     const bindData = await api("GET", "/bindings");
-    if (bindData?.bindings?.length) setBindings(bindData.bindings);
+    const loadedBindings = bindData?.bindings?.length ? bindData.bindings : [];
+    if (loadedBindings.length) setBindings(loadedBindings);
     const promptData = await api("GET", "/prompts");
+    let loadedPrompts = {};
     if (promptData && !promptData.error) {
+      loadedPrompts = promptData;
       setPrompts(promptData);
       setPromptsLoaded(true);
       defaultPromptsRef.current = { ...defaultPrompts(), ...promptData };
     }
     const cronData = await api("GET", "/cron-jobs");
-    if (cronData?.jobs?.length) setCronJobs(cronData.jobs);
+    const loadedCron = cronData?.jobs?.length ? cronData.jobs : [];
+    if (loadedCron.length) setCronJobs(loadedCron);
     const mcpData = await api("GET", "/mcp-servers");
+    const loadedMcp = (mcpData && !mcpData.error) ? mcpData : {};
     if (mcpData && !mcpData.error) setMcpServers(mcpData);
     const a2aData = await api("GET", "/a2a");
+    const loadedA2a = (a2aData && !a2aData.error) ? a2aData : {};
     if (a2aData && !a2aData.error) setA2a(a2aData);
     configLoadedRef.current = true;
-    // Reset snapshot so dirty-state tracking recaptures real backend values
-    setSavedSnapshot("");
+    // Capture snapshot directly from fetched data — eliminates race with React batching
+    setSavedSnapshot(JSON.stringify({
+      cfg: mergedCfg,
+      agents: loadedAgents.length ? loadedAgents : [],
+      bindings: loadedBindings.length ? loadedBindings : [],
+      cronJobs: loadedCron.length ? loadedCron : [],
+      mcpServers: loadedMcp,
+      a2a: loadedA2a,
+      prompts: loadedPrompts,
+    }));
     setLoaded(true);
     return true;
   }, []); // All setters are stable React refs — no deps needed
@@ -1451,13 +1479,8 @@ export default function App() {
   // and saves are blocked until real config has been fetched.
   useEffect(() => { loadAllConfig(); }, [loadAllConfig]);
 
-  // B4: Set initial snapshot AFTER all state is loaded.
-  // Also re-runs when savedSnapshot is reset (e.g. after config reload from backend).
-  useEffect(() => {
-    if (loaded && !savedSnapshot) {
-      setSavedSnapshot(JSON.stringify({ cfg, agents, bindings, cronJobs, mcpServers, a2a, prompts }));
-    }
-  }, [loaded, savedSnapshot]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Snapshot is now set directly in loadAllConfig() from fetched data,
+  // eliminating the React batching race condition that caused false-positive dirty state.
 
   // Fix #2: Parallel save with error tracking + Fix #15: includes prompts
   // Fix #23: Block save before config loads + only send changed API keys
@@ -1606,14 +1629,10 @@ export default function App() {
         e.preventDefault();
         save();
       }
-      // Ctrl+1..0 for pages
-      if ((e.ctrlKey || e.metaKey) && e.key >= "1" && e.key <= "9") {
-        const idx = parseInt(e.key) - 1;
-        if (PAGES[idx]) { e.preventDefault(); setPage(PAGES[idx].id); }
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "0") {
-        e.preventDefault();
-        setPage("cron");
+      // Ctrl/Cmd+1..9,0 for pages (matched by key field, not index)
+      if ((e.ctrlKey || e.metaKey) && e.key >= "0" && e.key <= "9") {
+        const target = PAGES.find(p => p.key === e.key);
+        if (target) { e.preventDefault(); setPage(target.id); }
       }
     };
     window.addEventListener("keydown", handler);
@@ -1655,15 +1674,12 @@ export default function App() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasChanges]);
 
-  // Fix #1: Warn on page change with unsaved changes
-  const changePage = useCallback(async (newPage) => {
-    if (hasChanges) {
-      const ok = await styledConfirm({ title: "Ungespeicherte Änderungen", message: "Es gibt ungespeicherte Änderungen. Wirklich die Seite wechseln?" });
-      if (!ok) return;
-    }
+  // Page switch is purely a render change — state persists across pages,
+  // so no "unsaved changes" warning is needed on navigation.
+  const changePage = useCallback((newPage) => {
     setPage(newPage);
     setMenuOpen(false);
-  }, [hasChanges, styledConfirm]);
+  }, []);
 
   // Render current page
   const renderPage = () => {
@@ -1698,6 +1714,7 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scrollbar-gutter: stable; }
         .cc-root {
           font-family: 'DM Sans', -apple-system, sans-serif;
           background: var(--bg);

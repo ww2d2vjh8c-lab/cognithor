@@ -94,14 +94,16 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 48 MCP
 
 ## What's New
 
-### v0.28.0 — Vite IPv6 Fix, Qwen3-Coder, Python 3.15 Compat
+### v0.29.0 — QA Fixes, SQLite Encryption, Token Tracking
 
-- **Vite Dev Server Fix** — Explicit `host: '127.0.0.1'` binding prevents IPv6/IPv4 mismatch (`localhost` → `::1`) on newer Node.js, fixing "localhost:5173 unreachable"
-- **Qwen3-Coder** — Updated coder model from non-existent `qwen3-coder:32b` to official `qwen3-coder:30b` (MoE, 18 GB) across all configs, docs, and bootstrap
-- **Python 3.15 Ready** — Replaced deprecated `locale.getdefaultlocale()` with `getlocale()` in bootstrap
+- **UI Stability** — Layout wiggle fixed (`scrollbar-gutter: stable`), unsaved-changes false positives eliminated, keyboard shortcuts made sequential (Cmd+1..0)
+- **Token Tracking** — `WorkingMemory.add_message()` now updates `token_count` live (was always 0)
+- **SQLite Encryption** — Optional SQLCipher support with OS keyring key storage (`pip install cognithor[encryption]`)
+- **Speed field removed** — Was a metadata-only field with no runtime effect; removed from Models UI
 
 **Previous Releases**
 
+- **v0.28.0** — Vite IPv6 fix, Qwen3-Coder model update, Python 3.15 locale compat
 - **v0.27.5** "BugHunt" — 60+ CodeQL fixes, CI stability, thread-safe EpisodicStore, 10,165 tests
 - **v0.27.3** — CWE-22 Path Traversal fix in TTS API, multi-GPU installer fix, `--init-only` hang fix
 - **v0.27.1** — Community Skill Marketplace, ToolEnforcer runtime sandboxing, 5-check validation pipeline, 13 autonomy fixes

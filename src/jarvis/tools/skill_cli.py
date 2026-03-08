@@ -350,15 +350,25 @@ class SkillTester:
         """Baut ein minimales Environment ohne sensitive Variablen."""
         import os as _os
 
+        # Include PYTHONPATH/PYTHONHOME so pytest can find installed packages
+        # when run via sys.executable in a subprocess.
+        base: dict[str, str] = {}
+        for key in ("PYTHONPATH", "PYTHONHOME", "PYTHONDONTWRITEBYTECODE", "VIRTUAL_ENV"):
+            val = _os.environ.get(key)
+            if val:
+                base[key] = val
         if sys.platform == "win32":
             return {
+                **base,
                 "PATH": _os.environ.get("PATH", ""),
                 "SYSTEMROOT": _os.environ.get("SYSTEMROOT", r"C:\Windows"),
                 "TEMP": _os.environ.get("TEMP", r"C:\Windows\Temp"),
                 "TMP": _os.environ.get("TMP", r"C:\Windows\Temp"),
                 "USERPROFILE": _os.environ.get("USERPROFILE", ""),
+                "APPDATA": _os.environ.get("APPDATA", ""),
             }
         return {
+            **base,
             "PATH": "/usr/local/bin:/usr/bin:/bin",
             "HOME": "/tmp",
             "LANG": "C.UTF-8",

@@ -491,9 +491,27 @@ class WorkingMemory(BaseModel):
         """True wenn Pre-Compaction Flush nötig ist (>80%). [B§4.6]"""
         return self.usage_ratio > 0.80
 
+    @staticmethod
+    def _estimate_msg_tokens(text: str) -> int:
+        """Lightweight token estimate (word-based + compound correction).
+
+        Mirrors the logic in memory.chunker._estimate_tokens but avoids
+        cross-module imports from the central models module.
+        """
+        if not text:
+            return 4  # message overhead
+        words = text.split()
+        if not words:
+            return 4
+        base = int(len(words) * 1.3)
+        # Long words (>=16 chars, typical German compounds) produce extra tokens
+        extra = sum(max(0, len(w) // 4 - 1) for w in words if len(w) >= 16)
+        return base + extra + 4  # +4 for role/message overhead
+
     def add_message(self, msg: Message) -> None:
-        """Fügt eine Nachricht zum Session-Kontext hinzu."""
+        """Fügt eine Nachricht zum Session-Kontext hinzu und aktualisiert token_count."""
         self.chat_history.append(msg)
+        self.token_count += self._estimate_msg_tokens(msg.content or "")
 
     def add_tool_result(self, result: ToolResult) -> None:
         """Fügt ein Tool-Ergebnis zum Session-Kontext hinzu."""
@@ -519,6 +537,10 @@ class WorkingMemory(BaseModel):
         removed = non_system[:-keep_last_n]
         kept = non_system[-keep_last_n:]
         self.chat_history = system_msgs + kept
+        # Recalculate token count from remaining messages
+        self.token_count = sum(
+            self._estimate_msg_tokens(m.content or "") for m in self.chat_history
+        )
         self.tool_results = []
         return removed
 

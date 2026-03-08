@@ -422,7 +422,7 @@ class MemoryConfig(BaseModel):
     dynamic_weighting: bool = False
 
     @model_validator(mode="after")
-    def validate_weights(self) -> "MemoryConfig":
+    def validate_weights(self) -> MemoryConfig:
         """Validator um sicherzustellen, dass die Gewichtungen der Hybrid-Suche
         sich sinnvoll verhalten.
 
@@ -1438,6 +1438,14 @@ class DatabaseConfig(BaseModel):
     pg_password: str = ""
     pg_pool_min: int = Field(default=2, ge=1, le=50)
     pg_pool_max: int = Field(default=10, ge=1, le=100)
+    encryption_enabled: bool = Field(
+        default=False,
+        description="SQLite-Datenbanken mit SQLCipher verschluesseln",
+    )
+    encryption_backend: str = Field(
+        default="keyring",
+        description="Schluessel-Backend: 'keyring' (OS Credential Store)",
+    )
 
 
 class QueueConfig(BaseModel):
@@ -1606,8 +1614,8 @@ class JarvisConfig(BaseModel):
     # an den Gateway-Handler sendet. Die PluginsConfig definiert, in
     # welchem Verzeichnis zusätzliche Skills (Prozeduren) installiert
     # werden und ob automatische Updates erlaubt sind.
-    heartbeat: "HeartbeatConfig" = Field(default_factory=lambda: HeartbeatConfig())
-    plugins: "PluginsConfig" = Field(default_factory=lambda: PluginsConfig())
+    heartbeat: HeartbeatConfig = Field(default_factory=lambda: HeartbeatConfig())
+    plugins: PluginsConfig = Field(default_factory=lambda: PluginsConfig())
 
     # Cost Tracking
     cost_tracking_enabled: bool = True
@@ -1618,8 +1626,8 @@ class JarvisConfig(BaseModel):
         default=0.0, ge=0.0, description="Monatslimit in USD (0 = kein Limit)"
     )
 
-    dashboard: "DashboardConfig" = Field(default_factory=lambda: DashboardConfig())
-    model_overrides: "ModelOverrideConfig" = Field(default_factory=lambda: ModelOverrideConfig())
+    dashboard: DashboardConfig = Field(default_factory=lambda: DashboardConfig())
+    model_overrides: ModelOverrideConfig = Field(default_factory=lambda: ModelOverrideConfig())
 
     # Multi-Instance / Distributed Locking
     lock_backend: Literal["local", "file", "redis"] = Field(

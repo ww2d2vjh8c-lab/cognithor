@@ -7,10 +7,13 @@ Async-Methoden nutzen asyncio.to_thread um den Event Loop nicht zu blockieren.
 from __future__ import annotations
 
 import asyncio
-import sqlite3
 import logging
+import sqlite3
 from pathlib import Path
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 logger = logging.getLogger("jarvis.db.sqlite")
 
@@ -18,15 +21,19 @@ logger = logging.getLogger("jarvis.db.sqlite")
 class SQLiteBackend:
     """SQLite-Backend mit Row-Factory."""
 
-    def __init__(self, db_path: str | Path) -> None:
+    def __init__(self, db_path: str | Path, *, encryption_key: str | None = None) -> None:
         self._db_path = str(db_path)
+        self._encryption_key = encryption_key
         self._conn: sqlite3.Connection | None = None
         self._ensure_connection()
 
     def _ensure_connection(self) -> sqlite3.Connection:
         if self._conn is None:
             Path(self._db_path).parent.mkdir(parents=True, exist_ok=True)
-            self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
+
+            from jarvis.db.encryption import open_sqlite
+
+            self._conn = open_sqlite(self._db_path, self._encryption_key)
             self._conn.row_factory = sqlite3.Row
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.execute("PRAGMA synchronous=NORMAL")
