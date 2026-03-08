@@ -353,14 +353,34 @@ class WebUIChannel(Channel):
                 websocket: WebSocket,
                 session_id: str,
             ) -> None:
-                # Token-Check für WebSocket (via Query-Param)
+                # Token-Check via erster WS-Nachricht (nicht Query-Param,
+                # um Log-Exposure zu vermeiden).
+                await websocket.accept()
+
                 if self._api_token:
-                    token = websocket.query_params.get("token", "")
-                    if token != self._api_token:
+                    import hmac as _hmac
+                    try:
+                        auth_raw = await asyncio.wait_for(
+                            websocket.receive_text(), timeout=10.0,
+                        )
+                        auth_msg = json.loads(auth_raw)
+                        client_token = (
+                            auth_msg.get("token", "")
+                            if auth_msg.get("type") == "auth"
+                            else ""
+                        )
+                    except (asyncio.TimeoutError, Exception):
+                        client_token = ""
+                    if not _hmac.compare_digest(client_token, self._api_token):
+                        try:
+                            await websocket.send_json({
+                                "type": "error",
+                                "error": "Unauthorized",
+                            })
+                        except Exception:
+                            pass
                         await websocket.close(code=4001, reason="Unauthorized")
                         return
-
-                await websocket.accept()
                 self._connections[session_id] = websocket
                 log.info("ws_connected", session_id=session_id)
 
@@ -794,18 +814,18 @@ def create_app() -> Any:
     (docker-compose.yml, jarvis-webui.service).
 
     Konfiguration ausschließlich über Umgebungsvariablen:
-      JARVIS_WEBUI_HOST          (default "0.0.0.0")
+      JARVIS_WEBUI_HOST          (default "127.0.0.1"; "0.0.0.0" fuer Docker)
       JARVIS_WEBUI_PORT          (default "8080", nur informativ)
       JARVIS_API_TOKEN           (optional, Bearer-Auth)
-      JARVIS_WEBUI_CORS_ORIGINS  (kommasepariert, default "*")
+      JARVIS_WEBUI_CORS_ORIGINS  (kommasepariert, default "http://localhost:8741")
       JARVIS_SSL_CERTFILE        (optional, PEM-Pfad)
       JARVIS_SSL_KEYFILE         (optional, PEM-Pfad)
 
     Ohne Gateway gibt POST /api/v1/message → 503 zurück (korrekt).
     """
-    host = os.environ.get("JARVIS_WEBUI_HOST", "0.0.0.0")
+    host = os.environ.get("JARVIS_WEBUI_HOST", "127.0.0.1")
     api_token = os.environ.get("JARVIS_API_TOKEN") or None
-    cors_raw = os.environ.get("JARVIS_WEBUI_CORS_ORIGINS", "*")
+    cors_raw = os.environ.get("JARVIS_WEBUI_CORS_ORIGINS", "http://localhost:8741")
     cors_origins = [o.strip() for o in cors_raw.split(",") if o.strip()]
     ssl_cert = os.environ.get("JARVIS_SSL_CERTFILE", "")
     ssl_key = os.environ.get("JARVIS_SSL_KEYFILE", "")

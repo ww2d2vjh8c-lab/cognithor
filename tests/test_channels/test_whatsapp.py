@@ -8,15 +8,26 @@ from __future__ import annotations
 import hashlib
 import hmac as hmac_mod
 import json
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# Mock httpx before importing WhatsAppChannel so that missing httpx does not
-# cause an ImportError.
+# Mock httpx *persistently* in sys.modules so that the WhatsApp module import
+# does not pull in 280+ transitive modules inside a patch.dict context — which
+# would be removed on context-exit and leave behind a broken cryptography stack.
 _httpx_mock = MagicMock()
-with patch.dict("sys.modules", {"httpx": _httpx_mock}):
-    from jarvis.channels.whatsapp import WhatsAppChannel, MAX_TEXT_LENGTH
+_had_httpx = "httpx" in sys.modules
+_orig_httpx = sys.modules.get("httpx")
+sys.modules["httpx"] = _httpx_mock
+
+from jarvis.channels.whatsapp import WhatsAppChannel, MAX_TEXT_LENGTH  # noqa: E402
+
+# Restore original state so we don't leak the mock
+if _had_httpx:
+    sys.modules["httpx"] = _orig_httpx
+else:
+    sys.modules.pop("httpx", None)
 
 
 # ============================================================================
@@ -27,14 +38,14 @@ with patch.dict("sys.modules", {"httpx": _httpx_mock}):
 @pytest.fixture
 def wa() -> WhatsAppChannel:
     """WhatsAppChannel mit Dummy-Config."""
-    with patch.dict("sys.modules", {"httpx": _httpx_mock}):
-        ch = WhatsAppChannel(
-            api_token="test-token-12345",
-            phone_number_id="123456789",
-            verify_token="my-verify-token",
-            webhook_port=9999,
-            allowed_numbers=["+491234567890"],
-        )
+    ch = WhatsAppChannel(
+        api_token="test-token-12345",
+        phone_number_id="123456789",
+        verify_token="my-verify-token",
+        app_secret="test-app-secret",
+        webhook_port=9999,
+        allowed_numbers=["+491234567890"],
+    )
     return ch
 
 
@@ -48,19 +59,17 @@ class TestWhatsAppInit:
         assert wa.name == "whatsapp"
 
     def test_config_stored(self, wa: WhatsAppChannel) -> None:
-        assert wa._api_token == "test-token-12345"
         assert wa._phone_number_id == "123456789"
         assert wa._verify_token == "my-verify-token"
         assert wa._webhook_port == 9999
         assert "+491234567890" in wa._allowed_numbers
 
     def test_default_verify_token_generated(self) -> None:
-        with patch.dict("sys.modules", {"httpx": _httpx_mock}):
-            ch = WhatsAppChannel(
-                api_token="tok",
-                phone_number_id="pid",
-                verify_token="",
-            )
+        ch = WhatsAppChannel(
+            api_token="tok",
+            phone_number_id="pid",
+            verify_token="",
+        )
         # Should have auto-generated a non-empty verify token
         assert ch._verify_token != ""
 
@@ -117,9 +126,10 @@ class TestWebhookVerification:
 
 class TestHMACValidation:
     def test_valid_signature(self, wa: WhatsAppChannel) -> None:
+        """Korrekte Signatur mit app_secret wird akzeptiert."""
         payload = b'{"test": "data"}'
         expected = hmac_mod.new(
-            b"test-token-12345", payload, hashlib.sha256
+            b"test-app-secret", payload, hashlib.sha256
         ).hexdigest()
         sig_header = f"sha256={expected}"
 

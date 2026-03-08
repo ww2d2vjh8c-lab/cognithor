@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cognithor"
-version = "0.27.3"
+version = "0.27.4-beta"
 description = "Cognithor · Agent OS — Local-first autonomous agent operating system"
 readme = "README.md"
 license = "Apache-2.0"
@@ -38,7 +38,7 @@ dependencies = [
     # Async
     "anyio>=4.0,<5",
     # Security
-    "cryptography>=44.0,<45",
+    "cryptography>=46.0.5",
     # .env file loading
     "python-dotenv>=1.0,<2",
 ]

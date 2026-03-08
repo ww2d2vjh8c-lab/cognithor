@@ -100,19 +100,25 @@ class AgentVault:
 
     Jeder Agent hat seinen eigenen Vault mit eigenem Namespace.
     Cross-Agent-Zugriff ist nicht möglich.
+
+    Der Encryption-Key wird deterministisch aus ``agent_id`` **plus**
+    einem externen ``master_secret`` abgeleitet.  Gleiche Eingaben
+    erzeugen denselben Key, sodass verschluesselte Secrets Prozess-
+    Neustarts ueberleben.  Ohne Kenntnis des ``master_secret`` kann
+    der Key nicht rekonstruiert werden.
     """
 
-    def __init__(self, agent_id: str) -> None:
+    def __init__(self, agent_id: str, *, master_secret: bytes = b"") -> None:
         self._agent_id = agent_id
         self._secrets: dict[str, AgentSecret] = {}
         self._counter = 0
         self._access_log: list[dict[str, Any]] = []
-        # Derive a *deterministic* Fernet key from agent_id so that the
-        # same vault always produces the same encryption key.  This lets
-        # encrypted secrets survive process restarts when they are
-        # persisted externally (e.g. via AgentVaultManager).
+        # Deterministic key derivation: agent_id + master_secret.
+        # The master_secret is managed by AgentVaultManager (generated
+        # once, persisted to ~/.jarvis/vault_master.key).  Without
+        # master_secret the key depends only on agent_id (legacy compat).
         self._salt = hashlib.sha256(f"vault-salt:{agent_id}".encode()).digest()[:16]
-        raw_key_material = f"vault:{agent_id}".encode()
+        raw_key_material = f"vault:{agent_id}".encode() + master_secret
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -521,10 +527,48 @@ class SessionFirewall:
 # ============================================================================
 
 
-class AgentVaultManager:
-    """Zentrale Verwaltung aller Agent-Vaults + Sessions."""
+def _load_or_create_master_secret(path: str | None = None) -> bytes:
+    """Laedt oder generiert das Vault-Master-Secret.
 
-    def __init__(self) -> None:
+    Das Secret wird in ``~/.jarvis/vault_master.key`` gespeichert
+    (oder im uebergebenen ``path``).  Es hat 32 Byte Entropie und
+    wird nur einmal generiert.
+    """
+    from pathlib import Path
+
+    if path is None:
+        home = Path(os.environ.get("JARVIS_HOME", Path.home() / ".jarvis"))
+        key_file = home / "vault_master.key"
+    else:
+        key_file = Path(path)
+
+    if key_file.exists():
+        raw = key_file.read_bytes()
+        if len(raw) >= 32:
+            return raw[:32]
+        # Corrupt/truncated file — regenerate.
+
+    # Generate 32 bytes of cryptographic randomness.
+    master = os.urandom(32)
+    key_file.parent.mkdir(parents=True, exist_ok=True)
+    key_file.write_bytes(master)
+    # Restrict permissions: owner-only on Unix, default ACL on Windows.
+    try:
+        key_file.chmod(0o600)
+    except OSError:
+        pass  # Windows: ACL-based, chmod not fully supported
+    return master
+
+
+class AgentVaultManager:
+    """Zentrale Verwaltung aller Agent-Vaults + Sessions.
+
+    Beim Start wird ein Master-Secret geladen (oder generiert),
+    das in die Key-Derivation jedes ``AgentVault`` einfliesst.
+    """
+
+    def __init__(self, *, master_secret_path: str | None = None) -> None:
+        self._master_secret = _load_or_create_master_secret(master_secret_path)
         self._vaults: dict[str, AgentVault] = {}
         self._sessions = IsolatedSessionStore()
         self._firewall = SessionFirewall(self._sessions)
@@ -543,7 +587,7 @@ class AgentVaultManager:
         return self._rotator
 
     def create_vault(self, agent_id: str) -> AgentVault:
-        vault = AgentVault(agent_id)
+        vault = AgentVault(agent_id, master_secret=self._master_secret)
         self._vaults[agent_id] = vault
         return vault
 

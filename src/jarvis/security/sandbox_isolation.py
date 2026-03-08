@@ -14,11 +14,17 @@ Architektur-Bibel: §9.3 (Sandbox), §16.1 (Multi-Tenant)
 
 from __future__ import annotations
 
+import base64
 import hashlib
+import os
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+from cryptography.fernet import Fernet, InvalidToken
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
 
 
 # ============================================================================
@@ -211,7 +217,7 @@ class AgentSecret:
     """Ein Secret, das zu genau einem Agenten gehört."""
 
     key: str
-    encrypted_value: str  # Simuliert verschlüsselt
+    encrypted_value: str  # Fernet-verschluesselter Ciphertext
     agent_id: str
     tenant_id: str = "default"
     created_at: str = ""
@@ -227,20 +233,46 @@ class AgentSecret:
         }
 
 
+def _derive_fernet(agent_id: str, salt: bytes) -> Fernet:
+    """Leitet einen Fernet-Key aus agent_id + zufaelligem Salt ab."""
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=600_000,
+    )
+    raw_key = kdf.derive(f"per-agent-vault:{agent_id}".encode())
+    return Fernet(base64.urlsafe_b64encode(raw_key))
+
+
 class PerAgentSecretVault:
     """Jeder Agent hat seinen eigenen Secret-Store.
 
     Kein Agent kann auf Secrets anderer Agenten zugreifen.
+    Secrets werden mit Fernet (AES-128-CBC + HMAC) verschluesselt.
+    Jeder Agent erhaelt einen eigenen kryptographischen Schluessel,
+    abgeleitet aus seiner agent_id und einem zufaelligen Salt.
     """
 
     def __init__(self) -> None:
-        self._secrets: dict[str, dict[str, AgentSecret]] = {}  # agent_id → {key → secret}
+        self._secrets: dict[str, dict[str, AgentSecret]] = {}  # agent_id -> {key -> secret}
+        self._fernets: dict[str, Fernet] = {}  # agent_id -> Fernet instance
+        self._salts: dict[str, bytes] = {}  # agent_id -> random salt
         self._access_log: list[dict[str, Any]] = []
+
+    def _get_fernet(self, agent_id: str) -> Fernet:
+        """Gibt den Fernet-Cipher fuer einen Agenten zurueck (erstellt bei Bedarf)."""
+        if agent_id not in self._fernets:
+            salt = os.urandom(16)
+            self._salts[agent_id] = salt
+            self._fernets[agent_id] = _derive_fernet(agent_id, salt)
+        return self._fernets[agent_id]
 
     def store(self, agent_id: str, key: str, value: str, tenant_id: str = "default") -> AgentSecret:
         if agent_id not in self._secrets:
             self._secrets[agent_id] = {}
-        encrypted = hashlib.sha256(value.encode()).hexdigest()
+        fernet = self._get_fernet(agent_id)
+        encrypted = fernet.encrypt(value.encode("utf-8")).decode("ascii")
         secret = AgentSecret(
             key=key,
             encrypted_value=encrypted,
@@ -267,7 +299,15 @@ class PerAgentSecretVault:
 
         agent_secrets = self._secrets.get(agent_id, {})
         secret = agent_secrets.get(key)
-        return secret.encrypted_value if secret else None
+        if not secret:
+            return None
+        fernet = self._fernets.get(agent_id)
+        if not fernet:
+            return None
+        try:
+            return fernet.decrypt(secret.encrypted_value.encode("ascii")).decode("utf-8")
+        except InvalidToken:
+            return None
 
     def revoke(self, agent_id: str, key: str) -> bool:
         agent_secrets = self._secrets.get(agent_id, {})
@@ -279,6 +319,8 @@ class PerAgentSecretVault:
     def revoke_all(self, agent_id: str) -> int:
         count = len(self._secrets.get(agent_id, {}))
         self._secrets.pop(agent_id, None)
+        self._fernets.pop(agent_id, None)
+        self._salts.pop(agent_id, None)
         return count
 
     def list_keys(self, agent_id: str) -> list[str]:

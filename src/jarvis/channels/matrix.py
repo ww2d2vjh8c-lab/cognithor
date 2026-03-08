@@ -62,6 +62,7 @@ class MatrixChannel(Channel):
         allowed_rooms: list[str] | None = None,
         store_path: Path | None = None,
         workspace_dir: Path | None = None,
+        require_e2ee: bool = False,
     ) -> None:
         self._homeserver = homeserver
         self._user_id = user_id
@@ -75,6 +76,7 @@ class MatrixChannel(Channel):
         self._allowed_rooms = set(allowed_rooms or [])
         self._store_path = store_path or Path.home() / ".jarvis" / "matrix_store"
         self._workspace_dir = workspace_dir or Path.home() / ".jarvis" / "workspace" / "matrix"
+        self._require_e2ee = require_e2ee
 
         self._handler: MessageHandler | None = None
         self._running = False
@@ -134,6 +136,28 @@ class MatrixChannel(Channel):
 
         # E2EE-Store vorbereiten
         self._store_path.mkdir(parents=True, exist_ok=True)
+
+        # E2EE-Verfuegbarkeit pruefen
+        _olm_available = False
+        try:
+            import olm  # noqa: F401
+            _olm_available = True
+        except ImportError:
+            pass
+
+        if not _olm_available:
+            if self._require_e2ee:
+                logger.error(
+                    "Matrix: E2EE erforderlich (require_e2ee=True), aber python-olm/libolm "
+                    "ist nicht installiert. Installiere mit: pip install 'matrix-nio[e2e]'. "
+                    "Start abgebrochen."
+                )
+                return
+            logger.warning(
+                "Matrix: python-olm/libolm nicht installiert — "
+                "Nachrichten werden UNVERSCHLUESSELT gesendet. "
+                "Fuer E2EE: pip install 'matrix-nio[e2e]'"
+            )
 
         # Client erstellen
         self._client = AsyncClient(

@@ -5,7 +5,10 @@ const WS_MAX_RETRIES = 10;
 const WS_HEARTBEAT_INTERVAL = 30000;
 
 function makeSessionId() {
-  return `web_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const buf = new Uint8Array(6);
+  crypto.getRandomValues(buf);
+  const hex = Array.from(buf, b => b.toString(16).padStart(2, "0")).join("");
+  return `web_${Date.now()}_${hex}`;
 }
 
 export function useJarvisChat() {
@@ -28,7 +31,7 @@ export function useJarvisChat() {
 
   const addMessage = useCallback((role, text, meta) => {
     setMessages(prev => [...prev, {
-      id: Date.now() + Math.random(),
+      id: `${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0]}`,
       role,
       text,
       time: new Date(),

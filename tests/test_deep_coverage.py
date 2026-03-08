@@ -717,10 +717,10 @@ class TestSessionManager:
     def test_stats(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
         sm = SessionManager(storage_dir=tmp_path)
-        sm.save_session(SessionSnapshot(session_id="s1", domain="x.com"))
+        sm.save_session(SessionSnapshot(session_id="s1", domain="testdomain"))
         s = sm.stats()
         assert s["total_sessions"] == 1
-        assert "x.com" in s["domains"]
+        assert "testdomain" in s["domains"]
 
 
 # ============================================================================

@@ -582,7 +582,7 @@ class TestFactory:
 
         backend = create_backend(config)
         assert isinstance(backend, OpenAIBackend)
-        assert "groq.com" in backend._base_url
+        assert backend._base_url.startswith("https://api.groq.com")
 
     def test_create_deepseek_backend(self) -> None:
         config = MagicMock()
@@ -592,7 +592,7 @@ class TestFactory:
 
         backend = create_backend(config)
         assert isinstance(backend, OpenAIBackend)
-        assert "deepseek.com" in backend._base_url
+        assert backend._base_url.startswith("https://api.deepseek.com")
 
     def test_create_mistral_backend(self) -> None:
         config = MagicMock()

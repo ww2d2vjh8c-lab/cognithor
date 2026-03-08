@@ -530,11 +530,41 @@ class RemoteRegistry:
                 data = json.loads(self._install_history_file.read_text(encoding="utf-8"))
                 for entry in data:
                     self._installed[entry["name"]] = InstalledPlugin.from_dict(entry)
-            except Exception:
+            except Exception as exc:
+                log.warning(
+                    "install_history_corrupt",
+                    file=str(self._install_history_file),
+                    error=str(exc),
+                )
+                # Korrupte Datei als Backup sichern statt silent reset
+                backup = self._install_history_file.with_suffix(".json.corrupt")
+                try:
+                    shutil.copy2(self._install_history_file, backup)
+                    log.info("install_history_backup_created", backup=str(backup))
+                except OSError:
+                    pass
                 self._installed = {}
 
     def _save_install_history(self) -> None:
+        import os as _os
+        import tempfile as _tempfile
+
         data = [p.to_dict() for p in self._installed.values()]
-        self._install_history_file.write_text(
-            json.dumps(data, indent=2), encoding="utf-8",
+        content = json.dumps(data, indent=2)
+
+        # Atomic write: temp file + rename
+        parent = self._install_history_file.parent
+        parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp_path = _tempfile.mkstemp(
+            dir=str(parent), suffix=".tmp", prefix=".plugin_history_",
         )
+        try:
+            with _os.fdopen(fd, "w", encoding="utf-8") as fh:
+                fh.write(content)
+            _os.replace(tmp_path, str(self._install_history_file))
+        except BaseException:
+            try:
+                _os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise

@@ -43,14 +43,27 @@ log = get_logger(__name__)
 class AudioAccumulator:
     """Sammelt Base64-encoded Audio-Chunks und gibt WAV zurück."""
 
+    # Max 100 MB pro Session (schuetzt vor Memory Exhaustion)
+    MAX_BYTES: int = 104_857_600
+
     chunks: list[bytes] = field(default_factory=list)
     format: str = "webm"
     sample_rate: int = 16000
     _total_bytes: int = 0
 
     def add_chunk(self, base64_data: str) -> None:
-        """Fügt einen Base64-kodierten Audio-Chunk hinzu."""
+        """Fuegt einen Base64-kodierten Audio-Chunk hinzu.
+
+        Raises:
+            ValueError: Wenn MAX_BYTES ueberschritten wuerde.
+        """
         raw = base64.b64decode(base64_data)
+        if self._total_bytes + len(raw) > self.MAX_BYTES:
+            raise ValueError(
+                f"Audio-Limit ueberschritten: "
+                f"{(self._total_bytes + len(raw)) // 1_048_576} MB "
+                f"(max {self.MAX_BYTES // 1_048_576} MB)"
+            )
         self.chunks.append(raw)
         self._total_bytes += len(raw)
 
@@ -163,7 +176,7 @@ class VoiceWebSocketBridge:
             return await self._handle_audio_start(session_id, msg, send_fn)
 
         if msg_type == "audio_chunk":
-            return await self._handle_audio_chunk(session_id, msg)
+            return await self._handle_audio_chunk(session_id, msg, send_fn)
 
         if msg_type == "audio_stop":
             return await self._handle_audio_stop(session_id, send_fn)
@@ -195,15 +208,24 @@ class VoiceWebSocketBridge:
         self,
         session_id: str,
         msg: dict[str, Any],
+        send_fn: Any = None,
     ) -> None:
-        """Fügt einen Audio-Chunk zur aktiven Session hinzu."""
+        """Fuegt einen Audio-Chunk zur aktiven Session hinzu."""
         acc = self._active_sessions.get(session_id)
         if acc is None:
             return None
 
         data = msg.get("data", "")
         if data:
-            acc.add_chunk(data)
+            try:
+                acc.add_chunk(data)
+            except ValueError as exc:
+                log.warning("audio_chunk_rejected", session=session_id, error=str(exc))
+                if send_fn:
+                    await send_fn({
+                        "type": "voice_error",
+                        "error": str(exc),
+                    })
 
         return None
 

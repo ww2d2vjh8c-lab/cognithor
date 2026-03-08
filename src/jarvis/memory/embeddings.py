@@ -191,12 +191,13 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
             self._client = httpx.AsyncClient(
                 timeout=self._timeout,
                 trust_env=False,
+                headers={"x-goog-api-key": self._api_key},
             )
         return self._client
 
     async def embed_single(self, model: str, text: str) -> list[float]:
         client = await self._get_client()
-        url = f"{self.API_URL}/models/{model}:embedContent?key={self._api_key}"
+        url = f"{self.API_URL}/models/{model}:embedContent"
         resp = await client.post(
             url,
             json={"content": {"parts": [{"text": text}]}},
@@ -207,7 +208,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
 
     async def embed_batch_raw(self, model: str, texts: list[str]) -> list[list[float]]:
         client = await self._get_client()
-        url = f"{self.API_URL}/models/{model}:batchEmbedContents?key={self._api_key}"
+        url = f"{self.API_URL}/models/{model}:batchEmbedContents"
         requests = [
             {"model": f"models/{model}", "content": {"parts": [{"text": t}]}}
             for t in texts

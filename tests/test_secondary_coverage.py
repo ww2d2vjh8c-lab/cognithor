@@ -753,10 +753,10 @@ class TestCICDGate:
             {"stage": "s1", "result": "ok", "findings": [{"severity": "critical"}]},
         ]})
         assert result.verdict == GateVerdict.FAIL
-        overridden = gate.override(result.gate_id, "admin", "hotfix required")
+        overridden = gate.override(result.gate_id, "admin", "hotfix required for production")
         assert overridden is not None
         assert overridden.verdict == GateVerdict.OVERRIDE
-        assert gate.override("nonexistent", "x", "y") is None
+        assert gate.override("nonexistent", "admin", "this gate id does not exist") is None
 
     def test_history_and_pass_rate(self):
         from jarvis.security.cicd_gate import SecurityGate

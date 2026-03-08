@@ -735,7 +735,8 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
             raise RuntimeError("init-only failed")
     except Exception:
         # Fallback: manuell erstellen
-        for sub in ["memory", "logs", "cache", "cache/web_search"]:
+        for sub in ["memory", "memory/episodes", "memory/knowledge", "memory/procedures",
+                     "memory/sessions", "index", "logs", "cache", "cache/web_search"]:
             (JARVIS_HOME / sub).mkdir(parents=True, exist_ok=True)
         ok("Verzeichnisstruktur manuell erstellt")
 

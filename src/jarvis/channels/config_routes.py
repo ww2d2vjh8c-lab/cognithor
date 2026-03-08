@@ -198,7 +198,8 @@ def _register_system_routes(
                 }]
             return {"agents": agents}
         except Exception as exc:
-            return {"agents": [], "error": str(exc)}
+            log.error("agents_list_failed", error=str(exc))
+            return {"agents": [], "error": "Agenten konnten nicht geladen werden"}
 
     # -- Credentials ------------------------------------------------------
 
@@ -216,7 +217,8 @@ def _register_system_routes(
                 ],
             }
         except Exception as exc:
-            return {"credentials": [], "error": str(exc)}
+            log.error("credentials_list_failed", error=str(exc))
+            return {"credentials": [], "error": "Credentials konnten nicht geladen werden"}
 
     @app.post("/api/v1/credentials", dependencies=deps)
     async def store_credential(
@@ -229,7 +231,8 @@ def _register_system_routes(
             store.store(service, key, value, agent_id=agent_id)
             return {"status": "ok", "service": service, "key": key, "scope": agent_id or "global"}
         except Exception as exc:
-            return {"error": str(exc), "status": 500}
+            log.error("credential_store_failed", error=str(exc))
+            return {"error": "Credential konnte nicht gespeichert werden", "status": 500}
 
     @app.delete("/api/v1/credentials/{service}/{key}", dependencies=deps)
     async def delete_credential(service: str, key: str, agent_id: str = "") -> dict[str, Any]:
@@ -240,7 +243,8 @@ def _register_system_routes(
             store.store(service, key, "", agent_id=agent_id)
             return {"status": "ok", "deleted": f"{service}:{key}"}
         except Exception as exc:
-            return {"error": str(exc), "status": 500}
+            log.error("credential_delete_failed", error=str(exc))
+            return {"error": "Credential konnte nicht geloescht werden", "status": 500}
 
     # -- Bindings ---------------------------------------------------------
 
@@ -256,7 +260,8 @@ def _register_system_routes(
                 bindings = []
             return {"bindings": bindings}
         except Exception as exc:
-            return {"bindings": [], "error": str(exc)}
+            log.error("bindings_list_failed", error=str(exc))
+            return {"bindings": [], "error": "Bindings konnten nicht geladen werden"}
 
     @app.post("/api/v1/bindings", dependencies=deps)
     async def create_binding(data: dict[str, Any]) -> dict[str, Any]:
@@ -267,7 +272,8 @@ def _register_system_routes(
             dto = BindingRuleDTO(**data)
             return {"binding": cfg_mgr.upsert_binding(dto), "status": "ok"}
         except Exception as exc:
-            return {"error": str(exc), "status": 400}
+            log.error("binding_create_failed", error=str(exc))
+            return {"error": "Binding konnte nicht erstellt werden", "status": 400}
 
     @app.delete("/api/v1/bindings/{name}", dependencies=deps)
     async def delete_binding(name: str) -> dict[str, Any]:
@@ -279,7 +285,8 @@ def _register_system_routes(
                 return {"status": "ok", "deleted": name}
             return {"error": f"Binding '{name}' nicht gefunden", "status": 404}
         except Exception as exc:
-            return {"error": str(exc), "status": 500}
+            log.error("binding_delete_failed", error=str(exc))
+            return {"error": "Binding konnte nicht geloescht werden", "status": 500}
 
     # -- Circles ----------------------------------------------------------
 
@@ -305,7 +312,8 @@ def _register_system_routes(
                 "stats": circles_mgr.stats(),
             }
         except Exception as exc:
-            return {"circles": [], "error": str(exc)}
+            log.error("circles_list_failed", error=str(exc))
+            return {"circles": [], "error": "Circles konnten nicht geladen werden"}
 
     @app.get("/api/v1/circles/stats", dependencies=deps)
     async def circles_stats() -> dict[str, Any]:
@@ -314,7 +322,8 @@ def _register_system_routes(
             from jarvis.skills.circles import CircleManager
             return CircleManager().stats()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("circles_stats_failed", error=str(exc))
+            return {"error": "Circle-Statistiken nicht verfuegbar"}
 
     # -- Sandbox ----------------------------------------------------------
 
@@ -326,7 +335,8 @@ def _register_system_routes(
             cfg_mgr = CfgMgr(config_manager.config)
             return {"sandbox": cfg_mgr.get_sandbox()}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("sandbox_get_failed", error=str(exc))
+            return {"error": "Sandbox-Konfiguration nicht verfuegbar"}
 
     @app.patch("/api/v1/sandbox", dependencies=deps)
     async def update_sandbox(values: dict[str, Any]) -> dict[str, Any]:
@@ -337,7 +347,8 @@ def _register_system_routes(
             update = SandboxUpdate(**values)
             return {"sandbox": cfg_mgr.update_sandbox(update), "status": "ok"}
         except Exception as exc:
-            return {"error": str(exc), "status": 400}
+            log.error("sandbox_update_failed", error=str(exc))
+            return {"error": "Sandbox konnte nicht aktualisiert werden", "status": 400}
 
     # -- Wizards ----------------------------------------------------------
 
@@ -412,7 +423,8 @@ def _register_system_routes(
             from jarvis.gateway.auth import AuthGateway
             return AuthGateway().stats()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("auth_stats_failed", error=str(exc))
+            return {"error": "Auth-Statistiken nicht verfuegbar"}
 
     # -- Agent Heartbeat --------------------------------------------------
 
@@ -423,7 +435,8 @@ def _register_system_routes(
             from jarvis.core.agent_heartbeat import AgentHeartbeatScheduler
             return AgentHeartbeatScheduler().global_dashboard()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("heartbeat_dashboard_failed", error=str(exc))
+            return {"error": "Heartbeat-Dashboard nicht verfuegbar"}
 
     @app.get("/api/v1/agent-heartbeat/{agent_id}", dependencies=deps)
     async def agent_heartbeat_summary(agent_id: str) -> dict[str, Any]:
@@ -432,7 +445,8 @@ def _register_system_routes(
             from jarvis.core.agent_heartbeat import AgentHeartbeatScheduler
             return AgentHeartbeatScheduler().agent_summary(agent_id)
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("heartbeat_summary_failed", agent_id=agent_id, error=str(exc))
+            return {"error": "Heartbeat-Zusammenfassung nicht verfuegbar"}
 
 
 # ======================================================================
@@ -478,7 +492,8 @@ def _register_config_routes(
                 config_manager.update_top_level(key, value)
                 results.append({"key": key, "status": "ok"})
             except ValueError as exc:
-                results.append({"key": key, "status": "error", "error": str(exc)})
+                log.error("config_update_key_failed", key=key, error=str(exc))
+                results.append({"key": key, "status": "error", "error": "Ungueltige Konfiguration"})
         config_manager.save()
         # Trigger live-reload of runtime components
         if gateway is not None and hasattr(gateway, "reload_components"):
@@ -551,7 +566,8 @@ def _register_config_routes(
                 config_manager.update_section(section, values)
                 results.append({"section": section, "status": "ok"})
             except ValueError as exc:
-                results.append({"section": section, "status": "error", "error": str(exc)})
+                log.warning("preset_section_update_failed", section=section, error=str(exc))
+                results.append({"section": section, "status": "error", "error": "Ungueltige Konfiguration"})
         config_manager.save()
         return {"preset": preset_name, "results": results}
 
@@ -614,7 +630,8 @@ def _register_config_routes(
                 gateway.reload_components(config=True)
             return {"status": "ok", "section": section, "updated_keys": list(cleaned.keys())}
         except ValueError as exc:
-            return {"error": str(exc), "status": 400}
+            log.warning("config_section_update_failed", section=section, error=str(exc))
+            return {"error": "Ungueltige Konfiguration", "status": 400}
 
 
 # ======================================================================
@@ -674,7 +691,8 @@ def _register_session_routes(
             iso = MultiUserIsolation()
             return iso.stats()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("isolation_stats_failed", error=str(exc))
+            return {"error": "Isolation-Statistiken nicht verfuegbar"}
 
     @app.get("/api/v1/isolation/quotas", dependencies=deps)
     async def isolation_quotas() -> dict[str, Any]:
@@ -684,7 +702,8 @@ def _register_session_routes(
             iso = MultiUserIsolation()
             return {"quotas": iso.all_quota_summaries()}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("isolation_quotas_failed", error=str(exc))
+            return {"error": "Quota-Uebersicht nicht verfuegbar"}
 
     @app.get("/api/v1/isolation/violations", dependencies=deps)
     async def isolation_violations() -> dict[str, Any]:
@@ -694,7 +713,8 @@ def _register_session_routes(
             guard = WorkspaceGuard()
             return {"violations": guard.violations, "count": guard.violation_count}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("isolation_violations_failed", error=str(exc))
+            return {"error": "Violations konnten nicht geladen werden"}
 
     # -- Sandbox-Isolierung + Multi-Tenant (Phase 25) ---------------------
 
@@ -944,7 +964,8 @@ def _register_skill_routes(
             from jarvis.skills.marketplace import SkillMarketplace
             return SkillMarketplace().curated_feed()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("marketplace_feed_failed", error=str(exc))
+            return {"error": "Marketplace-Feed nicht verfuegbar"}
 
     @app.get("/api/v1/marketplace/search", dependencies=deps)
     async def marketplace_search(
@@ -962,7 +983,8 @@ def _register_skill_routes(
             )
             return {"results": [r.to_dict() for r in results], "count": len(results)}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("marketplace_search_failed", error=str(exc))
+            return {"error": "Marketplace-Suche fehlgeschlagen"}
 
     @app.get("/api/v1/marketplace/categories", dependencies=deps)
     async def marketplace_categories() -> dict[str, Any]:
@@ -971,7 +993,8 @@ def _register_skill_routes(
             from jarvis.skills.marketplace import SkillMarketplace
             return {"categories": [c.to_dict() for c in SkillMarketplace().categories()]}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("marketplace_categories_failed", error=str(exc))
+            return {"error": "Kategorien nicht verfuegbar"}
 
     @app.get("/api/v1/marketplace/featured", dependencies=deps)
     async def marketplace_featured(n: int = 10) -> dict[str, Any]:
@@ -980,7 +1003,8 @@ def _register_skill_routes(
             from jarvis.skills.marketplace import SkillMarketplace
             return {"featured": [s.to_dict() for s in SkillMarketplace().featured(n)]}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("marketplace_featured_failed", error=str(exc))
+            return {"error": "Featured-Skills nicht verfuegbar"}
 
     @app.get("/api/v1/marketplace/trending", dependencies=deps)
     async def marketplace_trending(window: str = "24h", n: int = 10) -> dict[str, Any]:
@@ -989,7 +1013,8 @@ def _register_skill_routes(
             from jarvis.skills.marketplace import SkillMarketplace
             return {"trending": [s.to_dict() for s in SkillMarketplace().trending(window, n)]}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("marketplace_trending_failed", error=str(exc))
+            return {"error": "Trending-Skills nicht verfuegbar"}
 
     @app.get("/api/v1/marketplace/stats", dependencies=deps)
     async def marketplace_stats() -> dict[str, Any]:
@@ -998,7 +1023,8 @@ def _register_skill_routes(
             from jarvis.skills.marketplace import SkillMarketplace
             return SkillMarketplace().stats()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("marketplace_stats_failed", error=str(exc))
+            return {"error": "Marketplace-Statistiken nicht verfuegbar"}
 
     # -- Skill-Updater ----------------------------------------------------
 
@@ -1009,7 +1035,8 @@ def _register_skill_routes(
             from jarvis.skills.updater import SkillUpdater
             return SkillUpdater().stats()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("updater_stats_failed", error=str(exc))
+            return {"error": "Updater-Statistiken nicht verfuegbar"}
 
     @app.get("/api/v1/updater/pending", dependencies=deps)
     async def updater_pending() -> dict[str, Any]:
@@ -1019,7 +1046,8 @@ def _register_skill_routes(
             u = SkillUpdater()
             return {"updates": [c.to_dict() for c in u.pending_updates()]}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("updater_pending_failed", error=str(exc))
+            return {"error": "Ausstehende Updates nicht verfuegbar"}
 
     @app.get("/api/v1/updater/recalls", dependencies=deps)
     async def updater_recalls() -> dict[str, Any]:
@@ -1029,7 +1057,8 @@ def _register_skill_routes(
             u = SkillUpdater()
             return {"recalls": [r.to_dict() for r in u.active_recalls()]}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("updater_recalls_failed", error=str(exc))
+            return {"error": "Recalls nicht verfuegbar"}
 
     @app.get("/api/v1/updater/history", dependencies=deps)
     async def updater_history(n: int = 20) -> dict[str, Any]:
@@ -1038,7 +1067,8 @@ def _register_skill_routes(
             from jarvis.skills.updater import SkillUpdater
             return {"history": SkillUpdater().update_history(n)}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("updater_history_failed", error=str(exc))
+            return {"error": "Update-Historie nicht verfuegbar"}
 
     # -- Commands ---------------------------------------------------------
 
@@ -1050,7 +1080,8 @@ def _register_skill_routes(
             reg = CommandRegistry()
             return {"commands": [c.to_dict() for c in reg.list_commands()], "count": reg.command_count}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("commands_list_failed", error=str(exc))
+            return {"error": "Commands konnten nicht geladen werden"}
 
     @app.get("/api/v1/commands/slack", dependencies=deps)
     async def commands_slack() -> dict[str, Any]:
@@ -1059,7 +1090,8 @@ def _register_skill_routes(
             from jarvis.channels.commands import CommandRegistry
             return {"definitions": CommandRegistry().slack_definitions()}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("commands_slack_failed", error=str(exc))
+            return {"error": "Slack-Commands nicht verfuegbar"}
 
     @app.get("/api/v1/commands/discord", dependencies=deps)
     async def commands_discord() -> dict[str, Any]:
@@ -1068,7 +1100,8 @@ def _register_skill_routes(
             from jarvis.channels.commands import CommandRegistry
             return {"definitions": CommandRegistry().discord_definitions()}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("commands_discord_failed", error=str(exc))
+            return {"error": "Discord-Commands nicht verfuegbar"}
 
     # -- Connectors -------------------------------------------------------
 
@@ -1114,7 +1147,8 @@ def _register_skill_routes(
             inst = engine.start(template, created_by=body.get("created_by", ""))
             return inst.to_dict()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("workflow_start_failed", error=str(exc))
+            return {"error": "Workflow konnte nicht gestartet werden"}
 
     # -- Models -----------------------------------------------------------
 
@@ -1394,7 +1428,8 @@ def _register_security_routes(
             )
             return result.to_dict()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("redteam_scan_failed", error=str(exc))
+            return {"error": "Security-Scan fehlgeschlagen"}
 
     @app.get("/api/v1/security/redteam/status", dependencies=deps)
     async def redteam_status() -> dict[str, Any]:
@@ -1427,7 +1462,8 @@ def _register_security_routes(
             report = fw.generate_report()
             return report.to_dict()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("compliance_report_failed", error=str(exc))
+            return {"error": "Compliance-Report konnte nicht generiert werden"}
 
     @app.get("/api/v1/compliance/export/{fmt}", dependencies=deps)
     async def compliance_export(fmt: str) -> Any:
@@ -1453,7 +1489,8 @@ def _register_security_routes(
                 return PlainTextResponse(ReportExporter.to_markdown(report), media_type="text/markdown")
             return {"error": f"Unknown format: {fmt}. Use json/csv/markdown."}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("compliance_export_failed", error=str(exc))
+            return {"error": "Compliance-Export fehlgeschlagen"}
 
     @app.get("/api/v1/compliance/decisions", dependencies=deps)
     async def compliance_decisions() -> dict[str, Any]:
@@ -1528,7 +1565,8 @@ def _register_security_routes(
             )
             return run.to_dict()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("pipeline_run_failed", error=str(exc))
+            return {"error": "Security-Pipeline-Run fehlgeschlagen"}
 
     @app.get("/api/v1/security/pipeline/history", dependencies=deps)
     async def pipeline_history() -> dict[str, Any]:
@@ -1573,7 +1611,8 @@ def _register_security_routes(
             )
             return badge.to_dict()
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("ecosystem_evaluate_failed", error=str(exc))
+            return {"error": "Ecosystem-Evaluierung fehlgeschlagen"}
 
     # -- AI Agent Security Framework (Phase 21) ---------------------------
 
@@ -1957,7 +1996,8 @@ def _register_prompt_evolution_routes(
             result = await engine.maybe_evolve("system_prompt")
             return {"evolved": result is not None, "version_id": result}
         except Exception as exc:
-            return {"error": str(exc)}
+            log.error("prompt_evolution_evolve_failed", error=str(exc))
+            return {"error": "Prompt-Evolution fehlgeschlagen"}
 
     @app.post("/api/v1/prompt-evolution/toggle", dependencies=deps)
     async def prompt_evolution_toggle(request: Request) -> dict[str, Any]:
@@ -1984,7 +2024,8 @@ def _register_prompt_evolution_routes(
                     if planner:
                         planner._prompt_evolution = engine
                 except Exception as exc:
-                    return {"error": str(exc), "enabled": False}
+                    log.error("prompt_evolution_toggle_failed", error=str(exc))
+                    return {"error": "Prompt-Evolution konnte nicht aktiviert werden", "enabled": False}
         else:
             # Disable: disconnect from planner but keep engine for stats
             planner = getattr(gateway, "_planner", None)
@@ -2162,7 +2203,8 @@ def _register_ui_routes(
             config_manager.reload()
             return {"status": "ok", "message": "System gestartet (Config neu geladen)"}
         except Exception as exc:
-            return {"error": str(exc), "status": 500}
+            log.error("system_start_failed", error=str(exc))
+            return {"error": "System konnte nicht gestartet werden", "status": 500}
 
     @app.post("/api/v1/system/stop", dependencies=deps)
     async def ui_system_stop() -> dict[str, Any]:
@@ -2173,7 +2215,8 @@ def _register_ui_routes(
                 return {"status": "ok", "message": "Shutdown eingeleitet"}
             return {"status": "ok", "message": "Kein Gateway — nur Config-Server aktiv"}
         except Exception as exc:
-            return {"error": str(exc), "status": 500}
+            log.error("system_stop_failed", error=str(exc))
+            return {"error": "Shutdown fehlgeschlagen", "status": 500}
 
     # -- 3.4: POST /agents/{name} ----------------------------------------
 
@@ -2181,7 +2224,11 @@ def _register_ui_routes(
     async def ui_upsert_agent(name: str, request: Request) -> dict[str, Any]:
         """Creates or updates an agent profile in agents.yaml."""
         try:
+            from jarvis.gateway.config_api import AgentProfileDTO
+
             body = await request.json()
+            body["name"] = name
+            validated = AgentProfileDTO(**body).model_dump(exclude_unset=False)
             data = _load_yaml(agents_path)
             agents = data.get("agents", [])
             if not isinstance(agents, list):
@@ -2190,17 +2237,17 @@ def _register_ui_routes(
             found = False
             for i, a in enumerate(agents):
                 if isinstance(a, dict) and a.get("name") == name:
-                    agents[i] = body
+                    agents[i] = validated
                     found = True
                     break
             if not found:
-                body["name"] = name
-                agents.append(body)
+                agents.append(validated)
             data["agents"] = agents
             _save_yaml(agents_path, data)
             return {"status": "ok", "agent": name}
         except Exception as exc:
-            return {"error": str(exc), "status": 400}
+            log.error("agent_upsert_failed", agent=name, error=str(exc))
+            return {"error": "Agent konnte nicht gespeichert werden", "status": 400}
 
     # -- 3.5: POST /bindings/{name} --------------------------------------
 
@@ -2208,7 +2255,11 @@ def _register_ui_routes(
     async def ui_upsert_binding(name: str, request: Request) -> dict[str, Any]:
         """Creates or updates a binding rule in bindings.yaml."""
         try:
+            from jarvis.gateway.config_api import BindingRuleDTO
+
             body = await request.json()
+            body["name"] = name
+            validated = BindingRuleDTO(**body).model_dump(exclude_unset=False)
             data = _load_yaml(bindings_path)
             bindings = data.get("bindings", [])
             if not isinstance(bindings, list):
@@ -2216,17 +2267,17 @@ def _register_ui_routes(
             found = False
             for i, b in enumerate(bindings):
                 if isinstance(b, dict) and b.get("name") == name:
-                    bindings[i] = body
+                    bindings[i] = validated
                     found = True
                     break
             if not found:
-                body["name"] = name
-                bindings.append(body)
+                bindings.append(validated)
             data["bindings"] = bindings
             _save_yaml(bindings_path, data)
             return {"status": "ok", "binding": name}
         except Exception as exc:
-            return {"error": str(exc), "status": 400}
+            log.error("binding_upsert_failed", binding=name, error=str(exc))
+            return {"error": "Binding konnte nicht gespeichert werden", "status": 400}
 
     # -- 3.6: Prompts GET / PUT ------------------------------------------
 
@@ -2361,7 +2412,8 @@ def _register_ui_routes(
 
             return {"status": "ok", "written": written}
         except Exception as exc:
-            return {"error": str(exc), "status": 400}
+            log.error("prompts_put_failed", error=str(exc))
+            return {"error": "Prompts konnten nicht gespeichert werden", "status": 400}
 
     # -- 3.7: Cron Jobs GET / PUT ----------------------------------------
 
@@ -2387,7 +2439,8 @@ def _register_ui_routes(
                 ],
             }
         except Exception as exc:
-            return {"jobs": [], "error": str(exc)}
+            log.error("cron_jobs_get_failed", error=str(exc))
+            return {"jobs": [], "error": "Cron-Jobs konnten nicht geladen werden"}
 
     @app.put("/api/v1/cron-jobs", dependencies=deps)
     async def ui_put_cron_jobs(request: Request) -> dict[str, Any]:
@@ -2406,7 +2459,8 @@ def _register_ui_routes(
             store._save()
             return {"status": "ok", "count": len(store.jobs)}
         except Exception as exc:
-            return {"error": str(exc), "status": 400}
+            log.error("cron_jobs_put_failed", error=str(exc))
+            return {"error": "Cron-Jobs konnten nicht gespeichert werden", "status": 400}
 
     # -- 3.8: MCP Servers GET / PUT --------------------------------------
 
@@ -2432,7 +2486,7 @@ def _register_ui_routes(
                 "http_port": sm.get("http_port", 3001),
                 "server_name": sm.get("server_name", "jarvis"),
                 "require_auth": sm.get("require_auth", False),
-                "auth_token": sm.get("auth_token", ""),
+                "auth_token": "***" if sm.get("auth_token") else "",
                 "expose_tools": sm.get("expose_tools", True),
                 "expose_resources": sm.get("expose_resources", True),
                 "expose_prompts": sm.get("expose_prompts", False),
@@ -2441,7 +2495,8 @@ def _register_ui_routes(
             }
             return result
         except Exception as exc:
-            return {"mode": "disabled", "external_servers": {}, "error": str(exc)}
+            log.error("mcp_servers_load_failed", error=str(exc))
+            return {"mode": "disabled", "external_servers": {}, "error": "MCP-Server-Konfiguration konnte nicht geladen werden"}
 
     @app.put("/api/v1/mcp-servers", dependencies=deps)
     async def ui_put_mcp_servers(request: Request) -> dict[str, Any]:
@@ -2465,7 +2520,8 @@ def _register_ui_routes(
             _save_yaml(mcp_path, data)
             return {"status": "ok"}
         except Exception as exc:
-            return {"error": str(exc), "status": 400}
+            log.error("mcp_servers_put_failed", error=str(exc))
+            return {"error": "MCP-Server-Konfiguration konnte nicht gespeichert werden", "status": 400}
 
     # -- 3.9: A2A GET / PUT ----------------------------------------------
 
@@ -2485,7 +2541,8 @@ def _register_ui_routes(
                 **{k: v for k, v in a2a.items() if k not in ("enabled", "host", "port", "agent_name")},
             }
         except Exception as exc:
-            return {"enabled": False, "error": str(exc)}
+            log.error("a2a_get_failed", error=str(exc))
+            return {"enabled": False, "error": "A2A-Konfiguration konnte nicht geladen werden"}
 
     @app.put("/api/v1/a2a", dependencies=deps)
     async def ui_put_a2a(request: Request) -> dict[str, Any]:
@@ -2498,7 +2555,8 @@ def _register_ui_routes(
             _save_yaml(mcp_path, data)
             return {"status": "ok"}
         except Exception as exc:
-            return {"error": str(exc), "status": 400}
+            log.error("a2a_config_save_failed", error=str(exc))
+            return {"error": "A2A-Konfiguration konnte nicht gespeichert werden", "status": 400}
 
 
 # ======================================================================
@@ -2617,13 +2675,18 @@ def _register_workflow_graph_routes(
         _, dag, _ = _get_engines()
         if not dag or not dag._checkpoint_dir:
             return {"error": "DAG engine unavailable", "status": 503}
-        cp_file = dag._checkpoint_dir / f"{run_id}.json"
+        cp_file = (dag._checkpoint_dir / f"{run_id}.json").resolve()
+        try:
+            cp_file.relative_to(dag._checkpoint_dir.resolve())
+        except ValueError:
+            return {"error": "Invalid run_id (Path-Traversal)", "status": 400}
         if not cp_file.exists():
             return {"error": "Run not found", "status": 404}
         try:
             return json.loads(cp_file.read_text(encoding="utf-8"))
         except Exception as exc:
-            return {"error": str(exc), "status": 500}
+            log.error("wf_dag_run_read_failed", run_id=run_id, error=str(exc))
+            return {"error": "DAG-Run konnte nicht geladen werden", "status": 500}
 
     # -- Combined stats ----------------------------------------------------
 

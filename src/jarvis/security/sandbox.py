@@ -43,6 +43,7 @@ class SandboxResult:
     killed: bool = False
     oom_killed: bool = False
     timed_out: bool = False
+    isolation_degraded: bool = False
 
 
 class Sandbox:
@@ -331,11 +332,34 @@ class Sandbox:
             # 1. Job Object erstellen
             job_handle = kernel32.CreateJobObjectW(None, None)
             if not job_handle:
-                log.warning("jobobject_create_failed", error=ctypes.get_last_error())
-                # Fallback: ohne Job Object ausführen
-                return await self._exec_process_bare(
+                last_err = ctypes.get_last_error()
+                if not self._config.allow_degraded_sandbox:
+                    log.error(
+                        "jobobject_create_failed_execution_refused",
+                        error=last_err,
+                    )
+                    return SandboxResult(
+                        exit_code=-1,
+                        stdout="",
+                        stderr=(
+                            "CreateJobObjectW fehlgeschlagen und "
+                            "allow_degraded_sandbox=False — "
+                            "Ausfuehrung verweigert"
+                        ),
+                        duration_ms=0,
+                        sandbox_level=SandboxLevel.PROCESS,
+                        isolation_degraded=True,
+                    )
+                log.warning(
+                    "jobobject_create_failed_degraded_fallback",
+                    error=last_err,
+                )
+                # Fallback: ohne Job Object ausführen (nur Timeout-Schutz)
+                result = await self._exec_process_bare(
                     command, working_dir=working_dir, env=env, timeout=timeout
                 )
+                result.isolation_degraded = True
+                return result
 
             # 2. Limits konfigurieren
             info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
@@ -595,7 +619,7 @@ class Sandbox:
             "--memory",
             f"{self._config.max_memory_mb}m",
             "--cpus",
-            str(self._config.max_cpu_seconds / 10),
+            str(self._config.max_cpu_cores),
             "--pids-limit",
             "64",
             "--read-only",

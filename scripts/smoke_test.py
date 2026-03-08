@@ -123,7 +123,7 @@ class SmokeTest:
             "memory/episodes",
             "memory/knowledge",
             "memory/procedures",
-            "memory/index",
+            "index",
             "logs",
         ]:
             if (self.jarvis_home / d).exists():
@@ -185,7 +185,7 @@ class SmokeTest:
             config = JarvisConfig(jarvis_home=self.jarvis_home)
             ensure_directory_structure(config)
             manager = MemoryManager(config)
-            stats = manager.initialize()
+            stats = manager.initialize_sync()
             self._pass(
                 f"Memory initialisiert (Chunks: {stats.get('chunks', 0)}, Entities: {stats.get('entities', 0)})"
             )

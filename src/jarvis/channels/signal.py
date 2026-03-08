@@ -62,6 +62,7 @@ class SignalChannel(Channel):
         allowed_numbers: list[str] | None = None,
         webhook_host: str = "127.0.0.1",
         webhook_port: int = 8090,
+        webhook_secret: str = "",
         use_polling: bool = False,
         polling_interval: float = 1.0,
         workspace_dir: Path | None = None,
@@ -71,6 +72,7 @@ class SignalChannel(Channel):
         self._allowed_numbers = set(allowed_numbers or [])
         self._webhook_host = webhook_host
         self._webhook_port = webhook_port
+        self._webhook_secret = webhook_secret
         self._use_polling = use_polling
         self._polling_interval = polling_interval
         self._workspace_dir = workspace_dir or Path.home() / ".jarvis" / "workspace" / "signal"
@@ -259,6 +261,14 @@ class SignalChannel(Channel):
             self._poll_task = asyncio.create_task(self._polling_loop())
             return
 
+        if self._webhook_host != "127.0.0.1" and not self._webhook_secret:
+            logger.warning(
+                "Signal: Webhook auf %s ohne webhook_secret exponiert — "
+                "Anfragen koennen nicht authentifiziert werden. "
+                "Setze webhook_secret fuer HMAC-Verifizierung.",
+                self._webhook_host,
+            )
+
         app = web.Application()
         app.router.add_post("/signal/webhook", self._handle_webhook)
         app.router.add_get("/signal/health", self._handle_health)
@@ -295,12 +305,30 @@ class SignalChannel(Channel):
 
     async def _handle_webhook(self, request: Any) -> Any:
         """POST /signal/webhook -- Eingehende Signal-Nachrichten."""
+        import hmac as _hmac
+        import hashlib as _hashlib
         from aiohttp import web
 
-        try:
-            body = await request.json()
-        except Exception:
-            return web.Response(status=400, text="Invalid JSON")
+        if self._webhook_secret:
+            raw_body = await request.read()
+            sig_header = request.headers.get("X-Webhook-Signature", "")
+            expected = _hmac.new(
+                self._webhook_secret.encode(),
+                raw_body,
+                _hashlib.sha256,
+            ).hexdigest()
+            if not _hmac.compare_digest(sig_header, expected):
+                logger.warning("Signal: Webhook-Request mit ungueltiger Signatur abgelehnt")
+                return web.Response(status=403, text="Forbidden")
+            try:
+                body = json.loads(raw_body)
+            except Exception:
+                return web.Response(status=400, text="Invalid JSON")
+        else:
+            try:
+                body = await request.json()
+            except Exception:
+                return web.Response(status=400, text="Invalid JSON")
 
         asyncio.create_task(self._process_webhook_payload(body))
         return web.Response(status=200, text="OK")

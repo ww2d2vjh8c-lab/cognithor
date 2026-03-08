@@ -121,7 +121,7 @@ class TestCheckPythonPackages:
         assert len(report.warnings) == 0
 
     def test_missing_packages_installed(self, config: JarvisConfig) -> None:
-        checker = StartupChecker(config)
+        checker = StartupChecker(config, auto_install=True)
         # First call: can't import; after install: can import
         with patch("jarvis.core.startup_check._can_import", return_value=False):
             with patch("jarvis.core.startup_check._pip_install", return_value=(True, "")):
@@ -129,7 +129,7 @@ class TestCheckPythonPackages:
         assert len(report.fixes_applied) > 0
 
     def test_missing_packages_install_fails(self, config: JarvisConfig) -> None:
-        checker = StartupChecker(config)
+        checker = StartupChecker(config, auto_install=True)
         with patch("jarvis.core.startup_check._can_import", return_value=False):
             with patch("jarvis.core.startup_check._pip_install", return_value=(False, "error")):
                 report = checker.check_python_packages()
@@ -165,15 +165,21 @@ class TestCheckOllama:
             report = checker.check_ollama()
         assert "Ollama running" in report.checks_passed
 
-    def test_check_ollama_not_running_not_found(self, config: JarvisConfig) -> None:
+    def test_check_ollama_not_running_warns_without_auto_install(self, config: JarvisConfig) -> None:
         checker = StartupChecker(config)
+        with patch.object(checker, "_ollama_is_running", return_value=False):
+            report = checker.check_ollama()
+        assert any("not running" in w.lower() for w in report.warnings)
+
+    def test_check_ollama_not_running_not_found(self, config: JarvisConfig) -> None:
+        checker = StartupChecker(config, auto_install=True)
         with patch.object(checker, "_ollama_is_running", return_value=False):
             with patch.object(checker, "_find_ollama", return_value=None):
                 report = checker.check_ollama()
         assert any("not found" in w.lower() for w in report.warnings)
 
     def test_check_ollama_not_running_autostart_ok(self, config: JarvisConfig) -> None:
-        checker = StartupChecker(config)
+        checker = StartupChecker(config, auto_install=True)
         with patch.object(checker, "_ollama_is_running", return_value=False):
             with patch.object(checker, "_find_ollama", return_value="/usr/bin/ollama"):
                 with patch.object(checker, "_start_ollama", return_value=True):
@@ -181,7 +187,7 @@ class TestCheckOllama:
         assert any("auto-started" in f for f in report.fixes_applied)
 
     def test_check_ollama_not_running_autostart_fail(self, config: JarvisConfig) -> None:
-        checker = StartupChecker(config)
+        checker = StartupChecker(config, auto_install=True)
         with patch.object(checker, "_ollama_is_running", return_value=False):
             with patch.object(checker, "_find_ollama", return_value="/usr/bin/ollama"):
                 with patch.object(checker, "_start_ollama", return_value=False):

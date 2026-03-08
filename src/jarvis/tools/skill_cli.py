@@ -315,6 +315,25 @@ class SkillTester:
     def __init__(self) -> None:
         self._results: list[SkillTestResult] = []
 
+    @staticmethod
+    def _build_safe_env() -> dict[str, str]:
+        """Baut ein minimales Environment ohne sensitive Variablen."""
+        import os as _os
+
+        if sys.platform == "win32":
+            return {
+                "PATH": _os.environ.get("PATH", ""),
+                "SYSTEMROOT": _os.environ.get("SYSTEMROOT", r"C:\Windows"),
+                "TEMP": _os.environ.get("TEMP", r"C:\Windows\Temp"),
+                "TMP": _os.environ.get("TMP", r"C:\Windows\Temp"),
+                "USERPROFILE": _os.environ.get("USERPROFILE", ""),
+            }
+        return {
+            "PATH": "/usr/local/bin:/usr/bin:/bin",
+            "HOME": "/tmp",
+            "LANG": "C.UTF-8",
+        }
+
     def test_skill(self, skill_name: str, test_code: str = "") -> SkillTestResult:
         """Führt Tests für einen Skill aus."""
         import re
@@ -332,9 +351,11 @@ class SkillTester:
             try:
                 proc = subprocess.run(
                     [sys.executable, "-m", "pytest", str(tmp), "--tb=short", "-q",
-                     f"--rootdir={tmpdir}"],
+                     f"--rootdir={tmpdir}", "--import-mode=importlib",
+                     "-p", "no:cacheprovider", "--no-header"],
                     capture_output=True, text=True, timeout=30,
                     cwd=tmpdir,
+                    env=self._build_safe_env(),
                 )
                 # Parse pytest output ("X passed, Y failed")
                 output = proc.stdout + proc.stderr

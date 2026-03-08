@@ -304,6 +304,7 @@ class SandboxConfig(BaseModel):
     timeout_seconds: int = Field(default=30, ge=1, le=600)
     max_memory_mb: int = Field(default=512, ge=64, le=8192)
     max_cpu_seconds: int = Field(default=10, ge=1, le=300)
+    max_cpu_cores: float = Field(default=1.0, ge=0.1, le=64.0)
     allowed_paths: list[str] = Field(
         default_factory=lambda: [
             "~/.jarvis/workspace/",
@@ -311,6 +312,7 @@ class SandboxConfig(BaseModel):
         ]
     )
     network_access: bool = False
+    allow_degraded_sandbox: bool = True
     env_vars: dict[str, str] = Field(default_factory=dict)
 
 

@@ -340,7 +340,11 @@ class CredentialStore:
             return
         if self._store_path.exists():
             try:
-                raw = self._store_path.read_text(encoding="utf-8")
+                raw = self._store_path.read_text(encoding="utf-8").strip()
+                if not raw:
+                    # Empty file — treat as fresh store
+                    self._loaded = True
+                    return
                 data = json.loads(raw)
                 for lookup, entry_data in data.items():
                     self._entries[lookup] = _StoredCredential(

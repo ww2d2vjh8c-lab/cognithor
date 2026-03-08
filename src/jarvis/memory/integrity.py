@@ -189,7 +189,21 @@ class DuplicateDetector:
         union = words_a | words_b
         return len(intersection) / len(union)
 
+    # Maximale Anzahl Eintraege fuer paarweisen Vergleich.
+    # Verhindert O(N^2)-Explosion bei grossen Memory-Stores.
+    MAX_ENTRIES = 5000
+
     def detect(self, entries: list[MemoryEntry]) -> list[DuplicateGroup]:
+        # Batch-Limit: bei zu vielen Eintraegen nur die neuesten verarbeiten
+        if len(entries) > self.MAX_ENTRIES:
+            entries = entries[-self.MAX_ENTRIES:]
+
+        # Normalisierung cachen (jeder Entry genau einmal)
+        normalized: list[tuple[str, set[str]]] = []
+        for entry in entries:
+            norm = self._normalize(entry.content)
+            normalized.append((norm, set(norm.split())))
+
         groups: list[DuplicateGroup] = []
         seen: set[str] = set()
         group_counter = 0
@@ -197,15 +211,25 @@ class DuplicateDetector:
         for i, entry_a in enumerate(entries):
             if entry_a.entry_id in seen:
                 continue
-            norm_a = self._normalize(entry_a.content)
+            norm_a, words_a = normalized[i]
+            len_a = len(words_a)
             duplicates = [entry_a.entry_id]
 
             for j in range(i + 1, len(entries)):
                 entry_b = entries[j]
                 if entry_b.entry_id in seen:
                     continue
-                norm_b = self._normalize(entry_b.content)
-                sim = self._simple_similarity(norm_a, norm_b)
+                _, words_b = normalized[j]
+                len_b = len(words_b)
+
+                # Pre-Filter: Jaccard kann maximal min(a,b)/max(a,b) sein.
+                # Wenn das unter dem Threshold liegt, ueberspringen.
+                if len_a and len_b:
+                    max_possible = min(len_a, len_b) / max(len_a, len_b)
+                    if max_possible < self._threshold:
+                        continue
+
+                sim = self._jaccard(words_a, words_b)
                 if sim >= self._threshold:
                     duplicates.append(entry_b.entry_id)
                     seen.add(entry_b.entry_id)
@@ -220,6 +244,13 @@ class DuplicateDetector:
                 ))
 
         return groups
+
+    @staticmethod
+    def _jaccard(words_a: set[str], words_b: set[str]) -> float:
+        """Jaccard-Ähnlichkeit auf vorberechneten Wort-Sets."""
+        if not words_a or not words_b:
+            return 0.0
+        return len(words_a & words_b) / len(words_a | words_b)
 
     def stats(self, groups: list[DuplicateGroup]) -> dict[str, Any]:
         return {

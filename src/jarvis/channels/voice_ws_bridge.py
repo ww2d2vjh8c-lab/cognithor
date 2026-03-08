@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -79,7 +80,7 @@ class VoiceMessageHandler:
         try:
             # Audio dekodieren und speichern
             audio_bytes = base64.b64decode(audio_base64)
-            audio_path = self._workspace / f"voice_input{ext}"
+            audio_path = self._workspace / f"voice_input_{uuid.uuid4().hex[:12]}{ext}"
             audio_path.write_bytes(audio_bytes)
 
             log.info(
@@ -142,7 +143,7 @@ class VoiceMessageHandler:
 
         try:
             media = self._get_media()
-            output = self._workspace / "voice_response.wav"
+            output = self._workspace / f"voice_response_{uuid.uuid4().hex[:12]}.wav"
             result = await media.text_to_speech(
                 text,
                 output_path=str(output),

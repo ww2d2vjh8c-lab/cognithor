@@ -18,6 +18,7 @@ import hashlib
 import time
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 
@@ -117,14 +118,14 @@ class Tenant:
     users: list[TenantUser] = field(default_factory=list)
     config: dict[str, Any] = field(default_factory=dict)
 
-    # Isolierte Pfade
+    # Isolierte Pfade (plattformunabhaengig)
     @property
     def data_path(self) -> str:
-        return f"/data/tenants/{self.tenant_id}"
+        return str(Path.home() / ".jarvis" / "tenants" / self.tenant_id / "data")
 
     @property
     def secrets_path(self) -> str:
-        return f"/run/secrets/tenants/{self.tenant_id}"
+        return str(Path.home() / ".jarvis" / "tenants" / self.tenant_id / "secrets")
 
     @property
     def db_name(self) -> str:

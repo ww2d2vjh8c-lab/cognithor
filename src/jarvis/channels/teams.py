@@ -220,7 +220,7 @@ class TeamsChannel(Channel):
 
         except Exception as exc:
             logger.error("Teams: Activity-Verarbeitung fehlgeschlagen: %s", exc)
-            return web.Response(status=500, text=str(exc))
+            return web.Response(status=500, text="Internal Server Error")
 
     async def stop(self) -> None:
         """Stoppt den Teams-Channel sauber."""

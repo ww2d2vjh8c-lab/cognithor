@@ -115,11 +115,14 @@ class TestWebhookStart:
              patch("aiohttp.web.TCPSite", return_value=mock_site):
             await ch._start_webhook()
 
-        mock_bot.set_webhook.assert_called_once_with(
-            url="https://bot.example.com/telegram/webhook",
-            drop_pending_updates=True,
-            allowed_updates=["message", "callback_query"],
-        )
+        mock_bot.set_webhook.assert_called_once()
+        call_kwargs = mock_bot.set_webhook.call_args[1]
+        assert call_kwargs["url"] == "https://bot.example.com/telegram/webhook"
+        assert call_kwargs["drop_pending_updates"] is True
+        assert call_kwargs["allowed_updates"] == ["message", "callback_query"]
+        # F-024: secret_token wird jetzt mitgeschickt
+        assert "secret_token" in call_kwargs
+        assert len(call_kwargs["secret_token"]) == 64  # hex(32 bytes)
         assert ch._webhook_runner is mock_runner
         mock_site.start.assert_called_once()
 
@@ -201,6 +204,11 @@ class TestWebhookHandler:
 
         mock_request = MagicMock()
         mock_request.json = AsyncMock(return_value=update_data)
+        # F-024: Webhook erwartet Secret-Token-Header
+        mock_request.headers = MagicMock()
+        mock_request.headers.get = lambda key, default="": (
+            ch._webhook_secret_token if key == "X-Telegram-Bot-Api-Secret-Token" else default
+        )
 
         mock_update = MagicMock()
 
@@ -219,6 +227,10 @@ class TestWebhookHandler:
 
         mock_request = MagicMock()
         mock_request.json = AsyncMock(side_effect=ValueError("bad json"))
+        mock_request.headers = MagicMock()
+        mock_request.headers.get = lambda key, default="": (
+            ch._webhook_secret_token if key == "X-Telegram-Bot-Api-Secret-Token" else default
+        )
 
         response = await ch._handle_webhook(mock_request)
         assert response.status == 500
@@ -237,6 +249,10 @@ class TestWebhookHandler:
 
         mock_request = MagicMock()
         mock_request.json = AsyncMock(return_value=update_data)
+        mock_request.headers = MagicMock()
+        mock_request.headers.get = lambda key, default="": (
+            ch._webhook_secret_token if key == "X-Telegram-Bot-Api-Secret-Token" else default
+        )
 
         with patch("telegram.Update.de_json", return_value=MagicMock()):
             response = await ch._handle_webhook(mock_request)

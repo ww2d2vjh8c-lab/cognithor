@@ -121,14 +121,13 @@ class TestSynthesizeResponse:
     async def test_synthesis_success(self, bridge: VoiceWebSocketBridge, workspace: Path) -> None:
         from jarvis.mcp.media import MediaResult
 
-        # Fake WAV-Datei erstellen die nach TTS "da" sein soll
-        wav_path = workspace / "voice_response.wav"
-        wav_path.write_bytes(b"RIFF" + b"\x00" * 40)
+        # TTS-Mock: erstellt die Datei unter dem uebergebenen output_path
+        async def fake_tts(text: str, output_path: str, voice: str = "") -> MediaResult:
+            Path(output_path).write_bytes(b"RIFF" + b"\x00" * 40)
+            return MediaResult(success=True, text=f"Audio erzeugt: {output_path}")
 
         mock_media = MagicMock()
-        mock_media.text_to_speech = AsyncMock(
-            return_value=MediaResult(success=True, text=f"Audio erzeugt: {wav_path}")
-        )
+        mock_media.text_to_speech = AsyncMock(side_effect=fake_tts)
         bridge._media = mock_media
 
         result = await bridge.synthesize_response("Hallo")

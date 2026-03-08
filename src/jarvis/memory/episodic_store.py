@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from datetime import datetime, UTC, date
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,7 @@ class EpisodicStore:
     def __init__(self, db_path: str | Path | None = None) -> None:
         self._db_path = str(db_path) if db_path else ":memory:"
         self._conn: sqlite3.Connection | None = None
+        self._write_lock = threading.RLock()
         self._ensure_schema()
 
     def _get_conn(self) -> sqlite3.Connection:
@@ -31,9 +33,10 @@ class EpisodicStore:
         return self._conn
 
     def _ensure_schema(self) -> None:
-        conn = self._get_conn()
-        conn.executescript("""
-            CREATE TABLE IF NOT EXISTS episodes (
+        with self._write_lock:
+            conn = self._get_conn()
+            conn.executescript("""
+                CREATE TABLE IF NOT EXISTS episodes (
                 id TEXT PRIMARY KEY,
                 session_id TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
@@ -76,8 +79,8 @@ class EpisodicStore:
                 summary TEXT NOT NULL,
                 key_learnings TEXT NOT NULL DEFAULT '[]'
             );
-        """)
-        conn.commit()
+            """)
+            conn.commit()
 
     def store_episode(
         self,
@@ -93,24 +96,25 @@ class EpisodicStore:
         """Speichert eine Episode."""
         from jarvis.models import _new_id
         eid = episode_id or _new_id()
-        conn = self._get_conn()
-        conn.execute(
-            """INSERT INTO episodes (id, session_id, timestamp, topic, content, outcome,
-               tool_sequence, success_score, tags)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                eid,
-                session_id,
-                datetime.now(UTC).isoformat(),
-                topic,
-                content,
-                outcome,
-                json.dumps(tool_sequence or []),
-                success_score,
-                json.dumps(tags or []),
-            ),
-        )
-        conn.commit()
+        with self._write_lock:
+            conn = self._get_conn()
+            conn.execute(
+                """INSERT INTO episodes (id, session_id, timestamp, topic, content, outcome,
+                   tool_sequence, success_score, tags)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    eid,
+                    session_id,
+                    datetime.now(UTC).isoformat(),
+                    topic,
+                    content,
+                    outcome,
+                    json.dumps(tool_sequence or []),
+                    success_score,
+                    json.dumps(tags or []),
+                ),
+            )
+            conn.commit()
         return eid
 
     def search_episodes(
@@ -209,13 +213,14 @@ class EpisodicStore:
         """Speichert eine Zusammenfassung."""
         from jarvis.models import _new_id
         sid = _new_id()
-        conn = self._get_conn()
-        conn.execute(
-            """INSERT INTO episode_summaries (id, period, start_date, end_date, summary, key_learnings)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (sid, period, start_date, end_date, summary, json.dumps(key_learnings or [])),
-        )
-        conn.commit()
+        with self._write_lock:
+            conn = self._get_conn()
+            conn.execute(
+                """INSERT INTO episode_summaries (id, period, start_date, end_date, summary, key_learnings)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (sid, period, start_date, end_date, summary, json.dumps(key_learnings or [])),
+            )
+            conn.commit()
         return sid
 
     def get_summaries(self, period: str | None = None) -> list[dict[str, Any]]:

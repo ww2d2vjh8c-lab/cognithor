@@ -253,19 +253,31 @@ class TestCheckPythonPackages:
     @patch("jarvis.core.startup_check._pip_install", return_value=(True, ""))
     @patch("jarvis.core.startup_check._can_import", return_value=False)
     def test_missing_packages_auto_installed(
-        self, _mock_import: MagicMock, _mock_pip: MagicMock, checker: StartupChecker
+        self, _mock_import: MagicMock, _mock_pip: MagicMock, mock_config: MagicMock
     ) -> None:
-        report = checker.check_python_packages()
+        # F-010: auto_install=True required for automatic installation
+        auto_checker = StartupChecker(mock_config, auto_install=True)
+        report = auto_checker.check_python_packages()
         assert len(report.fixes_applied) > 0
         # Should have attempted pip install for each group
         assert _mock_pip.call_count == len(OPTIONAL_GROUPS)
 
+    @patch("jarvis.core.startup_check._can_import", return_value=False)
+    def test_missing_packages_without_auto_install_warns(
+        self, _mock_import: MagicMock, checker: StartupChecker
+    ) -> None:
+        """F-010: Without --auto-install, missing packages only produce warnings."""
+        report = checker.check_python_packages()
+        assert len(report.warnings) > 0
+        assert len(report.fixes_applied) == 0
+
     @patch("jarvis.core.startup_check._pip_install", return_value=(False, "error"))
     @patch("jarvis.core.startup_check._can_import", return_value=False)
     def test_install_failure_creates_warning(
-        self, _mock_import: MagicMock, _mock_pip: MagicMock, checker: StartupChecker
+        self, _mock_import: MagicMock, _mock_pip: MagicMock, mock_config: MagicMock
     ) -> None:
-        report = checker.check_python_packages()
+        auto_checker = StartupChecker(mock_config, auto_install=True)
+        report = auto_checker.check_python_packages()
         assert len(report.warnings) > 0
         assert len(report.fixes_applied) == 0
 
@@ -303,13 +315,23 @@ class TestCheckOllama:
         assert len(report.fixes_applied) == 0
         assert len(report.warnings) == 0
 
+    @patch.object(StartupChecker, "_ollama_is_running", return_value=False)
+    def test_ollama_not_running_without_auto_install(
+        self, _mock_run: MagicMock, checker: StartupChecker
+    ) -> None:
+        """Without --auto-install, only warns."""
+        report = checker.check_ollama()
+        assert len(report.warnings) == 1
+        assert "not running" in report.warnings[0].lower()
+
     @patch.object(StartupChecker, "_start_ollama", return_value=True)
     @patch.object(StartupChecker, "_find_ollama", return_value="/usr/local/bin/ollama")
     @patch.object(StartupChecker, "_ollama_is_running", return_value=False)
     def test_ollama_auto_started(
         self, _mock_run: MagicMock, _mock_find: MagicMock, _mock_start: MagicMock,
-        checker: StartupChecker,
+        mock_config: MagicMock,
     ) -> None:
+        checker = StartupChecker(mock_config, auto_install=True)
         report = checker.check_ollama()
         assert len(report.fixes_applied) == 1
         assert "auto-started" in report.fixes_applied[0]
@@ -317,8 +339,9 @@ class TestCheckOllama:
     @patch.object(StartupChecker, "_find_ollama", return_value=None)
     @patch.object(StartupChecker, "_ollama_is_running", return_value=False)
     def test_ollama_not_found(
-        self, _mock_run: MagicMock, _mock_find: MagicMock, checker: StartupChecker
+        self, _mock_run: MagicMock, _mock_find: MagicMock, mock_config: MagicMock
     ) -> None:
+        checker = StartupChecker(mock_config, auto_install=True)
         report = checker.check_ollama()
         assert len(report.warnings) == 1
         assert "not found" in report.warnings[0].lower()
@@ -328,8 +351,9 @@ class TestCheckOllama:
     @patch.object(StartupChecker, "_ollama_is_running", return_value=False)
     def test_ollama_start_failed(
         self, _mock_run: MagicMock, _mock_find: MagicMock, _mock_start: MagicMock,
-        checker: StartupChecker,
+        mock_config: MagicMock,
     ) -> None:
+        checker = StartupChecker(mock_config, auto_install=True)
         report = checker.check_ollama()
         assert len(report.warnings) == 1
         assert "could not be started" in report.warnings[0].lower()
@@ -363,8 +387,9 @@ class TestCheckModels:
     @patch("jarvis.core.startup_check._http_get_json")
     def test_missing_model_auto_pulled(
         self, mock_http: MagicMock, _mock_find: MagicMock, mock_pull: MagicMock,
-        checker: StartupChecker,
+        mock_config: MagicMock,
     ) -> None:
+        checker = StartupChecker(mock_config, auto_install=True)
         # Only qwen3:8b is installed
         mock_http.return_value = {"models": [{"name": "qwen3:8b"}]}
         report = checker.check_models()
@@ -376,8 +401,9 @@ class TestCheckModels:
     @patch("jarvis.core.startup_check._http_get_json")
     def test_model_pull_failed(
         self, mock_http: MagicMock, _mock_find: MagicMock, mock_pull: MagicMock,
-        checker: StartupChecker,
+        mock_config: MagicMock,
     ) -> None:
+        checker = StartupChecker(mock_config, auto_install=True)
         mock_http.return_value = {"models": []}
         report = checker.check_models()
         assert len(report.warnings) > 0
@@ -397,8 +423,9 @@ class TestCheckModels:
     @patch.object(StartupChecker, "_find_ollama", return_value=None)
     @patch("jarvis.core.startup_check._http_get_json")
     def test_missing_model_no_ollama_binary(
-        self, mock_http: MagicMock, _mock_find: MagicMock, checker: StartupChecker
+        self, mock_http: MagicMock, _mock_find: MagicMock, mock_config: MagicMock
     ) -> None:
+        checker = StartupChecker(mock_config, auto_install=True)
         mock_http.return_value = {"models": []}
         report = checker.check_models()
         assert len(report.warnings) > 0
@@ -423,12 +450,16 @@ class TestCheckDirectories:
 
     def test_existing_dirs_pass(self, checker: StartupChecker, tmp_path: Path) -> None:
         home = tmp_path / "jarvis_test"
-        for sub in ["memory", "logs", "cache", "cache/web_search", "vault", "policies", "episodes", "skills"]:
+        for sub in [
+            "memory", "memory/episodes", "memory/knowledge", "memory/procedures",
+            "memory/sessions", "index", "logs", "cache", "cache/web_search",
+            "vault", "policies", "skills",
+        ]:
             (home / sub).mkdir(parents=True, exist_ok=True)
         checker._config.jarvis_home = home
         report = checker.check_directories()
         assert len(report.fixes_applied) == 0
-        assert len(report.checks_passed) == 8
+        assert len(report.checks_passed) == 12
 
     def test_no_config_skips(self, checker_no_config: StartupChecker) -> None:
         report = checker_no_config.check_directories()

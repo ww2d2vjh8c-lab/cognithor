@@ -9,7 +9,7 @@ Unterstützt:
 
 Konfiguration:
   - JARVIS_IRC_SERVER: IRC-Server Hostname
-  - JARVIS_IRC_PORT: Port (default 6667)
+  - JARVIS_IRC_PORT: Port (default 6697, SSL)
   - JARVIS_IRC_NICK: Bot-Nick
   - JARVIS_IRC_CHANNELS: Komma-separierte Channel-Liste
 
@@ -44,11 +44,11 @@ class IRCChannel(Channel):
     def __init__(
         self,
         server: str = "",
-        port: int = 6667,
+        port: int = 6697,
         nick: str = "JarvisBot",
         channels: list[str] | None = None,
         password: str = "",
-        use_ssl: bool = False,
+        use_ssl: bool = True,
     ) -> None:
         self._server = server
         self._port = port
@@ -76,6 +76,14 @@ class IRCChannel(Channel):
 
         if not self._server:
             logger.warning("IRC: Server nicht konfiguriert")
+            return
+
+        if self._password and not self._use_ssl:
+            logger.error(
+                "IRC: Passwort gesetzt aber SSL deaktiviert — "
+                "Verbindung verweigert (Klartext-Passwoerter sind unsicher). "
+                "Setze use_ssl=True oder entferne das Passwort."
+            )
             return
 
         try:

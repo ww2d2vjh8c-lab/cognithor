@@ -123,6 +123,9 @@ class TelegramChannel(Channel):
         self._ssl_certfile = ssl_certfile
         self._ssl_keyfile = ssl_keyfile
         self._webhook_runner: Any | None = None  # aiohttp.web.AppRunner
+        # Secret-Token fuer Webhook-Verifizierung (Art. Telegram Bot API)
+        import secrets as _secrets
+        self._webhook_secret_token: str = _secrets.token_hex(32)
 
     @property
     def token(self) -> str:
@@ -301,6 +304,7 @@ class TelegramChannel(Channel):
             url=self._webhook_url,
             drop_pending_updates=True,
             allowed_updates=["message", "callback_query"],
+            secret_token=self._webhook_secret_token,
         )
 
         logger.info(
@@ -311,8 +315,19 @@ class TelegramChannel(Channel):
 
     async def _handle_webhook(self, request: Any) -> Any:
         """Verarbeitet eingehende Telegram-Updates via Webhook."""
+        import hmac as _hmac
         from aiohttp import web
         from telegram import Update
+
+        # Secret-Token-Verifizierung (Telegram sendet den Header automatisch)
+        received_token = request.headers.get(
+            "X-Telegram-Bot-Api-Secret-Token", "",
+        )
+        if not _hmac.compare_digest(received_token, self._webhook_secret_token):
+            logger.warning(
+                "Telegram-Webhook: Ungueltige oder fehlende Secret-Token-Verifizierung"
+            )
+            return web.Response(status=403, text="Forbidden")
 
         try:
             data = await request.json()

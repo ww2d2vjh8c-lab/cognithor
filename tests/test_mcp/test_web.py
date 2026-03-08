@@ -205,12 +205,12 @@ class TestFormatSearchResults:
 
     def test_formats_results(self) -> None:
         results = [
-            {"title": "Test", "url": "https://example.com", "content": "Snippet"},
+            {"title": "Test", "url": "https://example.test/article", "content": "Snippet"},
         ]
         text = _format_search_results(results, "test query")
         assert "test query" in text
         assert "Test" in text
-        assert "https://example.com" in text
+        assert "example.test/article" in text
         assert "Snippet" in text
 
     def test_empty_results(self) -> None:

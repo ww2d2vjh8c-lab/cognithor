@@ -191,8 +191,9 @@ class StartupChecker:
                 unit-testing individual methods.
     """
 
-    def __init__(self, config: Any = None) -> None:
+    def __init__(self, config: Any = None, *, auto_install: bool = False) -> None:
         self._config = config
+        self._auto_install = auto_install
 
     # ------------------------------------------------------------------
     # Main entry point
@@ -285,7 +286,17 @@ class StartupChecker:
             if not missing_pkgs:
                 continue
 
-            # Attempt auto-install
+            if not self._auto_install:
+                # Without --auto-install: only warn, do not install
+                msg = (
+                    f"Missing [{group}]: {', '.join(missing_pkgs)} "
+                    f"-- run with --auto-install or: pip install {' '.join(missing_pkgs)}"
+                )
+                report.warnings.append(msg)
+                log.warning("startup_packages_missing", group=group, packages=missing_pkgs)
+                continue
+
+            # Attempt auto-install (only with explicit --auto-install)
             log.info(
                 "startup_installing_packages",
                 group=group,
@@ -340,7 +351,17 @@ class StartupChecker:
             log.debug("startup_ollama_running")
             return report
 
-        # Not running -- try to find and start it
+        # Not running
+        if not self._auto_install:
+            # Without --auto-install: only warn, do not auto-start
+            report.warnings.append(
+                "Ollama not running -- run with --auto-install to auto-start, "
+                "or start manually: ollama serve"
+            )
+            log.warning("startup_ollama_not_running")
+            return report
+
+        # Try to find and start it (only with explicit --auto-install)
         ollama_path = self._find_ollama()
         if ollama_path is None:
             report.warnings.append(
@@ -430,7 +451,16 @@ class StartupChecker:
                 report.checks_passed.append(f"model:{model}")
                 continue
 
-            # Attempt auto-pull
+            if not self._auto_install:
+                # Without --auto-install: only warn, do not pull
+                report.warnings.append(
+                    f"Model '{model}' missing "
+                    f"-- run with --auto-install or: ollama pull {model}"
+                )
+                log.warning("startup_model_missing", model=model)
+                continue
+
+            # Attempt auto-pull (only with explicit --auto-install)
             if ollama_path is None:
                 report.warnings.append(
                     f"Model '{model}' missing but Ollama binary not found for pull"
@@ -476,12 +506,16 @@ class StartupChecker:
         base = Path(str(jarvis_home))
         subdirs = [
             "memory",
+            "memory/episodes",
+            "memory/knowledge",
+            "memory/procedures",
+            "memory/sessions",
+            "index",
             "logs",
             "cache",
             "cache/web_search",
             "vault",
             "policies",
-            "episodes",
             "skills",
         ]
 

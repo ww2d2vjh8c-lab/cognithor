@@ -133,9 +133,9 @@ class TestBuildFrontmatter:
         assert "author: jarvis" in fm
 
     def test_with_sources(self, vault: VaultTools) -> None:
-        fm = vault._build_frontmatter("T", ["t"], sources=["https://a.com", "https://b.com"])
+        fm = vault._build_frontmatter("T", ["t"], sources=["https://example.test/page1", "https://example.test/page2"])
         assert "sources:" in fm
-        assert "https://a.com" in fm
+        assert "example.test/page1" in fm
 
     def test_with_linked_notes(self, vault: VaultTools) -> None:
         fm = vault._build_frontmatter("T", ["t"], linked_notes=["Note A", "Note B"])

@@ -250,6 +250,13 @@ class WhatsAppChannel(Channel):
         if not ssl_ctx and self._webhook_host not in ("127.0.0.1", "localhost", "::1"):
             logger.warning("WARNUNG: WhatsApp-Webhook auf %s ohne TLS gestartet!", self._webhook_host)
 
+        if not self._app_secret:
+            logger.warning(
+                "WhatsApp: app_secret nicht konfiguriert — "
+                "Webhook-Signaturpruefung deaktiviert! "
+                "Alle eingehenden Requests werden abgelehnt."
+            )
+
         site = web.TCPSite(runner, self._webhook_host, self._webhook_port, ssl_context=ssl_ctx)
         await site.start()
 
@@ -306,7 +313,17 @@ class WhatsAppChannel(Channel):
 
         The header value has the form ``sha256=<hex-digest>``.
         Uses ``hmac.compare_digest`` for constant-time comparison.
+
+        Returns False (and logs error) if no app_secret is configured,
+        since Meta signs webhooks exclusively with the App Secret.
         """
+        if not self._app_secret:
+            logger.error(
+                "WhatsApp: Webhook-Signatur kann nicht verifiziert werden — "
+                "app_secret nicht konfiguriert. Setze JARVIS_WHATSAPP_APP_SECRET."
+            )
+            return False
+
         if not signature_header:
             return False
 
@@ -314,10 +331,8 @@ class WhatsAppChannel(Channel):
             return False
 
         expected_sig = signature_header[len("sha256="):]
-        # Meta signs webhooks with the App Secret, not the API token
-        hmac_key = self._app_secret or self._api_token
         computed = hmac.new(
-            hmac_key.encode("utf-8"),
+            self._app_secret.encode("utf-8"),
             payload,
             hashlib.sha256,
         ).hexdigest()

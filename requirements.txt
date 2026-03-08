@@ -14,7 +14,7 @@ anyio>=4.0,<5                  # Async Primitives
 python-dotenv>=1.0,<2          # .env-Dateien laden
 
 # === Security ===
-cryptography>=44.0,<45         # Credential-Verschlüsselung (Fernet)
+cryptography>=46.0.5           # Credential-Verschlüsselung (Fernet)
 
 # === Channels (optional) ===
 # fastapi>=0.115,<1            # Web UI + REST API

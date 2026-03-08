@@ -1183,7 +1183,7 @@ class TestUIRoutes:
     async def test_upsert_binding(self, registered_app: FakeApp) -> None:
         handler = registered_app.routes["POST /api/v1/bindings/{name}"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={"channel": "telegram"})
+        request.json = AsyncMock(return_value={"target_agent": "agent-1", "channels": ["telegram"]})
         result = await handler(name="b1", request=request)
         assert result["status"] == "ok"
 

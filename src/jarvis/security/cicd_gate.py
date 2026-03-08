@@ -103,6 +103,7 @@ class SecurityGate:
     def __init__(self, policy: GatePolicy | None = None) -> None:
         self._policy = policy or GatePolicy()
         self._history: list[GateResult] = []
+        self._audit_log: list[dict[str, Any]] = []
 
     @property
     def policy(self) -> GatePolicy:
@@ -161,13 +162,62 @@ class SecurityGate:
         self._history.append(result)
         return result
 
+    AUTHORIZED_OVERRIDE_ROLES: set[str] = {"admin", "security-lead", "release-manager"}
+
     def override(self, gate_id: str, by: str, reason: str) -> GateResult | None:
-        """Manuelles Override eines Gate-Ergebnisses."""
+        """Manuelles Override eines Gate-Ergebnisses.
+
+        Args:
+            gate_id: ID des Gate-Ergebnisses.
+            by: Rolle/Identity des Overriders (muss in AUTHORIZED_OVERRIDE_ROLES sein).
+            reason: Begruendung (mind. 10 Zeichen).
+
+        Returns:
+            Das ueberschriebene GateResult, oder None wenn gate_id unbekannt.
+
+        Raises:
+            PermissionError: Wenn ``by`` keine autorisierte Rolle ist.
+            ValueError: Wenn ``reason`` zu kurz oder leer ist.
+        """
+        if not by or by not in self.AUTHORIZED_OVERRIDE_ROLES:
+            self._audit_log.append({
+                "action": "override_denied",
+                "gate_id": gate_id,
+                "by": by,
+                "reason": reason,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "detail": "unauthorized_role",
+            })
+            raise PermissionError(
+                f"Override verweigert: Rolle '{by}' ist nicht autorisiert. "
+                f"Erlaubt: {sorted(self.AUTHORIZED_OVERRIDE_ROLES)}"
+            )
+        if not reason or len(reason.strip()) < 10:
+            self._audit_log.append({
+                "action": "override_denied",
+                "gate_id": gate_id,
+                "by": by,
+                "reason": reason,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "detail": "reason_too_short",
+            })
+            raise ValueError(
+                "Override verweigert: Begruendung muss mindestens 10 Zeichen lang sein."
+            )
         for r in self._history:
             if r.gate_id == gate_id:
+                previous_verdict = r.verdict.value
                 r.verdict = GateVerdict.OVERRIDE
                 r.override_by = by
                 r.override_reason = reason
+                self._audit_log.append({
+                    "action": "override_approved",
+                    "gate_id": gate_id,
+                    "by": by,
+                    "reason": reason,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "previous_verdict": previous_verdict,
+                })
                 return r
         return None
 

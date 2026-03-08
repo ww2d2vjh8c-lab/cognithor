@@ -46,6 +46,11 @@ class ContentDeduplicator:
     duplicates without requiring embedding models.
     """
 
+    # Maximum entries for O(N^2) fuzzy comparison.  Beyond this limit the
+    # remaining entries are skipped to keep consolidation runtime bounded.
+    # 500 entries → max 124 750 comparisons — still fast on any machine.
+    MAX_FUZZY_ENTRIES: int = 500
+
     def __init__(self, similarity_threshold: float = 0.85) -> None:
         self.similarity_threshold = similarity_threshold
         self._hash_index: dict[str, str] = {}  # content_hash → entry_id
@@ -104,6 +109,13 @@ class ContentDeduplicator:
 
         # Phase 2: Fuzzy n-gram duplicates (skip already matched)
         remaining = [e for e in entries if e["id"] not in seen_ids]
+        if len(remaining) > self.MAX_FUZZY_ENTRIES:
+            log.warning(
+                "dedup_fuzzy_batch_limited",
+                total=len(remaining),
+                limit=self.MAX_FUZZY_ENTRIES,
+            )
+            remaining = remaining[:self.MAX_FUZZY_ENTRIES]
         for i, entry_a in enumerate(remaining):
             if entry_a["id"] in seen_ids:
                 continue

@@ -78,6 +78,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Lite-Modus: qwen3:8b als Planner und Executor (6 GB statt 26 GB VRAM)",
     )
+    parser.add_argument(
+        "--auto-install",
+        action="store_true",
+        help="Fehlende Python-Pakete automatisch installieren (Default: nur Warning)",
+    )
     return parser.parse_args()
 
 
@@ -165,7 +170,7 @@ def main() -> None:
     # 3.6 Startup-Check: Fehlende Abhängigkeiten automatisch laden
     from jarvis.core.startup_check import StartupChecker
 
-    checker = StartupChecker(config)
+    checker = StartupChecker(config, auto_install=getattr(args, "auto_install", False))
     report = checker.check_and_fix_all()
     if report.fixes_applied:
         log.info("startup_auto_fixes", fixes=report.fixes_applied, warnings=report.warnings)
@@ -353,11 +358,30 @@ def main() -> None:
                 @api_app.websocket("/ws/{session_id}")
                 async def _cc_ws(websocket: WebSocket, session_id: str) -> None:
                     # ── Token-based authentication ────────────────────────
+                    # Token wird via erster WS-Nachricht gesendet, NICHT als
+                    # Query-Parameter (vermeidet Log-Exposure).
                     required_token = os.environ.get("JARVIS_API_TOKEN")
+                    await websocket.accept()
+
                     if required_token:
                         import hmac as _hmac
-                        client_token = websocket.query_params.get("token") or ""
+                        try:
+                            auth_raw = await asyncio.wait_for(
+                                websocket.receive_text(), timeout=10.0,
+                            )
+                            auth_msg = _json.loads(auth_raw)
+                            client_token = (
+                                auth_msg.get("token", "")
+                                if auth_msg.get("type") == "auth"
+                                else ""
+                            )
+                        except (asyncio.TimeoutError, Exception):
+                            client_token = ""
                         if not _hmac.compare_digest(client_token, required_token):
+                            await websocket.send_json({
+                                "type": "error",
+                                "error": "Unauthorized",
+                            })
                             await websocket.close(code=4001, reason="Unauthorized")
                             log.warning(
                                 "cc_ws_auth_rejected",
@@ -365,8 +389,6 @@ def main() -> None:
                                 reason="missing_or_invalid_token",
                             )
                             return
-
-                    await websocket.accept()
 
                     # ── Session collision: close existing connection ──────
                     existing = _ws_connections.get(session_id)
@@ -408,6 +430,15 @@ def main() -> None:
                                 if audio_b64:
                                     import base64 as _b64
                                     import tempfile as _tmpfile
+                                    # Size-Limit: Base64-String vor Decode pruefen (50 MB decoded)
+                                    _MAX_AUDIO_B64_BYTES = 52_428_800  # 50 MB
+                                    estimated_size = len(audio_b64) * 3 // 4
+                                    if estimated_size > _MAX_AUDIO_B64_BYTES:
+                                        await websocket.send_json({
+                                            "type": "error",
+                                            "error": f"Audiodatei zu gross ({estimated_size // 1_048_576} MB, max {_MAX_AUDIO_B64_BYTES // 1_048_576} MB)",
+                                        })
+                                        continue
                                     audio_type = metadata.get("audio_type") or metadata.get("file_type") or "audio/webm"
                                     ext = {"audio/webm": ".webm", "audio/ogg": ".ogg", "audio/wav": ".wav", "audio/mp3": ".mp3", "audio/mpeg": ".mp3", "audio/m4a": ".m4a", "audio/flac": ".flac"}.get(audio_type, ".webm")
                                     tmp_path = None
@@ -513,7 +544,7 @@ def main() -> None:
                         return {"error": "Piper TTS nicht installiert. Bitte: pip install piper-tts"}
                     except Exception as _tts_exc:
                         log.error("tts_error", error=str(_tts_exc))
-                        return {"error": f"TTS-Fehler: {_tts_exc}"}
+                        return {"error": "TTS-Fehler aufgetreten"}
 
                 @api_app.get("/api/v1/tts/voices")
                 async def _cc_tts_voices() -> dict[str, Any]:
@@ -539,11 +570,15 @@ def main() -> None:
 
                 async def _run_piper_tts(text: str, voice: str, length_scale: float = 1.0) -> bytes:
                     """Generiert WAV-Audio via Piper TTS."""
+                    import re
                     import tempfile
-                    from jarvis.security.sanitizer import validate_voice_name, validate_model_path_containment
 
-                    # CWE-22: Validate voice name before path construction
-                    validate_voice_name(voice)
+                    # CWE-22: Inline validation + sanitizer defense-in-depth
+                    # CodeQL requires visible inline guards before path construction
+                    if not voice or "/" in voice or "\\" in voice or ".." in voice or "\x00" in voice:
+                        raise ValueError(f"Ungueltiger Stimmenname: {voice!r}")
+                    if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.\-]*", voice):
+                        raise ValueError(f"Ungueltiger Stimmenname: {voice!r}")
 
                     # Voice-Modell-Pfad ermitteln
                     voices_dir = Path(config.jarvis_home) / "voices"
@@ -551,7 +586,10 @@ def main() -> None:
                     model_path = voices_dir / f"{voice}.onnx"
 
                     # Defense-in-depth: ensure resolved path stays in voices_dir
-                    validate_model_path_containment(model_path, voices_dir)
+                    resolved_model = model_path.resolve()
+                    resolved_voices = voices_dir.resolve()
+                    if resolved_voices not in resolved_model.parents and resolved_voices != resolved_model.parent:
+                        raise ValueError(f"Modellpfad verletzt Verzeichnisgrenzen: {model_path}")
 
                     # Auto-Download wenn nicht vorhanden
                     if not model_path.exists():
@@ -578,6 +616,9 @@ def main() -> None:
                         ]
                         # Multi-speaker models (e.g. thorsten_emotional) need --speaker
                         model_json = model_path.with_suffix(".onnx.json")
+                        # CWE-22: validate derived path stays within voices_dir
+                        if resolved_voices not in model_json.resolve().parents:
+                            raise ValueError(f"Modell-JSON verletzt Verzeichnisgrenzen: {model_json}")
                         if model_json.exists():
                             try:
                                 import json as _mj
@@ -611,8 +652,37 @@ def main() -> None:
                         with contextlib.suppress(OSError, NameError):
                             os.unlink(txt_input_path)
 
+                # Bekannte SHA-256 Hashes fuer Piper Voice-Modelle.
+                # Neue Hashes werden beim Download geloggt und koennen hier
+                # eingetragen werden. Unbekannte Voices werden mit Warnung
+                # akzeptiert (nicht blockiert).
+                _KNOWN_VOICE_HASHES: dict[str, str] = {
+                    # Format: "voice-id": "sha256-hex-digest"
+                    # Hashes werden beim ersten Download geloggt.
+                }
+
+                def _verify_voice_hash(voice: str, file_hash: str) -> None:
+                    """Prueft SHA-256 eines heruntergeladenen Voice-Modells."""
+                    expected = _KNOWN_VOICE_HASHES.get(voice)
+                    if expected is None:
+                        log.warning(
+                            "voice_hash_unknown",
+                            voice=voice,
+                            sha256=file_hash,
+                            hint="Hash nicht in _KNOWN_VOICE_HASHES hinterlegt",
+                        )
+                        return
+                    if file_hash != expected:
+                        # Datei loeschen bei Hash-Mismatch
+                        raise ValueError(
+                            f"Integrity check failed fuer Voice '{voice}': "
+                            f"erwartet {expected[:16]}..., erhalten {file_hash[:16]}..."
+                        )
+                    log.info("voice_hash_verified", voice=voice)
+
                 async def _download_piper_voice(voice: str, dest: Path) -> None:
                     """Lädt ein Piper-Voicemodell von HuggingFace herunter."""
+                    import hashlib
                     import urllib.request
                     from jarvis.security.sanitizer import validate_voice_name, validate_model_path_containment
 
@@ -639,7 +709,13 @@ def main() -> None:
                         urllib.request.urlretrieve(json_url, str(dest / f"{voice}.onnx.json"))
 
                     await asyncio.get_running_loop().run_in_executor(None, _dl)
-                    log.info("piper_voice_downloaded", voice=voice)
+
+                    # Integrity check: SHA-256 verifizieren
+                    onnx_path = dest / f"{voice}.onnx"
+                    file_hash = hashlib.sha256(onnx_path.read_bytes()).hexdigest()
+                    _verify_voice_hash(voice, file_hash)
+
+                    log.info("piper_voice_downloaded", voice=voice, sha256=file_hash)
 
                 log.info("cc_tts_endpoint_registered")
 

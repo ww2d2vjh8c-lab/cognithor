@@ -128,11 +128,17 @@ class DataProcessingLog:
 
     def __init__(self) -> None:
         self._records: list[DataProcessingRecord] = []
+        self._archived: list[DataProcessingRecord] = []
         self._counter = 0
 
     @property
     def records(self) -> list[DataProcessingRecord]:
         return list(self._records)
+
+    @property
+    def archived(self) -> list[DataProcessingRecord]:
+        """Records moved to archive by retention enforcement."""
+        return list(self._archived)
 
     def record(
         self,
@@ -507,15 +513,36 @@ class RetentionEnforcer:
         counts: dict[str, int] = {}
 
         delete_ids: set[str] = set()
+        anonymize_ids: set[str] = set()
+        archive_ids: set[str] = set()
+
         for rec, action in expired:
             counts[action.value] = counts.get(action.value, 0) + 1
             if action == RetentionAction.DELETE:
                 delete_ids.add(rec.record_id)
+            elif action == RetentionAction.ANONYMIZE:
+                anonymize_ids.add(rec.record_id)
+            elif action == RetentionAction.ARCHIVE:
+                archive_ids.add(rec.record_id)
 
         if delete_ids:
             log._records = [
                 r for r in log._records if r.record_id not in delete_ids
             ]
+
+        if anonymize_ids:
+            for rec in log._records:
+                if rec.record_id in anonymize_ids:
+                    rec.user_id = "ANONYMIZED"
+                    rec.data_summary = ""
+                    rec.data_hash = ""
+                    rec.purpose = "ANONYMIZED"
+                    rec.third_party = ""
+
+        if archive_ids:
+            archived = [r for r in log._records if r.record_id in archive_ids]
+            log._records = [r for r in log._records if r.record_id not in archive_ids]
+            log._archived.extend(archived)
 
         _log.info(
             "gdpr.retention_enforced",

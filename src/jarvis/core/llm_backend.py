@@ -810,6 +810,7 @@ class GeminiBackend(LLMBackend):
                     pool=10.0,
                 ),
                 trust_env=False,
+                headers={"x-goog-api-key": self._api_key},
             )
         return self._client
 
@@ -910,7 +911,7 @@ class GeminiBackend(LLMBackend):
         if format_json:
             payload["generationConfig"]["responseMimeType"] = "application/json"
 
-        url = f"{self.API_URL}/models/{model}:generateContent?key={self._api_key}"
+        url = f"{self.API_URL}/models/{model}:generateContent"
 
         start = time.monotonic()
         try:
@@ -989,7 +990,7 @@ class GeminiBackend(LLMBackend):
 
         url = (
             f"{self.API_URL}/models/{model}:streamGenerateContent"
-            f"?alt=sse&key={self._api_key}"
+            f"?alt=sse"
         )
 
         import json as _json
@@ -1017,7 +1018,7 @@ class GeminiBackend(LLMBackend):
 
     async def embed(self, model: str, text: str) -> EmbedResponse:
         client = await self._ensure_client()
-        url = f"{self.API_URL}/models/{model}:embedContent?key={self._api_key}"
+        url = f"{self.API_URL}/models/{model}:embedContent"
         payload = {
             "content": {
                 "parts": [{"text": text}],
@@ -1036,7 +1037,7 @@ class GeminiBackend(LLMBackend):
     async def is_available(self) -> bool:
         try:
             client = await self._ensure_client()
-            url = f"{self.API_URL}/models?key={self._api_key}"
+            url = f"{self.API_URL}/models"
             resp = await client.get(url, timeout=10.0)
             return resp.status_code == 200
         except (httpx.ConnectError, httpx.TimeoutException, OSError):
@@ -1045,7 +1046,7 @@ class GeminiBackend(LLMBackend):
     async def list_models(self) -> list[str]:
         try:
             client = await self._ensure_client()
-            url = f"{self.API_URL}/models?key={self._api_key}"
+            url = f"{self.API_URL}/models"
             resp = await client.get(url)
             resp.raise_for_status()
             return [

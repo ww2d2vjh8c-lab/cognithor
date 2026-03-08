@@ -282,8 +282,16 @@ class CommunityRegistryClient:
                 warnings=validation.warnings,
             )
 
-        # 6. Lokal speichern
-        install_dir = self._community_dir / skill_name
+        # 6. Lokal speichern (mit Path-Traversal-Schutz)
+        install_dir = (self._community_dir / skill_name).resolve()
+        try:
+            install_dir.relative_to(self._community_dir.resolve())
+        except ValueError:
+            return InstallResult(
+                success=False,
+                skill_name=skill_name,
+                errors=[f"Ungueltiger Skill-Name (Path-Traversal): '{skill_name}'"],
+            )
         install_dir.mkdir(parents=True, exist_ok=True)
 
         try:
@@ -336,7 +344,13 @@ class CommunityRegistryClient:
         """
         import shutil
 
-        install_dir = self._community_dir / skill_name
+        install_dir = (self._community_dir / skill_name).resolve()
+        try:
+            install_dir.relative_to(self._community_dir.resolve())
+        except ValueError:
+            log.error("path_traversal_blocked", skill=skill_name, path=str(install_dir))
+            return False
+
         if not install_dir.exists():
             log.warning("skill_not_found_for_uninstall", skill=skill_name)
             return False

@@ -43,8 +43,8 @@ class TestTenantUser:
 class TestTenant:
     def test_properties(self) -> None:
         t = Tenant(tenant_id="abc123", name="Test Tenant")
-        assert "/abc123" in t.data_path
-        assert "/abc123" in t.secrets_path
+        assert "abc123" in t.data_path
+        assert "abc123" in t.secrets_path
         assert "abc123" in t.db_name
 
     def test_limits(self) -> None:

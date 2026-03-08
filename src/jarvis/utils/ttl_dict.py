@@ -101,15 +101,27 @@ class TTLDict(Generic[KT, VT]):
             raise KeyError(key)
         return entry.value
 
-    def setdefault(self, key: KT, default: VT | None = None) -> VT:
-        """Gibt den Wert zurück wenn vorhanden, sonst setzt default und gibt ihn zurück."""
-        val = self.get(key)
-        if val is not None:
-            return val
+    def setdefault(self, key: KT, default: VT | None = None) -> VT | None:
+        """Gibt den Wert zurück wenn vorhanden, sonst setzt default und gibt ihn zurück.
+
+        Verhält sich wie dict.setdefault(): fehlender Key mit default=None
+        speichert und gibt None zurück (kein KeyError).
+        """
+        now = time.monotonic()
+        self._maybe_cleanup(now)
+        entry = self._data.get(key)
+        if entry is not None and now < entry.expires_at:
+            entry.last_access = now
+            self._data.move_to_end(key)
+            return entry.value
+        # Key fehlt oder abgelaufen — default setzen
+        if entry is not None:
+            # Abgelaufen: entfernen
+            del self._data[key]
+            self._expired_count += 1
         if default is not None:
             self.set(key, default)
-            return default
-        raise KeyError(key)  # type: ignore[arg-type]
+        return default
 
     def clear(self) -> None:
         """Entfernt alle Einträge."""

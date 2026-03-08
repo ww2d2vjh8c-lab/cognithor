@@ -660,13 +660,13 @@ setup_directories() {
     local dirs=(
         "$JARVIS_HOME"
         "$JARVIS_HOME/memory"
-        "$JARVIS_HOME/memory/semantic"
-        "$JARVIS_HOME/memory/episodic"
+        "$JARVIS_HOME/memory/episodes"
         "$JARVIS_HOME/memory/procedures"
         "$JARVIS_HOME/memory/knowledge"
+        "$JARVIS_HOME/memory/sessions"
+        "$JARVIS_HOME/index"
         "$JARVIS_HOME/logs"
         "$JARVIS_HOME/cache"
-        "$JARVIS_HOME/index"
         "$JARVIS_HOME/workspace"
         "$JARVIS_HOME/workspace/tmp"
     )

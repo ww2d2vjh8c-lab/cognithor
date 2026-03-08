@@ -383,25 +383,50 @@ class VADDetector:
     wenn verfügbar, sonst einfache Energie-Schwelle.
     """
 
+    # Gepinnter Release-Tag fuer reproduzierbaren Download (kein `main`-Branch)
+    SILERO_REPO = "snakers4/silero-vad:v5.1"
+    # SHA-256 des JIT-Modells (silero_vad.jit) — bei Update des Tags anpassen
+    SILERO_MODEL_HASH: str = ""  # Leer = Hash-Check deaktiviert (erster Download)
+
     def __init__(self, config: VoiceConfig) -> None:
         self._config = config
         self._model: Any = None
         self._use_silero = False
 
     async def load(self) -> None:
-        """Lädt das VAD-Modell."""
+        """Laedt das VAD-Modell (gepinnt auf Release-Tag)."""
         try:
             import torch
 
             self._model, _ = torch.hub.load(
-                repo_or_dir="snakers4/silero-vad",
+                repo_or_dir=self.SILERO_REPO,
                 model="silero_vad",
                 force_reload=False,
+                trust_repo=True,
             )
+
+            # Integrity-Check: Model-State-Dict hashen
+            if self.SILERO_MODEL_HASH:
+                import hashlib
+                state_bytes = str(sorted(self._model.state_dict().keys())).encode()
+                for key, param in sorted(self._model.state_dict().items()):
+                    state_bytes += param.cpu().numpy().tobytes()
+                actual_hash = hashlib.sha256(state_bytes).hexdigest()
+                if actual_hash != self.SILERO_MODEL_HASH:
+                    log.error(
+                        "silero_vad_integrity_check_failed",
+                        expected=self.SILERO_MODEL_HASH[:16],
+                        actual=actual_hash[:16],
+                    )
+                    self._model = None
+                    self._use_silero = False
+                    return
+                log.info("silero_vad_integrity_verified")
+
             self._use_silero = True
-            log.info("silero_vad_loaded")
-        except Exception:
-            log.info("using_energy_based_vad_fallback")
+            log.info("silero_vad_loaded", repo=self.SILERO_REPO)
+        except Exception as exc:
+            log.info("using_energy_based_vad_fallback", error=str(exc))
             self._use_silero = False
 
     def is_speech(self, audio_chunk: bytes) -> bool:
