@@ -796,8 +796,10 @@ class JarvisMCPServer:
         if self._config.require_auth:
             import hmac
 
-            if not self._config.auth_token or not auth_token or not hmac.compare_digest(
-                auth_token.encode(), self._config.auth_token.encode()
+            if (
+                not self._config.auth_token
+                or not auth_token
+                or not hmac.compare_digest(auth_token.encode(), self._config.auth_token.encode())
             ):
                 return {
                     "jsonrpc": "2.0",

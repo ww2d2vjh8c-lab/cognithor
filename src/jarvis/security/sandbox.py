@@ -594,6 +594,7 @@ class Sandbox:
         finally:
             if _created_tmp:
                 import shutil
+
                 shutil.rmtree(work_dir, ignore_errors=True)
 
     # ========================================================================
@@ -857,6 +858,7 @@ class Sandbox:
                 kernel32.CloseHandle(job_handle)
             if _created_job_tmp:
                 import shutil
+
                 shutil.rmtree(work_dir, ignore_errors=True)
 
     # ========================================================================

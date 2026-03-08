@@ -376,7 +376,9 @@ def main() -> None:
 
                 config_mgr = ConfigManager(config=config)
                 create_config_routes(
-                    api_app, config_mgr, gateway=gateway,
+                    api_app,
+                    config_mgr,
+                    gateway=gateway,
                     verify_token_dep=_Depends(_verify_cc_token),
                 )
 
@@ -1133,12 +1135,16 @@ def main() -> None:
                         async def _dash_redirect(request):
                             return RedirectResponse(url=f"{api_base}/dashboard")
 
-                        dash_app = Starlette(routes=[
-                            Route("/", _dash_redirect),
-                            Route("/dashboard", _dash_redirect),
-                        ])
+                        dash_app = Starlette(
+                            routes=[
+                                Route("/", _dash_redirect),
+                                Route("/dashboard", _dash_redirect),
+                            ]
+                        )
                         dash_config = uvicorn.Config(
-                            dash_app, host="127.0.0.1", port=dashboard_port,
+                            dash_app,
+                            host="127.0.0.1",
+                            port=dashboard_port,
                             log_level="warning",
                         )
                         dash_server = uvicorn.Server(dash_config)

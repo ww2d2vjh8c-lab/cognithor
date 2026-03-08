@@ -694,7 +694,11 @@ def _register_config_routes(
                                 f"Bitte installieren: ollama pull {model_cfg.name}"
                             )
 
-            result: dict[str, Any] = {"status": "ok", "section": section, "updated_keys": list(cleaned.keys())}
+            result: dict[str, Any] = {
+                "status": "ok",
+                "section": section,
+                "updated_keys": list(cleaned.keys()),
+            }
             if model_warnings:
                 result["warnings"] = model_warnings
             return result
@@ -1296,7 +1300,12 @@ def _register_skill_routes(
         # Also return currently configured models for reference
         cfg = getattr(gateway, "_config", None)
         if cfg is None:
-            return {"models": models, "configured": {}, "warnings": [], "source": "backend" if router._backend else "ollama"}
+            return {
+                "models": models,
+                "configured": {},
+                "warnings": [],
+                "source": "backend" if router._backend else "ollama",
+            }
         configured = {
             "planner": cfg.models.planner.name,
             "executor": cfg.models.executor.name,
@@ -1306,7 +1315,9 @@ def _register_skill_routes(
         warnings = []
         for role, name in configured.items():
             if models and name not in models:
-                warnings.append(f"Modell '{name}' ({role}) ist nicht verfügbar. Installieren: ollama pull {name}")
+                warnings.append(
+                    f"Modell '{name}' ({role}) ist nicht verfügbar. Installieren: ollama pull {name}"
+                )
         return {
             "models": models,
             "configured": configured,

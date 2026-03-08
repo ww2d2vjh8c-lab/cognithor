@@ -761,11 +761,12 @@ class Gateway:
                     log.debug("executor_config_reload_failed", exc_info=True)
 
             # Live-update ModelRouter with new config + schedule model list refresh
-            if self._model_router and hasattr(self._model_router, '_config'):
+            if self._model_router and hasattr(self._model_router, "_config"):
                 try:
                     self._model_router._config = new_config
                     # Schedule async re-initialization to refresh _available_models
                     import asyncio
+
                     try:
                         loop = asyncio.get_running_loop()
                         loop.create_task(self._model_router.initialize())
@@ -776,7 +777,7 @@ class Gateway:
                     log.debug("model_router_config_reload_failed", exc_info=True)
 
             # Live-update Planner with new config
-            if self._planner and hasattr(self._planner, '_config'):
+            if self._planner and hasattr(self._planner, "_config"):
                 try:
                     self._planner._config = new_config
                 except Exception:

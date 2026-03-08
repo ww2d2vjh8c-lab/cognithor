@@ -177,6 +177,7 @@ class PromptEvolutionEngine:
 
         if test is not None:
             import hashlib
+
             arm = int(hashlib.sha256(session_id.encode()).hexdigest(), 16) % 2
             version_id = test["version_a_id"] if arm == 0 else test["version_b_id"]
             row = self._conn.execute(

@@ -145,7 +145,9 @@ class MediaPipeline:
             try:
                 path.relative_to(jarvis_home)
             except ValueError:
-                log.warning("media_path_outside_workspace", path=str(path), workspace=str(self._workspace))
+                log.warning(
+                    "media_path_outside_workspace", path=str(path), workspace=str(self._workspace)
+                )
                 return None
         return path
 
