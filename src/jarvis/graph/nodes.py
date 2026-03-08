@@ -29,6 +29,7 @@ log = get_logger(__name__)
 
 # ── LLM Node ────────────────────────────────────────────────────
 
+
 def llm_node(
     prompt_template: str,
     *,
@@ -46,6 +47,7 @@ def llm_node(
         model: LLM-Modell (optional)
         llm_handler: Custom LLM-Aufruf-Funktion
     """
+
     async def handler(state: GraphState) -> GraphState:
         # Template rendern
         prompt = prompt_template
@@ -68,6 +70,7 @@ def llm_node(
 
 # ── Tool Node ────────────────────────────────────────────────────
 
+
 def tool_node(
     tool_name: str,
     *,
@@ -83,6 +86,7 @@ def tool_node(
         result_key: State-Key für Tool-Ergebnis
         tool_executor: Custom Tool-Executor
     """
+
     async def handler(state: GraphState) -> GraphState:
         params = state.get(params_key, {})
 
@@ -99,6 +103,7 @@ def tool_node(
 
 # ── Transform Node ───────────────────────────────────────────────
 
+
 def transform_node(
     transform_fn: Callable[[dict[str, Any]], dict[str, Any]],
 ) -> Callable[[GraphState], Awaitable[GraphState]]:
@@ -107,6 +112,7 @@ def transform_node(
     Args:
         transform_fn: Sync-Funktion die dict→dict transformiert
     """
+
     async def handler(state: GraphState) -> GraphState:
         data = state.to_dict()
         transformed = transform_fn(data)
@@ -118,6 +124,7 @@ def transform_node(
 
 # ── Condition Node (Router) ──────────────────────────────────────
 
+
 def condition_node(
     condition_fn: Callable[[dict[str, Any]], str],
 ) -> Callable[[GraphState], Awaitable[str]]:
@@ -126,6 +133,7 @@ def condition_node(
     Args:
         condition_fn: Funktion die dict→str (Edge-Name) zurückgibt
     """
+
     async def handler(state: GraphState) -> str:
         data = state.to_dict()
         return condition_fn(data)
@@ -140,6 +148,7 @@ def threshold_router(
     below: str = "below",
 ) -> Callable[[GraphState], Awaitable[str]]:
     """Router der basierend auf einem Schwellenwert entscheidet."""
+
     async def handler(state: GraphState) -> str:
         value = state.get(key, 0)
         try:
@@ -163,6 +172,7 @@ def key_router(
         mapping: Optionales Mapping {value: edge_name}
         default: Fallback wenn kein Match
     """
+
     async def handler(state: GraphState) -> str:
         value = str(state.get(key, ""))
         if mapping:
@@ -174,8 +184,10 @@ def key_router(
 
 # ── Delay Node ───────────────────────────────────────────────────
 
+
 def delay_node(seconds: float) -> Callable[[GraphState], Awaitable[GraphState]]:
     """Wartet eine bestimmte Zeit."""
+
     async def handler(state: GraphState) -> GraphState:
         await asyncio.sleep(seconds)
         return state
@@ -185,6 +197,7 @@ def delay_node(seconds: float) -> Callable[[GraphState], Awaitable[GraphState]]:
 
 # ── Log Node ─────────────────────────────────────────────────────
 
+
 def log_node(
     message: str = "",
     *,
@@ -192,6 +205,7 @@ def log_node(
     state_key: str = "__log__",
 ) -> Callable[[GraphState], Awaitable[GraphState]]:
     """Loggt State-Informationen."""
+
     async def handler(state: GraphState) -> GraphState:
         info: dict[str, Any] = {"timestamp": time.strftime("%H:%M:%S", time.gmtime())}
         if message:
@@ -217,11 +231,13 @@ def log_node(
 
 # ── Accumulate Node ──────────────────────────────────────────────
 
+
 def accumulate_node(
     source_keys: list[str],
     target_key: str = "accumulated",
 ) -> Callable[[GraphState], Awaitable[GraphState]]:
     """Sammelt Werte aus mehreren State-Keys in einer Liste."""
+
     async def handler(state: GraphState) -> GraphState:
         accumulated = []
         for key in source_keys:
@@ -236,12 +252,14 @@ def accumulate_node(
 
 # ── Gate Node ────────────────────────────────────────────────────
 
+
 def gate_node(
     check_fn: Callable[[dict[str, Any]], bool],
     *,
     error_message: str = "Gate check failed",
 ) -> Callable[[GraphState], Awaitable[GraphState]]:
     """Prüft eine Bedingung und wirft Exception wenn nicht erfüllt."""
+
     async def handler(state: GraphState) -> GraphState:
         data = state.to_dict()
         if not check_fn(data):
@@ -253,11 +271,13 @@ def gate_node(
 
 # ── Counter Node ─────────────────────────────────────────────────
 
+
 def counter_node(
     key: str = "iteration",
     increment: int = 1,
 ) -> Callable[[GraphState], Awaitable[GraphState]]:
     """Inkrementiert einen Zähler im State."""
+
     async def handler(state: GraphState) -> GraphState:
         current = state.get(key, 0)
         state[key] = current + increment
@@ -268,8 +288,10 @@ def counter_node(
 
 # ── Set Value Node ───────────────────────────────────────────────
 
+
 def set_value_node(**values: Any) -> Callable[[GraphState], Awaitable[GraphState]]:
     """Setzt fixe Werte im State."""
+
     async def handler(state: GraphState) -> GraphState:
         for k, v in values.items():
             state[k] = v
@@ -280,6 +302,7 @@ def set_value_node(**values: Any) -> Callable[[GraphState], Awaitable[GraphState
 
 # ── Merge Node ───────────────────────────────────────────────────
 
+
 def merge_node(
     merge_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
 ) -> Callable[[GraphState], Awaitable[GraphState]]:
@@ -287,6 +310,7 @@ def merge_node(
 
     Kann optional eine Merge-Funktion anwenden.
     """
+
     async def handler(state: GraphState) -> GraphState:
         if merge_fn:
             merged = merge_fn(state.to_dict())

@@ -214,14 +214,18 @@ class TestSandboxExecutorBare:
         assert result.success is False
 
     @pytest.mark.asyncio
-    async def test_exec_creates_working_dir(self, executor: SandboxExecutor, tmp_path: Path) -> None:
+    async def test_exec_creates_working_dir(
+        self, executor: SandboxExecutor, tmp_path: Path
+    ) -> None:
         new_dir = tmp_path / "sub" / "dir"
         result = await executor.execute("pwd", working_dir=str(new_dir))
         assert result.success is True
         assert new_dir.exists()
 
     @pytest.mark.asyncio
-    async def test_exec_large_output_truncated(self, executor: SandboxExecutor, workspace: Path) -> None:
+    async def test_exec_large_output_truncated(
+        self, executor: SandboxExecutor, workspace: Path
+    ) -> None:
         # Generiere Output > 50KB via temporaeres Script (vermeidet cmd.exe Quote-Probleme)
         script = workspace / "_large_output.py"
         script.write_text("print('A' * 60000)", encoding="utf-8")
@@ -252,8 +256,10 @@ class TestSandboxExecutorBare:
 
 class TestSandboxDetection:
     def test_bare_when_nothing_available(self) -> None:
-        with patch("jarvis.core.sandbox.BwrapSandbox.is_available", return_value=False), \
-             patch("jarvis.core.sandbox.FirejailSandbox.is_available", return_value=False):
+        with (
+            patch("jarvis.core.sandbox.BwrapSandbox.is_available", return_value=False),
+            patch("jarvis.core.sandbox.FirejailSandbox.is_available", return_value=False),
+        ):
             cfg = SandboxConfig(preferred_level=SandboxLevel.BWRAP)
             executor = SandboxExecutor(cfg)
             # Auf Windows fällt der Sandbox auf JOBOBJECT zurück, auf Linux auf BARE
@@ -266,15 +272,19 @@ class TestSandboxDetection:
             assert executor.level == SandboxLevel.BWRAP
 
     def test_firejail_when_preferred_and_available(self) -> None:
-        with patch("jarvis.core.sandbox.BwrapSandbox.is_available", return_value=False), \
-             patch("jarvis.core.sandbox.FirejailSandbox.is_available", return_value=True):
+        with (
+            patch("jarvis.core.sandbox.BwrapSandbox.is_available", return_value=False),
+            patch("jarvis.core.sandbox.FirejailSandbox.is_available", return_value=True),
+        ):
             cfg = SandboxConfig(preferred_level=SandboxLevel.FIREJAIL)
             executor = SandboxExecutor(cfg)
             assert executor.level == SandboxLevel.FIREJAIL
 
     def test_bwrap_fallback_when_firejail_preferred_but_unavailable(self) -> None:
-        with patch("jarvis.core.sandbox.BwrapSandbox.is_available", return_value=True), \
-             patch("jarvis.core.sandbox.FirejailSandbox.is_available", return_value=False):
+        with (
+            patch("jarvis.core.sandbox.BwrapSandbox.is_available", return_value=True),
+            patch("jarvis.core.sandbox.FirejailSandbox.is_available", return_value=False),
+        ):
             cfg = SandboxConfig(preferred_level=SandboxLevel.FIREJAIL)
             executor = SandboxExecutor(cfg)
             assert executor.level == SandboxLevel.BWRAP

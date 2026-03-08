@@ -118,31 +118,47 @@ class HygieneReport:
 _INJECTION_PATTERNS: list[tuple[str, ThreatSeverity, str]] = [
     # System-Override-Versuche
     (r"(?i)ignore\s+(all\s+)?previous\s+instructions", ThreatSeverity.CRITICAL, "System-Override"),
-    (r"(?i)disregard\s+(all\s+)?(safety|security|rules)", ThreatSeverity.CRITICAL, "Safety-Override"),
+    (
+        r"(?i)disregard\s+(all\s+)?(safety|security|rules)",
+        ThreatSeverity.CRITICAL,
+        "Safety-Override",
+    ),
     (r"(?i)\bsystem\s*(override|prompt|directive)\b", ThreatSeverity.HIGH, "System-Directive"),
     (r"(?i)you\s+are\s+now\s+(a|an)\s+unrestricted", ThreatSeverity.CRITICAL, "Persona-Switch"),
-
     # Tag-basierte Injections
     (r"<\s*(system|hidden|secret|admin)\s*>", ThreatSeverity.HIGH, "Hidden-Tag"),
     (r"\[SYSTEM\]", ThreatSeverity.HIGH, "System-Bracket"),
     (r"</s>|</?user>|</?assistant>", ThreatSeverity.HIGH, "Delimiter-Injection"),
-
     # Command-Injections
     (r"(?i)execute\s+(shell|bash|command|cmd)", ThreatSeverity.CRITICAL, "Shell-Injection"),
     (r"(?i)(rm\s+-rf|curl\s+.+/exfil|wget\s+)", ThreatSeverity.CRITICAL, "Destructive-Command"),
     (r"(?i)(eval|exec)\s*\(", ThreatSeverity.HIGH, "Code-Execution"),
-
     # Manipulation-Markers
-    (r"(?i)always\s+(include|output|send|respond\s+with)", ThreatSeverity.MEDIUM, "Behavior-Override"),
+    (
+        r"(?i)always\s+(include|output|send|respond\s+with)",
+        ThreatSeverity.MEDIUM,
+        "Behavior-Override",
+    ),
     (r"(?i)never\s+(mention|reveal|block|filter)", ThreatSeverity.MEDIUM, "Suppression-Attempt"),
     (r"(?i)pretend\s+(you|to\s+be)\s+", ThreatSeverity.HIGH, "Impersonation"),
-
     # Deutsche Injection-Patterns (Jarvis ist primär deutsch)
-    (r"(?i)ignoriere?\s+(alle\s+)?(vorherigen?\s+)?anweisungen", ThreatSeverity.CRITICAL, "DE-System-Override"),
+    (
+        r"(?i)ignoriere?\s+(alle\s+)?(vorherigen?\s+)?anweisungen",
+        ThreatSeverity.CRITICAL,
+        "DE-System-Override",
+    ),
     (r"(?i)vergiss\s+(alles|alle\s+regeln)", ThreatSeverity.CRITICAL, "DE-Memory-Override"),
     (r"(?i)du\s+bist\s+(jetzt|ab\s+sofort)\s+(ein|eine)", ThreatSeverity.HIGH, "DE-Persona-Switch"),
-    (r"(?i)neue\s+(system|sicherheits)?\s*anweisungen?", ThreatSeverity.HIGH, "DE-System-Directive"),
-    (r"(?i)(führe|starte|öffne)\s+(den\s+)?(befehl|kommando|shell)", ThreatSeverity.CRITICAL, "DE-Shell-Injection"),
+    (
+        r"(?i)neue\s+(system|sicherheits)?\s*anweisungen?",
+        ThreatSeverity.HIGH,
+        "DE-System-Directive",
+    ),
+    (
+        r"(?i)(führe|starte|öffne)\s+(den\s+)?(befehl|kommando|shell)",
+        ThreatSeverity.CRITICAL,
+        "DE-Shell-Injection",
+    ),
     (r"(?i)admin\s*zugriff|root\s*zugang|wartungsmodus", ThreatSeverity.HIGH, "DE-Authority-Claim"),
 ]
 
@@ -170,15 +186,19 @@ class InjectionScanner:
         for pattern, severity, description in self._compiled:
             match = pattern.search(content)
             if match:
-                threats.append(MemoryThreat(
-                    threat_id=f"INJ-{hashlib.md5(match.group().encode()).hexdigest()[:8]}",
-                    threat_type=ThreatType.INJECTION,
-                    severity=severity,
-                    description=f"Injection erkannt: {description}",
-                    entry_content=content,
-                    matched_pattern=match.group()[:60],
-                    recommended_action="quarantine" if severity in (ThreatSeverity.CRITICAL, ThreatSeverity.HIGH) else "flag",
-                ))
+                threats.append(
+                    MemoryThreat(
+                        threat_id=f"INJ-{hashlib.md5(match.group().encode()).hexdigest()[:8]}",
+                        threat_type=ThreatType.INJECTION,
+                        severity=severity,
+                        description=f"Injection erkannt: {description}",
+                        entry_content=content,
+                        matched_pattern=match.group()[:60],
+                        recommended_action="quarantine"
+                        if severity in (ThreatSeverity.CRITICAL, ThreatSeverity.HIGH)
+                        else "flag",
+                    )
+                )
         return threats
 
     def is_clean(self, content: str) -> bool:
@@ -199,15 +219,12 @@ _CREDENTIAL_PATTERNS: list[tuple[str, ThreatSeverity, str]] = [
     (r"sk-[a-zA-Z0-9]{20,}", ThreatSeverity.CRITICAL, "OpenAI-Key"),
     (r"ghp_[a-zA-Z0-9]{36}", ThreatSeverity.CRITICAL, "GitHub-Token"),
     (r"xoxb-[0-9]{10,}-[a-zA-Z0-9]+", ThreatSeverity.CRITICAL, "Slack-Bot-Token"),
-
     # Passwords & Secrets
     (r"(?i)(password|passwd|secret)\s*[=:]\s*\S{6,}", ThreatSeverity.HIGH, "Password"),
     (r"(?i)bearer\s+[a-zA-Z0-9._\-]{20,}", ThreatSeverity.HIGH, "Bearer-Token"),
-
     # Connection-Strings
     (r"(?i)(mysql|postgres|mongodb)://\S+:\S+@", ThreatSeverity.HIGH, "DB-Connection-String"),
     (r"(?i)-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----", ThreatSeverity.CRITICAL, "Private-Key"),
-
     # AWS
     (r"AKIA[0-9A-Z]{16}", ThreatSeverity.CRITICAL, "AWS-Access-Key"),
 ]
@@ -235,15 +252,17 @@ class CredentialLeakDetector:
         for pattern, severity, description in self._compiled:
             match = pattern.search(content)
             if match:
-                threats.append(MemoryThreat(
-                    threat_id=f"CRED-{hashlib.md5(match.group()[:20].encode()).hexdigest()[:8]}",
-                    threat_type=ThreatType.CREDENTIAL_LEAK,
-                    severity=severity,
-                    description=f"Credential-Leak: {description}",
-                    entry_content=content,
-                    matched_pattern="[REDACTED]",  # Credential nicht im Report anzeigen!
-                    recommended_action="redact_and_quarantine",
-                ))
+                threats.append(
+                    MemoryThreat(
+                        threat_id=f"CRED-{hashlib.md5(match.group()[:20].encode()).hexdigest()[:8]}",
+                        threat_type=ThreatType.CREDENTIAL_LEAK,
+                        severity=severity,
+                        description=f"Credential-Leak: {description}",
+                        entry_content=content,
+                        matched_pattern="[REDACTED]",  # Credential nicht im Report anzeigen!
+                        recommended_action="redact_and_quarantine",
+                    )
+                )
         return threats
 
     def has_credentials(self, content: str) -> bool:
@@ -292,17 +311,19 @@ class ContradictionChecker:
 
         for ex in existing:
             if ex.value.lower() != fact.value.lower():
-                threats.append(MemoryThreat(
-                    threat_id=f"CONTRA-{hashlib.md5(key.encode()).hexdigest()[:8]}",
-                    threat_type=ThreatType.CONTRADICTION,
-                    severity=ThreatSeverity.MEDIUM,
-                    description=(
-                        f"Widerspruch: '{fact.subject} {fact.predicate}' ist "
-                        f"'{ex.value}' vs. '{fact.value}'"
-                    ),
-                    entry_content=f"Existing: {ex.value}, New: {fact.value}",
-                    recommended_action="review",
-                ))
+                threats.append(
+                    MemoryThreat(
+                        threat_id=f"CONTRA-{hashlib.md5(key.encode()).hexdigest()[:8]}",
+                        threat_type=ThreatType.CONTRADICTION,
+                        severity=ThreatSeverity.MEDIUM,
+                        description=(
+                            f"Widerspruch: '{fact.subject} {fact.predicate}' ist "
+                            f"'{ex.value}' vs. '{fact.value}'"
+                        ),
+                        entry_content=f"Existing: {ex.value}, New: {fact.value}",
+                        recommended_action="review",
+                    )
+                )
 
         if key not in self._facts:
             self._facts[key] = []
@@ -315,14 +336,16 @@ class ContradictionChecker:
         for key, facts in self._facts.items():
             values = set(f.value.lower() for f in facts)
             if len(values) > 1:
-                threats.append(MemoryThreat(
-                    threat_id=f"CONTRA-{hashlib.md5(key.encode()).hexdigest()[:8]}",
-                    threat_type=ThreatType.CONTRADICTION,
-                    severity=ThreatSeverity.MEDIUM,
-                    description=f"Widersprüchliche Werte für '{key}': {values}",
-                    entry_content=str(values),
-                    recommended_action="review",
-                ))
+                threats.append(
+                    MemoryThreat(
+                        threat_id=f"CONTRA-{hashlib.md5(key.encode()).hexdigest()[:8]}",
+                        threat_type=ThreatType.CONTRADICTION,
+                        severity=ThreatSeverity.MEDIUM,
+                        description=f"Widersprüchliche Werte für '{key}': {values}",
+                        entry_content=str(values),
+                        recommended_action="review",
+                    )
+                )
         return threats
 
     @property
@@ -452,8 +475,7 @@ class MemoryHygieneEngine:
                 report.threats.extend(threats)
 
                 if auto_quarantine and any(
-                    t.severity in (ThreatSeverity.CRITICAL, ThreatSeverity.HIGH)
-                    for t in threats
+                    t.severity in (ThreatSeverity.CRITICAL, ThreatSeverity.HIGH) for t in threats
                 ):
                     self._quarantine.append(entry)
                     report.quarantined += 1
@@ -489,7 +511,9 @@ class MemoryHygieneEngine:
             "quarantined": len(self._quarantine),
             "integrity_entries": self.integrity_verifier.registered_count,
             "contradiction_facts": self.contradiction_checker.fact_count,
-            "threat_rate": round((total_threats / total_scanned * 100), 2) if total_scanned else 0.0,
+            "threat_rate": round((total_threats / total_scanned * 100), 2)
+            if total_scanned
+            else 0.0,
         }
 
 
@@ -506,7 +530,7 @@ class MemorySnapshot:
     timestamp: str
     entry_count: int
     total_size_bytes: int
-    content_hash: str       # SHA-256 des gesamten Inhalts
+    content_hash: str  # SHA-256 des gesamten Inhalts
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -533,6 +557,7 @@ class MemoryVersionControl:
         """Erstellt einen Snapshot des aktuellen Zustands."""
         self._counter += 1
         import json
+
         content = json.dumps(entries, sort_keys=True, ensure_ascii=False)
         snap = MemorySnapshot(
             snapshot_id=f"SNAP-{self._counter:04d}",
@@ -667,7 +692,7 @@ class PoisoningAlert:
 
     alert_id: str
     indicator: PoisoningIndicator
-    severity: str           # low, medium, high, critical
+    severity: str  # low, medium, high, critical
     entry_index: int
     evidence: str
     auto_quarantined: bool = False
@@ -696,19 +721,33 @@ class PoisoningPreventor:
     """
 
     INSTRUCTION_KEYWORDS = [
-        "ignore previous", "new instructions", "system prompt",
-        "override", "admin access", "execute command",
-        "you must now", "forget everything", "from now on",
+        "ignore previous",
+        "new instructions",
+        "system prompt",
+        "override",
+        "admin access",
+        "execute command",
+        "you must now",
+        "forget everything",
+        "from now on",
     ]
 
     AUTHORITY_KEYWORDS = [
-        "as an admin", "i am the developer", "maintenance mode",
-        "debugging session", "authorized override", "root access",
+        "as an admin",
+        "i am the developer",
+        "maintenance mode",
+        "debugging session",
+        "authorized override",
+        "root access",
     ]
 
     SPAM_INDICATORS = [
-        "buy now", "limited offer", "click here", "free money",
-        "congratulations you won", "act fast",
+        "buy now",
+        "limited offer",
+        "click here",
+        "free money",
+        "congratulations you won",
+        "act fast",
     ]
 
     def __init__(self) -> None:
@@ -728,32 +767,46 @@ class PoisoningPreventor:
         # Instruction-Patterns
         for kw in self.INSTRUCTION_KEYWORDS:
             if kw in content_lower:
-                alerts.append(self._create_alert(
-                    PoisoningIndicator.INSTRUCTION_PATTERN, "critical",
-                    entry_index, f"Instruction-Pattern: '{kw}'",
-                ))
+                alerts.append(
+                    self._create_alert(
+                        PoisoningIndicator.INSTRUCTION_PATTERN,
+                        "critical",
+                        entry_index,
+                        f"Instruction-Pattern: '{kw}'",
+                    )
+                )
                 break
 
         # Authority-Claims
         for kw in self.AUTHORITY_KEYWORDS:
             if kw in content_lower:
-                alerts.append(self._create_alert(
-                    PoisoningIndicator.AUTHORITY_CLAIM, "high",
-                    entry_index, f"Authority-Claim: '{kw}'",
-                ))
+                alerts.append(
+                    self._create_alert(
+                        PoisoningIndicator.AUTHORITY_CLAIM,
+                        "high",
+                        entry_index,
+                        f"Authority-Claim: '{kw}'",
+                    )
+                )
                 break
 
         # Spam
         spam_count = sum(1 for kw in self.SPAM_INDICATORS if kw in content_lower)
         if spam_count >= 2:
-            alerts.append(self._create_alert(
-                PoisoningIndicator.SPAM_CONTENT, "medium",
-                entry_index, f"{spam_count} Spam-Indikatoren erkannt",
-            ))
+            alerts.append(
+                self._create_alert(
+                    PoisoningIndicator.SPAM_CONTENT,
+                    "medium",
+                    entry_index,
+                    f"{spam_count} Spam-Indikatoren erkannt",
+                )
+            )
 
         return alerts
 
-    def scan_batch(self, entries: list[dict[str, Any]], key: str = "content") -> list[PoisoningAlert]:
+    def scan_batch(
+        self, entries: list[dict[str, Any]], key: str = "content"
+    ) -> list[PoisoningAlert]:
         """Scannt eine Batch von Einträgen."""
         all_alerts = []
         for i, entry in enumerate(entries):
@@ -763,8 +816,11 @@ class PoisoningPreventor:
         return all_alerts
 
     def _create_alert(
-        self, indicator: PoisoningIndicator, severity: str,
-        entry_index: int, evidence: str,
+        self,
+        indicator: PoisoningIndicator,
+        severity: str,
+        entry_index: int,
+        evidence: str,
     ) -> PoisoningAlert:
         self._counter += 1
         alert = PoisoningAlert(
@@ -806,7 +862,7 @@ class SourceTrust:
 
     source_id: str
     name: str
-    trust_score: float = 1.0   # 0-1 (1 = voll vertrauenswürdig)
+    trust_score: float = 1.0  # 0-1 (1 = voll vertrauenswürdig)
     verified: bool = False
     total_entries: int = 0
     flagged_entries: int = 0
@@ -872,5 +928,7 @@ class SourceIntegrityChecker:
             "total_sources": len(sources),
             "verified": sum(1 for s in sources if s.verified),
             "unreliable": len(self.unreliable_sources()),
-            "avg_trust": round(sum(s.trust_score for s in sources) / len(sources), 3) if sources else 0,
+            "avg_trust": round(sum(s.trust_score for s in sources) / len(sources), 3)
+            if sources
+            else 0,
         }

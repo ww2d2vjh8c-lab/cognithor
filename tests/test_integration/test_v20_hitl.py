@@ -11,16 +11,27 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 from jarvis.hitl.types import (
-    ApprovalStatus, ReviewPriority, EscalationAction, NotificationType,
+    ApprovalStatus,
+    ReviewPriority,
+    EscalationAction,
+    NotificationType,
     HITLNodeKind,
-    NotificationChannel, EscalationPolicy, HITLConfig,
-    ApprovalRequest, ApprovalResponse, ReviewTask,
+    NotificationChannel,
+    EscalationPolicy,
+    HITLConfig,
+    ApprovalRequest,
+    ApprovalResponse,
+    ReviewTask,
 )
 from jarvis.hitl.notifier import HITLNotifier, NotificationRecord
 from jarvis.hitl.manager import ApprovalManager
 from jarvis.hitl.nodes import (
-    create_approval_node, create_review_node, create_input_node,
-    create_gate_node, create_selection_node, create_edit_node,
+    create_approval_node,
+    create_review_node,
+    create_input_node,
+    create_gate_node,
+    create_selection_node,
+    create_edit_node,
 )
 from jarvis.graph.types import GraphState, NodeType, ExecutionStatus
 from jarvis.graph.engine import GraphEngine
@@ -32,22 +43,28 @@ from jarvis.graph.types import END
 # Helper
 # ============================================================================
 
+
 async def noop_handler(state: GraphState) -> GraphState:
     return state
+
 
 async def increment_handler(state: GraphState) -> GraphState:
     state["counter"] = state.get("counter", 0) + 1
     return state
 
 
-def respond_in_background(manager: ApprovalManager, request_id: str,
-                          decision: ApprovalStatus = ApprovalStatus.APPROVED,
-                          delay: float = 0.05,
-                          reviewer: str = "tester",
-                          comment: str = "",
-                          modifications: dict | None = None,
-                          selected_option: str = "") -> asyncio.Task:
+def respond_in_background(
+    manager: ApprovalManager,
+    request_id: str,
+    decision: ApprovalStatus = ApprovalStatus.APPROVED,
+    delay: float = 0.05,
+    reviewer: str = "tester",
+    comment: str = "",
+    modifications: dict | None = None,
+    selected_option: str = "",
+) -> asyncio.Task:
     """Startet Background-Task der nach delay antwortet."""
+
     async def _respond():
         await asyncio.sleep(delay)
         resp = ApprovalResponse(
@@ -156,7 +173,9 @@ class TestApprovalRequest:
 
     def test_to_dict(self):
         req = ApprovalRequest(
-            execution_id="e1", graph_name="g1", node_name="n1",
+            execution_id="e1",
+            graph_name="g1",
+            node_name="n1",
         )
         d = req.to_dict()
         assert d["execution_id"] == "e1"
@@ -193,19 +212,25 @@ class TestReviewTask:
 
     def test_fully_approved(self):
         req = ApprovalRequest(config=HITLConfig(required_approvals=2))
-        task = ReviewTask(request=req, responses=[
-            ApprovalResponse(decision=ApprovalStatus.APPROVED, reviewer="a"),
-            ApprovalResponse(decision=ApprovalStatus.APPROVED, reviewer="b"),
-        ])
+        task = ReviewTask(
+            request=req,
+            responses=[
+                ApprovalResponse(decision=ApprovalStatus.APPROVED, reviewer="a"),
+                ApprovalResponse(decision=ApprovalStatus.APPROVED, reviewer="b"),
+            ],
+        )
         assert task.is_fully_approved
         assert not task.needs_more_approvals
 
     def test_rejected(self):
         req = ApprovalRequest(config=HITLConfig(required_approvals=2))
-        task = ReviewTask(request=req, responses=[
-            ApprovalResponse(decision=ApprovalStatus.APPROVED, reviewer="a"),
-            ApprovalResponse(decision=ApprovalStatus.REJECTED, reviewer="b"),
-        ])
+        task = ReviewTask(
+            request=req,
+            responses=[
+                ApprovalResponse(decision=ApprovalStatus.APPROVED, reviewer="a"),
+                ApprovalResponse(decision=ApprovalStatus.REJECTED, reviewer="b"),
+            ],
+        )
         assert task.is_rejected
         assert not task.needs_more_approvals
 
@@ -284,11 +309,13 @@ class TestHITLNotifier:
             channel_type=NotificationType.IN_APP,
             template="Bitte {title} prüfen (Priorität: {priority})",
         )
-        req = ApprovalRequest(config=HITLConfig(
-            title="Datenexport",
-            priority=ReviewPriority.CRITICAL,
-            notifications=[channel],
-        ))
+        req = ApprovalRequest(
+            config=HITLConfig(
+                title="Datenexport",
+                priority=ReviewPriority.CRITICAL,
+                notifications=[channel],
+            )
+        )
         await notifier.notify_new_request(req)
         pending = notifier.get_pending_notifications()
         assert "Datenexport" in pending[0]["message"]
@@ -298,7 +325,8 @@ class TestHITLNotifier:
     async def test_disabled_channel(self):
         notifier = HITLNotifier()
         channel = NotificationChannel(
-            channel_type=NotificationType.IN_APP, enabled=False,
+            channel_type=NotificationType.IN_APP,
+            enabled=False,
         )
         req = ApprovalRequest(config=HITLConfig(notifications=[channel]))
         sent = await notifier.notify_new_request(req)
@@ -362,7 +390,9 @@ class TestApprovalManager:
     async def test_create_request(self):
         mgr = ApprovalManager()
         req = await mgr.create_request(
-            "exec-1", "graph-1", "validate",
+            "exec-1",
+            "graph-1",
+            "validate",
             HITLConfig(title="Validate Data"),
         )
         assert req.request_id
@@ -374,9 +404,13 @@ class TestApprovalManager:
         mgr = ApprovalManager()
         req = await mgr.create_request("e1", "g1", "n1", HITLConfig())
 
-        task = await mgr.respond(req.request_id, ApprovalResponse(
-            decision=ApprovalStatus.APPROVED, reviewer="alice",
-        ))
+        task = await mgr.respond(
+            req.request_id,
+            ApprovalResponse(
+                decision=ApprovalStatus.APPROVED,
+                reviewer="alice",
+            ),
+        )
         assert task is not None
         assert task.request.status == ApprovalStatus.APPROVED
         assert mgr.stats()["approved"] == 1
@@ -386,10 +420,14 @@ class TestApprovalManager:
         mgr = ApprovalManager()
         req = await mgr.create_request("e1", "g1", "n1", HITLConfig())
 
-        task = await mgr.respond(req.request_id, ApprovalResponse(
-            decision=ApprovalStatus.REJECTED, reviewer="bob",
-            comment="Data quality insufficient",
-        ))
+        task = await mgr.respond(
+            req.request_id,
+            ApprovalResponse(
+                decision=ApprovalStatus.REJECTED,
+                reviewer="bob",
+                comment="Data quality insufficient",
+            ),
+        )
         assert task.request.status == ApprovalStatus.REJECTED
         assert mgr.stats()["rejected"] == 1
 
@@ -397,20 +435,30 @@ class TestApprovalManager:
     async def test_multi_approval(self):
         mgr = ApprovalManager()
         req = await mgr.create_request(
-            "e1", "g1", "n1",
+            "e1",
+            "g1",
+            "n1",
             HITLConfig(required_approvals=2),
         )
 
         # Erste Genehmigung
-        task = await mgr.respond(req.request_id, ApprovalResponse(
-            decision=ApprovalStatus.APPROVED, reviewer="alice",
-        ))
+        task = await mgr.respond(
+            req.request_id,
+            ApprovalResponse(
+                decision=ApprovalStatus.APPROVED,
+                reviewer="alice",
+            ),
+        )
         assert task.request.status == ApprovalStatus.PENDING  # Noch nicht genug
 
         # Zweite Genehmigung
-        task = await mgr.respond(req.request_id, ApprovalResponse(
-            decision=ApprovalStatus.APPROVED, reviewer="bob",
-        ))
+        task = await mgr.respond(
+            req.request_id,
+            ApprovalResponse(
+                decision=ApprovalStatus.APPROVED,
+                reviewer="bob",
+            ),
+        )
         assert task.request.status == ApprovalStatus.APPROVED
 
     @pytest.mark.asyncio
@@ -423,21 +471,32 @@ class TestApprovalManager:
     async def test_respond_already_resolved(self):
         mgr = ApprovalManager()
         req = await mgr.create_request("e1", "g1", "n1", HITLConfig())
-        await mgr.respond(req.request_id, ApprovalResponse(
-            decision=ApprovalStatus.APPROVED,
-        ))
+        await mgr.respond(
+            req.request_id,
+            ApprovalResponse(
+                decision=ApprovalStatus.APPROVED,
+            ),
+        )
         # Second response on resolved request
-        task = await mgr.respond(req.request_id, ApprovalResponse(
-            decision=ApprovalStatus.REJECTED,
-        ))
+        task = await mgr.respond(
+            req.request_id,
+            ApprovalResponse(
+                decision=ApprovalStatus.REJECTED,
+            ),
+        )
         assert task.request.status == ApprovalStatus.APPROVED  # Unchanged
 
     @pytest.mark.asyncio
     async def test_wait_for_resolution(self):
         mgr = ApprovalManager()
-        req = await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            escalation=EscalationPolicy(timeout_seconds=5),
-        ))
+        req = await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                escalation=EscalationPolicy(timeout_seconds=5),
+            ),
+        )
 
         # Background approval
         bg = respond_in_background(mgr, req.request_id, delay=0.05)
@@ -450,12 +509,17 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_wait_timeout_auto_approve(self):
         mgr = ApprovalManager()
-        req = await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            escalation=EscalationPolicy(
-                timeout_seconds=0.05,
-                action=EscalationAction.AUTO_APPROVE,
+        req = await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                escalation=EscalationPolicy(
+                    timeout_seconds=0.05,
+                    action=EscalationAction.AUTO_APPROVE,
+                ),
             ),
-        ))
+        )
 
         task = await mgr.wait_for_resolution(req.request_id, timeout=0.1)
         assert task is not None
@@ -464,12 +528,17 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_wait_timeout_auto_reject(self):
         mgr = ApprovalManager()
-        req = await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            escalation=EscalationPolicy(
-                timeout_seconds=0.05,
-                action=EscalationAction.AUTO_REJECT,
+        req = await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                escalation=EscalationPolicy(
+                    timeout_seconds=0.05,
+                    action=EscalationAction.AUTO_REJECT,
+                ),
             ),
-        ))
+        )
 
         task = await mgr.wait_for_resolution(req.request_id, timeout=0.1)
         assert task is not None
@@ -478,12 +547,17 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_wait_timeout_pause_indefinitely(self):
         mgr = ApprovalManager()
-        req = await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            escalation=EscalationPolicy(
-                timeout_seconds=0.05,
-                action=EscalationAction.PAUSE_INDEFINITELY,
+        req = await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                escalation=EscalationPolicy(
+                    timeout_seconds=0.05,
+                    action=EscalationAction.PAUSE_INDEFINITELY,
+                ),
             ),
-        ))
+        )
 
         task = await mgr.wait_for_resolution(req.request_id, timeout=0.1)
         assert task is not None
@@ -492,9 +566,14 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_delegate(self):
         mgr = ApprovalManager()
-        req = await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            assignees=["alice"],
-        ))
+        req = await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                assignees=["alice"],
+            ),
+        )
         assert await mgr.delegate(req.request_id, "bob", delegated_by="alice")
         task = mgr.get_task(req.request_id)
         assert "bob" in task.request.config.assignees
@@ -510,12 +589,24 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_get_pending(self):
         mgr = ApprovalManager()
-        await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            assignees=["alice"], priority=ReviewPriority.HIGH,
-        ))
-        await mgr.create_request("e2", "g2", "n2", HITLConfig(
-            assignees=["bob"], priority=ReviewPriority.LOW,
-        ))
+        await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                assignees=["alice"],
+                priority=ReviewPriority.HIGH,
+            ),
+        )
+        await mgr.create_request(
+            "e2",
+            "g2",
+            "n2",
+            HITLConfig(
+                assignees=["bob"],
+                priority=ReviewPriority.LOW,
+            ),
+        )
 
         all_pending = mgr.get_pending()
         assert len(all_pending) == 2
@@ -539,9 +630,12 @@ class TestApprovalManager:
     async def test_get_history(self):
         mgr = ApprovalManager()
         req = await mgr.create_request("e1", "g1", "n1", HITLConfig())
-        await mgr.respond(req.request_id, ApprovalResponse(
-            decision=ApprovalStatus.APPROVED,
-        ))
+        await mgr.respond(
+            req.request_id,
+            ApprovalResponse(
+                decision=ApprovalStatus.APPROVED,
+            ),
+        )
         history = mgr.get_history(status=ApprovalStatus.APPROVED)
         assert len(history) == 1
 
@@ -553,8 +647,11 @@ class TestApprovalManager:
             auto_approve_fn=lambda ctx: ctx.get("risk_score", 100) < 50,
         )
         req = await mgr.create_request(
-            "e1", "g1", "gate",
-            config, context={"risk_score": 10},
+            "e1",
+            "g1",
+            "gate",
+            config,
+            context={"risk_score": 10},
         )
         assert req.status == ApprovalStatus.APPROVED  # Auto-approved
 
@@ -566,33 +663,46 @@ class TestApprovalManager:
             auto_approve_fn=lambda ctx: ctx.get("risk_score", 100) < 50,
         )
         req = await mgr.create_request(
-            "e1", "g1", "gate",
-            config, context={"risk_score": 80},
+            "e1",
+            "g1",
+            "gate",
+            config,
+            context={"risk_score": 80},
         )
         assert req.is_pending  # High risk → needs human
 
     @pytest.mark.asyncio
     async def test_check_timeouts(self):
         mgr = ApprovalManager()
-        req = await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            escalation=EscalationPolicy(
-                timeout_seconds=0,  # Sofort expired
-                action=EscalationAction.AUTO_APPROVE,
+        req = await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                escalation=EscalationPolicy(
+                    timeout_seconds=0,  # Sofort expired
+                    action=EscalationAction.AUTO_APPROVE,
+                ),
             ),
-        ))
+        )
         timed_out = await mgr.check_timeouts()
         assert timed_out >= 1
 
     @pytest.mark.asyncio
     async def test_escalation_max_exceeded(self):
         mgr = ApprovalManager()
-        req = await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            escalation=EscalationPolicy(
-                timeout_seconds=0,
-                action=EscalationAction.PAUSE_INDEFINITELY,
-                max_escalations=1,
+        req = await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                escalation=EscalationPolicy(
+                    timeout_seconds=0,
+                    action=EscalationAction.PAUSE_INDEFINITELY,
+                    max_escalations=1,
+                ),
             ),
-        ))
+        )
         # First escalation
         await mgr._handle_timeout(req.request_id)
         assert mgr.get_task(req.request_id).request.status == ApprovalStatus.ESCALATED
@@ -628,9 +738,10 @@ class TestHITLNodes:
             await asyncio.sleep(0.05)
             pending = mgr.get_pending()
             if pending:
-                await mgr.respond(pending[0].request.request_id,
-                                  ApprovalResponse(decision=ApprovalStatus.APPROVED,
-                                                   reviewer="alice"))
+                await mgr.respond(
+                    pending[0].request.request_id,
+                    ApprovalResponse(decision=ApprovalStatus.APPROVED, reviewer="alice"),
+                )
 
         task = asyncio.create_task(approve_after_delay())
         result = await handler(state)
@@ -648,9 +759,12 @@ class TestHITLNodes:
             await asyncio.sleep(0.05)
             pending = mgr.get_pending()
             if pending:
-                await mgr.respond(pending[0].request.request_id,
-                                  ApprovalResponse(decision=ApprovalStatus.REJECTED,
-                                                   reviewer="bob", comment="Bad data"))
+                await mgr.respond(
+                    pending[0].request.request_id,
+                    ApprovalResponse(
+                        decision=ApprovalStatus.REJECTED, reviewer="bob", comment="Bad data"
+                    ),
+                )
 
         task = asyncio.create_task(reject_after_delay())
         with pytest.raises(ValueError, match="rejected"):
@@ -667,12 +781,14 @@ class TestHITLNodes:
             await asyncio.sleep(0.05)
             pending = mgr.get_pending()
             if pending:
-                await mgr.respond(pending[0].request.request_id,
-                                  ApprovalResponse(
-                                      decision=ApprovalStatus.APPROVED,
-                                      reviewer="cfo",
-                                      modifications={"budget": 2000},
-                                  ))
+                await mgr.respond(
+                    pending[0].request.request_id,
+                    ApprovalResponse(
+                        decision=ApprovalStatus.APPROVED,
+                        reviewer="cfo",
+                        modifications={"budget": 2000},
+                    ),
+                )
 
         task = asyncio.create_task(approve_with_edits())
         result = await handler(state)
@@ -683,7 +799,8 @@ class TestHITLNodes:
     async def test_gate_node_auto_pass(self):
         mgr = ApprovalManager()
         handler = create_gate_node(
-            mgr, title="Risk Gate",
+            mgr,
+            title="Risk Gate",
             check_fn=lambda ctx: ctx.get("risk_score", 100) < 50,
         )
         state = GraphState(risk_score=20)
@@ -695,7 +812,8 @@ class TestHITLNodes:
     async def test_gate_node_requires_human(self):
         mgr = ApprovalManager()
         handler = create_gate_node(
-            mgr, title="Risk Gate",
+            mgr,
+            title="Risk Gate",
             check_fn=lambda ctx: ctx.get("risk_score", 100) < 50,
             timeout=0.1,
         )
@@ -706,9 +824,10 @@ class TestHITLNodes:
             await asyncio.sleep(0.03)
             pending = mgr.get_pending()
             if pending:
-                await mgr.respond(pending[0].request.request_id,
-                                  ApprovalResponse(decision=ApprovalStatus.APPROVED,
-                                                   reviewer="risk_officer"))
+                await mgr.respond(
+                    pending[0].request.request_id,
+                    ApprovalResponse(decision=ApprovalStatus.APPROVED, reviewer="risk_officer"),
+                )
 
         task = asyncio.create_task(approve())
         result = await handler(state)
@@ -719,7 +838,8 @@ class TestHITLNodes:
     async def test_selection_node(self):
         mgr = ApprovalManager()
         handler = create_selection_node(
-            mgr, title="Choose Model",
+            mgr,
+            title="Choose Model",
             options=["claude", "gpt4", "gemini"],
         )
         state = GraphState()
@@ -728,12 +848,14 @@ class TestHITLNodes:
             await asyncio.sleep(0.05)
             pending = mgr.get_pending()
             if pending:
-                await mgr.respond(pending[0].request.request_id,
-                                  ApprovalResponse(
-                                      decision=ApprovalStatus.APPROVED,
-                                      reviewer="dev",
-                                      selected_option="claude",
-                                  ))
+                await mgr.respond(
+                    pending[0].request.request_id,
+                    ApprovalResponse(
+                        decision=ApprovalStatus.APPROVED,
+                        reviewer="dev",
+                        selected_option="claude",
+                    ),
+                )
 
         task = asyncio.create_task(select())
         result = await handler(state)
@@ -744,7 +866,8 @@ class TestHITLNodes:
     async def test_input_node(self):
         mgr = ApprovalManager()
         handler = create_input_node(
-            mgr, title="Enter API Key",
+            mgr,
+            title="Enter API Key",
             input_keys=["api_key"],
         )
         state = GraphState()
@@ -753,12 +876,14 @@ class TestHITLNodes:
             await asyncio.sleep(0.05)
             pending = mgr.get_pending()
             if pending:
-                await mgr.respond(pending[0].request.request_id,
-                                  ApprovalResponse(
-                                      decision=ApprovalStatus.APPROVED,
-                                      reviewer="admin",
-                                      modifications={"api_key": "sk-test-123"},
-                                  ))
+                await mgr.respond(
+                    pending[0].request.request_id,
+                    ApprovalResponse(
+                        decision=ApprovalStatus.APPROVED,
+                        reviewer="admin",
+                        modifications={"api_key": "sk-test-123"},
+                    ),
+                )
 
         task = asyncio.create_task(provide_input())
         result = await handler(state)
@@ -769,7 +894,8 @@ class TestHITLNodes:
     async def test_review_node(self):
         mgr = ApprovalManager()
         handler = create_review_node(
-            mgr, title="Code Review",
+            mgr,
+            title="Code Review",
             instructions="Check for security issues",
             required_approvals=1,
         )
@@ -779,12 +905,14 @@ class TestHITLNodes:
             await asyncio.sleep(0.05)
             pending = mgr.get_pending()
             if pending:
-                await mgr.respond(pending[0].request.request_id,
-                                  ApprovalResponse(
-                                      decision=ApprovalStatus.APPROVED,
-                                      reviewer="senior_dev",
-                                      comment="LGTM",
-                                  ))
+                await mgr.respond(
+                    pending[0].request.request_id,
+                    ApprovalResponse(
+                        decision=ApprovalStatus.APPROVED,
+                        reviewer="senior_dev",
+                        comment="LGTM",
+                    ),
+                )
 
         task = asyncio.create_task(review())
         result = await handler(state)
@@ -796,7 +924,8 @@ class TestHITLNodes:
     async def test_context_extraction(self):
         mgr = ApprovalManager()
         handler = create_approval_node(
-            mgr, config=HITLConfig(
+            mgr,
+            config=HITLConfig(
                 title="Test",
                 context_keys=["important_data"],
             ),
@@ -813,8 +942,10 @@ class TestHITLNodes:
                 ctx = pending[0].request.context
                 assert "important_data" in ctx
                 assert "secret" not in ctx
-                await mgr.respond(pending[0].request.request_id,
-                                  ApprovalResponse(decision=ApprovalStatus.APPROVED))
+                await mgr.respond(
+                    pending[0].request.request_id,
+                    ApprovalResponse(decision=ApprovalStatus.APPROVED),
+                )
 
         task = asyncio.create_task(approve())
         await handler(state)
@@ -835,10 +966,14 @@ class TestHITLGraphIntegration:
         graph = (
             GraphBuilder("approval_flow")
             .add_node("process", increment_handler)
-            .add_node("review", create_approval_node(
-                mgr, title="Review Results",
-                timeout=2.0,
-            ))
+            .add_node(
+                "review",
+                create_approval_node(
+                    mgr,
+                    title="Review Results",
+                    timeout=2.0,
+                ),
+            )
             .add_node("finalize", increment_handler)
             .chain("process", "review", "finalize", END)
             .build()
@@ -853,11 +988,13 @@ class TestHITLGraphIntegration:
                 await asyncio.sleep(0.05)
                 pending = mgr.get_pending()
                 if pending:
-                    await mgr.respond(pending[0].request.request_id,
-                                      ApprovalResponse(
-                                          decision=ApprovalStatus.APPROVED,
-                                          reviewer="supervisor",
-                                      ))
+                    await mgr.respond(
+                        pending[0].request.request_id,
+                        ApprovalResponse(
+                            decision=ApprovalStatus.APPROVED,
+                            reviewer="supervisor",
+                        ),
+                    )
                     return
 
         bg = asyncio.create_task(approve_when_ready())
@@ -877,10 +1014,14 @@ class TestHITLGraphIntegration:
 
         graph = (
             GraphBuilder("gate_flow")
-            .add_node("check_risk", create_gate_node(
-                mgr, title="Risk Check",
-                check_fn=lambda ctx: ctx.get("risk", 100) < 50,
-            ))
+            .add_node(
+                "check_risk",
+                create_gate_node(
+                    mgr,
+                    title="Risk Check",
+                    check_fn=lambda ctx: ctx.get("risk", 100) < 50,
+                ),
+            )
             .add_node("proceed", increment_handler)
             .chain("check_risk", "proceed", END)
             .build()
@@ -898,11 +1039,13 @@ class TestHITLGraphIntegration:
         mgr = ApprovalManager()
 
         node1 = create_gate_node(
-            mgr, title="Gate 1",
+            mgr,
+            title="Gate 1",
             check_fn=lambda ctx: True,  # Always auto-approve
         )
         node2 = create_gate_node(
-            mgr, title="Gate 2",
+            mgr,
+            title="Gate 2",
             check_fn=lambda ctx: True,
         )
 
@@ -953,16 +1096,25 @@ class TestHITLGraphIntegration:
     async def test_delegation_flow(self):
         """Delegation zu anderem Reviewer."""
         mgr = ApprovalManager()
-        req = await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            assignees=["alice"],
-        ))
+        req = await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                assignees=["alice"],
+            ),
+        )
         # Alice delegates to Bob
         await mgr.delegate(req.request_id, "bob", delegated_by="alice")
 
         # Bob approves
-        await mgr.respond(req.request_id, ApprovalResponse(
-            decision=ApprovalStatus.APPROVED, reviewer="bob",
-        ))
+        await mgr.respond(
+            req.request_id,
+            ApprovalResponse(
+                decision=ApprovalStatus.APPROVED,
+                reviewer="bob",
+            ),
+        )
 
         task = mgr.get_task(req.request_id)
         assert task.request.status == ApprovalStatus.APPROVED
@@ -989,14 +1141,19 @@ class TestHITLGraphIntegration:
     async def test_timeout_with_delegate(self):
         """Timeout mit Delegation-Eskalation."""
         mgr = ApprovalManager()
-        req = await mgr.create_request("e1", "g1", "n1", HITLConfig(
-            assignees=["junior"],
-            escalation=EscalationPolicy(
-                timeout_seconds=0.05,
-                action=EscalationAction.DELEGATE,
-                delegate_to="senior",
+        req = await mgr.create_request(
+            "e1",
+            "g1",
+            "n1",
+            HITLConfig(
+                assignees=["junior"],
+                escalation=EscalationPolicy(
+                    timeout_seconds=0.05,
+                    action=EscalationAction.DELEGATE,
+                    delegate_to="senior",
+                ),
             ),
-        ))
+        )
 
         task = await mgr.wait_for_resolution(req.request_id, timeout=0.1)
         # After timeout → delegated to senior, but still pending
@@ -1022,7 +1179,8 @@ class TestHITLGraphIntegration:
             return state
 
         gate_handler = create_gate_node(
-            mgr, title="Safety Gate",
+            mgr,
+            title="Safety Gate",
             check_fn=lambda ctx: ctx.get("risk", 100) < 50,
         )
 

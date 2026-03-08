@@ -204,6 +204,7 @@ class TestInteractionStore:
     def test_cleanup(self) -> None:
         store = InteractionStore(ttl_seconds=0)  # Instant expiry
         import time
+
         time.sleep(0.01)
         store.create(InteractionType.BUTTON_CLICK, "u1")
         # The state created will be expired since ttl is 0
@@ -249,30 +250,39 @@ class TestFallbackRenderer:
         assert "STOP" in text
 
     def test_render_select(self) -> None:
-        text = FallbackRenderer.render_select("Wähle:", [
-            {"label": "Option A", "description": "Erste Wahl"},
-            {"label": "Option B"},
-        ])
+        text = FallbackRenderer.render_select(
+            "Wähle:",
+            [
+                {"label": "Option A", "description": "Erste Wahl"},
+                {"label": "Option B"},
+            ],
+        )
         assert "1) Option A" in text
         assert "Erste Wahl" in text
         assert "2) Option B" in text
 
     def test_render_progress(self) -> None:
-        text = FallbackRenderer.render_progress("Installation", [
-            {"name": "Download", "status": "completed"},
-            {"name": "Verify", "status": "running"},
-            {"name": "Install", "status": "pending"},
-        ])
+        text = FallbackRenderer.render_progress(
+            "Installation",
+            [
+                {"name": "Download", "status": "completed"},
+                {"name": "Verify", "status": "running"},
+                {"name": "Install", "status": "pending"},
+            ],
+        )
         assert "✓" in text
         assert "►" in text
         assert "○" in text
         assert "Download" in text
 
     def test_render_form(self) -> None:
-        text = FallbackRenderer.render_form("Konfiguration", [
-            {"label": "Name", "required": True},
-            {"label": "Port", "default": "8080"},
-        ])
+        text = FallbackRenderer.render_form(
+            "Konfiguration",
+            [
+                {"label": "Name", "required": True},
+                {"label": "Port", "default": "8080"},
+            ],
+        )
         assert "Name" in text
         assert "Pflicht" in text
         assert "8080" in text
@@ -297,9 +307,19 @@ class TestFallbackRenderer:
         assert FallbackRenderer.parse_approval_response("") is None
 
     def test_parse_approval_custom_words(self) -> None:
-        assert FallbackRenderer.parse_approval_response(
-            "ok", approve_word="OK", reject_word="STOP",
-        ) is True
-        assert FallbackRenderer.parse_approval_response(
-            "STOP", approve_word="OK", reject_word="STOP",
-        ) is False
+        assert (
+            FallbackRenderer.parse_approval_response(
+                "ok",
+                approve_word="OK",
+                reject_word="STOP",
+            )
+            is True
+        )
+        assert (
+            FallbackRenderer.parse_approval_response(
+                "STOP",
+                approve_word="OK",
+                reject_word="STOP",
+            )
+            is False
+        )

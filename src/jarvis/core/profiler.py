@@ -62,7 +62,9 @@ class TaskProfiler:
         """)
         conn.commit()
 
-    def start_task(self, session_id: str, task_description: str = "", category: str = "general") -> None:
+    def start_task(
+        self, session_id: str, task_description: str = "", category: str = "general"
+    ) -> None:
         """Oeffnet einen Profiling-Kontext fuer einen Task."""
         conn = self._get_conn()
         now = datetime.now(UTC).isoformat()
@@ -204,16 +206,19 @@ class TaskProfiler:
         conn = self._get_conn()
 
         # Get all tool names
-        tool_names = [r[0] for r in conn.execute(
-            "SELECT DISTINCT tool_name FROM tool_calls"
-        ).fetchall()]
+        tool_names = [
+            r[0] for r in conn.execute("SELECT DISTINCT tool_name FROM tool_calls").fetchall()
+        ]
 
         tool_profiles = [self.get_tool_profile(t) for t in tool_names]
 
         # Get all categories
-        categories = [r[0] for r in conn.execute(
-            "SELECT DISTINCT category FROM task_records WHERE end_time IS NOT NULL"
-        ).fetchall()]
+        categories = [
+            r[0]
+            for r in conn.execute(
+                "SELECT DISTINCT category FROM task_records WHERE end_time IS NOT NULL"
+            ).fetchall()
+        ]
 
         task_profiles = [self.get_task_profile(c) for c in categories]
 

@@ -59,7 +59,7 @@ class TestSecretVaultRoundtrip:
 
     def test_roundtrip_special_chars(self) -> None:
         vault = PerAgentSecretVault()
-        secret = 'quotes"and\'backslash\\newline\ntab\tnull\x00end'
+        secret = "quotes\"and'backslash\\newline\ntab\tnull\x00end"
         vault.store("agent-1", "special", secret)
         assert vault.retrieve("agent-1", "special") == secret
 
@@ -116,8 +116,7 @@ class TestEncryptionQuality:
         vault = PerAgentSecretVault()
         secret_obj = vault.store("agent-1", "k", "test")
         assert secret_obj.encrypted_value.startswith("gAAAAA"), (
-            f"Ciphertext sieht nicht wie ein Fernet-Token aus: "
-            f"{secret_obj.encrypted_value[:20]}..."
+            f"Ciphertext sieht nicht wie ein Fernet-Token aus: {secret_obj.encrypted_value[:20]}..."
         )
 
 

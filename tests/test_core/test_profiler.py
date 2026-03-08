@@ -26,8 +26,8 @@ class TestTaskProfiler:
 
         profile = self.profiler.get_tool_profile("read_file")
         assert profile.call_count == 3
-        assert abs(profile.avg_latency_ms - (50+100+200)/3) < 0.01
-        assert abs(profile.success_rate - 2/3) < 0.01
+        assert abs(profile.avg_latency_ms - (50 + 100 + 200) / 3) < 0.01
+        assert abs(profile.success_rate - 2 / 3) < 0.01
         assert profile.error_types.get("TimeoutError") == 1
 
     def test_tool_profile_empty(self):

@@ -76,7 +76,9 @@ class TestCircleCRUD:
         assert mgr.delete_circle(circle.circle_id, by_peer="alex") is True
         assert mgr.get_circle(circle.circle_id) is None
 
-    def test_delete_circle_by_non_owner_fails(self, mgr: CircleManager, circle: TrustedCircle) -> None:
+    def test_delete_circle_by_non_owner_fails(
+        self, mgr: CircleManager, circle: TrustedCircle
+    ) -> None:
         assert mgr.delete_circle(circle.circle_id, by_peer="hacker") is False
 
     def test_list_circles_for_peer(self, mgr: CircleManager, circle: TrustedCircle) -> None:
@@ -84,7 +86,9 @@ class TestCircleCRUD:
         assert len(circles) == 1
         assert circles[0].name == "Versicherungs-Profis"
 
-    def test_list_circles_empty_for_outsider(self, mgr: CircleManager, circle: TrustedCircle) -> None:
+    def test_list_circles_empty_for_outsider(
+        self, mgr: CircleManager, circle: TrustedCircle
+    ) -> None:
         assert mgr.list_circles(peer_id="stranger") == []
 
     def test_list_all_circles(self, mgr: CircleManager) -> None:
@@ -285,7 +289,9 @@ class TestTrustScoring:
         score = mgr.trust_score_for_package("pkg1", "stranger1", "stranger2")
         assert score == 0.0
 
-    def test_trust_score_with_curation(self, mgr: CircleManager, full_circle: TrustedCircle) -> None:
+    def test_trust_score_with_curation(
+        self, mgr: CircleManager, full_circle: TrustedCircle
+    ) -> None:
         full_circle.submit_skill("pkg1", "Tool", submitted_by="charlie")
         full_circle.review_skill("pkg1", "alice", ReviewVerdict.APPROVED)
         full_circle.review_skill("pkg1", "bob", ReviewVerdict.APPROVED)
@@ -296,7 +302,10 @@ class TestTrustScoring:
     def test_filter_trusted_packages(self, mgr: CircleManager, full_circle: TrustedCircle) -> None:
         publisher_map = {"pkg1": "bob", "pkg2": "stranger", "pkg3": "charlie"}
         result = mgr.filter_trusted_packages(
-            ["pkg1", "pkg2", "pkg3"], publisher_map, "alice", min_score=1.0,
+            ["pkg1", "pkg2", "pkg3"],
+            publisher_map,
+            "alice",
+            min_score=1.0,
         )
         ids = [r[0] for r in result]
         assert "pkg1" in ids
@@ -350,7 +359,9 @@ class TestCollections:
         assert len(mgr.list_collections(public_only=True)) == 1
 
     def test_search_collections(self, mgr: CircleManager) -> None:
-        mgr.create_collection("BU-Tools", "alex", description="Berufsunfähigkeit", tags=["versicherung"])
+        mgr.create_collection(
+            "BU-Tools", "alex", description="Berufsunfähigkeit", tags=["versicherung"]
+        )
         mgr.create_collection("Dev-Tools", "bob", tags=["coding"])
         results = mgr.search_collections("versicherung")
         assert len(results) == 1

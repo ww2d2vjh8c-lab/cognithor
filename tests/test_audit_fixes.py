@@ -125,11 +125,20 @@ class TestC15_ApiKeyLength:
     def test_all_key_fields_validated(self, tmp_path: Path) -> None:
         """Alle 14 API-Key-Felder werden validiert."""
         key_fields = [
-            "openai_api_key", "anthropic_api_key", "gemini_api_key",
-            "groq_api_key", "deepseek_api_key", "mistral_api_key",
-            "together_api_key", "openrouter_api_key", "xai_api_key",
-            "cerebras_api_key", "github_api_key", "bedrock_api_key",
-            "huggingface_api_key", "moonshot_api_key",
+            "openai_api_key",
+            "anthropic_api_key",
+            "gemini_api_key",
+            "groq_api_key",
+            "deepseek_api_key",
+            "mistral_api_key",
+            "together_api_key",
+            "openrouter_api_key",
+            "xai_api_key",
+            "cerebras_api_key",
+            "github_api_key",
+            "bedrock_api_key",
+            "huggingface_api_key",
+            "moonshot_api_key",
         ]
         for field_name in key_fields:
             with pytest.raises(Exception, match="zu kurz"):
@@ -332,8 +341,8 @@ class TestC16_A2AFallbackEndpoint:
     def test_post_a2a_route_in_source(self) -> None:
         """Verify the route exists in source code."""
         source = (_SRC_ROOT / "a2a" / "http_handler.py").read_text(encoding="utf-8")
-        assert 'POST' in source and '/a2a' in source
-        assert 'handle_a2a_request' in source
+        assert "POST" in source and "/a2a" in source
+        assert "handle_a2a_request" in source
 
 
 # ============================================================================
@@ -499,6 +508,7 @@ class TestH17_WebhookNotifierRealHTTP:
         mock_client.post = MagicMock(return_value=mock_response)
 
         import httpx as real_httpx
+
         with patch.object(real_httpx, "Client", return_value=mock_client):
             sent = notifier.notify("test_event", {"key": "value"})
             assert sent == 1

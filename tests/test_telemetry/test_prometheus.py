@@ -76,14 +76,14 @@ class TestLabelEscaping:
         assert _escape_label_value(r"path\to\file") == r"path\\to\\file"
 
     def test_double_quote_escaped(self):
-        assert _escape_label_value('say "hello"') == r'say \"hello\"'
+        assert _escape_label_value('say "hello"') == r"say \"hello\""
 
     def test_newline_escaped(self):
         assert _escape_label_value("line1\nline2") == r"line1\nline2"
 
     def test_combined_escapes(self):
         result = _escape_label_value('a\\b"c\nd')
-        assert result == r'a\\b\"c\nd'
+        assert result == r"a\\b\"c\nd"
 
     def test_empty_value(self):
         assert _escape_label_value("") == ""
@@ -277,7 +277,7 @@ class TestHistogramExport:
         exporter = PrometheusExporter(metrics_provider=provider)
         output = exporter.export()
 
-        assert '+Inf' in output
+        assert "+Inf" in output
 
     def test_histogram_count_and_sum(self):
         provider = MetricsProvider()
@@ -327,7 +327,9 @@ class TestPrefix:
         output = exporter.export()
 
         assert "cognithor_test_metric" in output
-        assert "jarvis_" not in output.split("jarvis_uptime")[0] if "jarvis_uptime" in output else True
+        assert (
+            "jarvis_" not in output.split("jarvis_uptime")[0] if "jarvis_uptime" in output else True
+        )
 
     def test_no_double_prefix(self):
         """If metric already starts with prefix, don't double it."""
@@ -426,7 +428,7 @@ class TestFullOutput:
         output = exporter.export()
 
         metric_line_re = re.compile(
-            r'^[a-zA-Z_:][a-zA-Z0-9_:]*(\{[^}]*\})?\s+[\d.eE+\-]+|[+\-]?Inf|NaN$'
+            r"^[a-zA-Z_:][a-zA-Z0-9_:]*(\{[^}]*\})?\s+[\d.eE+\-]+|[+\-]?Inf|NaN$"
         )
         for line in output.strip().split("\n"):
             if line.startswith("#") or not line.strip():
@@ -504,7 +506,7 @@ class TestSpecialCharacters:
         exporter = PrometheusExporter(metrics_provider=provider)
         output = exporter.export()
 
-        assert r'SELECT \"name\"' in output
+        assert r"SELECT \"name\"" in output
 
     def test_label_with_newline(self):
         provider = MetricsProvider()

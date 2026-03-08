@@ -169,9 +169,9 @@ class TestAPIEndpointsViaHTTPX:
         except ImportError:
             pytest.skip("httpx not installed")
 
-        handler = AsyncMock(return_value=OutgoingMessage(
-            text="response", session_id="s1", channel="api"
-        ))
+        handler = AsyncMock(
+            return_value=OutgoingMessage(text="response", session_id="s1", channel="api")
+        )
         loop = asyncio.new_event_loop()
         loop.run_until_complete(ch.start(handler))
         loop.close()

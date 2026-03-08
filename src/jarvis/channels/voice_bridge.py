@@ -115,7 +115,9 @@ class VoiceWebSocketBridge:
         self._whisper_model = whisper_model
         self._language = language
         self._stt_engine: Any = None
-        self._active_sessions: TTLDict[str, AudioAccumulator] = TTLDict(max_size=100, ttl_seconds=600)
+        self._active_sessions: TTLDict[str, AudioAccumulator] = TTLDict(
+            max_size=100, ttl_seconds=600
+        )
 
     async def initialize(self) -> bool:
         """Lädt das Whisper-Modell. Gibt False zurück wenn nicht verfügbar."""
@@ -125,6 +127,7 @@ class VoiceWebSocketBridge:
             device = "cpu"
             try:
                 import torch
+
                 if torch.cuda.is_available():
                     device = "cuda"
             except ImportError:
@@ -196,10 +199,12 @@ class VoiceWebSocketBridge:
         )
         self._active_sessions[session_id] = acc
 
-        await send_fn({
-            "type": "voice_status",
-            "status": "listening",
-        })
+        await send_fn(
+            {
+                "type": "voice_status",
+                "status": "listening",
+            }
+        )
 
         log.info("voice_session_started", session_id=session_id, format=acc.format)
         return None
@@ -222,10 +227,12 @@ class VoiceWebSocketBridge:
             except ValueError as exc:
                 log.warning("audio_chunk_rejected", session=session_id, error=str(exc))
                 if send_fn:
-                    await send_fn({
-                        "type": "voice_error",
-                        "error": str(exc),
-                    })
+                    await send_fn(
+                        {
+                            "type": "voice_error",
+                            "error": str(exc),
+                        }
+                    )
 
         return None
 
@@ -237,63 +244,81 @@ class VoiceWebSocketBridge:
         """Beendet die Aufnahme und transkribiert das Audio."""
         acc = self._active_sessions.pop(session_id, None)
         if acc is None or acc.is_empty:
-            await send_fn({
-                "type": "voice_error",
-                "error": "Keine Audio-Daten empfangen.",
-            })
+            await send_fn(
+                {
+                    "type": "voice_error",
+                    "error": "Keine Audio-Daten empfangen.",
+                }
+            )
             return None
 
         # Zu kurze Aufnahmen verwerfen
         if acc.duration_estimate_seconds < 0.3:
-            await send_fn({
-                "type": "voice_error",
-                "error": "Aufnahme zu kurz.",
-            })
+            await send_fn(
+                {
+                    "type": "voice_error",
+                    "error": "Aufnahme zu kurz.",
+                }
+            )
             return None
 
-        await send_fn({
-            "type": "voice_status",
-            "status": "processing",
-        })
+        await send_fn(
+            {
+                "type": "voice_status",
+                "status": "processing",
+            }
+        )
 
         try:
             text = await self._transcribe(acc)
 
             if not text or not text.strip():
-                await send_fn({
-                    "type": "transcription",
-                    "text": "",
-                    "final": True,
-                })
-                await send_fn({
-                    "type": "voice_status",
-                    "status": "ready",
-                })
+                await send_fn(
+                    {
+                        "type": "transcription",
+                        "text": "",
+                        "final": True,
+                    }
+                )
+                await send_fn(
+                    {
+                        "type": "voice_status",
+                        "status": "ready",
+                    }
+                )
                 return None
 
-            await send_fn({
-                "type": "transcription",
-                "text": text,
-                "final": True,
-            })
-            await send_fn({
-                "type": "voice_status",
-                "status": "ready",
-            })
+            await send_fn(
+                {
+                    "type": "transcription",
+                    "text": text,
+                    "final": True,
+                }
+            )
+            await send_fn(
+                {
+                    "type": "voice_status",
+                    "status": "ready",
+                }
+            )
 
             log.info("voice_transcription", session_id=session_id, text_length=len(text))
             return text
 
         except Exception as exc:
             log.error("voice_transcription_failed", error=str(exc))
-            await send_fn({
-                "type": "voice_error",
-                "error": f"Transkription fehlgeschlagen: {exc}",
-            })
-            await send_fn({
-                "type": "voice_status",
-                "status": "ready",
-            })
+            await send_fn(
+                {
+                    "type": "voice_error",
+                    "error": f"Transkription fehlgeschlagen: {exc}",
+                }
+            )
+            await send_fn(
+                {
+                    "type": "voice_status",
+                    "status": "ready",
+                }
+            )
             return None
 
     async def _transcribe(self, acc: AudioAccumulator) -> str:
@@ -326,10 +351,14 @@ class VoiceWebSocketBridge:
             try:
                 proc = await asyncio.create_subprocess_exec(
                     "ffmpeg",
-                    "-i", input_path,
-                    "-ar", str(acc.sample_rate),
-                    "-ac", "1",
-                    "-f", "wav",
+                    "-i",
+                    input_path,
+                    "-ar",
+                    str(acc.sample_rate),
+                    "-ac",
+                    "1",
+                    "-f",
+                    "wav",
                     "-y",
                     wav_path,
                     stdout=asyncio.subprocess.PIPE,

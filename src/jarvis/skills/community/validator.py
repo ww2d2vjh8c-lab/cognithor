@@ -30,52 +30,88 @@ log = get_logger(__name__)
 # Bekannte Malware-Domains (Content-Safety-Check)
 # ============================================================================
 
-_MALWARE_DOMAINS: frozenset[str] = frozenset({
-    "coinhive.com", "cryptoloot.pro", "coin-hive.com",
-    "minero.cc", "authedmine.com",
-})
+_MALWARE_DOMAINS: frozenset[str] = frozenset(
+    {
+        "coinhive.com",
+        "cryptoloot.pro",
+        "coin-hive.com",
+        "minero.cc",
+        "authedmine.com",
+    }
+)
 
 
 # ============================================================================
 # Bekannte MCP-Tools (48 Tools ueber 10 Module)
 # ============================================================================
 
-KNOWN_MCP_TOOLS: frozenset[str] = frozenset({
-    # Filesystem
-    "read_file", "write_file", "edit_file", "list_directory", "delete_file",
-    # Shell
-    "exec_command", "shell_exec", "shell",
-    # Web
-    "web_search", "web_fetch", "web_news_search", "search_and_read",
-    "browse_url", "fetch_url", "http_request",
-    # Media
-    "media_analyze_image", "media_extract_text", "media_transcribe_audio",
-    "media_tts", "media_convert_audio", "media_resize_image",
-    "document_export",
-    # Memory
-    "save_to_memory", "search_memory", "get_core_memory",
-    "get_recent_episodes", "memory_stats",
-    # Vault
-    "get_entity", "add_entity", "add_relation", "search",
-    # Synthesis
-    # (synthesis tools handled via media/web)
-    # Code
-    "run_python", "analyze_code",
-    # Skills
-    "create_skill", "list_skills", "search_procedures", "record_procedure_usage",
-    # Browser
-    "browse_page_info", "browse_screenshot",
-    # Jobs
-    "schedule_job", "list_jobs",
-    # Email
-    "email_send",
-})
+KNOWN_MCP_TOOLS: frozenset[str] = frozenset(
+    {
+        # Filesystem
+        "read_file",
+        "write_file",
+        "edit_file",
+        "list_directory",
+        "delete_file",
+        # Shell
+        "exec_command",
+        "shell_exec",
+        "shell",
+        # Web
+        "web_search",
+        "web_fetch",
+        "web_news_search",
+        "search_and_read",
+        "browse_url",
+        "fetch_url",
+        "http_request",
+        # Media
+        "media_analyze_image",
+        "media_extract_text",
+        "media_transcribe_audio",
+        "media_tts",
+        "media_convert_audio",
+        "media_resize_image",
+        "document_export",
+        # Memory
+        "save_to_memory",
+        "search_memory",
+        "get_core_memory",
+        "get_recent_episodes",
+        "memory_stats",
+        # Vault
+        "get_entity",
+        "add_entity",
+        "add_relation",
+        "search",
+        # Synthesis
+        # (synthesis tools handled via media/web)
+        # Code
+        "run_python",
+        "analyze_code",
+        # Skills
+        "create_skill",
+        "list_skills",
+        "search_procedures",
+        "record_procedure_usage",
+        # Browser
+        "browse_page_info",
+        "browse_screenshot",
+        # Jobs
+        "schedule_job",
+        "list_jobs",
+        # Email
+        "email_send",
+    }
+)
 
 # RED-Tools die in Community-Skills NIEMALS erlaubt sind
-RED_TOOLS: frozenset[str] = frozenset({
-    "email_send",
-    "delete_file",
-})
+RED_TOOLS: frozenset[str] = frozenset(
+    {
+        "email_send",
+        "delete_file",
+    }
+)
 
 # Tools die in Skill-Bodies als Referenz erkannt werden
 _TOOL_MENTION_PATTERN = re.compile(
@@ -183,13 +219,20 @@ class SkillValidator:
 
     # Pflichtfelder im YAML-Frontmatter
     REQUIRED_FRONTMATTER_FIELDS: list[str] = [
-        "name", "description", "trigger_keywords", "tools_required",
+        "name",
+        "description",
+        "trigger_keywords",
+        "tools_required",
     ]
 
     # Pflichtfelder im Manifest
     REQUIRED_MANIFEST_FIELDS: list[str] = [
-        "name", "version", "description", "author_github",
-        "tools_required", "content_hash",
+        "name",
+        "version",
+        "description",
+        "author_github",
+        "tools_required",
+        "content_hash",
     ]
 
     # Name-Format: lowercase, Bindestriche erlaubt
@@ -253,16 +296,16 @@ class SkillValidator:
         # Check 5: Manifest Integrity
         if manifest is not None:
             checks.append(
-                self._check_manifest_integrity(
-                    manifest, skill_md, existing_names or set()
-                )
+                self._check_manifest_integrity(manifest, skill_md, existing_names or set())
             )
         else:
-            checks.append(CheckResult(
-                check_name="manifest_integrity",
-                passed=True,
-                warnings=["Kein Manifest vorhanden — Check uebersprungen"],
-            ))
+            checks.append(
+                CheckResult(
+                    check_name="manifest_integrity",
+                    passed=True,
+                    warnings=["Kein Manifest vorhanden — Check uebersprungen"],
+                )
+            )
 
         all_passed = all(c.passed for c in checks)
         result = ValidationResult(
@@ -286,7 +329,9 @@ class SkillValidator:
     # ====================================================================
 
     def _check_syntax(
-        self, frontmatter: dict[str, Any], skill_name: str,
+        self,
+        frontmatter: dict[str, Any],
+        skill_name: str,
     ) -> CheckResult:
         errors: list[str] = []
         warnings: list[str] = []
@@ -313,9 +358,7 @@ class SkillValidator:
                 if tool not in self._known_tools:
                     errors.append(f"Unbekanntes Tool in tools_required: '{tool}'")
                 if tool in RED_TOOLS:
-                    errors.append(
-                        f"RED-Tool '{tool}' ist in Community-Skills nicht erlaubt"
-                    )
+                    errors.append(f"RED-Tool '{tool}' ist in Community-Skills nicht erlaubt")
         elif tools:
             errors.append("tools_required muss eine Liste sein")
 
@@ -327,9 +370,7 @@ class SkillValidator:
         # Description Laenge
         desc = frontmatter.get("description", "")
         if isinstance(desc, str) and len(desc) > 200:
-            warnings.append(
-                f"description ist {len(desc)} Zeichen lang (max 200 empfohlen)"
-            )
+            warnings.append(f"description ist {len(desc)} Zeichen lang (max 200 empfohlen)")
 
         return CheckResult(
             check_name="yaml_syntax",
@@ -410,14 +451,17 @@ class SkillValidator:
         # ORANGE/RED-Tools in tools_required brauchen Begruendung
         for tool in declared_tools:
             if tool in RED_TOOLS:
-                errors.append(
-                    f"RED-Tool '{tool}' darf in Community-Skills nicht genutzt werden"
-                )
-            elif tool in {"exec_command", "shell_exec", "shell", "run_python",
-                          "fetch_url", "http_request"}:
+                errors.append(f"RED-Tool '{tool}' darf in Community-Skills nicht genutzt werden")
+            elif tool in {
+                "exec_command",
+                "shell_exec",
+                "shell",
+                "run_python",
+                "fetch_url",
+                "http_request",
+            }:
                 warnings.append(
-                    f"ORANGE/YELLOW-Tool '{tool}' in tools_required — "
-                    f"erfordert besonderen Review"
+                    f"ORANGE/YELLOW-Tool '{tool}' in tools_required — erfordert besonderen Review"
                 )
 
         return CheckResult(
@@ -471,9 +515,7 @@ class SkillValidator:
         # Kodierte Payloads (Base64-Bloecke > 100 Zeichen)
         b64_blocks = re.findall(r"[A-Za-z0-9+/]{100,}={0,2}", body)
         if b64_blocks:
-            warnings.append(
-                f"{len(b64_blocks)} verdaechtige(r) Base64-Block(s) im Body"
-            )
+            warnings.append(f"{len(b64_blocks)} verdaechtige(r) Base64-Block(s) im Body")
 
         return CheckResult(
             check_name="content_safety",
@@ -522,9 +564,7 @@ class SkillValidator:
 
         # Name-Format
         if name and not self.NAME_PATTERN.match(name):
-            errors.append(
-                f"Manifest-Name '{name}' entspricht nicht dem Format"
-            )
+            errors.append(f"Manifest-Name '{name}' entspricht nicht dem Format")
 
         return CheckResult(
             check_name="manifest_integrity",

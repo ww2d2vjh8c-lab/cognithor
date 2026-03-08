@@ -161,8 +161,10 @@ class TestFallback:
 
             mock_load.assert_called_once()
             call_kwargs = mock_load.call_args
-            assert call_kwargs[1].get("repo_or_dir") == VADDetector.SILERO_REPO or \
-                   call_kwargs[0][0] == VADDetector.SILERO_REPO
+            assert (
+                call_kwargs[1].get("repo_or_dir") == VADDetector.SILERO_REPO
+                or call_kwargs[0][0] == VADDetector.SILERO_REPO
+            )
         finally:
             VADDetector.SILERO_MODEL_HASH = original_hash
 

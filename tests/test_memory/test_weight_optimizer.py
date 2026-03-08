@@ -53,7 +53,8 @@ class TestSearchWeightOptimizer:
         # Push one channel heavily
         for _ in range(100):
             self.optimizer.record_outcome(
-                "q", {"vector": 1.0, "bm25": 0.0, "graph": 0.0},
+                "q",
+                {"vector": 1.0, "bm25": 0.0, "graph": 0.0},
                 feedback_score=1.0,
             )
 
@@ -64,7 +65,8 @@ class TestSearchWeightOptimizer:
     def test_zero_feedback_no_update(self):
         initial = self.optimizer.get_optimized_weights()
         self.optimizer.record_outcome(
-            "q", {"vector": 0.5, "bm25": 0.3, "graph": 0.2},
+            "q",
+            {"vector": 0.5, "bm25": 0.3, "graph": 0.2},
             feedback_score=0.0,
         )
         after = self.optimizer.get_optimized_weights()
@@ -72,7 +74,8 @@ class TestSearchWeightOptimizer:
 
     def test_report(self):
         self.optimizer.record_outcome(
-            "q", {"vector": 0.5, "bm25": 0.3, "graph": 0.2},
+            "q",
+            {"vector": 0.5, "bm25": 0.3, "graph": 0.2},
             feedback_score=0.8,
         )
         report = self.optimizer.report()
@@ -97,7 +100,8 @@ class TestSearchWeightOptimizer:
             opt1 = SearchWeightOptimizer(db_path=db_path)
             for _ in range(10):
                 opt1.record_outcome(
-                    "q", {"vector": 0.8, "bm25": 0.1, "graph": 0.1},
+                    "q",
+                    {"vector": 0.8, "bm25": 0.1, "graph": 0.1},
                     feedback_score=0.9,
                 )
             weights1 = opt1.get_optimized_weights()

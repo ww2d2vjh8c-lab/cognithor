@@ -21,7 +21,9 @@ class PlanGraph:
     def __init__(self) -> None:
         self._nodes: dict[str, PlanNode] = {}
         self._edges: dict[str, set[str]] = defaultdict(set)  # node_id -> set of dependent node_ids
-        self._reverse_edges: dict[str, set[str]] = defaultdict(set)  # node_id -> set of dependency node_ids
+        self._reverse_edges: dict[str, set[str]] = defaultdict(
+            set
+        )  # node_id -> set of dependency node_ids
 
     def add_node(self, node: PlanNode) -> None:
         """Fuegt einen Knoten zum Graph hinzu."""

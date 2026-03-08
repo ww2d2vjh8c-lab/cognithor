@@ -68,9 +68,7 @@ class GoogleChatChannel(Channel):
         try:
             from google.oauth2 import service_account  # type: ignore[import-untyped]
         except ImportError:
-            logger.error(
-                "google-auth nicht installiert. pip install google-auth google-api-core"
-            )
+            logger.error("google-auth nicht installiert. pip install google-auth google-api-core")
             return
 
         creds_path = Path(self._credentials_path)
@@ -89,6 +87,7 @@ class GoogleChatChannel(Channel):
 
         try:
             import httpx
+
             self._http_client = httpx.AsyncClient(timeout=30.0)
         except ImportError:
             logger.error("httpx nicht installiert")
@@ -118,6 +117,7 @@ class GoogleChatChannel(Channel):
             return {}
         try:
             from google.auth.transport.requests import Request  # type: ignore[import-untyped]
+
             self._credentials.refresh(Request())
             return {"Authorization": f"Bearer {self._credentials.token}"}
         except Exception as exc:
@@ -140,8 +140,9 @@ class GoogleChatChannel(Channel):
         elif event_type == "CARD_CLICKED":
             await self._handle_card_click(payload)
         elif event_type == "ADDED_TO_SPACE":
-            logger.info("Google Chat: Zu Space hinzugefügt: %s",
-                        payload.get("space", {}).get("name", "?"))
+            logger.info(
+                "Google Chat: Zu Space hinzugefügt: %s", payload.get("space", {}).get("name", "?")
+            )
 
         return None
 
@@ -182,6 +183,7 @@ class GoogleChatChannel(Channel):
                 logger.error("Google Chat: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
@@ -231,13 +233,17 @@ class GoogleChatChannel(Channel):
         try:
             resp = await self._http_client.post(url, headers=headers, json=body)
             if resp.status_code >= 400:
-                logger.error("Google Chat Senden fehlgeschlagen: %s %s",
-                             resp.status_code, resp.text)
+                logger.error(
+                    "Google Chat Senden fehlgeschlagen: %s %s", resp.status_code, resp.text
+                )
         except Exception as exc:
             logger.error("Google Chat Senden fehlgeschlagen: %s", exc)
 
     async def request_approval(
-        self, session_id: str, action: PlannedAction, reason: str,
+        self,
+        session_id: str,
+        action: PlannedAction,
+        reason: str,
     ) -> bool:
         """Fragt den User per Card-Buttons um Erlaubnis."""
         if not self._http_client or not self._credentials:
@@ -251,43 +257,73 @@ class GoogleChatChannel(Channel):
             self._approval_futures[approval_id] = future
 
         card = {
-            "cardsV2": [{
-                "cardId": approval_id,
-                "card": {
-                    "header": {"title": "Genehmigung erforderlich"},
-                    "sections": [{
-                        "widgets": [
-                            {"textParagraph": {"text": f"<b>Tool:</b> {action.tool}"}},
-                            {"textParagraph": {"text": f"<b>Grund:</b> {reason}"}},
-                            {"textParagraph": {
-                                "text": f"<b>Parameter:</b> {json.dumps(action.params)[:200]}"
-                            }},
-                            {"buttonList": {"buttons": [
-                                {
-                                    "text": "Genehmigen",
-                                    "onClick": {"action": {
-                                        "actionMethodName": "jarvis_approve",
-                                        "parameters": [
-                                            {"key": "approval_id", "value": approval_id}
-                                        ],
-                                    }},
-                                    "color": {"red": 0.2, "green": 0.7, "blue": 0.3, "alpha": 1},
-                                },
-                                {
-                                    "text": "Ablehnen",
-                                    "onClick": {"action": {
-                                        "actionMethodName": "jarvis_reject",
-                                        "parameters": [
-                                            {"key": "approval_id", "value": approval_id}
-                                        ],
-                                    }},
-                                    "color": {"red": 0.8, "green": 0.2, "blue": 0.2, "alpha": 1},
-                                },
-                            ]}},
+            "cardsV2": [
+                {
+                    "cardId": approval_id,
+                    "card": {
+                        "header": {"title": "Genehmigung erforderlich"},
+                        "sections": [
+                            {
+                                "widgets": [
+                                    {"textParagraph": {"text": f"<b>Tool:</b> {action.tool}"}},
+                                    {"textParagraph": {"text": f"<b>Grund:</b> {reason}"}},
+                                    {
+                                        "textParagraph": {
+                                            "text": f"<b>Parameter:</b> {json.dumps(action.params)[:200]}"
+                                        }
+                                    },
+                                    {
+                                        "buttonList": {
+                                            "buttons": [
+                                                {
+                                                    "text": "Genehmigen",
+                                                    "onClick": {
+                                                        "action": {
+                                                            "actionMethodName": "jarvis_approve",
+                                                            "parameters": [
+                                                                {
+                                                                    "key": "approval_id",
+                                                                    "value": approval_id,
+                                                                }
+                                                            ],
+                                                        }
+                                                    },
+                                                    "color": {
+                                                        "red": 0.2,
+                                                        "green": 0.7,
+                                                        "blue": 0.3,
+                                                        "alpha": 1,
+                                                    },
+                                                },
+                                                {
+                                                    "text": "Ablehnen",
+                                                    "onClick": {
+                                                        "action": {
+                                                            "actionMethodName": "jarvis_reject",
+                                                            "parameters": [
+                                                                {
+                                                                    "key": "approval_id",
+                                                                    "value": approval_id,
+                                                                }
+                                                            ],
+                                                        }
+                                                    },
+                                                    "color": {
+                                                        "red": 0.8,
+                                                        "green": 0.2,
+                                                        "blue": 0.2,
+                                                        "alpha": 1,
+                                                    },
+                                                },
+                                            ]
+                                        }
+                                    },
+                                ],
+                            }
                         ],
-                    }],
-                },
-            }],
+                    },
+                }
+            ],
         }
 
         # Card wird über Webhook-Antwort gesendet, hier nur Future warten
@@ -309,6 +345,8 @@ class GoogleChatChannel(Channel):
             if text.strip():
                 await self.send(
                     OutgoingMessage(
-                        channel=self.name, text=text, session_id=session_id,
+                        channel=self.name,
+                        text=text,
+                        session_id=session_id,
                     )
                 )

@@ -89,7 +89,8 @@ class TestCorruptHistoryHandling:
 
         plugin = _make_installed_plugin()
         history_file.write_text(
-            json.dumps([plugin.to_dict()], indent=2), encoding="utf-8",
+            json.dumps([plugin.to_dict()], indent=2),
+            encoding="utf-8",
         )
 
         reg._load_install_history()

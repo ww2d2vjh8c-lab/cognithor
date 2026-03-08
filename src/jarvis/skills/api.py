@@ -27,6 +27,7 @@ def _get_store() -> Any:
         # Pfad aus Config lesen, Fallback auf Standard
         try:
             from jarvis.config import load_config
+
             cfg = load_config()
             db_path = getattr(cfg, "marketplace", None)
             if db_path and hasattr(db_path, "db_path") and db_path.db_path:
@@ -54,12 +55,14 @@ try:
 
     class ReviewRequest(_BaseModel):
         """Payload fuer eine Review-Einreichung."""
+
         rating: int
         comment: str = ""
         reviewer_id: str = "anonymous"
 
     class InstallRequest(_BaseModel):
         """Payload fuer eine Installation."""
+
         user_id: str = "default"
         version: str = ""
 
@@ -102,8 +105,11 @@ def _build_router() -> Any:
         """
         store = _get_store()
         results = store.search_listings(
-            query=query, category=category,
-            min_rating=min_rating, sort=sort, limit=limit,
+            query=query,
+            category=category,
+            min_rating=min_rating,
+            sort=sort,
+            limit=limit,
         )
         return {"results": results, "count": len(results)}
 
@@ -128,14 +134,17 @@ def _build_router() -> Any:
     async def get_categories() -> dict:
         """Alle verfuegbaren Kategorien mit Metadaten."""
         from jarvis.skills.marketplace import CATEGORY_INFOS
+
         categories = []
         for cat, info in CATEGORY_INFOS.items():
-            categories.append({
-                "value": cat.value,
-                "display_name": info.display_name,
-                "icon": info.icon,
-                "description": info.description,
-            })
+            categories.append(
+                {
+                    "value": cat.value,
+                    "display_name": info.display_name,
+                    "icon": info.icon,
+                    "description": info.description,
+                }
+            )
         return {"categories": categories}
 
     @router.get("/installed")
@@ -173,7 +182,8 @@ def _build_router() -> Any:
 
     @router.post("/{package_id}/install")
     async def install_skill(
-        package_id: str, body: Optional[InstallRequest] = None,
+        package_id: str,
+        body: Optional[InstallRequest] = None,
     ) -> dict:
         """Installiert einen Skill (zeichnet Installation auf)."""
         store = _get_store()
@@ -186,11 +196,15 @@ def _build_router() -> Any:
 
         store.increment_install_count(package_id)
         store.record_install(
-            package_id=package_id, version=version, user_id=user_id,
+            package_id=package_id,
+            version=version,
+            user_id=user_id,
         )
         log.info(
             "skill_installed",
-            package_id=package_id, user_id=user_id, version=version,
+            package_id=package_id,
+            user_id=user_id,
+            version=version,
         )
         return {"status": "installed", "package_id": package_id}
 
@@ -222,7 +236,8 @@ def _build_router() -> Any:
 
     @router.post("/{package_id}/reviews")
     async def submit_review(
-        package_id: str, body: ReviewRequest,
+        package_id: str,
+        body: ReviewRequest,
     ) -> dict:
         """Review fuer einen Skill einreichen."""
         store = _get_store()
@@ -266,10 +281,12 @@ def _build_community_router() -> Any:
 
     class CommunityInstallRequest(_BaseModel):
         """Payload fuer Community-Skill-Installation."""
+
         user_id: str = "default"
 
     class ReportRequest(_BaseModel):
         """Payload fuer Abuse-Report."""
+
         reporter: str = "anonymous"
         category: str = "other"
         description: str = ""
@@ -277,6 +294,7 @@ def _build_community_router() -> Any:
 
     class CommunityReviewRequest(_BaseModel):
         """Payload fuer Community-Skill-Review."""
+
         rating: int
         comment: str = ""
         reviewer_id: str = "anonymous"
@@ -289,8 +307,10 @@ def _build_community_router() -> Any:
     def _get_client() -> Any:
         if _client_holder["client"] is None:
             from jarvis.skills.community.client import CommunityRegistryClient
+
             try:
                 from jarvis.config import load_config
+
                 cfg = load_config()
                 cm = getattr(cfg, "community_marketplace", None)
                 registry_url = cm.registry_url if cm else ""
@@ -349,7 +369,9 @@ def _build_community_router() -> Any:
             recalls = store.get_remote_recalls()
         except Exception as exc:
             log.error("community_recalls_fetch_failed", error=str(exc))
-            raise HTTPException(status_code=500, detail="Recalls konnten nicht geladen werden") from exc
+            raise HTTPException(
+                status_code=500, detail="Recalls konnten nicht geladen werden"
+            ) from exc
         return {"recalls": recalls, "count": len(recalls)}
 
     # ------------------------------------------------------------------
@@ -374,6 +396,7 @@ def _build_community_router() -> Any:
         """Registry manuell synchronisieren."""
         try:
             from jarvis.skills.community.sync import RegistrySync
+
             sync = RegistrySync(marketplace_store=_get_store())
             result = await sync.sync_once()
         except Exception as exc:
@@ -420,7 +443,8 @@ def _build_community_router() -> Any:
 
     @cr.post("/{name}/install")
     async def install_community_skill(
-        name: str, body: CommunityInstallRequest | None = None,
+        name: str,
+        body: CommunityInstallRequest | None = None,
     ) -> dict:
         """Installiert einen Community-Skill."""
         try:
@@ -432,10 +456,17 @@ def _build_community_router() -> Any:
 
         if not result.success:
             import json as _json
-            raise HTTPException(status_code=400, detail=_json.dumps({
-                "errors": result.errors,
-                "warnings": result.warnings,
-            }, ensure_ascii=False))
+
+            raise HTTPException(
+                status_code=400,
+                detail=_json.dumps(
+                    {
+                        "errors": result.errors,
+                        "warnings": result.warnings,
+                    },
+                    ensure_ascii=False,
+                ),
+            )
 
         # In MarketplaceStore tracken
         try:
@@ -496,7 +527,8 @@ def _build_community_router() -> Any:
 
     @cr.post("/{name}/review")
     async def review_community_skill(
-        name: str, body: CommunityReviewRequest,
+        name: str,
+        body: CommunityReviewRequest,
     ) -> dict:
         """Review fuer einen Community-Skill abgeben."""
         store = _get_store()

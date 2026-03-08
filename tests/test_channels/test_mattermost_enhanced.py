@@ -18,7 +18,9 @@ from jarvis.models import OutgoingMessage, PlannedAction
 
 @pytest.fixture
 def ch() -> MattermostChannel:
-    return MattermostChannel(url="https://mm.example.com", token="test-token", default_channel="ch1")
+    return MattermostChannel(
+        url="https://mm.example.com", token="test-token", default_channel="ch1"
+    )
 
 
 class TestMattermostProperties:
@@ -61,13 +63,15 @@ class TestMattermostOnMessage:
         mock_resp.json.return_value = {"id": "post1"}
         ch._http_client.post = AsyncMock(return_value=mock_resp)
 
-        await ch._on_message({
-            "user_id": "u1",
-            "message": "Hello",
-            "channel_id": "ch1",
-            "id": "p1",
-            "root_id": "",
-        })
+        await ch._on_message(
+            {
+                "user_id": "u1",
+                "message": "Hello",
+                "channel_id": "ch1",
+                "id": "p1",
+                "root_id": "",
+            }
+        )
         ch._handler.assert_called_once()
 
 
@@ -96,21 +100,21 @@ class TestMattermostOnReaction:
 class TestMattermostHandleWsEvent:
     @pytest.mark.asyncio
     async def test_posted_event(self, ch: MattermostChannel) -> None:
-        ch._handler = AsyncMock(
-            return_value=OutgoingMessage(channel="mattermost", text="OK")
-        )
+        ch._handler = AsyncMock(return_value=OutgoingMessage(channel="mattermost", text="OK"))
         ch._http_client = AsyncMock()
         mock_resp = MagicMock()
         mock_resp.status_code = 201
         mock_resp.json.return_value = {"id": "p1"}
         ch._http_client.post = AsyncMock(return_value=mock_resp)
 
-        post_data = json.dumps({
-            "user_id": "u1",
-            "message": "test",
-            "channel_id": "ch1",
-            "id": "p1",
-        })
+        post_data = json.dumps(
+            {
+                "user_id": "u1",
+                "message": "test",
+                "channel_id": "ch1",
+                "id": "p1",
+            }
+        )
         await ch._handle_ws_event({"event": "posted", "data": {"post": post_data}})
         ch._handler.assert_called_once()
 
@@ -180,7 +184,8 @@ class TestMattermostSend:
         ch._http_client.post = AsyncMock(return_value=mock_resp)
 
         msg = OutgoingMessage(
-            channel="mattermost", text="hello",
+            channel="mattermost",
+            text="hello",
             metadata={"channel_id": "ch2", "root_id": "r1"},
         )
         await ch.send(msg)

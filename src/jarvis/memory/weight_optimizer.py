@@ -105,7 +105,10 @@ class SearchWeightOptimizer:
 
     @staticmethod
     def _normalize_weights(
-        w_vector: float, w_bm25: float, w_graph: float, min_w: float = 0.05,
+        w_vector: float,
+        w_bm25: float,
+        w_graph: float,
+        min_w: float = 0.05,
     ) -> tuple[float, float, float]:
         """Normalisiert Gewichte: min min_w je Kanal, Summe = 1.0.
 
@@ -184,16 +187,15 @@ class SearchWeightOptimizer:
                 self._w_vector = (
                     effective_alpha * observed_v + (1 - effective_alpha) * self._w_vector
                 )
-                self._w_bm25 = (
-                    effective_alpha * observed_b + (1 - effective_alpha) * self._w_bm25
-                )
-                self._w_graph = (
-                    effective_alpha * observed_g + (1 - effective_alpha) * self._w_graph
-                )
+                self._w_bm25 = effective_alpha * observed_b + (1 - effective_alpha) * self._w_bm25
+                self._w_graph = effective_alpha * observed_g + (1 - effective_alpha) * self._w_graph
 
                 # Normalize
                 self._w_vector, self._w_bm25, self._w_graph = self._normalize_weights(
-                    self._w_vector, self._w_bm25, self._w_graph, self.MIN_WEIGHT,
+                    self._w_vector,
+                    self._w_bm25,
+                    self._w_graph,
+                    self.MIN_WEIGHT,
                 )
                 self._save_weights()
 

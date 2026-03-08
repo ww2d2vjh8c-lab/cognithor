@@ -132,7 +132,9 @@ class OpenAICompatibleEmbeddingProvider(EmbeddingProvider):
     Funktioniert mit: OpenAI, Mistral, GitHub Models, Bedrock, Together, etc.
     """
 
-    def __init__(self, api_key: str, base_url: str = "https://api.openai.com/v1", timeout: float = 30.0) -> None:
+    def __init__(
+        self, api_key: str, base_url: str = "https://api.openai.com/v1", timeout: float = 30.0
+    ) -> None:
         self._api_key = api_key
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
@@ -210,16 +212,12 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         client = await self._get_client()
         url = f"{self.API_URL}/models/{model}:batchEmbedContents"
         requests = [
-            {"model": f"models/{model}", "content": {"parts": [{"text": t}]}}
-            for t in texts
+            {"model": f"models/{model}", "content": {"parts": [{"text": t}]}} for t in texts
         ]
         resp = await client.post(url, json={"requests": requests})
         resp.raise_for_status()
         data = resp.json()
-        return [
-            emb.get("values", [])
-            for emb in data.get("embeddings", [])
-        ]
+        return [emb.get("values", []) for emb in data.get("embeddings", [])]
 
     async def close(self) -> None:
         if self._client and not self._client.is_closed:
@@ -258,7 +256,17 @@ class NullEmbeddingProvider(EmbeddingProvider):
 _OPENAI_COMPAT_EMBEDDING_BACKENDS = {"openai", "mistral", "github", "bedrock"}
 
 # Backends ohne eigene Embedding-API
-_NO_EMBEDDING_BACKENDS = {"anthropic", "groq", "deepseek", "together", "openrouter", "xai", "cerebras", "huggingface", "moonshot"}
+_NO_EMBEDDING_BACKENDS = {
+    "anthropic",
+    "groq",
+    "deepseek",
+    "together",
+    "openrouter",
+    "xai",
+    "cerebras",
+    "huggingface",
+    "moonshot",
+}
 
 
 def _get_api_key_and_url(config: JarvisConfig, backend: str) -> tuple[str, str]:
@@ -554,7 +562,8 @@ class EmbeddingClient:
         if failed:
             logger.warning(
                 "embed_batch: %d/%d Embeddings fehlgeschlagen (None)",
-                failed, len(texts),
+                failed,
+                len(texts),
             )
         return results
 

@@ -1065,7 +1065,7 @@ class BudgetStatus(BaseModel, frozen=True):
     """Budget-Pruefungsergebnis."""
 
     ok: bool = True
-    daily_remaining: float = -1.0   # -1 = kein Limit
+    daily_remaining: float = -1.0  # -1 = kein Limit
     monthly_remaining: float = -1.0
     warning: str = ""
 
@@ -1142,7 +1142,7 @@ class PolicyProposal(BaseModel):
 
     id: int = 0  # SQLite auto-increment ID (0 = noch nicht persistiert)
     timestamp: datetime = Field(default_factory=_utc_now)
-    category: str = ""     # "error_rate", "budget", "recurring_error", "tool_latency", "unused_tool"
+    category: str = ""  # "error_rate", "budget", "recurring_error", "tool_latency", "unused_tool"
     title: str = ""
     description: str = ""
     evidence: dict[str, Any] = Field(default_factory=dict)
@@ -1155,7 +1155,7 @@ class PolicyChange(BaseModel, frozen=True):
     """Genehmigte Policy-Aenderung."""
 
     proposal_id: int
-    category: str = ""     # Bestimmt Ziel-Datei: {category}.yaml
+    category: str = ""  # Bestimmt Ziel-Datei: {category}.yaml
     title: str = ""
     change: dict[str, Any] = Field(default_factory=dict)  # Die eigentliche Aenderung
     timestamp: datetime = Field(default_factory=_utc_now)

@@ -69,9 +69,7 @@ class TestIRCChannel:
         ch._writer.drain = AsyncMock()
 
         # Nachricht ohne Nick-Mention → ignoriert
-        await ch._on_privmsg(
-            ":user!u@host", [":user!u@host", "PRIVMSG", "#test", ":Hello world"]
-        )
+        await ch._on_privmsg(":user!u@host", [":user!u@host", "PRIVMSG", "#test", ":Hello world"])
         ch._handler.assert_not_called()
 
     @pytest.mark.asyncio

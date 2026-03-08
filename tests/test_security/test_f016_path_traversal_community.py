@@ -47,7 +47,8 @@ class TestInstallPathTraversal:
 
         with patch.object(client, "_fetch_text", new_callable=AsyncMock, return_value="# Evil"):
             with patch.object(
-                client._validator, "validate",
+                client._validator,
+                "validate",
                 return_value=ValidationResult(valid=True),
             ):
                 result = await client.install("../../evil")
@@ -62,7 +63,8 @@ class TestInstallPathTraversal:
 
         with patch.object(client, "_fetch_text", new_callable=AsyncMock, return_value="# Test"):
             with patch.object(
-                client._validator, "validate",
+                client._validator,
+                "validate",
                 return_value=ValidationResult(valid=True),
             ):
                 result = await client.install("foo/../../bar")
@@ -77,7 +79,8 @@ class TestInstallPathTraversal:
 
         with patch.object(client, "_fetch_text", new_callable=AsyncMock, return_value="# Skill"):
             with patch.object(
-                client._validator, "validate",
+                client._validator,
+                "validate",
                 return_value=ValidationResult(valid=True),
             ):
                 result = await client.install("my-cool-skill")
@@ -91,12 +94,13 @@ class TestInstallPathTraversal:
         client = _make_client(tmp_path)
         _populate_registry(client, "../escape")
 
-        target = (tmp_path / "escape")
+        target = tmp_path / "escape"
         assert not target.exists()
 
         with patch.object(client, "_fetch_text", new_callable=AsyncMock, return_value="# Evil"):
             with patch.object(
-                client._validator, "validate",
+                client._validator,
+                "validate",
                 return_value=ValidationResult(valid=True),
             ):
                 result = await client.install("../escape")
@@ -163,7 +167,8 @@ class TestEdgeCases:
 
         with patch.object(client, "_fetch_text", new_callable=AsyncMock, return_value="# Evil"):
             with patch.object(
-                client._validator, "validate",
+                client._validator,
+                "validate",
                 return_value=ValidationResult(valid=True),
             ):
                 result = await client.install("..\\..\\evil")
@@ -186,7 +191,8 @@ class TestEdgeCases:
 
         with patch.object(client, "_fetch_text", new_callable=AsyncMock, return_value="# Evil"):
             with patch.object(
-                client._validator, "validate",
+                client._validator,
+                "validate",
                 return_value=ValidationResult(valid=True),
             ):
                 result = await client.install("..")

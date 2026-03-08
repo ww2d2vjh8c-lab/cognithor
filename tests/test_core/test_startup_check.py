@@ -197,7 +197,10 @@ class TestPipInstall:
         assert success is False
         assert "No matching distribution" in stderr
 
-    @patch("jarvis.core.startup_check.subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="pip", timeout=300))
+    @patch(
+        "jarvis.core.startup_check.subprocess.run",
+        side_effect=subprocess.TimeoutExpired(cmd="pip", timeout=300),
+    )
     def test_timeout(self, _mock: MagicMock) -> None:
         success, stderr = _pip_install(["slow-package"])
         assert success is False
@@ -328,7 +331,10 @@ class TestCheckOllama:
     @patch.object(StartupChecker, "_find_ollama", return_value="/usr/local/bin/ollama")
     @patch.object(StartupChecker, "_ollama_is_running", return_value=False)
     def test_ollama_auto_started(
-        self, _mock_run: MagicMock, _mock_find: MagicMock, _mock_start: MagicMock,
+        self,
+        _mock_run: MagicMock,
+        _mock_find: MagicMock,
+        _mock_start: MagicMock,
         mock_config: MagicMock,
     ) -> None:
         checker = StartupChecker(mock_config, auto_install=True)
@@ -350,7 +356,10 @@ class TestCheckOllama:
     @patch.object(StartupChecker, "_find_ollama", return_value="/usr/bin/ollama")
     @patch.object(StartupChecker, "_ollama_is_running", return_value=False)
     def test_ollama_start_failed(
-        self, _mock_run: MagicMock, _mock_find: MagicMock, _mock_start: MagicMock,
+        self,
+        _mock_run: MagicMock,
+        _mock_find: MagicMock,
+        _mock_start: MagicMock,
         mock_config: MagicMock,
     ) -> None:
         checker = StartupChecker(mock_config, auto_install=True)
@@ -386,7 +395,10 @@ class TestCheckModels:
     @patch.object(StartupChecker, "_find_ollama", return_value="/usr/bin/ollama")
     @patch("jarvis.core.startup_check._http_get_json")
     def test_missing_model_auto_pulled(
-        self, mock_http: MagicMock, _mock_find: MagicMock, mock_pull: MagicMock,
+        self,
+        mock_http: MagicMock,
+        _mock_find: MagicMock,
+        mock_pull: MagicMock,
         mock_config: MagicMock,
     ) -> None:
         checker = StartupChecker(mock_config, auto_install=True)
@@ -400,7 +412,10 @@ class TestCheckModels:
     @patch.object(StartupChecker, "_find_ollama", return_value="/usr/bin/ollama")
     @patch("jarvis.core.startup_check._http_get_json")
     def test_model_pull_failed(
-        self, mock_http: MagicMock, _mock_find: MagicMock, mock_pull: MagicMock,
+        self,
+        mock_http: MagicMock,
+        _mock_find: MagicMock,
+        mock_pull: MagicMock,
         mock_config: MagicMock,
     ) -> None:
         checker = StartupChecker(mock_config, auto_install=True)
@@ -451,9 +466,18 @@ class TestCheckDirectories:
     def test_existing_dirs_pass(self, checker: StartupChecker, tmp_path: Path) -> None:
         home = tmp_path / "jarvis_test"
         for sub in [
-            "memory", "memory/episodes", "memory/knowledge", "memory/procedures",
-            "memory/sessions", "index", "logs", "cache", "cache/web_search",
-            "vault", "policies", "skills",
+            "memory",
+            "memory/episodes",
+            "memory/knowledge",
+            "memory/procedures",
+            "memory/sessions",
+            "index",
+            "logs",
+            "cache",
+            "cache/web_search",
+            "vault",
+            "policies",
+            "skills",
         ]:
             (home / sub).mkdir(parents=True, exist_ok=True)
         checker._config.jarvis_home = home
@@ -514,7 +538,9 @@ class TestModelInstalled:
         assert StartupChecker._model_installed("llama3:70b", ["qwen3:8b"]) is False
 
     def test_base_name_without_tag(self) -> None:
-        assert StartupChecker._model_installed("nomic-embed-text", ["nomic-embed-text:latest"]) is True
+        assert (
+            StartupChecker._model_installed("nomic-embed-text", ["nomic-embed-text:latest"]) is True
+        )
 
     def test_tag_prefix_match(self) -> None:
         assert StartupChecker._model_installed("qwen3:8b", ["qwen3:8b-q4_0"]) is True
@@ -528,12 +554,24 @@ class TestModelInstalled:
 class TestCheckAndFixAll:
     """Tests for the top-level check_and_fix_all orchestration."""
 
-    @patch.object(StartupChecker, "check_node_modules", return_value=StartupReport(checks_passed=["node ok"]))
+    @patch.object(
+        StartupChecker, "check_node_modules", return_value=StartupReport(checks_passed=["node ok"])
+    )
     @patch.object(StartupChecker, "_find_repo_root", return_value="/repo")
-    @patch.object(StartupChecker, "check_directories", return_value=StartupReport(checks_passed=["dirs ok"]))
-    @patch.object(StartupChecker, "check_models", return_value=StartupReport(checks_passed=["models ok"]))
-    @patch.object(StartupChecker, "check_ollama", return_value=StartupReport(checks_passed=["ollama ok"]))
-    @patch.object(StartupChecker, "check_python_packages", return_value=StartupReport(checks_passed=["pkgs ok"]))
+    @patch.object(
+        StartupChecker, "check_directories", return_value=StartupReport(checks_passed=["dirs ok"])
+    )
+    @patch.object(
+        StartupChecker, "check_models", return_value=StartupReport(checks_passed=["models ok"])
+    )
+    @patch.object(
+        StartupChecker, "check_ollama", return_value=StartupReport(checks_passed=["ollama ok"])
+    )
+    @patch.object(
+        StartupChecker,
+        "check_python_packages",
+        return_value=StartupReport(checks_passed=["pkgs ok"]),
+    )
     def test_all_pass(
         self,
         _pkgs: MagicMock,
@@ -583,12 +621,28 @@ class TestCheckAndFixAll:
         report = checker.check_and_fix_all()
         assert any("Ollama check failed" in e for e in report.errors)
 
-    @patch.object(StartupChecker, "check_node_modules", return_value=StartupReport(fixes_applied=["npm install"]))
+    @patch.object(
+        StartupChecker,
+        "check_node_modules",
+        return_value=StartupReport(fixes_applied=["npm install"]),
+    )
     @patch.object(StartupChecker, "_find_repo_root", return_value="/repo")
-    @patch.object(StartupChecker, "check_directories", return_value=StartupReport(fixes_applied=["mkdir"]))
-    @patch.object(StartupChecker, "check_models", return_value=StartupReport(fixes_applied=["pulled qwen3:8b"]))
-    @patch.object(StartupChecker, "check_ollama", return_value=StartupReport(fixes_applied=["started"]))
-    @patch.object(StartupChecker, "check_python_packages", return_value=StartupReport(fixes_applied=["installed numpy"]))
+    @patch.object(
+        StartupChecker, "check_directories", return_value=StartupReport(fixes_applied=["mkdir"])
+    )
+    @patch.object(
+        StartupChecker,
+        "check_models",
+        return_value=StartupReport(fixes_applied=["pulled qwen3:8b"]),
+    )
+    @patch.object(
+        StartupChecker, "check_ollama", return_value=StartupReport(fixes_applied=["started"])
+    )
+    @patch.object(
+        StartupChecker,
+        "check_python_packages",
+        return_value=StartupReport(fixes_applied=["installed numpy"]),
+    )
     def test_fixes_aggregated(
         self,
         _pkgs: MagicMock,
@@ -641,6 +695,9 @@ class TestPullModel:
         mock_run.return_value = MagicMock(returncode=1)
         assert StartupChecker._pull_model("qwen3:8b", "/usr/bin/ollama") is False
 
-    @patch("jarvis.core.startup_check.subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 1800))
+    @patch(
+        "jarvis.core.startup_check.subprocess.run",
+        side_effect=subprocess.TimeoutExpired("cmd", 1800),
+    )
     def test_timeout(self, _mock: MagicMock) -> None:
         assert StartupChecker._pull_model("big-model:70b", "/usr/bin/ollama") is False

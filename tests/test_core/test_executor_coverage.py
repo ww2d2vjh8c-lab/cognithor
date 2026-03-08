@@ -37,22 +37,31 @@ def executor(config: JarvisConfig, mock_mcp: AsyncMock) -> Executor:
 
 def _allow(action=None):
     return GateDecision(
-        status=GateStatus.ALLOW, risk_level=RiskLevel.GREEN,
-        reason="OK", original_action=action, policy_name="test",
+        status=GateStatus.ALLOW,
+        risk_level=RiskLevel.GREEN,
+        reason="OK",
+        original_action=action,
+        policy_name="test",
     )
 
 
 def _block(action=None):
     return GateDecision(
-        status=GateStatus.BLOCK, risk_level=RiskLevel.RED,
-        reason="Blocked", original_action=action, policy_name="test",
+        status=GateStatus.BLOCK,
+        risk_level=RiskLevel.RED,
+        reason="Blocked",
+        original_action=action,
+        policy_name="test",
     )
 
 
 def _approve(action=None):
     return GateDecision(
-        status=GateStatus.APPROVE, risk_level=RiskLevel.ORANGE,
-        reason="Needs approval", original_action=action, policy_name="test",
+        status=GateStatus.APPROVE,
+        risk_level=RiskLevel.ORANGE,
+        reason="Needs approval",
+        original_action=action,
+        policy_name="test",
     )
 
 
@@ -162,6 +171,7 @@ class TestTimeoutBehavior:
     @pytest.mark.asyncio
     async def test_timeout_action(self, executor: Executor, mock_mcp: AsyncMock) -> None:
         import asyncio
+
         mock_mcp.call_tool = AsyncMock(side_effect=asyncio.TimeoutError("Tool timed out"))
         action = PlannedAction(tool="slow_tool", params={})
         results = await executor.execute([action], [_allow(action)])
@@ -212,16 +222,22 @@ class TestAgentContext:
 
 def _mask(action=None, masked_params=None):
     return GateDecision(
-        status=GateStatus.MASK, risk_level=RiskLevel.YELLOW,
-        reason="Masked", original_action=action, policy_name="test",
+        status=GateStatus.MASK,
+        risk_level=RiskLevel.YELLOW,
+        reason="Masked",
+        original_action=action,
+        policy_name="test",
         masked_params=masked_params,
     )
 
 
 def _inform(action=None):
     return GateDecision(
-        status=GateStatus.INFORM, risk_level=RiskLevel.YELLOW,
-        reason="Info", original_action=action, policy_name="test",
+        status=GateStatus.INFORM,
+        risk_level=RiskLevel.YELLOW,
+        reason="Info",
+        original_action=action,
+        policy_name="test",
     )
 
 
@@ -235,7 +251,9 @@ class TestRetryBehavior:
 
     @pytest.mark.asyncio
     async def test_retryable_error_retries(
-        self, executor: Executor, mock_mcp: AsyncMock,
+        self,
+        executor: Executor,
+        mock_mcp: AsyncMock,
     ) -> None:
         """ConnectionError is retryable -- should retry and eventually succeed."""
         executor._max_retries = 3
@@ -258,7 +276,9 @@ class TestRetryBehavior:
 
     @pytest.mark.asyncio
     async def test_non_retryable_error_no_retry(
-        self, executor: Executor, mock_mcp: AsyncMock,
+        self,
+        executor: Executor,
+        mock_mcp: AsyncMock,
     ) -> None:
         """ValueError is NOT retryable -- should fail immediately without retry."""
         executor._max_retries = 3
@@ -276,7 +296,9 @@ class TestRetryBehavior:
 
     @pytest.mark.asyncio
     async def test_all_retries_exhausted(
-        self, executor: Executor, mock_mcp: AsyncMock,
+        self,
+        executor: Executor,
+        mock_mcp: AsyncMock,
     ) -> None:
         """All attempts raise ConnectionError -> final error result."""
         executor._max_retries = 3
@@ -297,7 +319,9 @@ class TestRetryBehavior:
 
     @pytest.mark.asyncio
     async def test_timeout_error_retried(
-        self, executor: Executor, mock_mcp: AsyncMock,
+        self,
+        executor: Executor,
+        mock_mcp: AsyncMock,
     ) -> None:
         """asyncio.TimeoutError is retryable -- should retry and succeed."""
         import asyncio as _asyncio
@@ -328,7 +352,9 @@ class TestRetryBehavior:
 class TestOutputTruncation:
     @pytest.mark.asyncio
     async def test_long_output_truncated(
-        self, executor: Executor, mock_mcp: AsyncMock,
+        self,
+        executor: Executor,
+        mock_mcp: AsyncMock,
     ) -> None:
         """Tool output exceeding max_output_chars is truncated."""
         big_content = "X" * 50_000
@@ -355,7 +381,9 @@ class TestOutputTruncation:
 class TestMaskStatus:
     @pytest.mark.asyncio
     async def test_mask_uses_masked_params(
-        self, executor: Executor, mock_mcp: AsyncMock,
+        self,
+        executor: Executor,
+        mock_mcp: AsyncMock,
     ) -> None:
         """MASK decision should pass masked_params to the tool instead of original."""
         original_params = {"api_key": "SECRET_123", "query": "hello"}
@@ -381,7 +409,9 @@ class TestMaskStatus:
 class TestInformStatus:
     @pytest.mark.asyncio
     async def test_inform_status_allowed(
-        self, executor: Executor, mock_mcp: AsyncMock,
+        self,
+        executor: Executor,
+        mock_mcp: AsyncMock,
     ) -> None:
         """INFORM decision allows execution just like ALLOW."""
         action = PlannedAction(tool="write_file", params={"path": "/a", "content": "x"})
@@ -420,7 +450,9 @@ class TestNoMCPClient:
 class TestRuntimeMonitorBlock:
     @pytest.mark.asyncio
     async def test_runtime_monitor_blocks(
-        self, config: JarvisConfig, mock_mcp: AsyncMock,
+        self,
+        config: JarvisConfig,
+        mock_mcp: AsyncMock,
     ) -> None:
         """RuntimeMonitor blocking a tool should produce a SecurityBlock error."""
         monitor = MagicMock()
@@ -430,7 +462,9 @@ class TestRuntimeMonitorBlock:
         monitor.check_tool_call = MagicMock(return_value=security_event)
 
         exec_with_monitor = Executor(
-            config, mcp_client=mock_mcp, runtime_monitor=monitor,
+            config,
+            mcp_client=mock_mcp,
+            runtime_monitor=monitor,
         )
         action = PlannedAction(tool="exec_command", params={"command": "rm -rf /"})
         results = await exec_with_monitor.execute([action], [_allow(action)])
@@ -451,12 +485,16 @@ class TestRuntimeMonitorBlock:
 class TestAuditLogger:
     @pytest.mark.asyncio
     async def test_audit_logger_called_on_success(
-        self, config: JarvisConfig, mock_mcp: AsyncMock,
+        self,
+        config: JarvisConfig,
+        mock_mcp: AsyncMock,
     ) -> None:
         """On successful tool execution, audit_logger.log_tool_call is called with success=True."""
         audit = MagicMock()
         exec_with_audit = Executor(
-            config, mcp_client=mock_mcp, audit_logger=audit,
+            config,
+            mcp_client=mock_mcp,
+            audit_logger=audit,
         )
         action = PlannedAction(tool="list_directory", params={"path": "/tmp"})
         results = await exec_with_audit.execute([action], [_allow(action)])
@@ -469,14 +507,18 @@ class TestAuditLogger:
 
     @pytest.mark.asyncio
     async def test_audit_logger_called_on_failure(
-        self, config: JarvisConfig, mock_mcp: AsyncMock,
+        self,
+        config: JarvisConfig,
+        mock_mcp: AsyncMock,
     ) -> None:
         """On failed tool execution, audit_logger.log_tool_call is called with success=False."""
         audit = MagicMock()
         mock_mcp_fail = AsyncMock()
         mock_mcp_fail.call_tool = AsyncMock(side_effect=ValueError("bad"))
         exec_with_audit = Executor(
-            config, mcp_client=mock_mcp_fail, audit_logger=audit,
+            config,
+            mcp_client=mock_mcp_fail,
+            audit_logger=audit,
         )
         action = PlannedAction(tool="bad_tool", params={})
         results = await exec_with_audit.execute([action], [_allow(action)])
@@ -495,14 +537,18 @@ class TestAuditLogger:
 class TestGapDetector:
     @pytest.mark.asyncio
     async def test_gap_detector_unknown_tool(
-        self, config: JarvisConfig, mock_mcp: AsyncMock,
+        self,
+        config: JarvisConfig,
+        mock_mcp: AsyncMock,
     ) -> None:
         """Non-retryable error -> gap_detector.report_unknown_tool is called."""
         gap = MagicMock()
         mock_mcp_fail = AsyncMock()
         mock_mcp_fail.call_tool = AsyncMock(side_effect=ValueError("not found"))
         exec_with_gap = Executor(
-            config, mcp_client=mock_mcp_fail, gap_detector=gap,
+            config,
+            mcp_client=mock_mcp_fail,
+            gap_detector=gap,
         )
         action = PlannedAction(tool="unknown_tool", params={})
         results = await exec_with_gap.execute([action], [_allow(action)])
@@ -513,7 +559,9 @@ class TestGapDetector:
 
     @pytest.mark.asyncio
     async def test_gap_detector_repeated_failure(
-        self, config: JarvisConfig, mock_mcp: AsyncMock,
+        self,
+        config: JarvisConfig,
+        mock_mcp: AsyncMock,
     ) -> None:
         """All retries exhausted -> gap_detector.report_repeated_failure is called."""
         gap = MagicMock()
@@ -522,7 +570,9 @@ class TestGapDetector:
             side_effect=ConnectionError("keep failing"),
         )
         exec_with_gap = Executor(
-            config, mcp_client=mock_mcp_fail, gap_detector=gap,
+            config,
+            mcp_client=mock_mcp_fail,
+            gap_detector=gap,
         )
         exec_with_gap._max_retries = 3
         exec_with_gap._base_delay = 0.001
@@ -543,7 +593,9 @@ class TestGapDetector:
 class TestWorkspaceInjection:
     @pytest.mark.asyncio
     async def test_workspace_tool_gets_working_dir(
-        self, config: JarvisConfig, mock_mcp: AsyncMock,
+        self,
+        config: JarvisConfig,
+        mock_mcp: AsyncMock,
     ) -> None:
         """exec_command with agent workspace context -> working_dir injected."""
         exec_ws = Executor(config, mcp_client=mock_mcp)

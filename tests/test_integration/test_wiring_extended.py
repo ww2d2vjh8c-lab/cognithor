@@ -95,7 +95,9 @@ class TestGatekeeperAuditIntegration:
         assert len(gate_events) >= 1
 
     def test_gatekeeper_credential_mask_logged(
-        self, audit_logger: AuditLogger, tmp_path: Path,
+        self,
+        audit_logger: AuditLogger,
+        tmp_path: Path,
     ) -> None:
         """Credential-Maskierung wird auditiert."""
         from jarvis.config import JarvisConfig
@@ -140,9 +142,11 @@ class TestPlannerAuditIntegration:
 
         mock_config = MagicMock()
         mock_ollama = AsyncMock()
-        mock_ollama.chat = AsyncMock(return_value={
-            "message": {"content": "Das ist eine direkte Antwort."},
-        })
+        mock_ollama.chat = AsyncMock(
+            return_value={
+                "message": {"content": "Das ist eine direkte Antwort."},
+            }
+        )
 
         mock_router = MagicMock()
         mock_router.select_model.return_value = "test-model"
@@ -229,17 +233,21 @@ class TestReflectorAuditIntegration:
         agent_result = AgentResult(
             response="test",
             total_iterations=3,
-            plans=[ActionPlan(
-                goal="test",
-                reasoning="test reasoning",
-                steps=[_PA(tool="read_file", params={"path": "/tmp/x"})],
-            )],
+            plans=[
+                ActionPlan(
+                    goal="test",
+                    reasoning="test reasoning",
+                    steps=[_PA(tool="read_file", params={"path": "/tmp/x"})],
+                )
+            ],
         )
 
         result = await reflector.reflect(session, mock_wm, agent_result)
 
         tool_events = audit_logger.query(category=AuditCategory.TOOL_CALL)
-        llm_errors = [e for e in tool_events if not e.success and "llm_reflect" in (e.tool_name or "")]
+        llm_errors = [
+            e for e in tool_events if not e.success and "llm_reflect" in (e.tool_name or "")
+        ]
         assert len(llm_errors) >= 1
 
 
@@ -453,7 +461,9 @@ class TestFullAuditTrail:
 
     @pytest.mark.asyncio
     async def test_complete_request_audit_trail(
-        self, audit_logger: AuditLogger, tmp_path: Path,
+        self,
+        audit_logger: AuditLogger,
+        tmp_path: Path,
     ) -> None:
         """Simuliert: User-Input → Gatekeeper → Executor → Audit-Summary."""
         from jarvis.core.executor import Executor
@@ -474,7 +484,8 @@ class TestFullAuditTrail:
         mock_mcp.call_tool = AsyncMock(return_value=result_ok)
 
         executor = Executor(
-            mock_config, mock_mcp,
+            mock_config,
+            mock_mcp,
             runtime_monitor=monitor,
             audit_logger=audit_logger,
         )

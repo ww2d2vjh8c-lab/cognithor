@@ -113,10 +113,7 @@ class BruteForceIndex:
             ]
         else:
             query = _l2_normalize_py(query_vector)
-            scores = [
-                (key, _dot_py(query, vec))
-                for key, vec in self._vectors.items()
-            ]
+            scores = [(key, _dot_py(query, vec)) for key, vec in self._vectors.items()]
 
         scores.sort(key=lambda x: x[1], reverse=True)
         return scores[:top_k]
@@ -175,9 +172,7 @@ class FAISSIndex:
 
     def add(self, key: str, vector: list[float]) -> None:
         if len(vector) != self._dimension:
-            raise ValueError(
-                f"Dimension mismatch: expected {self._dimension}, got {len(vector)}"
-            )
+            raise ValueError(f"Dimension mismatch: expected {self._dimension}, got {len(vector)}")
         vec = _l2_normalize_np(np.array(vector, dtype=np.float32))
 
         # Deduplikation: wenn Key existiert, als geloescht markieren
@@ -220,7 +215,10 @@ class FAISSIndex:
         return results
 
     def _search_inner(
-        self, query: "np.ndarray", fetch_k: int, top_k: int,
+        self,
+        query: "np.ndarray",
+        fetch_k: int,
+        top_k: int,
     ) -> list[tuple[str, float]]:
         distances, indices = self._index.search(query.reshape(1, -1), fetch_k)
 
@@ -258,9 +256,7 @@ class FAISSIndex:
         import faiss  # type: ignore
 
         if not self._vectors:
-            self._index = faiss.IndexHNSWFlat(
-                self._dimension, self._m, faiss.METRIC_INNER_PRODUCT
-            )
+            self._index = faiss.IndexHNSWFlat(self._dimension, self._m, faiss.METRIC_INNER_PRODUCT)
             self._index.hnsw.efConstruction = self._ef_construction
             self._index.hnsw.efSearch = self._ef_search
             self._key_to_pos.clear()
@@ -270,9 +266,7 @@ class FAISSIndex:
             return
 
         # Neuen Index erstellen
-        new_index = faiss.IndexHNSWFlat(
-            self._dimension, self._m, faiss.METRIC_INNER_PRODUCT
-        )
+        new_index = faiss.IndexHNSWFlat(self._dimension, self._m, faiss.METRIC_INNER_PRODUCT)
         new_index.hnsw.efConstruction = self._ef_construction
         new_index.hnsw.efSearch = self._ef_search
 
@@ -326,8 +320,7 @@ def create_vector_index(backend: str = "auto", dimension: int = 768) -> VectorIn
         except ImportError:
             if backend == "faiss":
                 raise ImportError(
-                    "faiss-cpu nicht installiert. "
-                    "Installation: pip install faiss-cpu"
+                    "faiss-cpu nicht installiert. Installation: pip install faiss-cpu"
                 ) from None
             logger.info("faiss-cpu nicht verfuegbar, verwende BruteForceIndex")
 

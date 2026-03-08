@@ -141,7 +141,7 @@ class TestPlanExtraction:
         mock_ollama.chat.return_value = {
             "message": {
                 "role": "assistant",
-                "content": '{"goal": "test", "steps": [{"tool": "list_directory", "params": {"path": "/"}}], "confidence": 0.7}', # noqa: E501
+                "content": '{"goal": "test", "steps": [{"tool": "list_directory", "params": {"path": "/"}}], "confidence": 0.7}',  # noqa: E501
             },
         }
         plan = await planner.plan(

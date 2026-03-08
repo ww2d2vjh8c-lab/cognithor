@@ -13,26 +13,47 @@ from pathlib import Path
 from typing import Any
 
 from jarvis.telemetry.types import (
-    SpanKind, StatusCode, MetricKind,
-    SpanContext, SpanEvent, SpanLink, Span, Trace,
-    MetricDataPoint, HistogramDataPoint, MetricDefinition,
-    generate_trace_id, generate_span_id, _otlp_value,
+    SpanKind,
+    StatusCode,
+    MetricKind,
+    SpanContext,
+    SpanEvent,
+    SpanLink,
+    Span,
+    Trace,
+    MetricDataPoint,
+    HistogramDataPoint,
+    MetricDefinition,
+    generate_trace_id,
+    generate_span_id,
+    _otlp_value,
 )
 from jarvis.telemetry.tracer import (
-    TracerProvider, SpanContextManager,
-    AlwaysOnSampler, AlwaysOffSampler, ProbabilisticSampler, RateBasedSampler,
-    InMemoryProcessor, ConsoleProcessor, BatchProcessor,
-    SpanExporter, OTLPJsonExporter, _NoOpSpan,
+    TracerProvider,
+    SpanContextManager,
+    AlwaysOnSampler,
+    AlwaysOffSampler,
+    ProbabilisticSampler,
+    RateBasedSampler,
+    InMemoryProcessor,
+    ConsoleProcessor,
+    BatchProcessor,
+    SpanExporter,
+    OTLPJsonExporter,
+    _NoOpSpan,
 )
 from jarvis.telemetry.metrics import MetricsProvider
 from jarvis.telemetry.instrumentation import (
-    TelemetryHub, trace, measure,
+    TelemetryHub,
+    trace,
+    measure,
 )
 
 
 # ============================================================================
 # ID Generation Tests
 # ============================================================================
+
 
 class TestIdGeneration:
     def test_trace_id_format(self):
@@ -53,6 +74,7 @@ class TestIdGeneration:
 # ============================================================================
 # SpanContext Tests
 # ============================================================================
+
 
 class TestSpanContext:
     def test_auto_generation(self):
@@ -98,6 +120,7 @@ class TestSpanContext:
 # SpanEvent / SpanLink Tests
 # ============================================================================
 
+
 class TestSpanEvent:
     def test_basic(self):
         e = SpanEvent(name="error", attributes={"code": 500})
@@ -122,6 +145,7 @@ class TestSpanLink:
 # ============================================================================
 # Span Tests
 # ============================================================================
+
 
 class TestSpan:
     def test_basic(self):
@@ -212,6 +236,7 @@ class TestSpan:
 # Trace Tests
 # ============================================================================
 
+
 class TestTrace:
     def test_basic(self):
         t = Trace()
@@ -255,6 +280,7 @@ class TestTrace:
 # Metric Types Tests
 # ============================================================================
 
+
 class TestMetricTypes:
     def test_data_point(self):
         dp = MetricDataPoint(value=42.0, attributes={"env": "prod"})
@@ -274,8 +300,8 @@ class TestMetricTypes:
 
     def test_histogram_buckets(self):
         h = HistogramDataPoint()
-        h.record(3)   # bucket [0, 5]
-        h.record(8)   # bucket (5, 10]
+        h.record(3)  # bucket [0, 5]
+        h.record(8)  # bucket (5, 10]
         h.record(99)  # bucket (75, 100]
         assert h.bucket_counts[0] == 1  # <=5
         assert h.bucket_counts[1] == 1  # <=10
@@ -288,8 +314,7 @@ class TestMetricTypes:
         assert d["sum"] == 42
 
     def test_metric_definition(self):
-        m = MetricDefinition(name="requests", kind=MetricKind.COUNTER,
-                             description="Total requests")
+        m = MetricDefinition(name="requests", kind=MetricKind.COUNTER, description="Total requests")
         d = m.to_dict()
         assert d["name"] == "requests"
         assert d["kind"] == "counter"
@@ -316,6 +341,7 @@ class TestOTLPValue:
 # ============================================================================
 # Sampler Tests
 # ============================================================================
+
 
 class TestSamplers:
     def test_always_on(self):
@@ -349,6 +375,7 @@ class TestSamplers:
 # ============================================================================
 # Processor Tests
 # ============================================================================
+
 
 class TestProcessors:
     def test_in_memory(self):
@@ -408,6 +435,7 @@ class TestProcessors:
 # OTLP Exporter Tests
 # ============================================================================
 
+
 class TestOTLPExporter:
     def test_export_to_file(self):
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
@@ -434,6 +462,7 @@ class TestOTLPExporter:
 # ============================================================================
 # TracerProvider Tests
 # ============================================================================
+
 
 class TestTracerProvider:
     def test_start_span(self):
@@ -552,6 +581,7 @@ class TestTracerProvider:
 # MetricsProvider Tests
 # ============================================================================
 
+
 class TestMetricsProvider:
     def test_counter(self):
         m = MetricsProvider()
@@ -636,6 +666,7 @@ class TestMetricsProvider:
 # Instrumentation Decorator Tests
 # ============================================================================
 
+
 class TestDecorators:
     @pytest.mark.asyncio
     async def test_trace_decorator_async(self):
@@ -699,6 +730,7 @@ class TestDecorators:
 # TelemetryHub Tests
 # ============================================================================
 
+
 class TestTelemetryHub:
     def test_creation(self):
         hub = TelemetryHub(service_name="test")
@@ -738,8 +770,10 @@ class TestTelemetryHub:
         hub = TelemetryHub()
         with hub.trace_a2a_message("agent-2", "outbound") as span:
             pass
-        assert hub.metrics.get_counter("a2a_messages_total",
-                                        agent="agent-2", direction="outbound") == 1
+        assert (
+            hub.metrics.get_counter("a2a_messages_total", agent="agent-2", direction="outbound")
+            == 1
+        )
 
     def test_trace_browser_action(self):
         hub = TelemetryHub()
@@ -757,8 +791,7 @@ class TestTelemetryHub:
     def test_record_llm_usage(self):
         hub = TelemetryHub()
         hub.record_llm_usage("claude", 150.0, input_tokens=100, output_tokens=200)
-        assert hub.metrics.get_counter("llm_tokens_total",
-                                        model="claude", direction="input") == 100
+        assert hub.metrics.get_counter("llm_tokens_total", model="claude", direction="input") == 100
 
     def test_record_graph_execution(self):
         hub = TelemetryHub()
@@ -795,6 +828,7 @@ class TestTelemetryHub:
 # ============================================================================
 # Integration Tests
 # ============================================================================
+
 
 class TestTelemetryIntegration:
     def test_full_request_trace(self):

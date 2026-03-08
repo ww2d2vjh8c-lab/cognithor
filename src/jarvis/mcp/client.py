@@ -270,7 +270,9 @@ class JarvisMCPClient:
                 if server.process and server.process.returncode is None:
                     server.process.terminate()
                     try:
-                        await asyncio.wait_for(server.process.wait(), timeout=PROCESS_TERMINATION_TIMEOUT)
+                        await asyncio.wait_for(
+                            server.process.wait(), timeout=PROCESS_TERMINATION_TIMEOUT
+                        )
                     except TimeoutError:
                         server.process.kill()
                 server.connected = False
@@ -503,7 +505,10 @@ class JarvisMCPClient:
         return configs
 
     async def subscribe_resource(
-        self, server_name: str, uri: str, callback: Any,
+        self,
+        server_name: str,
+        uri: str,
+        callback: Any,
     ) -> bool:
         """Abonniert Änderungen an einer MCP-Ressource."""
         conn = self._servers.get(server_name)

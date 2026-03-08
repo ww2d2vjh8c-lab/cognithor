@@ -29,9 +29,9 @@ from typing import Any
 
 class RiskLevel(Enum):
     UNACCEPTABLE = "unacceptable"  # Art. 5: Verboten
-    HIGH = "high"                   # Art. 6: Strenge Auflagen
-    LIMITED = "limited"             # Art. 50: Transparenzpflichten
-    MINIMAL = "minimal"             # Keine Auflagen
+    HIGH = "high"  # Art. 6: Strenge Auflagen
+    LIMITED = "limited"  # Art. 50: Transparenzpflichten
+    MINIMAL = "minimal"  # Keine Auflagen
 
 
 class SystemCategory(Enum):
@@ -240,8 +240,11 @@ class MitigationTracker:
     def completion_rate(self) -> float:
         if not self._measures:
             return 100.0
-        done = sum(1 for m in self._measures
-                   if m.status in (MitigationStatus.IMPLEMENTED, MitigationStatus.VERIFIED))
+        done = sum(
+            1
+            for m in self._measures
+            if m.status in (MitigationStatus.IMPLEMENTED, MitigationStatus.VERIFIED)
+        )
         return done / len(self._measures) * 100
 
     @property
@@ -270,7 +273,7 @@ class TransparencyObligation:
     """Transparenzpflicht nach EU AI Act Art. 50."""
 
     obligation_id: str
-    article: str        # z.B. "Art. 50(1)"
+    article: str  # z.B. "Art. 50(1)"
     description: str
     implemented: bool = False
     evidence: str = ""
@@ -290,22 +293,36 @@ class TransparencyChecker:
     """Prüft ob Transparenzpflichten erfüllt sind."""
 
     DEFAULT_OBLIGATIONS = [
-        TransparencyObligation("T-001", "Art. 50(1)",
-            "Nutzer müssen informiert werden, dass sie mit einem AI-System interagieren."),
-        TransparencyObligation("T-002", "Art. 50(2)",
-            "AI-generierte Inhalte müssen als solche gekennzeichnet werden."),
-        TransparencyObligation("T-003", "Art. 50(3)",
-            "Deep-Fakes müssen als künstlich generiert gekennzeichnet werden."),
-        TransparencyObligation("T-004", "Art. 50(4)",
-            "Texte zu Themen öffentlichen Interesses müssen als AI-generiert markiert werden."),
-        TransparencyObligation("T-005", "Art. 13",
-            "Entscheidungen müssen nachvollziehbar und erklärbar sein."),
-        TransparencyObligation("T-006", "Art. 14",
-            "Menschliche Aufsicht muss sichergestellt sein."),
+        TransparencyObligation(
+            "T-001",
+            "Art. 50(1)",
+            "Nutzer müssen informiert werden, dass sie mit einem AI-System interagieren.",
+        ),
+        TransparencyObligation(
+            "T-002", "Art. 50(2)", "AI-generierte Inhalte müssen als solche gekennzeichnet werden."
+        ),
+        TransparencyObligation(
+            "T-003",
+            "Art. 50(3)",
+            "Deep-Fakes müssen als künstlich generiert gekennzeichnet werden.",
+        ),
+        TransparencyObligation(
+            "T-004",
+            "Art. 50(4)",
+            "Texte zu Themen öffentlichen Interesses müssen als AI-generiert markiert werden.",
+        ),
+        TransparencyObligation(
+            "T-005", "Art. 13", "Entscheidungen müssen nachvollziehbar und erklärbar sein."
+        ),
+        TransparencyObligation(
+            "T-006", "Art. 14", "Menschliche Aufsicht muss sichergestellt sein."
+        ),
     ]
 
     def __init__(self, obligations: list[TransparencyObligation] | None = None) -> None:
-        self._obligations = obligations if obligations is not None else list(self.DEFAULT_OBLIGATIONS)
+        self._obligations = (
+            obligations if obligations is not None else list(self.DEFAULT_OBLIGATIONS)
+        )
 
     def check_all(self) -> dict[str, Any]:
         total = len(self._obligations)
@@ -463,15 +480,20 @@ class ComplianceExporter:
 
         lines.extend(["", "## 3. Gegenmaßnahmen"])
         for m in d.get("mitigations", []):
-            lines.append(f"- [{m.get('status', '')}] **{m.get('risk_factor', '')}**: {m.get('description', '')}")
+            lines.append(
+                f"- [{m.get('status', '')}] **{m.get('risk_factor', '')}**: {m.get('description', '')}"
+            )
 
-        lines.extend([
-            "", "## 4. Audit-Trail",
-            f"- **Protokollierte Entscheidungen:** {d.get('audit_trail_entries', 0)}",
-            "",
-            "---",
-            f"_Bericht generiert am {d['generated_at']} durch Jarvis ComplianceExporter._",
-        ])
+        lines.extend(
+            [
+                "",
+                "## 4. Audit-Trail",
+                f"- **Protokollierte Entscheidungen:** {d.get('audit_trail_entries', 0)}",
+                "",
+                "---",
+                f"_Bericht generiert am {d['generated_at']} durch Jarvis ComplianceExporter._",
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -488,7 +510,7 @@ class ComplianceExporter:
             "risk_assessments": self._classifier.stats(),
             "mitigations": self._mitigations.stats(),
             "transparency": self._transparency.stats(),
-            "last_compliance": round(
-                self._reports[-1].overall_compliance, 1
-            ) if self._reports else None,
+            "last_compliance": round(self._reports[-1].overall_compliance, 1)
+            if self._reports
+            else None,
         }

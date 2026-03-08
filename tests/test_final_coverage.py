@@ -10,6 +10,7 @@ Covers additional lines in:
   - security/cicd_gate.py (ContinuousRedTeam, WebhookNotifier, ScanSchedule, ScanScheduler)
   - graph/engine.py + graph/state.py (remaining uncovered lines)
 """
+
 from __future__ import annotations
 
 import json
@@ -26,6 +27,7 @@ import pytest
 class TestA2ATypes:
     def test_text_part_to_dict(self):
         from jarvis.a2a.types import TextPart
+
         p = TextPart(text="hello", metadata={"lang": "en"})
         d = p.to_dict()
         assert d["type"] == "text"
@@ -34,12 +36,14 @@ class TestA2ATypes:
 
     def test_text_part_no_metadata(self):
         from jarvis.a2a.types import TextPart
+
         p = TextPart(text="hello")
         d = p.to_dict()
         assert "metadata" not in d
 
     def test_file_part_to_dict(self):
         from jarvis.a2a.types import FilePart
+
         p = FilePart(name="doc.pdf", uri="https://example.com/doc.pdf", data="AAAA")
         d = p.to_dict()
         assert d["type"] == "file"
@@ -49,6 +53,7 @@ class TestA2ATypes:
 
     def test_file_part_minimal(self):
         from jarvis.a2a.types import FilePart
+
         p = FilePart(name="x.txt")
         d = p.to_dict()
         assert "uri" not in d["file"]
@@ -56,6 +61,7 @@ class TestA2ATypes:
 
     def test_data_part_to_dict(self):
         from jarvis.a2a.types import DataPart
+
         p = DataPart(data={"key": "val"}, metadata={"source": "test"})
         d = p.to_dict()
         assert d["type"] == "data"
@@ -64,34 +70,40 @@ class TestA2ATypes:
 
     def test_data_part_no_metadata(self):
         from jarvis.a2a.types import DataPart
+
         p = DataPart(data={"x": 1})
         d = p.to_dict()
         assert "metadata" not in d
 
     def test_part_from_dict_text(self):
         from jarvis.a2a.types import part_from_dict, TextPart
+
         p = part_from_dict({"type": "text", "text": "hi"})
         assert isinstance(p, TextPart)
         assert p.text == "hi"
 
     def test_part_from_dict_file(self):
         from jarvis.a2a.types import part_from_dict, FilePart
+
         p = part_from_dict({"type": "file", "file": {"name": "x.txt", "uri": "http://x"}})
         assert isinstance(p, FilePart)
         assert p.name == "x.txt"
 
     def test_part_from_dict_data(self):
         from jarvis.a2a.types import part_from_dict, DataPart
+
         p = part_from_dict({"type": "data", "data": {"k": "v"}})
         assert isinstance(p, DataPart)
 
     def test_part_from_dict_unknown(self):
         from jarvis.a2a.types import part_from_dict, TextPart
+
         p = part_from_dict({"type": "unknown", "foo": "bar"})
         assert isinstance(p, TextPart)
 
     def test_task_state_properties(self):
         from jarvis.a2a.types import TaskState
+
         assert TaskState.COMPLETED.is_terminal is True
         assert TaskState.WORKING.is_terminal is False
         assert TaskState.SUBMITTED.is_active is True
@@ -100,6 +112,7 @@ class TestA2ATypes:
 
     def test_message_to_dict_and_from_dict(self):
         from jarvis.a2a.types import Message, MessageRole, TextPart
+
         msg = Message(
             role=MessageRole.USER,
             parts=[TextPart(text="Hello")],
@@ -121,6 +134,7 @@ class TestA2ATypes:
 
     def test_message_text_property(self):
         from jarvis.a2a.types import Message, MessageRole, TextPart, DataPart
+
         msg = Message(role=MessageRole.AGENT, parts=[DataPart(data={"x": 1})])
         assert msg.text == ""
         msg2 = Message(role=MessageRole.USER, parts=[TextPart(text="hi")])
@@ -128,6 +142,7 @@ class TestA2ATypes:
 
     def test_artifact_to_dict_and_from_dict(self):
         from jarvis.a2a.types import Artifact, TextPart
+
         art = Artifact(
             parts=[TextPart(text="result")],
             name="output",
@@ -142,7 +157,16 @@ class TestA2ATypes:
         assert art2.name == "output"
 
     def test_task_to_dict_full(self):
-        from jarvis.a2a.types import Task, TaskState, TaskStatus, Message, MessageRole, TextPart, Artifact
+        from jarvis.a2a.types import (
+            Task,
+            TaskState,
+            TaskStatus,
+            Message,
+            MessageRole,
+            TextPart,
+            Artifact,
+        )
+
         task = Task.create(message=Message(role=MessageRole.USER, parts=[TextPart(text="hi")]))
         task.artifacts.append(Artifact(parts=[TextPart(text="result")]))
         task.metadata = {"key": "val"}
@@ -155,8 +179,10 @@ class TestA2ATypes:
 
     def test_task_status_update_event_sse(self):
         from jarvis.a2a.types import TaskStatusUpdateEvent, TaskStatus, TaskState
+
         evt = TaskStatusUpdateEvent(
-            task_id="t1", context_id="c1",
+            task_id="t1",
+            context_id="c1",
             status=TaskStatus(state=TaskState.COMPLETED),
             final=True,
         )
@@ -166,8 +192,10 @@ class TestA2ATypes:
 
     def test_task_artifact_update_event_sse(self):
         from jarvis.a2a.types import TaskArtifactUpdateEvent, Artifact, TextPart
+
         evt = TaskArtifactUpdateEvent(
-            task_id="t1", context_id="c1",
+            task_id="t1",
+            context_id="c1",
             artifact=Artifact(parts=[TextPart(text="chunk")]),
             last_chunk=True,
         )
@@ -176,10 +204,13 @@ class TestA2ATypes:
 
     def test_push_notification_config(self):
         from jarvis.a2a.types import PushNotificationConfig, PushNotificationAuth
+
         auth = PushNotificationAuth(type="bearer", credentials="tok")
         config = PushNotificationConfig(
-            task_id="t1", url="http://hook.url",
-            authentication=auth, metadata={"x": 1},
+            task_id="t1",
+            url="http://hook.url",
+            authentication=auth,
+            metadata={"x": 1},
         )
         d = config.to_dict()
         assert d["taskId"] == "t1"
@@ -188,15 +219,28 @@ class TestA2ATypes:
 
     def test_agent_card_to_dict_full(self):
         from jarvis.a2a.types import (
-            A2AAgentCard, A2AProvider, A2AAgentCapabilities,
-            A2ASkill, A2AInterface, A2ASecurityScheme,
+            A2AAgentCard,
+            A2AProvider,
+            A2AAgentCapabilities,
+            A2ASkill,
+            A2AInterface,
+            A2ASecurityScheme,
         )
+
         card = A2AAgentCard(
             name="TestAgent",
             url="http://agent.local",
             provider=A2AProvider(organization="TestOrg", url="http://org.local"),
             capabilities=A2AAgentCapabilities(streaming=True, push_notifications=True),
-            skills=[A2ASkill(id="s1", name="Search", description="Search web", tags=["web"], examples=["search for..."])],
+            skills=[
+                A2ASkill(
+                    id="s1",
+                    name="Search",
+                    description="Search web",
+                    tags=["web"],
+                    examples=["search for..."],
+                )
+            ],
             interfaces=[A2AInterface(url="http://agent.local/a2a")],
             security_schemes=[A2ASecurityScheme(description="Bearer token")],
             tags=["test"],
@@ -212,6 +256,7 @@ class TestA2ATypes:
 
     def test_agent_card_from_dict(self):
         from jarvis.a2a.types import A2AAgentCard
+
         data = {
             "name": "Test",
             "description": "A test agent",
@@ -228,6 +273,7 @@ class TestA2ATypes:
 
     def test_a2a_skill_to_dict(self):
         from jarvis.a2a.types import A2ASkill
+
         s = A2ASkill(id="s1", name="Test", tags=["a"], examples=["ex1"])
         d = s.to_dict()
         assert d["tags"] == ["a"]
@@ -240,6 +286,7 @@ class TestA2ATypes:
 
     def test_a2a_security_scheme_to_dict(self):
         from jarvis.a2a.types import A2ASecurityScheme
+
         s = A2ASecurityScheme(description="Bearer auth")
         d = s.to_dict()
         assert d["description"] == "Bearer auth"
@@ -249,12 +296,14 @@ class TestA2ATypes:
 
     def test_a2a_interface_to_dict(self):
         from jarvis.a2a.types import A2AInterface
+
         i = A2AInterface(url="http://x.com")
         d = i.to_dict()
         assert d["url"] == "http://x.com"
 
     def test_a2a_error_codes(self):
         from jarvis.a2a.types import A2AErrorCode
+
         assert A2AErrorCode.PARSE_ERROR == -32700
         assert A2AErrorCode.TASK_NOT_FOUND == -32001
 
@@ -267,22 +316,67 @@ class TestA2ATypes:
 class TestPageAnalyzerDeep:
     async def test_analyze_full(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
         page.url = "http://test.com"
         page.title = AsyncMock(return_value="Test Page")
         # Mock evaluate for various JS calls
-        page.evaluate = AsyncMock(side_effect=[
-            "Page text content",  # text extraction
-            1500,  # html_length
-            [{"selector": "a", "text": "Link1", "href": "/p1", "visible": True, "ariaLabel": ""}],
-            [{"selector": "button", "text": "Click", "visible": True, "enabled": True, "ariaLabel": ""}],
-            [{"selector": "input", "type": "text", "name": "user", "value": "", "placeholder": "Name", "visible": True, "enabled": True, "required": True, "ariaLabel": ""}],
-            [{"selector": "form", "action": "/submit", "method": "POST", "fields": [
-                {"name": "user", "type": "text", "label": "Username", "selector": "#user"}
-            ], "submitSelector": "button[type=submit]", "name": "login"}],
-            [{"headers": ["Col1"], "rows": [["val1"]]}],
-        ])
+        page.evaluate = AsyncMock(
+            side_effect=[
+                "Page text content",  # text extraction
+                1500,  # html_length
+                [
+                    {
+                        "selector": "a",
+                        "text": "Link1",
+                        "href": "/p1",
+                        "visible": True,
+                        "ariaLabel": "",
+                    }
+                ],
+                [
+                    {
+                        "selector": "button",
+                        "text": "Click",
+                        "visible": True,
+                        "enabled": True,
+                        "ariaLabel": "",
+                    }
+                ],
+                [
+                    {
+                        "selector": "input",
+                        "type": "text",
+                        "name": "user",
+                        "value": "",
+                        "placeholder": "Name",
+                        "visible": True,
+                        "enabled": True,
+                        "required": True,
+                        "ariaLabel": "",
+                    }
+                ],
+                [
+                    {
+                        "selector": "form",
+                        "action": "/submit",
+                        "method": "POST",
+                        "fields": [
+                            {
+                                "name": "user",
+                                "type": "text",
+                                "label": "Username",
+                                "selector": "#user",
+                            }
+                        ],
+                        "submitSelector": "button[type=submit]",
+                        "name": "login",
+                    }
+                ],
+                [{"headers": ["Col1"], "rows": [["val1"]]}],
+            ]
+        )
         state = await pa.analyze(page)
         assert state.is_loaded is True
         assert state.url == "http://test.com"
@@ -296,6 +390,7 @@ class TestPageAnalyzerDeep:
     async def test_analyze_error_path(self):
         """When page.url raises, the outer except catches it."""
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
         # Make url a property that raises
@@ -306,6 +401,7 @@ class TestPageAnalyzerDeep:
 
     async def test_detect_cookie_banner(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
         page.evaluate = AsyncMock(return_value={"found": True, "selector": "#accept"})
@@ -314,6 +410,7 @@ class TestPageAnalyzerDeep:
 
     async def test_detect_cookie_banner_error(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
         page.evaluate = AsyncMock(side_effect=Exception("JS error"))
@@ -322,43 +419,81 @@ class TestPageAnalyzerDeep:
 
     async def test_find_element_button(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
-        page.evaluate = AsyncMock(side_effect=[
-            [{"selector": "button", "text": "Login", "visible": True, "enabled": True, "ariaLabel": ""}],
-            [],  # links
-            [],  # inputs
-        ])
+        page.evaluate = AsyncMock(
+            side_effect=[
+                [
+                    {
+                        "selector": "button",
+                        "text": "Login",
+                        "visible": True,
+                        "enabled": True,
+                        "ariaLabel": "",
+                    }
+                ],
+                [],  # links
+                [],  # inputs
+            ]
+        )
         elem = await pa.find_element(page, "Login")
         assert elem is not None
         assert elem.text == "Login"
 
     async def test_find_element_link(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
-        page.evaluate = AsyncMock(side_effect=[
-            [],  # buttons
-            [{"selector": "a", "text": "About Us", "href": "/about", "visible": True, "ariaLabel": ""}],
-            [],  # inputs
-        ])
+        page.evaluate = AsyncMock(
+            side_effect=[
+                [],  # buttons
+                [
+                    {
+                        "selector": "a",
+                        "text": "About Us",
+                        "href": "/about",
+                        "visible": True,
+                        "ariaLabel": "",
+                    }
+                ],
+                [],  # inputs
+            ]
+        )
         elem = await pa.find_element(page, "about")
         assert elem is not None
 
     async def test_find_element_input(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
-        page.evaluate = AsyncMock(side_effect=[
-            [],  # buttons
-            [],  # links
-            [{"selector": "input", "type": "email", "name": "email", "value": "", "placeholder": "Enter email", "visible": True, "enabled": True, "required": False, "ariaLabel": ""}],
-        ])
+        page.evaluate = AsyncMock(
+            side_effect=[
+                [],  # buttons
+                [],  # links
+                [
+                    {
+                        "selector": "input",
+                        "type": "email",
+                        "name": "email",
+                        "value": "",
+                        "placeholder": "Enter email",
+                        "visible": True,
+                        "enabled": True,
+                        "required": False,
+                        "ariaLabel": "",
+                    }
+                ],
+            ]
+        )
         elem = await pa.find_element(page, "email")
         assert elem is not None
 
     async def test_find_element_none(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
         page.evaluate = AsyncMock(return_value=[])
@@ -367,6 +502,7 @@ class TestPageAnalyzerDeep:
 
     def test_fuzzy_match(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         assert pa._fuzzy_match("login", "Login Button") is True
         assert pa._fuzzy_match("login button", "Login") is True  # reverse containment
@@ -376,15 +512,68 @@ class TestPageAnalyzerDeep:
     async def test_extract_input_types(self):
         """Test different input type mappings in _extract_inputs."""
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
-        page.evaluate = AsyncMock(return_value=[
-            {"selector": "#cb", "type": "checkbox", "name": "agree", "value": "", "placeholder": "", "visible": True, "enabled": True, "required": False, "ariaLabel": ""},
-            {"selector": "#rd", "type": "radio", "name": "option", "value": "a", "placeholder": "", "visible": True, "enabled": True, "required": False, "ariaLabel": ""},
-            {"selector": "#fl", "type": "file", "name": "upload", "value": "", "placeholder": "", "visible": True, "enabled": True, "required": False, "ariaLabel": ""},
-            {"selector": "#sl", "type": "select", "name": "country", "value": "", "placeholder": "", "visible": True, "enabled": True, "required": False, "ariaLabel": ""},
-            {"selector": "#ta", "type": "textarea", "name": "bio", "value": "", "placeholder": "", "visible": True, "enabled": True, "required": False, "ariaLabel": ""},
-        ])
+        page.evaluate = AsyncMock(
+            return_value=[
+                {
+                    "selector": "#cb",
+                    "type": "checkbox",
+                    "name": "agree",
+                    "value": "",
+                    "placeholder": "",
+                    "visible": True,
+                    "enabled": True,
+                    "required": False,
+                    "ariaLabel": "",
+                },
+                {
+                    "selector": "#rd",
+                    "type": "radio",
+                    "name": "option",
+                    "value": "a",
+                    "placeholder": "",
+                    "visible": True,
+                    "enabled": True,
+                    "required": False,
+                    "ariaLabel": "",
+                },
+                {
+                    "selector": "#fl",
+                    "type": "file",
+                    "name": "upload",
+                    "value": "",
+                    "placeholder": "",
+                    "visible": True,
+                    "enabled": True,
+                    "required": False,
+                    "ariaLabel": "",
+                },
+                {
+                    "selector": "#sl",
+                    "type": "select",
+                    "name": "country",
+                    "value": "",
+                    "placeholder": "",
+                    "visible": True,
+                    "enabled": True,
+                    "required": False,
+                    "ariaLabel": "",
+                },
+                {
+                    "selector": "#ta",
+                    "type": "textarea",
+                    "name": "bio",
+                    "value": "",
+                    "placeholder": "",
+                    "visible": True,
+                    "enabled": True,
+                    "required": False,
+                    "ariaLabel": "",
+                },
+            ]
+        )
         inputs = await pa._extract_inputs(page)
         types = [i.element_type.value for i in inputs]
         assert "checkbox" in types
@@ -395,20 +584,32 @@ class TestPageAnalyzerDeep:
 
     async def test_extract_forms(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
-        page.evaluate = AsyncMock(return_value=[
-            {
-                "selector": "form",
-                "action": "/login",
-                "method": "POST",
-                "name": "login_form",
-                "submitSelector": "button[type=submit]",
-                "fields": [
-                    {"name": "user", "type": "text", "label": "Username", "value": "", "placeholder": "User", "required": True, "options": [], "selector": "#user"},
-                ],
-            },
-        ])
+        page.evaluate = AsyncMock(
+            return_value=[
+                {
+                    "selector": "form",
+                    "action": "/login",
+                    "method": "POST",
+                    "name": "login_form",
+                    "submitSelector": "button[type=submit]",
+                    "fields": [
+                        {
+                            "name": "user",
+                            "type": "text",
+                            "label": "Username",
+                            "value": "",
+                            "placeholder": "User",
+                            "required": True,
+                            "options": [],
+                            "selector": "#user",
+                        },
+                    ],
+                },
+            ]
+        )
         forms = await pa._extract_forms(page)
         assert len(forms) == 1
         assert forms[0].action == "/login"
@@ -416,6 +617,7 @@ class TestPageAnalyzerDeep:
 
     async def test_extract_tables(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
         page.evaluate = AsyncMock(return_value=[{"headers": ["A", "B"], "rows": [["1", "2"]]}])
@@ -424,6 +626,7 @@ class TestPageAnalyzerDeep:
 
     async def test_extract_links_error(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
         page.evaluate = AsyncMock(side_effect=Exception("JS error"))
@@ -432,6 +635,7 @@ class TestPageAnalyzerDeep:
 
     async def test_extract_buttons_error(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         pa = PageAnalyzer()
         page = MagicMock()
         page.evaluate = AsyncMock(side_effect=Exception("JS error"))
@@ -448,13 +652,16 @@ class TestBrowserToolsVision:
     def _make_mock_mcp(self):
         mcp = MagicMock()
         mcp._tools = {}
+
         def register_tool(name, description, parameters, handler):
             mcp._tools[name] = handler
+
         mcp.register_tool = register_tool
         return mcp
 
     async def test_vision_analyze_success(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -470,6 +677,7 @@ class TestBrowserToolsVision:
 
     async def test_vision_find_success(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -482,11 +690,14 @@ class TestBrowserToolsVision:
             agent.find_and_click_with_vision = AsyncMock(return_value=res)
             MockAgent.return_value = agent
             register_browser_use_tools(mcp, vision_analyzer=MagicMock())
-            result = json.loads(await mcp._tools["browser_vision_find"]({"description": "blue button"}))
+            result = json.loads(
+                await mcp._tools["browser_vision_find"]({"description": "blue button"})
+            )
             assert result["success"] is True
 
     async def test_vision_screenshot_success_with_vision(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -512,6 +723,7 @@ class TestBrowserToolsVision:
 
     async def test_vision_screenshot_failure(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -527,6 +739,7 @@ class TestBrowserToolsVision:
 
     async def test_vision_screenshot_no_vision(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -553,6 +766,7 @@ class TestAuditRecord:
     def test_record_with_audit_entry(self, tmp_path):
         from jarvis.security.audit import AuditTrail
         from jarvis.models import AuditEntry, GateStatus, RiskLevel
+
         trail = AuditTrail(log_dir=tmp_path)
         entry = AuditEntry(
             session_id="s1",
@@ -571,6 +785,7 @@ class TestAuditRecord:
     def test_record_with_masking(self, tmp_path):
         from jarvis.security.audit import AuditTrail
         from jarvis.models import AuditEntry, GateStatus, RiskLevel
+
         trail = AuditTrail(log_dir=tmp_path)
         entry = AuditEntry(
             session_id="s1",
@@ -585,6 +800,7 @@ class TestAuditRecord:
     def test_record_no_mask(self, tmp_path):
         from jarvis.security.audit import AuditTrail
         from jarvis.models import AuditEntry, GateStatus
+
         trail = AuditTrail(log_dir=tmp_path)
         entry = AuditEntry(
             session_id="s1",
@@ -599,15 +815,24 @@ class TestAuditRecord:
     def test_query_with_session_filter(self, tmp_path):
         from jarvis.security.audit import AuditTrail
         from jarvis.models import AuditEntry, GateStatus
+
         trail = AuditTrail(log_dir=tmp_path)
-        trail.record(AuditEntry(
-            session_id="s1", action_tool="read_file",
-            action_params_hash="a", decision_status=GateStatus.ALLOW,
-        ))
-        trail.record(AuditEntry(
-            session_id="s2", action_tool="write_file",
-            action_params_hash="b", decision_status=GateStatus.BLOCK,
-        ))
+        trail.record(
+            AuditEntry(
+                session_id="s1",
+                action_tool="read_file",
+                action_params_hash="a",
+                decision_status=GateStatus.ALLOW,
+            )
+        )
+        trail.record(
+            AuditEntry(
+                session_id="s2",
+                action_tool="write_file",
+                action_params_hash="b",
+                decision_status=GateStatus.BLOCK,
+            )
+        )
         results = trail.query(session_id="s1")
         assert len(results) == 1
         assert results[0]["session_id"] == "s1"
@@ -615,20 +840,30 @@ class TestAuditRecord:
     def test_query_with_tool_filter(self, tmp_path):
         from jarvis.security.audit import AuditTrail
         from jarvis.models import AuditEntry, GateStatus
+
         trail = AuditTrail(log_dir=tmp_path)
-        trail.record(AuditEntry(
-            session_id="s1", action_tool="read_file",
-            action_params_hash="a", decision_status=GateStatus.ALLOW,
-        ))
-        trail.record(AuditEntry(
-            session_id="s1", action_tool="exec_command",
-            action_params_hash="b", decision_status=GateStatus.BLOCK,
-        ))
+        trail.record(
+            AuditEntry(
+                session_id="s1",
+                action_tool="read_file",
+                action_params_hash="a",
+                decision_status=GateStatus.ALLOW,
+            )
+        )
+        trail.record(
+            AuditEntry(
+                session_id="s1",
+                action_tool="exec_command",
+                action_params_hash="b",
+                decision_status=GateStatus.BLOCK,
+            )
+        )
         results = trail.query(tool="exec_command")
         assert len(results) == 1
 
     def test_query_with_limit(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         for i in range(5):
             trail.record_event(f"s{i}", f"event_{i}")
@@ -638,6 +873,7 @@ class TestAuditRecord:
     def test_query_with_since_filter(self, tmp_path):
         from jarvis.security.audit import AuditTrail
         from datetime import datetime, timezone
+
         trail = AuditTrail(log_dir=tmp_path)
         trail.record_event("s1", "old_event")
         # All events will be after 2020
@@ -654,6 +890,7 @@ class TestAuditRecord:
 class TestAgentVaultSessions:
     def test_isolated_session_store_create_and_list(self):
         from jarvis.security.agent_vault import IsolatedSessionStore
+
         store = IsolatedSessionStore()
         sess = store.create_session("agent1", tenant_id="t1")
         assert sess.agent_id == "agent1"
@@ -664,6 +901,7 @@ class TestAgentVaultSessions:
 
     def test_isolated_session_store_get_session(self):
         from jarvis.security.agent_vault import IsolatedSessionStore
+
         store = IsolatedSessionStore()
         sess = store.create_session("agent1")
         found = store.get_session("agent1", sess.session_id)
@@ -674,6 +912,7 @@ class TestAgentVaultSessions:
 
     def test_isolated_session_store_close_and_active(self):
         from jarvis.security.agent_vault import IsolatedSessionStore
+
         store = IsolatedSessionStore()
         s1 = store.create_session("agent1")
         s2 = store.create_session("agent1")
@@ -687,6 +926,7 @@ class TestAgentVaultSessions:
 
     def test_isolated_session_store_destroy_and_purge(self):
         from jarvis.security.agent_vault import IsolatedSessionStore
+
         store = IsolatedSessionStore()
         s1 = store.create_session("agent1")
         s2 = store.create_session("agent1")
@@ -704,6 +944,7 @@ class TestAgentVaultSessions:
 
     def test_isolated_session_store_stats(self):
         from jarvis.security.agent_vault import IsolatedSessionStore
+
         store = IsolatedSessionStore()
         store.create_session("a1")
         store.create_session("a2")
@@ -716,6 +957,7 @@ class TestAgentVaultSessions:
 
     def test_session_firewall_authorize(self):
         from jarvis.security.agent_vault import IsolatedSessionStore, SessionFirewall
+
         store = IsolatedSessionStore()
         sess = store.create_session("agent1")
         fw = SessionFirewall(store)
@@ -734,6 +976,7 @@ class TestAgentVaultSessions:
 
     def test_vault_rotator_add_policy(self):
         from jarvis.security.agent_vault import VaultRotator, RotationPolicy, SecretType
+
         rotator = VaultRotator(load_defaults=False)
         assert rotator.policy_count == 0
         policy = RotationPolicy("custom", SecretType.API_KEY, 48, 720)
@@ -747,6 +990,7 @@ class TestAgentVaultSessions:
 
     def test_vault_rotator_defaults(self):
         from jarvis.security.agent_vault import VaultRotator, SecretType
+
         rotator = VaultRotator(load_defaults=True)
         assert rotator.policy_count == 4
         st = rotator.stats()
@@ -756,9 +1000,12 @@ class TestAgentVaultSessions:
 
     def test_vault_rotator_check_and_auto_rotate(self):
         from jarvis.security.agent_vault import (
-            VaultRotator, RotationPolicy, SecretType,
+            VaultRotator,
+            RotationPolicy,
+            SecretType,
             AgentVault,
         )
+
         rotator = VaultRotator(load_defaults=False)
         # Add an auto-rotate policy for tokens with very short interval
         rotator.add_policy(RotationPolicy("ROT-TOK", SecretType.TOKEN, 0, 168, True, 4))
@@ -781,6 +1028,7 @@ class TestAgentVaultSessions:
 class TestCICDGateMore:
     def test_continuous_red_team_run_probes(self):
         from jarvis.security.cicd_gate import ContinuousRedTeam
+
         crt = ContinuousRedTeam()
         assert crt.probe_count == 0
         assert crt.detection_rate() == 100.0  # no probes yet
@@ -801,6 +1049,7 @@ class TestCICDGateMore:
 
     def test_continuous_red_team_partial_block(self):
         from jarvis.security.cicd_gate import ContinuousRedTeam
+
         crt = ContinuousRedTeam()
         call_count = {"n": 0}
 
@@ -821,6 +1070,7 @@ class TestCICDGateMore:
     def test_continuous_red_team_handler_exception(self):
         """When handler raises, the probe should be marked as blocked."""
         from jarvis.security.cicd_gate import ContinuousRedTeam
+
         crt = ContinuousRedTeam()
 
         def handler_fn(payload):
@@ -835,6 +1085,7 @@ class TestCICDGateMore:
 
     def test_red_team_probe_to_dict(self):
         from jarvis.security.cicd_gate import RedTeamProbe
+
         probe = RedTeamProbe(
             probe_id="RT-00001",
             category="prompt_injection",
@@ -850,6 +1101,7 @@ class TestCICDGateMore:
 
     def test_webhook_notifier(self):
         from jarvis.security.cicd_gate import WebhookNotifier, WebhookConfig
+
         notifier = WebhookNotifier()
         wh1 = WebhookConfig("wh1", "https://hooks.example.com/1", events=["gate_fail"])
         wh2 = WebhookConfig("wh2", "https://hooks.example.com/2", events=["*"], enabled=False)
@@ -870,6 +1122,7 @@ class TestCICDGateMore:
 
     def test_webhook_config_to_dict(self):
         from jarvis.security.cicd_gate import WebhookConfig
+
         wh = WebhookConfig("wh1", "https://example.com", events=["gate_fail", "critical_finding"])
         d = wh.to_dict()
         assert d["webhook_id"] == "wh1"
@@ -877,6 +1130,7 @@ class TestCICDGateMore:
 
     def test_scan_schedule_and_scheduler(self):
         from jarvis.security.cicd_gate import ScanSchedule, ScanScheduler
+
         # Create a custom schedule
         scan = ScanSchedule(
             schedule_id="SC-1",
@@ -913,6 +1167,7 @@ class TestCICDGateMore:
 
     def test_scan_scheduler_empty(self):
         from jarvis.security.cicd_gate import ScanScheduler
+
         scheduler = ScanScheduler(schedules=[])
         assert scheduler.schedule_count == 0
         assert scheduler.enabled_schedules() == []

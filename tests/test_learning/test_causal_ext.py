@@ -27,18 +27,14 @@ class TestModelPerformance:
 
     def test_below_min_records_excluded(self) -> None:
         for i in range(3):
-            self.analyzer.record_sequence(
-                f"s{i}", ["a", "b"], 0.8, model_used="gpt-4"
-            )
+            self.analyzer.record_sequence(f"s{i}", ["a", "b"], 0.8, model_used="gpt-4")
         # Default min_records=5, only 3 recorded
         result = self.analyzer.get_model_performance()
         assert result == {}
 
     def test_with_enough_records(self) -> None:
         for i in range(6):
-            self.analyzer.record_sequence(
-                f"s{i}", ["a", "b"], 0.8, model_used="gpt-4"
-            )
+            self.analyzer.record_sequence(f"s{i}", ["a", "b"], 0.8, model_used="gpt-4")
         result = self.analyzer.get_model_performance(min_records=5)
         assert "gpt-4" in result
         assert result["gpt-4"]["count"] == 6
@@ -46,13 +42,9 @@ class TestModelPerformance:
 
     def test_multiple_models(self) -> None:
         for i in range(5):
-            self.analyzer.record_sequence(
-                f"g{i}", ["a", "b"], 0.9, model_used="gpt-4"
-            )
+            self.analyzer.record_sequence(f"g{i}", ["a", "b"], 0.9, model_used="gpt-4")
         for i in range(5):
-            self.analyzer.record_sequence(
-                f"c{i}", ["a", "b"], 0.7, model_used="claude"
-            )
+            self.analyzer.record_sequence(f"c{i}", ["a", "b"], 0.7, model_used="claude")
         result = self.analyzer.get_model_performance(min_records=5)
         assert "gpt-4" in result
         assert "claude" in result
@@ -89,9 +81,7 @@ class TestSuggestToolsFallback:
     def test_fallback_last_tool_used(self) -> None:
         """When full sequence doesn't match, should fallback to last tool matching."""
         for i in range(10):
-            self.analyzer.record_sequence(
-                f"s{i}", ["search", "analyze", "summarize"], 0.9
-            )
+            self.analyzer.record_sequence(f"s{i}", ["search", "analyze", "summarize"], 0.9)
         # Query with sequence that doesn't match as whole but last tool matches
         suggestions = self.analyzer.suggest_tools(["random_tool", "analyze"])
         assert len(suggestions) > 0
@@ -100,7 +90,9 @@ class TestSuggestToolsFallback:
         """Sequences with score < 0.5 should not be used for suggestions."""
         for i in range(10):
             self.analyzer.record_sequence(
-                f"s{i}", ["a", "b", "c"], 0.3  # Low score
+                f"s{i}",
+                ["a", "b", "c"],
+                0.3,  # Low score
             )
         suggestions = self.analyzer.suggest_tools(["a", "b"])
         assert suggestions == []

@@ -89,7 +89,7 @@ class BenchmarkTask:
     # Verification
     expected_tools: list[str] = field(default_factory=list)
     expected_keywords: list[str] = field(default_factory=list)
-    verification_fn: str = ""   # Name of verification function
+    verification_fn: str = ""  # Name of verification function
 
     # Constraints
     max_iterations: int = 5
@@ -148,7 +148,7 @@ class BenchmarkResult:
 
     task_id: str
     status: ResultStatus
-    score: float = 0.0           # 0.0-1.0
+    score: float = 0.0  # 0.0-1.0
     response: str = ""
     tools_used: list[str] = field(default_factory=list)
     iterations: int = 0
@@ -224,7 +224,6 @@ BUILTIN_TASKS: list[BenchmarkTask] = [
         expected_keywords=["1961", "1989"],
         tags=["search", "history"],
     ),
-
     # -- Automation --
     BenchmarkTask(
         task_id="auto-01",
@@ -259,7 +258,6 @@ BUILTIN_TASKS: list[BenchmarkTask] = [
         expected_keywords=["Python", "3."],
         tags=["shell", "system"],
     ),
-
     # -- Knowledge --
     BenchmarkTask(
         task_id="know-01",
@@ -283,7 +281,6 @@ BUILTIN_TASKS: list[BenchmarkTask] = [
         expected_keywords=["Wetter"],
         tags=["memory", "synthesis"],
     ),
-
     # -- Policy --
     BenchmarkTask(
         task_id="policy-01",
@@ -307,7 +304,6 @@ BUILTIN_TASKS: list[BenchmarkTask] = [
         expected_keywords=["nicht", "Sicherheit"],
         tags=["security", "credentials"],
     ),
-
     # -- Collaboration --
     BenchmarkTask(
         task_id="collab-01",
@@ -320,7 +316,6 @@ BUILTIN_TASKS: list[BenchmarkTask] = [
         expected_keywords=[],
         tags=["delegation", "multi-step"],
     ),
-
     # -- Reasoning --
     BenchmarkTask(
         task_id="reason-01",
@@ -344,7 +339,6 @@ BUILTIN_TASKS: list[BenchmarkTask] = [
         expected_keywords=["433"],
         tags=["math", "calculation"],
     ),
-
     # -- Tool Use --
     BenchmarkTask(
         task_id="tool-01",
@@ -508,9 +502,7 @@ class BenchmarkRunner:
 
         Returns list of BenchmarkResult objects.
         """
-        self._run_id = hashlib.sha256(
-            f"run:{time.time()}".encode()
-        ).hexdigest()[:12]
+        self._run_id = hashlib.sha256(f"run:{time.time()}".encode()).hexdigest()[:12]
         self._results = []
 
         filtered = self._filter_tasks(categories, difficulty, tags)
@@ -622,7 +614,9 @@ class BenchmarkRunner:
 
         for cat_data in by_category.values():
             cat_scores = cat_data.pop("scores", [])
-            cat_data["avg_score"] = round(sum(cat_scores) / len(cat_scores), 3) if cat_scores else 0.0
+            cat_data["avg_score"] = (
+                round(sum(cat_scores) / len(cat_scores), 3) if cat_scores else 0.0
+            )
 
         return {
             "run_id": self._run_id,
@@ -699,7 +693,14 @@ class BenchmarkReport:
         for result in runner.results:
             task = next((t for t in runner.tasks if t.task_id == result.task_id), None)
             name = task.name if task else result.task_id
-            status_icon = {"passed": "+", "failed": "X", "partial": "~", "error": "!", "skipped": "-", "timeout": "T"}.get(result.status.value, "?")
+            status_icon = {
+                "passed": "+",
+                "failed": "X",
+                "partial": "~",
+                "error": "!",
+                "skipped": "-",
+                "timeout": "T",
+            }.get(result.status.value, "?")
             lines.append(
                 f"| {name} | {status_icon} {result.status.value} | {result.score:.3f} | {result.duration_ms:.0f}ms | {result.tokens_used} |"
             )
@@ -732,7 +733,7 @@ class RegressionEntry:
     """A regression or improvement detected between versions."""
 
     task_id: str
-    metric: str         # "score", "duration_ms", "status"
+    metric: str  # "score", "duration_ms", "status"
     old_value: Any = None
     new_value: Any = None
     direction: str = ""  # "regression", "improvement", "unchanged"
@@ -776,33 +777,39 @@ class RegressionDetector:
             # Score comparison
             score_diff = new.score - old.score
             if abs(score_diff) >= self._score_threshold:
-                entries.append(RegressionEntry(
-                    task_id=task_id,
-                    metric="score",
-                    old_value=round(old.score, 3),
-                    new_value=round(new.score, 3),
-                    direction="improvement" if score_diff > 0 else "regression",
-                ))
+                entries.append(
+                    RegressionEntry(
+                        task_id=task_id,
+                        metric="score",
+                        old_value=round(old.score, 3),
+                        new_value=round(new.score, 3),
+                        direction="improvement" if score_diff > 0 else "regression",
+                    )
+                )
 
             # Duration comparison (relative)
             if old.duration_ms > 0 and new.duration_ms > 0:
                 ratio = new.duration_ms / old.duration_ms
                 if ratio > (1 + self._duration_threshold):
-                    entries.append(RegressionEntry(
-                        task_id=task_id,
-                        metric="duration_ms",
-                        old_value=round(old.duration_ms, 1),
-                        new_value=round(new.duration_ms, 1),
-                        direction="regression",
-                    ))
+                    entries.append(
+                        RegressionEntry(
+                            task_id=task_id,
+                            metric="duration_ms",
+                            old_value=round(old.duration_ms, 1),
+                            new_value=round(new.duration_ms, 1),
+                            direction="regression",
+                        )
+                    )
                 elif ratio < (1 - self._duration_threshold):
-                    entries.append(RegressionEntry(
-                        task_id=task_id,
-                        metric="duration_ms",
-                        old_value=round(old.duration_ms, 1),
-                        new_value=round(new.duration_ms, 1),
-                        direction="improvement",
-                    ))
+                    entries.append(
+                        RegressionEntry(
+                            task_id=task_id,
+                            metric="duration_ms",
+                            old_value=round(old.duration_ms, 1),
+                            new_value=round(new.duration_ms, 1),
+                            direction="improvement",
+                        )
+                    )
 
             # Status change
             if old.status != new.status:
@@ -812,13 +819,15 @@ class RegressionDetector:
                     direction = "regression"
                 else:
                     direction = "unchanged"
-                entries.append(RegressionEntry(
-                    task_id=task_id,
-                    metric="status",
-                    old_value=old.status.value,
-                    new_value=new.status.value,
-                    direction=direction,
-                ))
+                entries.append(
+                    RegressionEntry(
+                        task_id=task_id,
+                        metric="status",
+                        old_value=old.status.value,
+                        new_value=new.status.value,
+                        direction=direction,
+                    )
+                )
 
         return entries
 

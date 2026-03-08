@@ -189,15 +189,18 @@ def _infer_schema(func: Callable) -> dict[str, Any]:
     hints: dict[str, Any] = {}
     try:
         hints = {
-            k: v for k, v in inspect.get_annotations(func, eval_str=True).items()
-            if k != "return"
+            k: v for k, v in inspect.get_annotations(func, eval_str=True).items() if k != "return"
         }
     except Exception:
         # Fallback: try raw annotations
         raw = getattr(func, "__annotations__", {})
         str_type_map = {
-            "str": str, "int": int, "float": float,
-            "bool": bool, "list": list, "dict": dict,
+            "str": str,
+            "int": int,
+            "float": float,
+            "bool": bool,
+            "list": list,
+            "dict": dict,
         }
         for k, v in raw.items():
             if k == "return":

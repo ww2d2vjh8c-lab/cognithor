@@ -100,9 +100,7 @@ class TestContextVarIsolation:
 class TestSetAndClear:
     """Tests that set/clear work correctly within the same context."""
 
-    async def test_set_and_clear(
-        self, router: ModelRouter, config: JarvisConfig
-    ) -> None:
+    async def test_set_and_clear(self, router: ModelRouter, config: JarvisConfig) -> None:
         """Setting override changes select_model; clearing restores default."""
         coding_model = "codestral:22b"
 
@@ -130,9 +128,7 @@ class TestSetAndClear:
 class TestDefaultIsNone:
     """Tests that without any override, normal routing is used."""
 
-    async def test_default_is_none(
-        self, router: ModelRouter, config: JarvisConfig
-    ) -> None:
+    async def test_default_is_none(self, router: ModelRouter, config: JarvisConfig) -> None:
         """Without override, select_model uses normal task-type routing."""
         assert _coding_override_var.get() is None
 
@@ -154,8 +150,14 @@ class TestOverrideAffectsSelectModel:
         override_model = "qwen3-coder:32b"
         router.set_coding_override(override_model)
 
-        for task_type in ("planning", "reflection", "code", "simple_tool_call",
-                          "summarization", "general"):
+        for task_type in (
+            "planning",
+            "reflection",
+            "code",
+            "simple_tool_call",
+            "summarization",
+            "general",
+        ):
             result = router.select_model(task_type)
             assert result == override_model, (
                 f"Expected {override_model} for task_type={task_type}, got {result}"
@@ -164,9 +166,7 @@ class TestOverrideAffectsSelectModel:
         # Embedding must still use the embedding model.
         assert router.select_model("embedding") == config.models.embedding.name
 
-    async def test_contextvar_directly_readable(
-        self, router: ModelRouter
-    ) -> None:
+    async def test_contextvar_directly_readable(self, router: ModelRouter) -> None:
         """The ContextVar is updated when set_coding_override is called."""
         assert _coding_override_var.get() is None
         router.set_coding_override("test-model:7b")
@@ -174,9 +174,7 @@ class TestOverrideAffectsSelectModel:
         router.clear_coding_override()
         assert _coding_override_var.get() is None
 
-    async def test_instance_attr_kept_for_backwards_compat(
-        self, router: ModelRouter
-    ) -> None:
+    async def test_instance_attr_kept_for_backwards_compat(self, router: ModelRouter) -> None:
         """The instance attribute _coding_override is still set for legacy callers."""
         router.set_coding_override("legacy-model:13b")
         assert router._coding_override == "legacy-model:13b"

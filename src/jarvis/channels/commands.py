@@ -41,11 +41,11 @@ class CommandScope(Enum):
 class SlashCommand:
     """Definition eines Slash-Commands."""
 
-    name: str                  # z.B. "schedule", "briefing", "approve"
+    name: str  # z.B. "schedule", "briefing", "approve"
     description: str
-    usage: str = ""            # z.B. "/jarvis schedule [task] [time]"
+    usage: str = ""  # z.B. "/jarvis schedule [task] [time]"
     scope: CommandScope = CommandScope.ALL
-    agent_id: str = ""         # Leer = alle Agents
+    agent_id: str = ""  # Leer = alle Agents
     requires_auth: bool = False
     admin_only: bool = False
     cooldown_seconds: int = 0  # Anti-Spam
@@ -224,10 +224,10 @@ class InteractionState:
     interaction_type: InteractionType
     user_id: str
     agent_id: str = ""
-    channel: str = ""          # slack, discord, etc.
-    message_id: str = ""       # Original-Nachricht
-    response_url: str = ""     # URL für verzögerte Antwort
-    action_id: str = ""        # Welcher Button/welches Feld
+    channel: str = ""  # slack, discord, etc.
+    message_id: str = ""  # Original-Nachricht
+    response_url: str = ""  # URL für verzögerte Antwort
+    action_id: str = ""  # Welcher Button/welches Feld
     payload: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     expires_at: datetime | None = None
@@ -296,6 +296,7 @@ class InteractionStore:
         """Erstellt einen neuen Interaktions-Zustand."""
         interaction_id = secrets.token_hex(12)
         from datetime import timedelta
+
         expires = datetime.now(UTC) + timedelta(seconds=self._ttl)
 
         state = InteractionState(
@@ -345,10 +346,7 @@ class InteractionStore:
 
     def cleanup(self) -> int:
         """Entfernt abgelaufene Interaktionen."""
-        expired = [
-            iid for iid, s in self._states.items()
-            if s.is_expired or s.resolved
-        ]
+        expired = [iid for iid, s in self._states.items() if s.is_expired or s.resolved]
         for iid in expired:
             state = self._states.pop(iid, None)
             if state and state.message_id:

@@ -31,15 +31,21 @@ class TestSandboxResultField:
 
     def test_default_false(self) -> None:
         result = SandboxResult(
-            exit_code=0, stdout="", stderr="",
-            duration_ms=0, sandbox_level=SandboxLevel.PROCESS,
+            exit_code=0,
+            stdout="",
+            stderr="",
+            duration_ms=0,
+            sandbox_level=SandboxLevel.PROCESS,
         )
         assert result.isolation_degraded is False
 
     def test_can_set_true(self) -> None:
         result = SandboxResult(
-            exit_code=0, stdout="", stderr="",
-            duration_ms=0, sandbox_level=SandboxLevel.PROCESS,
+            exit_code=0,
+            stdout="",
+            stderr="",
+            duration_ms=0,
+            sandbox_level=SandboxLevel.PROCESS,
             isolation_degraded=True,
         )
         assert result.isolation_degraded is True
@@ -47,8 +53,11 @@ class TestSandboxResultField:
     def test_mutable(self) -> None:
         """isolation_degraded kann nachtraeglich gesetzt werden."""
         result = SandboxResult(
-            exit_code=0, stdout="", stderr="",
-            duration_ms=0, sandbox_level=SandboxLevel.PROCESS,
+            exit_code=0,
+            stdout="",
+            stderr="",
+            duration_ms=0,
+            sandbox_level=SandboxLevel.PROCESS,
         )
         result.isolation_degraded = True
         assert result.isolation_degraded is True
@@ -87,15 +96,21 @@ class TestDegradedFallback:
         sandbox = Sandbox(config)
 
         bare_result = SandboxResult(
-            exit_code=0, stdout="ok", stderr="",
-            duration_ms=100, sandbox_level=SandboxLevel.PROCESS,
+            exit_code=0,
+            stdout="ok",
+            stderr="",
+            duration_ms=100,
+            sandbox_level=SandboxLevel.PROCESS,
         )
 
-        with patch.object(sandbox, "_exec_process_bare", new_callable=AsyncMock, return_value=bare_result):
+        with patch.object(
+            sandbox, "_exec_process_bare", new_callable=AsyncMock, return_value=bare_result
+        ):
             with patch("ctypes.windll.kernel32.CreateJobObjectW", return_value=0):
                 with patch("ctypes.get_last_error", return_value=5):
                     result = await sandbox._exec_process_with_jobobject(
-                        "echo test", timeout=10,
+                        "echo test",
+                        timeout=10,
                     )
 
         assert result.isolation_degraded is True
@@ -111,7 +126,8 @@ class TestDegradedFallback:
         with patch("ctypes.windll.kernel32.CreateJobObjectW", return_value=0):
             with patch("ctypes.get_last_error", return_value=5):
                 result = await sandbox._exec_process_with_jobobject(
-                    "echo test", timeout=10,
+                    "echo test",
+                    timeout=10,
                 )
 
         assert result.exit_code == -1
@@ -131,7 +147,8 @@ class TestDegradedFallback:
             with patch("ctypes.windll.kernel32.CreateJobObjectW", return_value=0):
                 with patch("ctypes.get_last_error", return_value=5):
                     await sandbox._exec_process_with_jobobject(
-                        "echo test", timeout=10,
+                        "echo test",
+                        timeout=10,
                     )
 
         bare_mock.assert_not_called()
@@ -143,16 +160,22 @@ class TestNormalPath:
     def test_bare_result_default_not_degraded(self) -> None:
         """_exec_process_bare erzeugt Results ohne isolation_degraded."""
         result = SandboxResult(
-            exit_code=0, stdout="", stderr="",
-            duration_ms=0, sandbox_level=SandboxLevel.PROCESS,
+            exit_code=0,
+            stdout="",
+            stderr="",
+            duration_ms=0,
+            sandbox_level=SandboxLevel.PROCESS,
         )
         assert result.isolation_degraded is False
 
     def test_normal_sandbox_result_not_degraded(self) -> None:
         """Ein normales SandboxResult hat isolation_degraded=False."""
         result = SandboxResult(
-            exit_code=0, stdout="output", stderr="",
-            duration_ms=50, sandbox_level=SandboxLevel.PROCESS,
+            exit_code=0,
+            stdout="output",
+            stderr="",
+            duration_ms=50,
+            sandbox_level=SandboxLevel.PROCESS,
         )
         assert not result.isolation_degraded
 

@@ -93,8 +93,12 @@ class TestCallTool:
     @pytest.mark.asyncio
     async def test_call_mcp_server_not_connected(self, client: JarvisMCPClient) -> None:
         from jarvis.models import MCPToolInfo
+
         client._tool_registry["remote_tool"] = MCPToolInfo(
-            name="remote_tool", server="dead_server", description="", input_schema={},
+            name="remote_tool",
+            server="dead_server",
+            description="",
+            input_schema={},
         )
         result = await client.call_tool("remote_tool", {})
         assert result.is_error
@@ -103,8 +107,12 @@ class TestCallTool:
     @pytest.mark.asyncio
     async def test_call_mcp_server_success(self, client: JarvisMCPClient) -> None:
         from jarvis.models import MCPToolInfo, MCPServerConfig
+
         client._tool_registry["remote_tool"] = MCPToolInfo(
-            name="remote_tool", server="srv1", description="", input_schema={},
+            name="remote_tool",
+            server="srv1",
+            description="",
+            input_schema={},
         )
         mock_session = AsyncMock()
         mock_block = MagicMock()
@@ -114,7 +122,10 @@ class TestCallTool:
         mock_result.isError = False
         mock_session.call_tool = AsyncMock(return_value=mock_result)
         client._servers["srv1"] = ServerConnection(
-            name="srv1", config=MagicMock(), session=mock_session, connected=True,
+            name="srv1",
+            config=MagicMock(),
+            session=mock_session,
+            connected=True,
         )
         result = await client.call_tool("remote_tool", {"arg": "val"})
         assert not result.is_error
@@ -123,13 +134,20 @@ class TestCallTool:
     @pytest.mark.asyncio
     async def test_call_mcp_server_exception(self, client: JarvisMCPClient) -> None:
         from jarvis.models import MCPToolInfo
+
         client._tool_registry["err_tool"] = MCPToolInfo(
-            name="err_tool", server="srv1", description="", input_schema={},
+            name="err_tool",
+            server="srv1",
+            description="",
+            input_schema={},
         )
         mock_session = AsyncMock()
         mock_session.call_tool = AsyncMock(side_effect=RuntimeError("network error"))
         client._servers["srv1"] = ServerConnection(
-            name="srv1", config=MagicMock(), session=mock_session, connected=True,
+            name="srv1",
+            config=MagicMock(),
+            session=mock_session,
+            connected=True,
         )
         result = await client.call_tool("err_tool", {})
         assert result.is_error
@@ -139,7 +157,9 @@ class TestCallTool:
 class TestGetToolSchemas:
     def test_schemas(self, client: JarvisMCPClient) -> None:
         client.register_builtin_handler(
-            "t1", lambda: None, description="Tool 1",
+            "t1",
+            lambda: None,
+            description="Tool 1",
             input_schema={"type": "object"},
         )
         schemas = client.get_tool_schemas()
@@ -207,8 +227,11 @@ class TestDisconnectAll:
         mock_process.terminate = MagicMock()
         mock_process.wait = AsyncMock()
         client._servers["srv"] = ServerConnection(
-            name="srv", config=MagicMock(),
-            session=mock_session, process=mock_process, connected=True,
+            name="srv",
+            config=MagicMock(),
+            session=mock_session,
+            process=mock_process,
+            connected=True,
         )
         await client.disconnect_all()
         assert client.server_count == 0
@@ -225,7 +248,10 @@ class TestSubscribeResource:
         mock_session = AsyncMock()
         mock_session.subscribe_resource = AsyncMock()
         client._servers["srv"] = ServerConnection(
-            name="srv", config=MagicMock(), session=mock_session, connected=True,
+            name="srv",
+            config=MagicMock(),
+            session=mock_session,
+            connected=True,
         )
         result = await client.subscribe_resource("srv", "jarvis://test", MagicMock())
         assert result is True
@@ -235,7 +261,10 @@ class TestSubscribeResource:
         mock_session = AsyncMock()
         mock_session.subscribe_resource = AsyncMock(side_effect=RuntimeError("fail"))
         client._servers["srv"] = ServerConnection(
-            name="srv", config=MagicMock(), session=mock_session, connected=True,
+            name="srv",
+            config=MagicMock(),
+            session=mock_session,
+            connected=True,
         )
         result = await client.subscribe_resource("srv", "jarvis://test", MagicMock())
         assert result is False
@@ -252,7 +281,10 @@ class TestUnsubscribeResource:
         mock_session = AsyncMock()
         mock_session.unsubscribe_resource = AsyncMock()
         client._servers["srv"] = ServerConnection(
-            name="srv", config=MagicMock(), session=mock_session, connected=True,
+            name="srv",
+            config=MagicMock(),
+            session=mock_session,
+            connected=True,
         )
         client._subscriptions["srv"] = {"jarvis://test": [MagicMock()]}
         result = await client.unsubscribe_resource("srv", "jarvis://test")
@@ -263,7 +295,10 @@ class TestUnsubscribeResource:
         mock_session = AsyncMock()
         mock_session.unsubscribe_resource = AsyncMock(side_effect=RuntimeError("fail"))
         client._servers["srv"] = ServerConnection(
-            name="srv", config=MagicMock(), session=mock_session, connected=True,
+            name="srv",
+            config=MagicMock(),
+            session=mock_session,
+            connected=True,
         )
         result = await client.unsubscribe_resource("srv", "jarvis://test")
         assert result is False

@@ -158,6 +158,7 @@ class TestSearchRemoteSkills:
 
         # Monkey-patch the module to look at our directory
         import jarvis.skills.manager as mgr
+
         original_file = Path(mgr.__file__).resolve()
         # Since the path resolution depends on parents, we test differently:
         # Just test that the function handles no matching directories gracefully

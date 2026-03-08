@@ -26,18 +26,24 @@ def config(tmp_path) -> JarvisConfig:
 
 def _mock_ollama(content: str = "{}") -> AsyncMock:
     mock = AsyncMock()
-    mock.chat = AsyncMock(return_value={
-        "message": {"role": "assistant", "content": content},
-        "prompt_eval_count": 100,
-        "eval_count": 50,
-    })
+    mock.chat = AsyncMock(
+        return_value={
+            "message": {"role": "assistant", "content": content},
+            "prompt_eval_count": 100,
+            "eval_count": 50,
+        }
+    )
     return mock
 
 
 def _mock_router() -> MagicMock:
     router = MagicMock()
     router.select_model.return_value = "qwen3:8b"
-    router.get_model_config.return_value = {"temperature": 0.3, "top_p": 0.9, "context_window": 32768}
+    router.get_model_config.return_value = {
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "context_window": 32768,
+    }
     return router
 
 
@@ -48,6 +54,7 @@ def _make_agent_result(
 ) -> AgentResult:
     """Creates a minimal AgentResult for tests."""
     from jarvis.models import PlannedAction
+
     if has_actions:
         plan = ActionPlan(
             goal="test",
@@ -107,7 +114,9 @@ class TestShouldReflect:
 
 class TestExtractKeywords:
     def test_extract_keywords_basic(self, config: JarvisConfig) -> None:
-        keywords = Reflector.extract_keywords("Python ist eine Programmiersprache fuer Data Science")
+        keywords = Reflector.extract_keywords(
+            "Python ist eine Programmiersprache fuer Data Science"
+        )
         assert isinstance(keywords, list)
         assert len(keywords) > 0
         # Should filter out stop words like "ist", "eine", "fuer"
@@ -178,7 +187,9 @@ class TestReflect:
         mock_audit.log_tool_call = MagicMock()
 
         reflector = Reflector(
-            config, _mock_ollama(llm_response), _mock_router(),
+            config,
+            _mock_ollama(llm_response),
+            _mock_router(),
             audit_logger=mock_audit,
         )
         session = SessionContext()
@@ -240,6 +251,7 @@ class TestApply:
     async def test_apply_empty_result(self, config: JarvisConfig) -> None:
         reflector = Reflector(config, _mock_ollama(), _mock_router())
         from jarvis.models import ReflectionResult
+
         result = ReflectionResult(
             session_id="test",
             success_score=0.5,
@@ -566,7 +578,9 @@ class TestReflectExtended:
         mock_episodic_store.store_episode = MagicMock()
 
         reflector = Reflector(
-            config, _mock_ollama(llm_response), _mock_router(),
+            config,
+            _mock_ollama(llm_response),
+            _mock_router(),
             episodic_store=mock_episodic_store,
         )
         session = SessionContext()
@@ -584,7 +598,9 @@ class TestReflectExtended:
         mock_causal.record_sequence = MagicMock()
 
         reflector = Reflector(
-            config, _mock_ollama(llm_response), _mock_router(),
+            config,
+            _mock_ollama(llm_response),
+            _mock_router(),
             causal_analyzer=mock_causal,
         )
         session = SessionContext()

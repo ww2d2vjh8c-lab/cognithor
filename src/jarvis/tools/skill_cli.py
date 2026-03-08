@@ -29,12 +29,12 @@ from typing import Any
 
 
 class TemplateType(Enum):
-    BASIC = "basic"                    # Einfacher Skill ohne Abhängigkeiten
+    BASIC = "basic"  # Einfacher Skill ohne Abhängigkeiten
     API_INTEGRATION = "api_integration"  # Skill mit REST-API-Anbindung
-    DATA_PROCESSOR = "data_processor"   # Datenverarbeitung + RAG
-    AUTOMATION = "automation"           # Workflow-Automatisierung
-    CHANNEL_ADAPTER = "channel_adapter" # Neuer Kommunikationskanal
-    TOOL_WRAPPER = "tool_wrapper"       # Wrapper um externes Tool
+    DATA_PROCESSOR = "data_processor"  # Datenverarbeitung + RAG
+    AUTOMATION = "automation"  # Workflow-Automatisierung
+    CHANNEL_ADAPTER = "channel_adapter"  # Neuer Kommunikationskanal
+    TOOL_WRAPPER = "tool_wrapper"  # Wrapper um externes Tool
 
 
 @dataclass
@@ -45,7 +45,7 @@ class SkillTemplate:
     name: str
     template_type: TemplateType
     description: str
-    files: dict[str, str]    # filename → content template
+    files: dict[str, str]  # filename → content template
     dependencies: list[str] = field(default_factory=list)
     min_python: str = "3.11"
 
@@ -61,7 +61,9 @@ class SkillTemplate:
 
 BUILT_IN_TEMPLATES: dict[TemplateType, SkillTemplate] = {
     TemplateType.BASIC: SkillTemplate(
-        "TPL-BASIC", "Basic Skill", TemplateType.BASIC,
+        "TPL-BASIC",
+        "Basic Skill",
+        TemplateType.BASIC,
         "Einfacher Skill mit Eingabe/Ausgabe",
         {
             "SKILL.md": "# {name}\n\n## Beschreibung\n{description}\n\n## Verwendung\n```\njarvis {slug} <eingabe>\n```\n",
@@ -71,7 +73,9 @@ BUILT_IN_TEMPLATES: dict[TemplateType, SkillTemplate] = {
         },
     ),
     TemplateType.API_INTEGRATION: SkillTemplate(
-        "TPL-API", "API Integration", TemplateType.API_INTEGRATION,
+        "TPL-API",
+        "API Integration",
+        TemplateType.API_INTEGRATION,
         "Skill mit REST-API-Anbindung",
         {
             "SKILL.md": "# {name}\n\nAPI-Integration für {description}\n",
@@ -82,7 +86,9 @@ BUILT_IN_TEMPLATES: dict[TemplateType, SkillTemplate] = {
         dependencies=["httpx"],
     ),
     TemplateType.AUTOMATION: SkillTemplate(
-        "TPL-AUTO", "Automation Skill", TemplateType.AUTOMATION,
+        "TPL-AUTO",
+        "Automation Skill",
+        TemplateType.AUTOMATION,
         "Workflow-Automatisierung mit Cron-Support",
         {
             "SKILL.md": "# {name}\n\nAutomation: {description}\n",
@@ -229,49 +235,73 @@ class SkillLinter:
         # Pflicht-Dateien
         for req in self.REQUIRED_FILES:
             if req not in files:
-                issues.append(LintIssue(
-                    "missing-file", LintSeverity.ERROR,
-                    f"Pflichtdatei '{req}' fehlt", req,
-                ))
+                issues.append(
+                    LintIssue(
+                        "missing-file",
+                        LintSeverity.ERROR,
+                        f"Pflichtdatei '{req}' fehlt",
+                        req,
+                    )
+                )
 
         # SKILL.md Inhalt
         skill_md = files.get("SKILL.md", "")
         if skill_md and len(skill_md) < 50:
-            issues.append(LintIssue(
-                "short-docs", LintSeverity.WARNING,
-                "SKILL.md ist sehr kurz (< 50 Zeichen)", "SKILL.md",
-            ))
+            issues.append(
+                LintIssue(
+                    "short-docs",
+                    LintSeverity.WARNING,
+                    "SKILL.md ist sehr kurz (< 50 Zeichen)",
+                    "SKILL.md",
+                )
+            )
         if skill_md and "## Beschreibung" not in skill_md and "## Description" not in skill_md:
-            issues.append(LintIssue(
-                "missing-description", LintSeverity.WARNING,
-                "SKILL.md sollte eine Beschreibung enthalten", "SKILL.md",
-            ))
+            issues.append(
+                LintIssue(
+                    "missing-description",
+                    LintSeverity.WARNING,
+                    "SKILL.md sollte eine Beschreibung enthalten",
+                    "SKILL.md",
+                )
+            )
 
         # manifest.json
         manifest = files.get("manifest.json", "")
         if manifest:
             for field_name in self.REQUIRED_MANIFEST_FIELDS:
                 if f'"{field_name}"' not in manifest:
-                    issues.append(LintIssue(
-                        "missing-manifest-field", LintSeverity.ERROR,
-                        f"Pflichtfeld '{field_name}' fehlt in manifest.json", "manifest.json",
-                    ))
+                    issues.append(
+                        LintIssue(
+                            "missing-manifest-field",
+                            LintSeverity.ERROR,
+                            f"Pflichtfeld '{field_name}' fehlt in manifest.json",
+                            "manifest.json",
+                        )
+                    )
 
         # Tests vorhanden?
         has_tests = any("test_" in f for f in files)
         if not has_tests:
-            issues.append(LintIssue(
-                "no-tests", LintSeverity.WARNING,
-                "Keine Tests gefunden (test_*.py)", "",
-            ))
+            issues.append(
+                LintIssue(
+                    "no-tests",
+                    LintSeverity.WARNING,
+                    "Keine Tests gefunden (test_*.py)",
+                    "",
+                )
+            )
 
         # skill.py BaseSkill-Ableitung
         skill_py = files.get("skill.py", "")
         if skill_py and "BaseSkill" not in skill_py:
-            issues.append(LintIssue(
-                "no-base-class", LintSeverity.ERROR,
-                "Skill muss von BaseSkill erben", "skill.py",
-            ))
+            issues.append(
+                LintIssue(
+                    "no-base-class",
+                    LintSeverity.ERROR,
+                    "Skill muss von BaseSkill erben",
+                    "skill.py",
+                )
+            )
 
         return issues
 
@@ -350,10 +380,22 @@ class SkillTester:
             tmp.write_text(test_code, encoding="utf-8")
             try:
                 proc = subprocess.run(
-                    [sys.executable, "-m", "pytest", str(tmp), "--tb=short", "-q",
-                     f"--rootdir={tmpdir}", "--import-mode=importlib",
-                     "-p", "no:cacheprovider", "--no-header"],
-                    capture_output=True, text=True, timeout=30,
+                    [
+                        sys.executable,
+                        "-m",
+                        "pytest",
+                        str(tmp),
+                        "--tb=short",
+                        "-q",
+                        f"--rootdir={tmpdir}",
+                        "--import-mode=importlib",
+                        "-p",
+                        "no:cacheprovider",
+                        "--no-header",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
                     cwd=tmpdir,
                     env=self._build_safe_env(),
                 )
@@ -382,6 +424,7 @@ class SkillTester:
                 failed = 0
             finally:
                 import shutil
+
                 shutil.rmtree(tmpdir, ignore_errors=True)
 
         elapsed = (time.time() - start) * 1000
@@ -469,9 +512,7 @@ class SkillPublisher:
         self._requests: dict[str, PublishRequest] = {}
         self._counter = 0
 
-    def create_request(
-        self, skill_name: str, version: str, author: str
-    ) -> PublishRequest:
+    def create_request(self, skill_name: str, version: str, author: str) -> PublishRequest:
         self._counter += 1
         req = PublishRequest(
             request_id=f"PUB-{self._counter:04d}",
@@ -482,7 +523,9 @@ class SkillPublisher:
         self._requests[req.request_id] = req
         return req
 
-    def run_checks(self, request_id: str, *, lint: bool = False, tests: bool = False, security: bool = False) -> bool:
+    def run_checks(
+        self, request_id: str, *, lint: bool = False, tests: bool = False, security: bool = False
+    ) -> bool:
         req = self._requests.get(request_id)
         if not req:
             return False
@@ -519,7 +562,11 @@ class SkillPublisher:
         return True
 
     def pending(self) -> list[PublishRequest]:
-        return [r for r in self._requests.values() if r.status in (PublishStatus.SUBMITTED, PublishStatus.IN_REVIEW)]
+        return [
+            r
+            for r in self._requests.values()
+            if r.status in (PublishStatus.SUBMITTED, PublishStatus.IN_REVIEW)
+        ]
 
     def stats(self) -> dict[str, Any]:
         reqs = list(self._requests.values())
@@ -574,15 +621,15 @@ class RewardSystem:
         "review_given": 20,
         "bug_reported": 30,
         "documentation": 50,
-        "first_skill": 200,     # Bonus für ersten Skill
+        "first_skill": 200,  # Bonus für ersten Skill
     }
 
     BADGES = {
         "first_skill": ("🌱 Erster Skill", 1),
         "five_skills": ("⭐ 5 Skills", 5),
         "ten_skills": ("🏆 10 Skills", 10),
-        "reviewer": ("🔍 Reviewer", 5),         # 5 Reviews
-        "expert": ("🎓 Experte", 1000),          # 1000 Punkte
+        "reviewer": ("🔍 Reviewer", 5),  # 5 Reviews
+        "expert": ("🎓 Experte", 1000),  # 1000 Punkte
     }
 
     def __init__(self) -> None:
@@ -705,7 +752,9 @@ class SkillCLI:
         test_result = self.cmd_test(skill_name, files.get("test_skill.py", ""))
 
         req = self.cmd_publish(skill_name, version, author)
-        self._publisher.run_checks(req.request_id, lint=lint_ok, tests=test_result.success, security=True)
+        self._publisher.run_checks(
+            req.request_id, lint=lint_ok, tests=test_result.success, security=True
+        )
 
         if req.can_publish:
             self._publisher.publish(req.request_id)

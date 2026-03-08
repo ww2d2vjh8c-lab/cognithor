@@ -135,8 +135,8 @@ class TestConcurrentWrites:
             try:
                 return store.store_summary(
                     period="daily",
-                    start_date=f"2026-01-{i+1:02d}",
-                    end_date=f"2026-01-{i+1:02d}",
+                    start_date=f"2026-01-{i + 1:02d}",
+                    end_date=f"2026-01-{i + 1:02d}",
                     summary=f"Summary {i}",
                 )
             except Exception as e:
@@ -221,6 +221,7 @@ class TestSourceLevelChecks:
 
     def test_threading_imported(self) -> None:
         import jarvis.memory.episodic_store as mod
+
         source = inspect.getsource(mod)
         assert "import threading" in source
 

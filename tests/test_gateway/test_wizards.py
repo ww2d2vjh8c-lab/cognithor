@@ -33,8 +33,11 @@ from jarvis.gateway.wizards import (
 class TestWizardStep:
     def test_validate_required_missing(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Name", description="",
-            field_type=WizardStepType.TEXT, field_name="name",
+            step_id="s1",
+            title="Name",
+            description="",
+            field_type=WizardStepType.TEXT,
+            field_name="name",
         )
         ok, msg = step.validate(None)
         assert not ok
@@ -42,16 +45,22 @@ class TestWizardStep:
 
     def test_validate_required_present(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Name", description="",
-            field_type=WizardStepType.TEXT, field_name="name",
+            step_id="s1",
+            title="Name",
+            description="",
+            field_type=WizardStepType.TEXT,
+            field_name="name",
         )
         ok, _ = step.validate("test")
         assert ok
 
     def test_validate_number_invalid(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Count", description="",
-            field_type=WizardStepType.NUMBER, field_name="count",
+            step_id="s1",
+            title="Count",
+            description="",
+            field_type=WizardStepType.NUMBER,
+            field_name="count",
         )
         ok, msg = step.validate("abc")
         assert not ok
@@ -59,16 +68,22 @@ class TestWizardStep:
 
     def test_validate_number_valid(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Count", description="",
-            field_type=WizardStepType.NUMBER, field_name="count",
+            step_id="s1",
+            title="Count",
+            description="",
+            field_type=WizardStepType.NUMBER,
+            field_name="count",
         )
         ok, _ = step.validate(42)
         assert ok
 
     def test_validate_select_invalid(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Channel", description="",
-            field_type=WizardStepType.SELECT, field_name="ch",
+            step_id="s1",
+            title="Channel",
+            description="",
+            field_type=WizardStepType.SELECT,
+            field_name="ch",
             options=[{"value": "cli"}, {"value": "slack"}],
         )
         ok, _ = step.validate("telegram")
@@ -76,8 +91,11 @@ class TestWizardStep:
 
     def test_validate_select_valid(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Channel", description="",
-            field_type=WizardStepType.SELECT, field_name="ch",
+            step_id="s1",
+            title="Channel",
+            description="",
+            field_type=WizardStepType.SELECT,
+            field_name="ch",
             options=[{"value": "cli"}, {"value": "slack"}],
         )
         ok, _ = step.validate("slack")
@@ -85,24 +103,33 @@ class TestWizardStep:
 
     def test_validate_boolean_invalid(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Enabled", description="",
-            field_type=WizardStepType.BOOLEAN, field_name="en",
+            step_id="s1",
+            title="Enabled",
+            description="",
+            field_type=WizardStepType.BOOLEAN,
+            field_name="en",
         )
         ok, _ = step.validate("yes")
         assert not ok
 
     def test_validate_boolean_valid(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Enabled", description="",
-            field_type=WizardStepType.BOOLEAN, field_name="en",
+            step_id="s1",
+            title="Enabled",
+            description="",
+            field_type=WizardStepType.BOOLEAN,
+            field_name="en",
         )
         ok, _ = step.validate(True)
         assert ok
 
     def test_optional_none_ok(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Opt", description="",
-            field_type=WizardStepType.TEXT, field_name="opt",
+            step_id="s1",
+            title="Opt",
+            description="",
+            field_type=WizardStepType.TEXT,
+            field_name="opt",
             required=False,
         )
         ok, _ = step.validate(None)
@@ -110,8 +137,11 @@ class TestWizardStep:
 
     def test_to_dict(self) -> None:
         step = WizardStep(
-            step_id="s1", title="Name", description="desc",
-            field_type=WizardStepType.TEXT, field_name="name",
+            step_id="s1",
+            title="Name",
+            description="desc",
+            field_type=WizardStepType.TEXT,
+            field_name="name",
             tooltip="Hilfe",
         )
         d = step.to_dict()
@@ -148,21 +178,25 @@ class TestHeartbeatWizard:
 
     def test_generate_config(self) -> None:
         wiz = HeartbeatWizard()
-        result = wiz.generate_config({
-            "enabled": True,
-            "interval_minutes": 30,
-            "channel": "cli",
-        })
+        result = wiz.generate_config(
+            {
+                "enabled": True,
+                "interval_minutes": 30,
+                "channel": "cli",
+            }
+        )
         assert result.valid
         assert result.config_patch["heartbeat"]["interval_minutes"] == 30
 
     def test_generate_config_warning_short_interval(self) -> None:
         wiz = HeartbeatWizard()
-        result = wiz.generate_config({
-            "enabled": True,
-            "interval_minutes": 2,
-            "channel": "cli",
-        })
+        result = wiz.generate_config(
+            {
+                "enabled": True,
+                "interval_minutes": 2,
+                "channel": "cli",
+            }
+        )
         assert any("Intervall" in w or "Performance" in w for w in result.warnings)
 
     def test_validate_step(self) -> None:
@@ -206,21 +240,25 @@ class TestBindingWizard:
 
     def test_generate_config(self) -> None:
         wiz = BindingWizard()
-        result = wiz.generate_config({
-            "name": "test_binding",
-            "target_agent": "coder",
-            "command_prefix": "/code",
-        })
+        result = wiz.generate_config(
+            {
+                "name": "test_binding",
+                "target_agent": "coder",
+                "command_prefix": "/code",
+            }
+        )
         assert result.config_patch["bindings"][0]["name"] == "test_binding"
         assert result.config_patch["bindings"][0]["target_agent"] == "coder"
 
     def test_generate_config_with_regex(self) -> None:
         wiz = BindingWizard()
-        result = wiz.generate_config({
-            "name": "bugs",
-            "target_agent": "coder",
-            "regex_pattern": "(?i)bug|fehler",
-        })
+        result = wiz.generate_config(
+            {
+                "name": "bugs",
+                "target_agent": "coder",
+                "regex_pattern": "(?i)bug|fehler",
+            }
+        )
         assert result.config_patch["bindings"][0]["regex_pattern"] == "(?i)bug|fehler"
 
     def test_wizard_type(self) -> None:
@@ -245,38 +283,46 @@ class TestAgentWizard:
         wiz = AgentWizard()
         t = wiz.get_template("coder")
         assert t is not None
-        assert "code" in t.preset_values.get("preferred_model", "").lower() or \
-               t.preset_values.get("name") == "coder"
+        assert (
+            "code" in t.preset_values.get("preferred_model", "").lower()
+            or t.preset_values.get("name") == "coder"
+        )
 
     def test_generate_config_standard_sandbox(self) -> None:
         wiz = AgentWizard()
-        result = wiz.generate_config({
-            "name": "test_agent",
-            "system_prompt": "Test prompt",
-            "sandbox_profile": "standard",
-        })
+        result = wiz.generate_config(
+            {
+                "name": "test_agent",
+                "system_prompt": "Test prompt",
+                "sandbox_profile": "standard",
+            }
+        )
         agent = result.config_patch["agents"][0]
         assert agent["sandbox_network"] == "allow"
         assert agent["sandbox_max_memory_mb"] == 512
 
     def test_generate_config_minimal_sandbox(self) -> None:
         wiz = AgentWizard()
-        result = wiz.generate_config({
-            "name": "safe_agent",
-            "system_prompt": "Restricted",
-            "sandbox_profile": "minimal",
-        })
+        result = wiz.generate_config(
+            {
+                "name": "safe_agent",
+                "system_prompt": "Restricted",
+                "sandbox_profile": "minimal",
+            }
+        )
         agent = result.config_patch["agents"][0]
         assert agent["sandbox_network"] == "block"
         assert agent["sandbox_max_memory_mb"] == 256
 
     def test_generate_config_full_sandbox(self) -> None:
         wiz = AgentWizard()
-        result = wiz.generate_config({
-            "name": "power_agent",
-            "system_prompt": "Full power",
-            "sandbox_profile": "full",
-        })
+        result = wiz.generate_config(
+            {
+                "name": "power_agent",
+                "system_prompt": "Full power",
+                "sandbox_profile": "full",
+            }
+        )
         agent = result.config_patch["agents"][0]
         assert agent["sandbox_max_memory_mb"] == 8192
 
@@ -284,8 +330,7 @@ class TestAgentWizard:
         wiz = AgentWizard()
         t = wiz.get_template("family")
         assert t is not None
-        assert "family" in t.preset_values.get("name", "").lower() or \
-               "Familie" in t.description
+        assert "family" in t.preset_values.get("name", "").lower() or "Familie" in t.description
 
     def test_wizard_type(self) -> None:
         assert AgentWizard().wizard_type == "agent"
@@ -332,7 +377,9 @@ class TestDashboardUser:
 
     def test_agent_scope_user_restricted(self) -> None:
         user = DashboardUser(
-            user_id="u6", display_name="User", role=UserRole.USER,
+            user_id="u6",
+            display_name="User",
+            role=UserRole.USER,
             agent_scope=["coder", "researcher"],
         )
         assert user.can_access_agent("coder")
@@ -344,7 +391,10 @@ class TestDashboardUser:
 
     def test_to_dict(self) -> None:
         user = DashboardUser(
-            user_id="u8", display_name="Alex", role=UserRole.ADMIN, email="a@b.de",
+            user_id="u8",
+            display_name="Alex",
+            role=UserRole.ADMIN,
+            email="a@b.de",
         )
         d = user.to_dict()
         assert d["role"] == "admin"
@@ -458,11 +508,14 @@ class TestWizardRegistry:
 
     def test_run_wizard(self) -> None:
         reg = WizardRegistry()
-        result = reg.run_wizard("heartbeat", {
-            "enabled": True,
-            "interval_minutes": 30,
-            "channel": "cli",
-        })
+        result = reg.run_wizard(
+            "heartbeat",
+            {
+                "enabled": True,
+                "interval_minutes": 30,
+                "channel": "cli",
+            },
+        )
         assert result is not None
         assert result.valid
 

@@ -35,30 +35,35 @@ class FakeApp:
         def decorator(fn):
             self._routes[f"GET {path}"] = fn
             return fn
+
         return decorator
 
     def post(self, path: str, **kw: Any):
         def decorator(fn):
             self._routes[f"POST {path}"] = fn
             return fn
+
         return decorator
 
     def patch(self, path: str, **kw: Any):
         def decorator(fn):
             self._routes[f"PATCH {path}"] = fn
             return fn
+
         return decorator
 
     def put(self, path: str, **kw: Any):
         def decorator(fn):
             self._routes[f"PUT {path}"] = fn
             return fn
+
         return decorator
 
     def delete(self, path: str, **kw: Any):
         def decorator(fn):
             self._routes[f"DELETE {path}"] = fn
             return fn
+
         return decorator
 
 

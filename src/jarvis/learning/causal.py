@@ -102,9 +102,7 @@ class CausalAnalyzer:
             Liste von SequenceScore, sortiert nach avg_score absteigend.
         """
         conn = self._get_conn()
-        rows = conn.execute(
-            "SELECT tool_sequence, success_score FROM causal_sequences"
-        ).fetchall()
+        rows = conn.execute("SELECT tool_sequence, success_score FROM causal_sequences").fetchall()
 
         if not rows:
             return []

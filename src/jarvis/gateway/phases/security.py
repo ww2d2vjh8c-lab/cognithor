@@ -49,6 +49,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
     # Phase 10: Red-Team Security-Scanner
     try:
         from jarvis.security.redteam import SecurityScanner
+
         result["security_scanner"] = SecurityScanner()
     except Exception:
         log.debug("security_scanner_init_skipped", exc_info=True)
@@ -60,6 +61,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
             IsolatedSessionStore,
             SessionIsolationGuard,
         )
+
         vault = VaultManager()
         isolated = IsolatedSessionStore()
         result["vault_manager"] = vault
@@ -71,6 +73,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
     # Phase 19: MLOps Security Pipeline
     try:
         from jarvis.security.mlops_pipeline import SecurityPipeline
+
         result["security_pipeline"] = SecurityPipeline()
     except Exception:
         log.debug("security_pipeline_init_skipped", exc_info=True)
@@ -83,6 +86,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
             SecurityTeam,
             PostureScorer,
         )
+
         tracker = IncidentTracker()
         result["incident_tracker"] = tracker
         result["security_metrics"] = SecurityMetrics(tracker)
@@ -99,6 +103,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
             ScanScheduler,
             WebhookNotifier,
         )
+
         result["security_gate"] = SecurityGate()
         result["continuous_redteam"] = ContinuousRedTeam()
         result["scan_scheduler"] = ScanScheduler()
@@ -109,6 +114,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
     # Phase 25: Strikte Sandbox-Isolierung + Multi-Tenant
     try:
         from jarvis.security.sandbox_isolation import IsolationEnforcer
+
         result["isolation_enforcer"] = IsolationEnforcer()
     except Exception:
         log.debug("isolation_enforcer_init_skipped", exc_info=True)
@@ -116,6 +122,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
     # Phase 29: Per-Agent Vault & Session-Isolation
     try:
         from jarvis.security.agent_vault import AgentVaultManager
+
         result["agent_vault_manager"] = AgentVaultManager()
     except Exception:
         log.debug("agent_vault_manager_init_skipped", exc_info=True)
@@ -123,6 +130,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
     # Phase 30: Red-Team-Framework
     try:
         from jarvis.security.red_team import RedTeamFramework
+
         result["red_team"] = RedTeamFramework()
     except Exception:
         log.debug("red_team_framework_init_skipped", exc_info=True)
@@ -130,6 +138,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
     # Phase 33: Automatisierte Code-Analyse
     try:
         from jarvis.security.code_audit import CodeAuditor
+
         result["code_auditor"] = CodeAuditor()
     except Exception:
         log.debug("code_auditor_init_skipped", exc_info=True)
@@ -170,6 +179,7 @@ async def init_security(config: Any, llm_backend: Any = None) -> PhaseResult:
 
     # Gatekeeper (deterministic, no LLM needed)
     from jarvis.models import OperationMode
+
     op_mode = getattr(config, "resolved_operation_mode", None)
     if isinstance(op_mode, str):
         try:
@@ -183,6 +193,7 @@ async def init_security(config: Any, llm_backend: Any = None) -> PhaseResult:
     # Community-Skill ToolEnforcer
     try:
         from jarvis.skills.community.tool_enforcer import ToolEnforcer
+
         cm_config = getattr(config, "community_marketplace", None)
         max_calls = getattr(cm_config, "max_tool_calls_default", 10) if cm_config else 10
         tool_enforcer = ToolEnforcer(max_tool_calls=max_calls)

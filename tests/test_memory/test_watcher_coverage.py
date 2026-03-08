@@ -70,7 +70,9 @@ class TestMemoryWatcher:
         callback = MagicMock()
         watcher = MemoryWatcher(tmp_path, callback, poll_interval=0.1)
 
-        with patch.dict("sys.modules", {"watchdog": None, "watchdog.events": None, "watchdog.observers": None}):
+        with patch.dict(
+            "sys.modules", {"watchdog": None, "watchdog.events": None, "watchdog.observers": None}
+        ):
             watcher.start()
             assert watcher.is_running
             time.sleep(0.05)

@@ -47,15 +47,21 @@ class MockToolResult:
 
 def _allow(action=None):
     return GateDecision(
-        status=GateStatus.ALLOW, risk_level=RiskLevel.GREEN,
-        reason="ok", original_action=action, policy_name="test",
+        status=GateStatus.ALLOW,
+        risk_level=RiskLevel.GREEN,
+        reason="ok",
+        original_action=action,
+        policy_name="test",
     )
 
 
 def _block(action=None):
     return GateDecision(
-        status=GateStatus.BLOCK, risk_level=RiskLevel.RED,
-        reason="blocked", original_action=action, policy_name="test",
+        status=GateStatus.BLOCK,
+        risk_level=RiskLevel.RED,
+        reason="blocked",
+        original_action=action,
+        policy_name="test",
     )
 
 
@@ -81,7 +87,9 @@ class TestProofFix1_WorkflowEngineActive:
             goal="Proof: Adapter works",
             steps=[
                 PlannedAction(tool="web_search", params={"query": "test"}),
-                PlannedAction(tool="web_fetch", params={"url": "https://example.com"}, depends_on=[0]),
+                PlannedAction(
+                    tool="web_fetch", params={"url": "https://example.com"}, depends_on=[0]
+                ),
                 PlannedAction(tool="write_file", params={"path": "/out.txt"}, depends_on=[1]),
             ],
         )
@@ -169,6 +177,7 @@ class TestProofFix3_WebToolRegistration:
         class MockClient:
             def __init__(self):
                 self.tools = {}
+
             def register_builtin_handler(self, name, handler, *, description="", input_schema=None):
                 self.tools[name] = {"handler": handler, "desc": description, "schema": input_schema}
 
@@ -266,8 +275,12 @@ class TestProofFix5_LiveReload:
         executor.reload_config(config2)
 
         # PROOF: all values changed
-        assert executor._default_timeout == 99, f"Timeout: {before_timeout} → {executor._default_timeout}"
-        assert executor._max_parallel == 12, f"Parallel: {before_parallel} → {executor._max_parallel}"
+        assert executor._default_timeout == 99, (
+            f"Timeout: {before_timeout} → {executor._default_timeout}"
+        )
+        assert executor._max_parallel == 12, (
+            f"Parallel: {before_parallel} → {executor._max_parallel}"
+        )
         assert executor._max_retries == 1, f"Retries: {before_retries} → {executor._max_retries}"
 
     def test_webtools_reload_updates_domain_lists(self, tmp_path) -> None:
@@ -328,6 +341,7 @@ class TestProofFix6_DomainValidation:
     def _validate_domain(self, d: str) -> str:
         """Python-Nachbau der JS-Validierung."""
         import re
+
         if not d:
             return "leer"
         if "://" in d:
@@ -401,11 +415,11 @@ class TestProofFix7_SecretMasking:
         from jarvis.config_manager import _is_secret_field
 
         non_secrets = [
-            "google_cse_cx",       # CSE-ID, nicht geheim
-            "searxng_url",         # URL, nicht geheim
+            "google_cse_cx",  # CSE-ID, nicht geheim
+            "searxng_url",  # URL, nicht geheim
             "duckduckgo_enabled",  # Bool, nicht geheim
-            "domain_blocklist",    # Liste, nicht geheim
-            "max_fetch_bytes",     # Zahl, nicht geheim
+            "domain_blocklist",  # Liste, nicht geheim
+            "max_fetch_bytes",  # Zahl, nicht geheim
         ]
         for field in non_secrets:
             assert _is_secret_field(field) is False, f"'{field}' faelschlich als Secret!"
@@ -423,10 +437,12 @@ class TestProofFix7_SecretMasking:
         data = mgr.read(include_secrets=False)
 
         web_data = data.get("web", {})
-        assert web_data["google_cse_api_key"] == "***", \
+        assert web_data["google_cse_api_key"] == "***", (
             f"google_cse_api_key nicht maskiert: {web_data['google_cse_api_key']}"
-        assert web_data["jina_api_key"] == "***", \
+        )
+        assert web_data["jina_api_key"] == "***", (
             f"jina_api_key nicht maskiert: {web_data['jina_api_key']}"
+        )
 
         # google_cse_cx darf NICHT maskiert sein
         assert web_data.get("google_cse_cx", "") != "***"

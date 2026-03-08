@@ -131,9 +131,21 @@ class TestConfigLoad:
         data = r.json()
         # Must have all sections the UI expects
         required_sections = [
-            "ollama", "models", "gatekeeper", "planner", "memory",
-            "channels", "sandbox", "logging", "security", "heartbeat",
-            "plugins", "dashboard", "model_overrides", "web", "database",
+            "ollama",
+            "models",
+            "gatekeeper",
+            "planner",
+            "memory",
+            "channels",
+            "sandbox",
+            "logging",
+            "security",
+            "heartbeat",
+            "plugins",
+            "dashboard",
+            "model_overrides",
+            "web",
+            "database",
         ]
         for section in required_sections:
             assert section in data, f"Missing section: {section}"
@@ -146,9 +158,20 @@ class TestConfigLoad:
     def test_get_config_sections_individually(self, client):
         """GET /config/{section} — each section must be readable."""
         sections = [
-            "ollama", "models", "gatekeeper", "planner", "memory",
-            "channels", "sandbox", "logging", "security", "heartbeat",
-            "plugins", "dashboard", "web", "database",
+            "ollama",
+            "models",
+            "gatekeeper",
+            "planner",
+            "memory",
+            "channels",
+            "sandbox",
+            "logging",
+            "security",
+            "heartbeat",
+            "plugins",
+            "dashboard",
+            "web",
+            "database",
         ]
         for section in sections:
             r = client.get(f"/api/v1/config/{section}")
@@ -162,14 +185,18 @@ class TestConfigLoad:
         r = client.get("/api/v1/config")
         data = r.json()
         # Numeric fields should NOT be masked
-        assert isinstance(data["planner"]["response_token_budget"], int), \
+        assert isinstance(data["planner"]["response_token_budget"], int), (
             "response_token_budget should be an integer, not masked"
-        assert isinstance(data["memory"]["chunk_size_tokens"], int), \
+        )
+        assert isinstance(data["memory"]["chunk_size_tokens"], int), (
             "chunk_size_tokens should be an integer, not masked"
-        assert isinstance(data["memory"]["chunk_overlap_tokens"], int), \
+        )
+        assert isinstance(data["memory"]["chunk_overlap_tokens"], int), (
             "chunk_overlap_tokens should be an integer, not masked"
-        assert isinstance(data["anthropic_max_tokens"], int), \
+        )
+        assert isinstance(data["anthropic_max_tokens"], int), (
             "anthropic_max_tokens should be an integer, not masked"
+        )
 
     def test_editable_sections_metadata(self, client):
         """_meta must list web and database as editable."""
@@ -188,22 +215,25 @@ class TestConfigLoad:
 class TestConfigPatch:
     """Test PATCH /api/v1/config/{section} for all 15 sections."""
 
-    @pytest.mark.parametrize("section,key,value", [
-        ("ollama", "timeout_seconds", 60),
-        ("models", "planner", {"name": "test-model:7b", "context_window": 8192}),
-        ("gatekeeper", "max_blocked_retries", 5),
-        ("planner", "temperature", 0.5),
-        ("memory", "chunk_size_tokens", 500),
-        ("channels", "cli_enabled", False),
-        ("sandbox", "timeout_seconds", 60),
-        ("logging", "level", "DEBUG"),
-        ("security", "max_iterations", 10),
-        ("heartbeat", "enabled", False),
-        ("plugins", "skills_dir", "custom_skills"),
-        ("dashboard", "enabled", True),
-        ("web", "duckduckgo_enabled", False),
-        ("database", "pg_port", 5433),
-    ])
+    @pytest.mark.parametrize(
+        "section,key,value",
+        [
+            ("ollama", "timeout_seconds", 60),
+            ("models", "planner", {"name": "test-model:7b", "context_window": 8192}),
+            ("gatekeeper", "max_blocked_retries", 5),
+            ("planner", "temperature", 0.5),
+            ("memory", "chunk_size_tokens", 500),
+            ("channels", "cli_enabled", False),
+            ("sandbox", "timeout_seconds", 60),
+            ("logging", "level", "DEBUG"),
+            ("security", "max_iterations", 10),
+            ("heartbeat", "enabled", False),
+            ("plugins", "skills_dir", "custom_skills"),
+            ("dashboard", "enabled", True),
+            ("web", "duckduckgo_enabled", False),
+            ("database", "pg_port", 5433),
+        ],
+    )
     def test_patch_section(self, client, section, key, value):
         """PATCH /config/{section} — update must succeed and persist."""
         payload = {key: value}
@@ -232,10 +262,13 @@ class TestConfigPatch:
         """PATCH with '***' values for secret fields must not overwrite."""
         # First set a real value (use top-level for API keys)
         # For section secrets like brave_api_key in web
-        r = client.patch("/api/v1/config/web", json={
-            "brave_api_key": "***",
-            "duckduckgo_enabled": True,
-        })
+        r = client.patch(
+            "/api/v1/config/web",
+            json={
+                "brave_api_key": "***",
+                "duckduckgo_enabled": True,
+            },
+        )
         assert r.status_code == 200
         data = r.json()
         assert data.get("status") == "ok"
@@ -269,8 +302,9 @@ class TestConfigTopLevel:
         data = r.json()
         results = data.get("results", [])
         for result in results:
-            assert result["status"] in ("ok", "skipped"), \
+            assert result["status"] in ("ok", "skipped"), (
                 f"Failed for {result['key']}: {result.get('error')}"
+            )
 
         # Verify persistence
         r2 = client.get("/api/v1/config")
@@ -328,8 +362,9 @@ class TestConfigTopLevel:
         assert r.status_code == 200
         results = r.json()["results"]
         for result in results:
-            assert result["status"] in ("ok", "skipped"), \
+            assert result["status"] in ("ok", "skipped"), (
                 f"Field '{result['key']}' failed: {result.get('error')}"
+            )
 
 
 # ===========================================================================
@@ -358,10 +393,19 @@ class TestAgents:
         r = client.get("/api/v1/agents")
         agent = r.json()["agents"][0]
         expected_fields = [
-            "name", "display_name", "description", "system_prompt",
-            "language", "trigger_patterns", "trigger_keywords", "priority",
-            "allowed_tools", "blocked_tools", "preferred_model",
-            "temperature", "enabled",
+            "name",
+            "display_name",
+            "description",
+            "system_prompt",
+            "language",
+            "trigger_patterns",
+            "trigger_keywords",
+            "priority",
+            "allowed_tools",
+            "blocked_tools",
+            "preferred_model",
+            "temperature",
+            "enabled",
         ]
         for field in expected_fields:
             assert field in agent, f"Agent missing field: {field}"
@@ -477,8 +521,12 @@ class TestPrompts:
         assert r.status_code == 200
         data = r.json()
         expected_fields = [
-            "coreMd", "plannerSystem", "replanPrompt",
-            "escalationPrompt", "policyYaml", "heartbeatMd",
+            "coreMd",
+            "plannerSystem",
+            "replanPrompt",
+            "escalationPrompt",
+            "policyYaml",
+            "heartbeatMd",
         ]
         for field in expected_fields:
             assert field in data, f"Missing prompt field: {field}"
@@ -502,7 +550,9 @@ class TestPrompts:
         # These should fall back to Python constants
         assert len(data["plannerSystem"]) > 50, "plannerSystem should have substantial content"
         assert len(data["replanPrompt"]) > 50, "replanPrompt should have substantial content"
-        assert len(data["escalationPrompt"]) > 50, "escalationPrompt should have substantial content"
+        assert len(data["escalationPrompt"]) > 50, (
+            "escalationPrompt should have substantial content"
+        )
 
     def test_put_prompts(self, client, tmp_jarvis_home):
         """PUT /prompts — must persist all fields to files."""
@@ -833,14 +883,17 @@ class TestFullSaveFlow:
         if r.json().get("error"):
             errors.append(f"a2a: {r.json()['error']}")
 
-        r = client.put("/api/v1/prompts", json={
-            "coreMd": "# Core",
-            "plannerSystem": "System",
-            "replanPrompt": "Replan",
-            "escalationPrompt": "Escalate",
-            "policyYaml": "rules: []",
-            "heartbeatMd": "# HB",
-        })
+        r = client.put(
+            "/api/v1/prompts",
+            json={
+                "coreMd": "# Core",
+                "plannerSystem": "System",
+                "replanPrompt": "Replan",
+                "escalationPrompt": "Escalate",
+                "policyYaml": "rules: []",
+                "heartbeatMd": "# HB",
+            },
+        )
         if r.json().get("error"):
             errors.append(f"prompts: {r.json()['error']}")
 

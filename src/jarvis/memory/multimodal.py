@@ -241,7 +241,11 @@ class MultimodalMemory:
 
         logger.info(
             "media_ingested: asset=%s type=%s file=%s chunks=%d method=%s",
-            asset_id, mtype.value, path.name, len(chunk_ids), extraction_method,
+            asset_id,
+            mtype.value,
+            path.name,
+            len(chunk_ids),
+            extraction_method,
         )
         return asset
 
@@ -345,7 +349,11 @@ class MultimodalMemory:
         if self._pipeline is None:
             # Ohne Pipeline: Nur Textdateien lesen
             if media_type == MediaType.DOCUMENT and path.suffix.lower() in {
-                ".txt", ".md", ".csv", ".json", ".xml",
+                ".txt",
+                ".md",
+                ".csv",
+                ".json",
+                ".xml",
             }:
                 text = path.read_text(encoding="utf-8", errors="replace")
                 return text[:10000], "direct_read"

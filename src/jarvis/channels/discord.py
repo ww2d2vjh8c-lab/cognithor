@@ -96,7 +96,9 @@ class DiscordChannel(Channel):
         self._session_users: TTLDict[str, int] = TTLDict(max_size=10000, ttl_seconds=86400)
         self._stream_buffers: TTLDict[str, list[str]] = TTLDict(max_size=1000, ttl_seconds=60)
         self._stream_lock = asyncio.Lock()
-        self._circuit_breaker = CircuitBreaker(name="discord_api", failure_threshold=5, recovery_timeout=60.0)
+        self._circuit_breaker = CircuitBreaker(
+            name="discord_api", failure_threshold=5, recovery_timeout=60.0
+        )
 
     @property
     def token(self) -> str:
@@ -118,7 +120,9 @@ class DiscordChannel(Channel):
 
         # Persistierte Mappings laden
         if self._session_store:
-            for key, val in self._session_store.load_all_channel_mappings("discord_session_users").items():
+            for key, val in self._session_store.load_all_channel_mappings(
+                "discord_session_users"
+            ).items():
                 self._session_users[key] = int(val)
 
         try:
@@ -198,7 +202,9 @@ class DiscordChannel(Channel):
         self._session_users[session_id] = message.author.id
         if self._session_store:
             self._session_store.save_channel_mapping(
-                "discord_session_users", session_id, str(message.author.id),
+                "discord_session_users",
+                session_id,
+                str(message.author.id),
             )
 
         if self._handler:
@@ -211,6 +217,7 @@ class DiscordChannel(Channel):
                 logger.error("Discord: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                     await message.channel.send(f"❌ {friendly}")
                 except Exception:
@@ -239,7 +246,8 @@ class DiscordChannel(Channel):
             if requester_id and user.id != requester_id:
                 logger.warning(
                     "Discord Approval von fremdem User ignoriert: %s (erwartet: %s)",
-                    user.id, requester_id,
+                    user.id,
+                    requester_id,
                 )
                 return
 
@@ -366,7 +374,10 @@ class DiscordChannel(Channel):
             logger.exception("Fehler beim Progress-Senden über Discord")
 
     async def request_approval(
-        self, session_id: str, action: PlannedAction, reason: str,
+        self,
+        session_id: str,
+        action: PlannedAction,
+        reason: str,
     ) -> bool:
         """Fragt den User per Reaction-Buttons um Erlaubnis.
 
@@ -430,7 +441,9 @@ class DiscordChannel(Channel):
             if text.strip():
                 await self.send(
                     OutgoingMessage(
-                        channel=self.name, text=text, session_id=session_id,
+                        channel=self.name,
+                        text=text,
+                        session_id=session_id,
                     )
                 )
 

@@ -82,7 +82,9 @@ class TestParts:
         assert p.text == "Hello"
 
     def test_part_from_dict_file(self):
-        p = part_from_dict({"type": "file", "file": {"name": "test.pdf", "mimeType": "application/pdf"}})
+        p = part_from_dict(
+            {"type": "file", "file": {"name": "test.pdf", "mimeType": "application/pdf"}}
+        )
         assert isinstance(p, FilePart)
         assert p.name == "test.pdf"
 
@@ -134,8 +136,12 @@ class TestMessage:
         assert len(m.message_id) == 16
 
     def test_message_to_dict(self):
-        m = Message(role=MessageRole.AGENT, parts=[TextPart(text="Hi")],
-                    context_id="ctx-1", task_id="task-1")
+        m = Message(
+            role=MessageRole.AGENT,
+            parts=[TextPart(text="Hi")],
+            context_id="ctx-1",
+            task_id="task-1",
+        )
         d = m.to_dict()
         assert d["role"] == "agent"
         assert d["messageId"]
@@ -143,8 +149,12 @@ class TestMessage:
         assert d["taskId"] == "task-1"
 
     def test_message_from_dict(self):
-        d = {"role": "user", "parts": [{"type": "text", "text": "Test"}],
-             "messageId": "abc123", "contextId": "ctx-x"}
+        d = {
+            "role": "user",
+            "parts": [{"type": "text", "text": "Test"}],
+            "messageId": "abc123",
+            "contextId": "ctx-x",
+        }
         m = Message.from_dict(d)
         assert m.role == MessageRole.USER
         assert m.text == "Test"
@@ -152,8 +162,9 @@ class TestMessage:
         assert m.context_id == "ctx-x"
 
     def test_message_roundtrip(self):
-        orig = Message(role=MessageRole.USER, parts=[TextPart(text="Round")],
-                       metadata={"key": "val"})
+        orig = Message(
+            role=MessageRole.USER, parts=[TextPart(text="Round")], metadata={"key": "val"}
+        )
         d = orig.to_dict()
         restored = Message.from_dict(d)
         assert restored.text == "Round"
@@ -212,8 +223,10 @@ class TestTask:
 class TestStreamingEvents:
     def test_status_update_event(self):
         e = TaskStatusUpdateEvent(
-            task_id="t1", context_id="c1",
-            status=TaskStatus(state=TaskState.WORKING), final=False,
+            task_id="t1",
+            context_id="c1",
+            status=TaskStatus(state=TaskState.WORKING),
+            final=False,
         )
         d = e.to_dict()
         assert d["taskId"] == "t1"
@@ -222,8 +235,10 @@ class TestStreamingEvents:
 
     def test_status_event_sse(self):
         e = TaskStatusUpdateEvent(
-            task_id="t1", context_id="c1",
-            status=TaskStatus(state=TaskState.COMPLETED), final=True,
+            task_id="t1",
+            context_id="c1",
+            status=TaskStatus(state=TaskState.COMPLETED),
+            final=True,
         )
         sse = e.to_sse()
         assert sse.startswith("event: status\n")
@@ -232,7 +247,10 @@ class TestStreamingEvents:
     def test_artifact_update_event(self):
         a = Artifact(parts=[TextPart(text="Result")])
         e = TaskArtifactUpdateEvent(
-            task_id="t1", context_id="c1", artifact=a, last_chunk=True,
+            task_id="t1",
+            context_id="c1",
+            artifact=a,
+            last_chunk=True,
         )
         d = e.to_dict()
         assert d["lastChunk"]
@@ -297,7 +315,9 @@ class TestAgentCard:
 
     def test_card_roundtrip(self):
         orig = A2AAgentCard(
-            name="Jarvis", description="AI Agent", version="16.0.0",
+            name="Jarvis",
+            description="AI Agent",
+            version="16.0.0",
             capabilities=A2AAgentCapabilities(streaming=True, push_notifications=True),
             skills=[A2ASkill(id="web", name="Web")],
             interfaces=[A2AInterface(protocol="jsonrpc", url="/a2a")],
@@ -365,70 +385,100 @@ class TestA2AServer:
     @pytest.fixture
     def server_with_handler(self):
         s = A2AServer(A2AServerConfig(enabled=True))
+
         async def handler(task):
             task.artifacts.append(Artifact(parts=[TextPart(text="Done")]))
-            task.transition(TaskState.COMPLETED, Message(
-                role=MessageRole.AGENT, parts=[TextPart(text="Done")],
-            ))
+            task.transition(
+                TaskState.COMPLETED,
+                Message(
+                    role=MessageRole.AGENT,
+                    parts=[TextPart(text="Done")],
+                ),
+            )
             return task
+
         s.set_task_handler(handler)
         return s
 
     @pytest.mark.asyncio
     async def test_message_send_new_task(self, server_with_handler):
-        result = await server_with_handler.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Hello"}]},
-        })
+        result = await server_with_handler.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Hello"}]},
+            },
+        )
         assert "id" in result
         assert "contextId" in result
         assert result["status"]["state"] == "submitted"
 
     @pytest.mark.asyncio
     async def test_message_send_with_context_id(self, server_with_handler):
-        result = await server_with_handler.dispatch("message/send", {
-            "contextId": "my-context",
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Hi"}]},
-        })
+        result = await server_with_handler.dispatch(
+            "message/send",
+            {
+                "contextId": "my-context",
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Hi"}]},
+            },
+        )
         assert result["contextId"] == "my-context"
 
     @pytest.mark.asyncio
     async def test_message_send_existing_task(self, server_with_handler):
-        r1 = await server_with_handler.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Start"}]},
-        })
+        r1 = await server_with_handler.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Start"}]},
+            },
+        )
         task_id = r1["id"]
         task = server_with_handler.get_task(task_id)
         task.transition(TaskState.WORKING)
         task.transition(TaskState.INPUT_REQUIRED)
-        r2 = await server_with_handler.dispatch("message/send", {
-            "id": task_id,
-            "message": {"role": "user", "parts": [{"type": "text", "text": "More info"}]},
-        })
+        r2 = await server_with_handler.dispatch(
+            "message/send",
+            {
+                "id": task_id,
+                "message": {"role": "user", "parts": [{"type": "text", "text": "More info"}]},
+            },
+        )
         assert r2["id"] == task_id
 
     @pytest.mark.asyncio
     async def test_message_send_max_tasks(self, server):
         server._config.max_tasks = 1
-        await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "First"}]},
-        })
-        result = await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Second"}]},
-        })
+        await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "First"}]},
+            },
+        )
+        result = await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Second"}]},
+            },
+        )
         assert "error" in result
 
     @pytest.mark.asyncio
     async def test_legacy_tasks_send(self, server):
-        result = await server.dispatch("tasks/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Legacy"}]},
-        })
+        result = await server.dispatch(
+            "tasks/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Legacy"}]},
+            },
+        )
         assert "id" in result
 
     @pytest.mark.asyncio
     async def test_tasks_get(self, server):
-        r = await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Test"}]},
-        })
+        r = await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Test"}]},
+            },
+        )
         result = await server.dispatch("tasks/get", {"id": r["id"]})
         assert result["id"] == r["id"]
 
@@ -439,9 +489,12 @@ class TestA2AServer:
 
     @pytest.mark.asyncio
     async def test_tasks_get_with_history(self, server):
-        r = await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "X"}]},
-        })
+        r = await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "X"}]},
+            },
+        )
         task = server.get_task(r["id"])
         task.transition(TaskState.WORKING)
         task.transition(TaskState.COMPLETED)
@@ -456,22 +509,31 @@ class TestA2AServer:
 
     @pytest.mark.asyncio
     async def test_tasks_list_with_filter(self, server):
-        await server.dispatch("message/send", {
-            "contextId": "ctx-A",
-            "message": {"role": "user", "parts": [{"type": "text", "text": "A"}]},
-        })
-        await server.dispatch("message/send", {
-            "contextId": "ctx-B",
-            "message": {"role": "user", "parts": [{"type": "text", "text": "B"}]},
-        })
+        await server.dispatch(
+            "message/send",
+            {
+                "contextId": "ctx-A",
+                "message": {"role": "user", "parts": [{"type": "text", "text": "A"}]},
+            },
+        )
+        await server.dispatch(
+            "message/send",
+            {
+                "contextId": "ctx-B",
+                "message": {"role": "user", "parts": [{"type": "text", "text": "B"}]},
+            },
+        )
         result = await server.dispatch("tasks/list", {"contextId": "ctx-A"})
         assert result["total"] == 1
 
     @pytest.mark.asyncio
     async def test_tasks_list_state_filter(self, server):
-        r = await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "X"}]},
-        })
+        r = await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "X"}]},
+            },
+        )
         task = server.get_task(r["id"])
         task.transition(TaskState.WORKING)
         task.transition(TaskState.COMPLETED)
@@ -481,18 +543,24 @@ class TestA2AServer:
     @pytest.mark.asyncio
     async def test_tasks_list_pagination(self, server):
         for i in range(5):
-            await server.dispatch("message/send", {
-                "message": {"role": "user", "parts": [{"type": "text", "text": f"Task {i}"}]},
-            })
+            await server.dispatch(
+                "message/send",
+                {
+                    "message": {"role": "user", "parts": [{"type": "text", "text": f"Task {i}"}]},
+                },
+            )
         result = await server.dispatch("tasks/list", {"limit": 2, "offset": 0})
         assert len(result["tasks"]) == 2
         assert result["total"] == 5
 
     @pytest.mark.asyncio
     async def test_tasks_cancel(self, server):
-        r = await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Cancel me"}]},
-        })
+        r = await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Cancel me"}]},
+            },
+        )
         result = await server.dispatch("tasks/cancel", {"id": r["id"]})
         assert result["status"]["state"] == "canceled"
 
@@ -503,9 +571,12 @@ class TestA2AServer:
 
     @pytest.mark.asyncio
     async def test_tasks_cancel_terminal(self, server):
-        r = await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "X"}]},
-        })
+        r = await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "X"}]},
+            },
+        )
         task = server.get_task(r["id"])
         task.transition(TaskState.WORKING)
         task.transition(TaskState.COMPLETED)
@@ -514,22 +585,33 @@ class TestA2AServer:
 
     @pytest.mark.asyncio
     async def test_push_disabled(self, server):
-        result = await server.dispatch("tasks/pushNotification/create", {
-            "taskId": "t1", "url": "https://example.com/hook",
-        })
+        result = await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": "t1",
+                "url": "https://example.com/hook",
+            },
+        )
         assert result["error"]["code"] == A2AErrorCode.PUSH_NOT_SUPPORTED
 
     @pytest.mark.asyncio
     async def test_push_crud(self):
         s = A2AServer(A2AServerConfig(enabled=True, enable_push=True))
-        r = await s.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "X"}]},
-        })
+        r = await s.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "X"}]},
+            },
+        )
         task_id = r["id"]
-        result = await s.dispatch("tasks/pushNotification/create", {
-            "taskId": task_id, "url": "https://example.com/hook",
-            "authentication": {"type": "bearer", "credentials": "tok"},
-        })
+        result = await s.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": task_id,
+                "url": "https://example.com/hook",
+                "authentication": {"type": "bearer", "credentials": "tok"},
+            },
+        )
         assert "configId" in result
         config_id = result["configId"]
 
@@ -548,9 +630,13 @@ class TestA2AServer:
     @pytest.mark.asyncio
     async def test_push_create_task_not_found(self):
         s = A2AServer(A2AServerConfig(enabled=True, enable_push=True))
-        result = await s.dispatch("tasks/pushNotification/create", {
-            "taskId": "nonexistent", "url": "https://x.com/hook",
-        })
+        result = await s.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": "nonexistent",
+                "url": "https://x.com/hook",
+            },
+        )
         assert result["error"]["code"] == A2AErrorCode.TASK_NOT_FOUND
 
     @pytest.mark.asyncio
@@ -573,20 +659,27 @@ class TestA2AServer:
 
     @pytest.mark.asyncio
     async def test_process_jsonrpc_request(self, server):
-        result = await server.process_jsonrpc({
-            "jsonrpc": "2.0", "id": 1, "method": "message/send",
-            "params": {"message": {"role": "user", "parts": [{"type": "text", "text": "Hi"}]}},
-        })
+        result = await server.process_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "message/send",
+                "params": {"message": {"role": "user", "parts": [{"type": "text", "text": "Hi"}]}},
+            }
+        )
         assert result["jsonrpc"] == "2.0"
         assert result["id"] == 1
         assert "result" in result
 
     @pytest.mark.asyncio
     async def test_process_jsonrpc_notification(self, server):
-        result = await server.process_jsonrpc({
-            "jsonrpc": "2.0", "method": "message/send",
-            "params": {"message": {"role": "user", "parts": [{"type": "text", "text": "Hi"}]}},
-        })
+        result = await server.process_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "method": "message/send",
+                "params": {"message": {"role": "user", "parts": [{"type": "text", "text": "Hi"}]}},
+            }
+        )
         assert result is None
 
     @pytest.mark.asyncio
@@ -646,9 +739,12 @@ class TestA2AServer:
     @pytest.mark.asyncio
     async def test_cleanup_completed_tasks(self, server):
         """cleanup_completed() entfernt abgeschlossene Tasks."""
-        r = await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Clean me"}]},
-        })
+        r = await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Clean me"}]},
+            },
+        )
         task = server.get_task(r["id"])
         task.transition(TaskState.WORKING)
         task.transition(TaskState.COMPLETED)
@@ -664,9 +760,12 @@ class TestA2AServer:
     async def test_stop_cleans_up(self, server):
         """stop() räumt alle completed Tasks auf."""
         await server.start()
-        r = await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Stop test"}]},
-        })
+        r = await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Stop test"}]},
+            },
+        )
         task = server.get_task(r["id"])
         task.transition(TaskState.WORKING)
         task.transition(TaskState.COMPLETED)
@@ -675,14 +774,20 @@ class TestA2AServer:
 
     @pytest.mark.asyncio
     async def test_context_tracking(self, server):
-        await server.dispatch("message/send", {
-            "contextId": "shared-ctx",
-            "message": {"role": "user", "parts": [{"type": "text", "text": "A"}]},
-        })
-        await server.dispatch("message/send", {
-            "contextId": "shared-ctx",
-            "message": {"role": "user", "parts": [{"type": "text", "text": "B"}]},
-        })
+        await server.dispatch(
+            "message/send",
+            {
+                "contextId": "shared-ctx",
+                "message": {"role": "user", "parts": [{"type": "text", "text": "A"}]},
+            },
+        )
+        await server.dispatch(
+            "message/send",
+            {
+                "contextId": "shared-ctx",
+                "message": {"role": "user", "parts": [{"type": "text", "text": "B"}]},
+            },
+        )
         assert "shared-ctx" in server._contexts
         assert len(server._contexts["shared-ctx"]) == 2
 
@@ -785,9 +890,13 @@ class TestA2AIntegration:
     async def test_full_task_lifecycle(self):
         async def handler(task):
             task.artifacts.append(Artifact(parts=[TextPart(text="Result")]))
-            task.transition(TaskState.COMPLETED, Message(
-                role=MessageRole.AGENT, parts=[TextPart(text="Done")],
-            ))
+            task.transition(
+                TaskState.COMPLETED,
+                Message(
+                    role=MessageRole.AGENT,
+                    parts=[TextPart(text="Done")],
+                ),
+            )
             return task
 
         server = A2AServer(A2AServerConfig(enabled=True))
@@ -806,13 +915,18 @@ class TestA2AIntegration:
     @pytest.mark.asyncio
     async def test_multi_turn_conversation(self):
         call_count = 0
+
         async def handler(task):
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                task.transition(TaskState.INPUT_REQUIRED, Message(
-                    role=MessageRole.AGENT, parts=[TextPart(text="Which product?")],
-                ))
+                task.transition(
+                    TaskState.INPUT_REQUIRED,
+                    Message(
+                        role=MessageRole.AGENT,
+                        parts=[TextPart(text="Which product?")],
+                    ),
+                )
             else:
                 task.artifacts.append(Artifact(parts=[TextPart(text="BU recommended")]))
                 task.transition(TaskState.COMPLETED)
@@ -822,8 +936,9 @@ class TestA2AIntegration:
         server.set_task_handler(handler)
         client = A2AClient()
 
-        task = await client.send_task_local(server, text="Insurance advice",
-                                             context_id="conversation-1")
+        task = await client.send_task_local(
+            server, text="Insurance advice", context_id="conversation-1"
+        )
         assert task is not None
         await asyncio.sleep(0.1)
 
@@ -852,16 +967,23 @@ class TestA2AIntegration:
     @pytest.mark.asyncio
     async def test_rejected_task(self):
         async def handler(task):
-            task.transition(TaskState.REJECTED, Message(
-                role=MessageRole.AGENT, parts=[TextPart(text="Cannot process.")],
-            ))
+            task.transition(
+                TaskState.REJECTED,
+                Message(
+                    role=MessageRole.AGENT,
+                    parts=[TextPart(text="Cannot process.")],
+                ),
+            )
             return task
 
         server = A2AServer(A2AServerConfig(enabled=True))
         server.set_task_handler(handler)
-        result = await server.dispatch("message/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "Invalid"}]},
-        })
+        result = await server.dispatch(
+            "message/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "Invalid"}]},
+            },
+        )
         await asyncio.sleep(0.1)
         task = await server.dispatch("tasks/get", {"id": result["id"]})
         assert task["status"]["state"] == "rejected"
@@ -987,4 +1109,4 @@ class TestA2AAdapterDetails:
     async def test_start_stop_disabled(self) -> None:
         adapter = self._make_adapter()
         await adapter.start()  # No-op
-        await adapter.stop()   # No-op
+        await adapter.stop()  # No-op

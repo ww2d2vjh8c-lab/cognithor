@@ -461,9 +461,7 @@ class HeartbeatMonitor:
         run.tasks_found = tasks_found
         run.tasks_executed = tasks_executed
         run.error = error
-        run.duration_ms = int(
-            (run.completed_at - run.started_at).total_seconds() * 1000
-        )
+        run.duration_ms = int((run.completed_at - run.started_at).total_seconds() * 1000)
 
     def set_schedule(self, enabled: bool, interval_minutes: int = 30) -> None:
         self._enabled = enabled

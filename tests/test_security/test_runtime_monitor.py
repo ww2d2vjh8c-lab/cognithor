@@ -149,13 +149,15 @@ class TestRuntimeMonitor:
 
     def test_custom_rule(self) -> None:
         monitor = RuntimeMonitor(enable_defaults=False)
-        monitor.add_rule(PolicyRule(
-            rule_id="no_delete",
-            tool_pattern="file_delete",
-            verdict=Verdict.BLOCK,
-            severity=Severity.CRITICAL,
-            forbidden_params={"path": ["/important"]},
-        ))
+        monitor.add_rule(
+            PolicyRule(
+                rule_id="no_delete",
+                tool_pattern="file_delete",
+                verdict=Verdict.BLOCK,
+                severity=Severity.CRITICAL,
+                forbidden_params={"path": ["/important"]},
+            )
+        )
 
         # Andere Tools OK
         event = monitor.check_tool_call("file_read", {"path": "/important/doc.txt"})
@@ -167,13 +169,15 @@ class TestRuntimeMonitor:
 
     def test_glob_pattern_matching(self) -> None:
         monitor = RuntimeMonitor(enable_defaults=False)
-        monitor.add_rule(PolicyRule(
-            rule_id="no_file_ops",
-            tool_pattern="file_*",
-            verdict=Verdict.BLOCK,
-            severity=Severity.CRITICAL,
-            forbidden_params={"path": ["/secret"]},
-        ))
+        monitor.add_rule(
+            PolicyRule(
+                rule_id="no_file_ops",
+                tool_pattern="file_*",
+                verdict=Verdict.BLOCK,
+                severity=Severity.CRITICAL,
+                forbidden_params={"path": ["/secret"]},
+            )
+        )
 
         event = monitor.check_tool_call("file_write", {"path": "/secret/data"})
         assert event.is_blocked
@@ -235,14 +239,16 @@ class TestRuntimeMonitor:
 
     def test_agent_pattern_matching(self) -> None:
         monitor = RuntimeMonitor(enable_defaults=False)
-        monitor.add_rule(PolicyRule(
-            rule_id="restrict_coder",
-            tool_pattern="*",
-            agent_pattern="coder",
-            verdict=Verdict.BLOCK,
-            severity=Severity.CRITICAL,
-            forbidden_params={"action": ["delete"]},
-        ))
+        monitor.add_rule(
+            PolicyRule(
+                rule_id="restrict_coder",
+                tool_pattern="*",
+                agent_pattern="coder",
+                verdict=Verdict.BLOCK,
+                severity=Severity.CRITICAL,
+                forbidden_params={"action": ["delete"]},
+            )
+        )
 
         # coder mit delete → blockiert
         event = monitor.check_tool_call("tool", {"action": "delete"}, agent_name="coder")

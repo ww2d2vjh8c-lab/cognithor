@@ -25,9 +25,11 @@ from typing import Any
 
 # ── ID Generation ────────────────────────────────────────────────
 
+
 def generate_trace_id() -> str:
     """Generiert eine 32-Hex-Char Trace-ID (128 bit)."""
     return uuid.uuid4().hex
+
 
 def generate_span_id() -> str:
     """Generiert eine 16-Hex-Char Span-ID (64 bit)."""
@@ -36,17 +38,20 @@ def generate_span_id() -> str:
 
 # ── Enums ────────────────────────────────────────────────────────
 
+
 class SpanKind(IntEnum):
     """Art des Spans (OpenTelemetry Spec)."""
-    INTERNAL = 0   # Default: Interne Operation
-    SERVER = 1     # Eingehender Request
-    CLIENT = 2     # Ausgehender Request
-    PRODUCER = 3   # Nachricht senden (async)
-    CONSUMER = 4   # Nachricht empfangen (async)
+
+    INTERNAL = 0  # Default: Interne Operation
+    SERVER = 1  # Eingehender Request
+    CLIENT = 2  # Ausgehender Request
+    PRODUCER = 3  # Nachricht senden (async)
+    CONSUMER = 4  # Nachricht empfangen (async)
 
 
 class StatusCode(IntEnum):
     """Status eines Spans (OpenTelemetry Spec)."""
+
     UNSET = 0
     OK = 1
     ERROR = 2
@@ -54,13 +59,15 @@ class StatusCode(IntEnum):
 
 class MetricKind(str, Enum):
     """Art einer Metrik."""
-    COUNTER = "counter"           # Monoton steigend
-    UP_DOWN_COUNTER = "up_down"   # Kann steigen/fallen
-    HISTOGRAM = "histogram"       # Verteilung
-    GAUGE = "gauge"               # Aktueller Wert
+
+    COUNTER = "counter"  # Monoton steigend
+    UP_DOWN_COUNTER = "up_down"  # Kann steigen/fallen
+    HISTOGRAM = "histogram"  # Verteilung
+    GAUGE = "gauge"  # Aktueller Wert
 
 
 # ── SpanContext ──────────────────────────────────────────────────
+
 
 @dataclass
 class SpanContext:
@@ -69,6 +76,7 @@ class SpanContext:
     Wird über HTTP-Header (traceparent) oder gRPC-Metadata propagiert.
     Format: 00-{trace_id}-{span_id}-{trace_flags}
     """
+
     trace_id: str = ""
     span_id: str = ""
     trace_flags: int = 1  # 1 = sampled
@@ -123,9 +131,11 @@ class SpanContext:
 
 # ── Span Event ───────────────────────────────────────────────────
 
+
 @dataclass
 class SpanEvent:
     """Ein zeitgestempeltes Event innerhalb eines Spans."""
+
     name: str
     timestamp_ns: int = 0
     attributes: dict[str, Any] = field(default_factory=dict)
@@ -146,9 +156,11 @@ class SpanEvent:
 
 # ── Span Link ────────────────────────────────────────────────────
 
+
 @dataclass
 class SpanLink:
     """Verknüpfung zu einem anderen Span (z.B. für Batch-Jobs)."""
+
     context: SpanContext
     attributes: dict[str, Any] = field(default_factory=dict)
 
@@ -162,12 +174,14 @@ class SpanLink:
 
 # ── Span ─────────────────────────────────────────────────────────
 
+
 @dataclass
 class Span:
     """Eine einzelne Operation im Distributed Trace.
 
     Lebenszyklus: start() → add_event() → set_status() → end()
     """
+
     name: str
     context: SpanContext = field(default_factory=SpanContext)
     parent_span_id: str = ""
@@ -271,17 +285,13 @@ class Span:
             "kind": self.kind.value + 1,  # OTLP ist 1-basiert
             "startTimeUnixNano": str(self.start_time_ns),
             "endTimeUnixNano": str(self.end_time_ns),
-            "attributes": [
-                {"key": k, "value": _otlp_value(v)}
-                for k, v in self.attributes.items()
-            ],
+            "attributes": [{"key": k, "value": _otlp_value(v)} for k, v in self.attributes.items()],
             "events": [
                 {
                     "name": e.name,
                     "timeUnixNano": str(e.timestamp_ns),
                     "attributes": [
-                        {"key": k, "value": _otlp_value(v)}
-                        for k, v in e.attributes.items()
+                        {"key": k, "value": _otlp_value(v)} for k, v in e.attributes.items()
                     ],
                 }
                 for e in self.events
@@ -295,9 +305,11 @@ class Span:
 
 # ── Trace ────────────────────────────────────────────────────────
 
+
 @dataclass
 class Trace:
     """Vollständiger Trace -- Baum von Spans."""
+
     trace_id: str = ""
     spans: list[Span] = field(default_factory=list)
     service_name: str = "jarvis"
@@ -346,9 +358,11 @@ class Trace:
 
 # ── Metric Types ─────────────────────────────────────────────────
 
+
 @dataclass
 class MetricDataPoint:
     """Ein einzelner Metrik-Datenpunkt."""
+
     timestamp_ns: int = 0
     value: float = 0.0
     attributes: dict[str, str] = field(default_factory=dict)
@@ -368,15 +382,30 @@ class MetricDataPoint:
 @dataclass
 class HistogramDataPoint:
     """Datenpunkt für Histogram-Metriken."""
+
     timestamp_ns: int = 0
     count: int = 0
     total: float = 0.0
     min_value: float = float("inf")
     max_value: float = float("-inf")
     bucket_counts: list[int] = field(default_factory=list)
-    bucket_boundaries: list[float] = field(default_factory=lambda: [
-        5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 10000,
-    ])
+    bucket_boundaries: list[float] = field(
+        default_factory=lambda: [
+            5,
+            10,
+            25,
+            50,
+            75,
+            100,
+            250,
+            500,
+            750,
+            1000,
+            2500,
+            5000,
+            10000,
+        ]
+    )
     attributes: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -415,6 +444,7 @@ class HistogramDataPoint:
 @dataclass
 class MetricDefinition:
     """Definition einer Metrik."""
+
     name: str
     kind: MetricKind
     description: str = ""
@@ -438,6 +468,7 @@ class MetricDefinition:
 
 
 # ── OTLP Helper ──────────────────────────────────────────────────
+
 
 def _otlp_value(v: Any) -> dict[str, Any]:
     """Konvertiert Python-Wert zu OTLP AnyValue."""

@@ -95,6 +95,7 @@ class EpisodicStore:
     ) -> str:
         """Speichert eine Episode."""
         from jarvis.models import _new_id
+
         eid = episode_id or _new_id()
         with self._write_lock:
             conn = self._get_conn()
@@ -212,6 +213,7 @@ class EpisodicStore:
     ) -> str:
         """Speichert eine Zusammenfassung."""
         from jarvis.models import _new_id
+
         sid = _new_id()
         with self._write_lock:
             conn = self._get_conn()

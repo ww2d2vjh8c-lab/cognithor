@@ -85,6 +85,7 @@ class MemoryManager:
         self._episodic_store: EpisodicStore | None = None
         try:
             from jarvis.memory.episodic_store import EpisodicStore as _ES
+
             db_path = str(self._config.db_path.with_name("memory_episodic.db"))
             self._episodic_store = _ES(db_path)
         except Exception:
@@ -94,6 +95,7 @@ class MemoryManager:
         self._weight_optimizer: SearchWeightOptimizer | None = None
         try:
             from jarvis.memory.weight_optimizer import SearchWeightOptimizer as _SWO
+
             opt_db = str(self._config.db_path.with_name("memory_weights.db"))
             self._weight_optimizer = _SWO(opt_db)
         except Exception:
@@ -106,7 +108,9 @@ class MemoryManager:
 
         # Hybrid Search (mit Vector-Index + Weight-Optimizer)
         self._search = HybridSearch(
-            self._index, self._embeddings, self._mc,
+            self._index,
+            self._embeddings,
+            self._mc,
             vector_index=self._vector_index,
             weight_optimizer=self._weight_optimizer,
         )
@@ -503,7 +507,10 @@ class MemoryManager:
                     vec = cached_results[chunk.content_hash]
                     self._search.notify_embedding_added(chunk.content_hash, vec)
                 else:
-                    logger.debug("Embedding fehlgeschlagen fuer chunk %s -- uebersprungen", chunk.content_hash[:8])
+                    logger.debug(
+                        "Embedding fehlgeschlagen fuer chunk %s -- uebersprungen",
+                        chunk.content_hash[:8],
+                    )
                 continue
             if not emb_result.cached:
                 self._index.store_embedding(

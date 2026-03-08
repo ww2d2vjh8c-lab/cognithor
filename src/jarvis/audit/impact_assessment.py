@@ -26,16 +26,16 @@ from typing import Any
 
 
 class ImpactDimension(Enum):
-    FUNDAMENTAL_RIGHTS = "fundamental_rights"    # Grundrechte
-    PRIVACY = "privacy"                          # Datenschutz
-    SAFETY = "safety"                            # Sicherheit
-    TRANSPARENCY = "transparency"                # Transparenz
-    DISCRIMINATION = "discrimination"            # Diskriminierung
-    AUTONOMY = "autonomy"                        # Menschliche Autonomie
-    ENVIRONMENT = "environment"                  # Umweltauswirkung
-    LABOR = "labor"                              # Arbeitsmarkt
-    DEMOCRACY = "democracy"                      # Demokratie
-    CHILDREN = "children"                        # Kinderschutz
+    FUNDAMENTAL_RIGHTS = "fundamental_rights"  # Grundrechte
+    PRIVACY = "privacy"  # Datenschutz
+    SAFETY = "safety"  # Sicherheit
+    TRANSPARENCY = "transparency"  # Transparenz
+    DISCRIMINATION = "discrimination"  # Diskriminierung
+    AUTONOMY = "autonomy"  # Menschliche Autonomie
+    ENVIRONMENT = "environment"  # Umweltauswirkung
+    LABOR = "labor"  # Arbeitsmarkt
+    DEMOCRACY = "democracy"  # Demokratie
+    CHILDREN = "children"  # Kinderschutz
 
 
 class ImpactSeverity(Enum):
@@ -147,15 +147,15 @@ class ImpactAssessment:
 
 
 class StakeholderRole(Enum):
-    AFFECTED_PERSON = "affected_person"      # Direkt Betroffene
-    DATA_SUBJECT = "data_subject"            # Datensubjekte
-    OPERATOR = "operator"                    # Betreiber
-    DEVELOPER = "developer"                  # Entwickler
-    REGULATOR = "regulator"                  # Aufsichtsbehörde
-    CIVIL_SOCIETY = "civil_society"          # Zivilgesellschaft
-    ETHICS_EXPERT = "ethics_expert"          # Ethik-Expert:in
-    DOMAIN_EXPERT = "domain_expert"          # Fachexpert:in
-    WORKER_REPRESENTATIVE = "worker_rep"     # Arbeitnehmervertretung
+    AFFECTED_PERSON = "affected_person"  # Direkt Betroffene
+    DATA_SUBJECT = "data_subject"  # Datensubjekte
+    OPERATOR = "operator"  # Betreiber
+    DEVELOPER = "developer"  # Entwickler
+    REGULATOR = "regulator"  # Aufsichtsbehörde
+    CIVIL_SOCIETY = "civil_society"  # Zivilgesellschaft
+    ETHICS_EXPERT = "ethics_expert"  # Ethik-Expert:in
+    DOMAIN_EXPERT = "domain_expert"  # Fachexpert:in
+    WORKER_REPRESENTATIVE = "worker_rep"  # Arbeitnehmervertretung
 
 
 @dataclass
@@ -207,9 +207,7 @@ class StakeholderRegistry:
         self._stakeholders[sh.stakeholder_id] = sh
         return sh
 
-    def record_consultation(
-        self, stakeholder_id: str, feedback: str
-    ) -> bool:
+    def record_consultation(self, stakeholder_id: str, feedback: str) -> bool:
         sh = self._stakeholders.get(stakeholder_id)
         if not sh:
             return False
@@ -257,7 +255,7 @@ class VoteOption(Enum):
     APPROVE = "approve"
     REJECT = "reject"
     ABSTAIN = "abstain"
-    CONDITIONAL = "conditional"   # Bedingte Zustimmung
+    CONDITIONAL = "conditional"  # Bedingte Zustimmung
 
 
 @dataclass
@@ -286,16 +284,13 @@ class BoardDecision:
     decision_id: str
     subject: str
     votes: list[BoardVote] = field(default_factory=list)
-    final_decision: str = ""   # approved, rejected, deferred
+    final_decision: str = ""  # approved, rejected, deferred
     requires_conditions: list[str] = field(default_factory=list)
     decided_at: str = ""
 
     @property
     def vote_count(self) -> dict[str, int]:
-        return {
-            opt.value: sum(1 for v in self.votes if v.vote == opt)
-            for opt in VoteOption
-        }
+        return {opt.value: sum(1 for v in self.votes if v.vote == opt) for opt in VoteOption}
 
     @property
     def has_veto(self) -> bool:
@@ -359,14 +354,16 @@ class EthicsBoard:
         # Keine Doppelabstimmung
         if any(v.voter_id == voter_id for v in decision.votes):
             return False
-        decision.votes.append(BoardVote(
-            voter_id=voter_id,
-            voter_name=voter_name,
-            vote=vote,
-            comment=comment,
-            conditions=conditions or [],
-            timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        ))
+        decision.votes.append(
+            BoardVote(
+                voter_id=voter_id,
+                voter_name=voter_name,
+                vote=vote,
+                comment=comment,
+                conditions=conditions or [],
+                timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            )
+        )
         return True
 
     def finalize(self, decision_id: str) -> BoardDecision | None:
@@ -381,13 +378,17 @@ class EthicsBoard:
         if decision.has_veto:
             decision.final_decision = "rejected_veto"
         else:
-            approvals = sum(1 for v in decision.votes if v.vote in (VoteOption.APPROVE, VoteOption.CONDITIONAL))
+            approvals = sum(
+                1 for v in decision.votes if v.vote in (VoteOption.APPROVE, VoteOption.CONDITIONAL)
+            )
             if approvals > len(decision.votes) / 2:
                 # Bedingungen sammeln
                 for v in decision.votes:
                     if v.vote == VoteOption.CONDITIONAL:
                         decision.requires_conditions.extend(v.conditions)
-                decision.final_decision = "approved" if not decision.requires_conditions else "approved_conditional"
+                decision.final_decision = (
+                    "approved" if not decision.requires_conditions else "approved_conditional"
+                )
             else:
                 decision.final_decision = "rejected"
 
@@ -439,7 +440,7 @@ class Mitigation:
     status: MitigationStatus = MitigationStatus.PLANNED
     responsible: str = ""
     deadline: str = ""
-    effectiveness: float = 0.0   # 0-1
+    effectiveness: float = 0.0  # 0-1
     created_at: str = ""
 
     def to_dict(self) -> dict[str, Any]:
@@ -481,7 +482,9 @@ class MitigationTracker:
         self._mitigations[m.mitigation_id] = m
         return m
 
-    def update_status(self, mitigation_id: str, status: MitigationStatus, effectiveness: float = 0.0) -> bool:
+    def update_status(
+        self, mitigation_id: str, status: MitigationStatus, effectiveness: float = 0.0
+    ) -> bool:
         m = self._mitigations.get(mitigation_id)
         if not m:
             return False
@@ -495,8 +498,11 @@ class MitigationTracker:
     def overdue(self) -> list[Mitigation]:
         now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         return [
-            m for m in self._mitigations.values()
-            if m.deadline and m.deadline < now and m.status in (MitigationStatus.PLANNED, MitigationStatus.IN_PROGRESS)
+            m
+            for m in self._mitigations.values()
+            if m.deadline
+            and m.deadline < now
+            and m.status in (MitigationStatus.PLANNED, MitigationStatus.IN_PROGRESS)
         ]
 
     @property
@@ -506,7 +512,11 @@ class MitigationTracker:
     def completion_rate(self) -> float:
         if not self._mitigations:
             return 0.0
-        done = sum(1 for m in self._mitigations.values() if m.status in (MitigationStatus.IMPLEMENTED, MitigationStatus.VERIFIED))
+        done = sum(
+            1
+            for m in self._mitigations.values()
+            if m.status in (MitigationStatus.IMPLEMENTED, MitigationStatus.VERIFIED)
+        )
         return round(done / len(self._mitigations) * 100, 1)
 
     def stats(self) -> dict[str, Any]:
@@ -572,35 +582,45 @@ class ImpactAssessor:
         """Vordefinierte Folgenabschätzung für Jarvis im Versicherungskontext."""
         scores = [
             DimensionScore(
-                ImpactDimension.FUNDAMENTAL_RIGHTS, ImpactSeverity.MODERATE, ImpactLikelihood.POSSIBLE,
+                ImpactDimension.FUNDAMENTAL_RIGHTS,
+                ImpactSeverity.MODERATE,
+                ImpactLikelihood.POSSIBLE,
                 "KI-gestützte Versicherungsempfehlungen können Zugang zu Versicherungsschutz beeinflussen",
                 ["Versicherungsnehmer", "Antragsteller"],
                 ["Human-in-the-Loop", "Transparenzpflicht"],
                 "medium",
             ),
             DimensionScore(
-                ImpactDimension.PRIVACY, ImpactSeverity.HIGH, ImpactLikelihood.LIKELY,
+                ImpactDimension.PRIVACY,
+                ImpactSeverity.HIGH,
+                ImpactLikelihood.LIKELY,
                 "Verarbeitung sensibler Gesundheitsdaten bei BU-Beratung",
                 ["Kunden", "Interessenten"],
                 ["DSGVO-Konformität", "Datensparsamkeit", "Verschlüsselung"],
                 "low",
             ),
             DimensionScore(
-                ImpactDimension.DISCRIMINATION, ImpactSeverity.HIGH, ImpactLikelihood.POSSIBLE,
+                ImpactDimension.DISCRIMINATION,
+                ImpactSeverity.HIGH,
+                ImpactLikelihood.POSSIBLE,
                 "Risiko der Benachteiligung bestimmter Berufsgruppen oder Altersklassen",
                 ["Ältere Antragsteller", "Risikoberufe"],
                 ["Fairness-Audits", "Bias-Detektion"],
                 "medium",
             ),
             DimensionScore(
-                ImpactDimension.TRANSPARENCY, ImpactSeverity.MODERATE, ImpactLikelihood.LIKELY,
+                ImpactDimension.TRANSPARENCY,
+                ImpactSeverity.MODERATE,
+                ImpactLikelihood.LIKELY,
                 "Kunden müssen verstehen warum eine bestimmte Versicherung empfohlen wird",
                 ["Alle Kunden"],
                 ["DecisionExplainer", "Art. 52 Transparenz"],
                 "low",
             ),
             DimensionScore(
-                ImpactDimension.AUTONOMY, ImpactSeverity.LOW, ImpactLikelihood.POSSIBLE,
+                ImpactDimension.AUTONOMY,
+                ImpactSeverity.LOW,
+                ImpactLikelihood.POSSIBLE,
                 "Empfehlungen könnten Entscheidungsfreiheit einschränken",
                 ["Kunden"],
                 ["Alternativen-Anzeige", "Keine automatischen Abschlüsse"],

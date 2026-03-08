@@ -110,7 +110,9 @@ class DataProcessingRecord:
             timestamp=d.get("timestamp", ""),
             category=DataCategory(d["category"]) if "category" in d else DataCategory.QUERY,
             purpose=d.get("purpose", ""),
-            legal_basis=ProcessingBasis(d["legal_basis"]) if "legal_basis" in d else ProcessingBasis.LEGITIMATE_INTEREST,
+            legal_basis=ProcessingBasis(d["legal_basis"])
+            if "legal_basis" in d
+            else ProcessingBasis.LEGITIMATE_INTEREST,
             tool_name=d.get("tool_name", ""),
             data_summary=d.get("data_summary", ""),
             data_hash=d.get("data_hash", ""),
@@ -349,10 +351,16 @@ class ModelUsageLog:
         """Aggregate usage statistics per model."""
         by_model: dict[str, dict[str, Any]] = {}
         for r in self._records:
-            m = by_model.setdefault(r.model_name, {
-                "calls": 0, "total_tokens": 0, "total_latency_ms": 0.0,
-                "pii_calls": 0, "errors": 0,
-            })
+            m = by_model.setdefault(
+                r.model_name,
+                {
+                    "calls": 0,
+                    "total_tokens": 0,
+                    "total_latency_ms": 0.0,
+                    "pii_calls": 0,
+                    "errors": 0,
+                },
+            )
             m["calls"] += 1
             m["total_tokens"] += r.total_tokens
             m["total_latency_ms"] += r.latency_ms
@@ -526,9 +534,7 @@ class RetentionEnforcer:
                 archive_ids.add(rec.record_id)
 
         if delete_ids:
-            log._records = [
-                r for r in log._records if r.record_id not in delete_ids
-            ]
+            log._records = [r for r in log._records if r.record_id not in delete_ids]
 
         if anonymize_ids:
             for rec in log._records:
@@ -722,10 +728,12 @@ class AuditExporter:
             lines.append("## Erasure Requests")
             lines.append(f"")
             for er in data["erasure_requests"]:
-                lines.append(f"- **{er['request_id']}** ({er['status']}): "
-                             f"User {er['user_id']}, "
-                             f"{er['records_deleted']} processing + "
-                             f"{er['model_records_deleted']} model records deleted")
+                lines.append(
+                    f"- **{er['request_id']}** ({er['status']}): "
+                    f"User {er['user_id']}, "
+                    f"{er['records_deleted']} processing + "
+                    f"{er['model_records_deleted']} model records deleted"
+                )
             lines.append(f"")
 
         # Processing records
@@ -740,7 +748,9 @@ class AuditExporter:
                     f"{r['tool_name']} | {r['purpose']} | {r['legal_basis']} |"
                 )
             if len(data["processing_records"]) > 100:
-                lines.append(f"| ... | {len(data['processing_records']) - 100} more records | | | | |")
+                lines.append(
+                    f"| ... | {len(data['processing_records']) - 100} more records | | | | |"
+                )
             lines.append(f"")
 
         return "\n".join(lines)
@@ -820,7 +830,10 @@ class GDPRComplianceManager:
     ) -> DataProcessingRecord:
         """Convenience: log a data processing activity."""
         return self.processing_log.record(
-            user_id, category, purpose, **kwargs,
+            user_id,
+            category,
+            purpose,
+            **kwargs,
         )
 
     def log_model_usage(
@@ -839,7 +852,9 @@ class GDPRComplianceManager:
     def erase_user(self, user_id: str) -> ErasureRequest:
         """Execute right-to-erasure for a user."""
         return self.erasure.request_erasure(
-            user_id, self.processing_log, self.usage_log,
+            user_id,
+            self.processing_log,
+            self.usage_log,
         )
 
     def user_report(self, user_id: str) -> dict:
@@ -853,10 +868,7 @@ class GDPRComplianceManager:
         pii_count = sum(1 for r in self.usage_log.records if r.contains_pii)
         policy_count = len(self.retention.policies)
         erasure_count = len(self.erasure.requests)
-        completed = sum(
-            1 for r in self.erasure.requests
-            if r.status == ErasureStatus.COMPLETED
-        )
+        completed = sum(1 for r in self.erasure.requests if r.status == ErasureStatus.COMPLETED)
 
         return {
             "processing_records": proc_count,

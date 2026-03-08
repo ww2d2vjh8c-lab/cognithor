@@ -31,11 +31,13 @@ def _setup_app(agents_data: dict | None = None, bindings_data: dict | None = Non
 
     if agents_data is not None:
         agents_path.write_text(
-            yaml.dump(agents_data, default_flow_style=False), encoding="utf-8",
+            yaml.dump(agents_data, default_flow_style=False),
+            encoding="utf-8",
         )
     if bindings_data is not None:
         bindings_path.write_text(
-            yaml.dump(bindings_data, default_flow_style=False), encoding="utf-8",
+            yaml.dump(bindings_data, default_flow_style=False),
+            encoding="utf-8",
         )
 
     app = FakeApp()
@@ -65,11 +67,13 @@ class TestAgentSchemaValidation:
         app, agents_path, _ = _setup_app(agents_data={"agents": []})
         handler = app.routes["POST /api/v1/agents/{name}"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "description": "Test Agent",
-            "language": "en",
-            "priority": 5,
-        })
+        request.json = AsyncMock(
+            return_value={
+                "description": "Test Agent",
+                "language": "en",
+                "priority": 5,
+            }
+        )
         result = await handler(name="test-agent", request=request)
         assert result["status"] == "ok"
 
@@ -85,12 +89,14 @@ class TestAgentSchemaValidation:
         app, agents_path, _ = _setup_app(agents_data={"agents": []})
         handler = app.routes["POST /api/v1/agents/{name}"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "description": "Legit Agent",
-            "malicious_field": "injected_value",
-            "__proto__": {"admin": True},
-            "exec_on_load": "rm -rf /",
-        })
+        request.json = AsyncMock(
+            return_value={
+                "description": "Legit Agent",
+                "malicious_field": "injected_value",
+                "__proto__": {"admin": True},
+                "exec_on_load": "rm -rf /",
+            }
+        )
         result = await handler(name="safe-agent", request=request)
         assert result["status"] == "ok"
 
@@ -105,14 +111,18 @@ class TestAgentSchemaValidation:
     @pytest.mark.asyncio
     async def test_upsert_updates_existing(self) -> None:
         """Upsert aktualisiert einen bestehenden Agenten."""
-        app, agents_path, _ = _setup_app(agents_data={
-            "agents": [{"name": "existing", "description": "old"}],
-        })
+        app, agents_path, _ = _setup_app(
+            agents_data={
+                "agents": [{"name": "existing", "description": "old"}],
+            }
+        )
         handler = app.routes["POST /api/v1/agents/{name}"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "description": "updated",
-        })
+        request.json = AsyncMock(
+            return_value={
+                "description": "updated",
+            }
+        )
         result = await handler(name="existing", request=request)
         assert result["status"] == "ok"
 
@@ -126,9 +136,11 @@ class TestAgentSchemaValidation:
         app, agents_path, _ = _setup_app(agents_data={"agents": []})
         handler = app.routes["POST /api/v1/agents/{name}"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "priority": "not-a-number",
-        })
+        request.json = AsyncMock(
+            return_value={
+                "priority": "not-a-number",
+            }
+        )
         result = await handler(name="bad-agent", request=request)
         # Pydantic validation should raise, caught by except -> error response
         assert "error" in result
@@ -142,11 +154,13 @@ class TestBindingSchemaValidation:
         app, _, bindings_path = _setup_app(bindings_data={"bindings": []})
         handler = app.routes["POST /api/v1/bindings/{name}"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "target_agent": "agent-1",
-            "priority": 50,
-            "description": "Test Binding",
-        })
+        request.json = AsyncMock(
+            return_value={
+                "target_agent": "agent-1",
+                "priority": 50,
+                "description": "Test Binding",
+            }
+        )
         result = await handler(name="test-binding", request=request)
         assert result["status"] == "ok"
 
@@ -162,11 +176,13 @@ class TestBindingSchemaValidation:
         app, _, bindings_path = _setup_app(bindings_data={"bindings": []})
         handler = app.routes["POST /api/v1/bindings/{name}"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "target_agent": "agent-1",
-            "evil_key": "evil_value",
-            "shell_exec": "whoami",
-        })
+        request.json = AsyncMock(
+            return_value={
+                "target_agent": "agent-1",
+                "evil_key": "evil_value",
+                "shell_exec": "whoami",
+            }
+        )
         result = await handler(name="clean-binding", request=request)
         assert result["status"] == "ok"
 
@@ -182,9 +198,11 @@ class TestBindingSchemaValidation:
         app, _, _ = _setup_app(bindings_data={"bindings": []})
         handler = app.routes["POST /api/v1/bindings/{name}"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "description": "Missing target_agent",
-        })
+        request.json = AsyncMock(
+            return_value={
+                "description": "Missing target_agent",
+            }
+        )
         result = await handler(name="bad-binding", request=request)
         assert "error" in result
 
@@ -198,10 +216,12 @@ class TestAlreadySecureEndpoints:
         app, _, _ = _setup_app()
         handler = app.routes["PUT /api/v1/prompts"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "coreMd": "# Test",
-            "unknown_injection": "malicious",
-        })
+        request.json = AsyncMock(
+            return_value={
+                "coreMd": "# Test",
+                "unknown_injection": "malicious",
+            }
+        )
         result = await handler(request=request)
         assert result["status"] == "ok"
         assert "coreMd" in result["written"]
@@ -233,10 +253,12 @@ class TestAlreadySecureEndpoints:
 
         handler = app.routes["PUT /api/v1/mcp-servers"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "mode": "enabled",
-            "injected_key": "evil",
-        })
+        request.json = AsyncMock(
+            return_value={
+                "mode": "enabled",
+                "injected_key": "evil",
+            }
+        )
         result = await handler(request=request)
         assert result["status"] == "ok"
 

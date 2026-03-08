@@ -15,8 +15,10 @@ from typing import Any
 
 # ── Action Types ─────────────────────────────────────────────────
 
+
 class ActionType(str, Enum):
     """Browser-Aktionen die der Agent ausführen kann."""
+
     NAVIGATE = "navigate"
     CLICK = "click"
     FILL = "fill"
@@ -45,6 +47,7 @@ class ActionType(str, Enum):
 
 class ElementType(str, Enum):
     """Interaktive Element-Typen auf einer Seite."""
+
     LINK = "link"
     BUTTON = "button"
     INPUT = "input"
@@ -63,20 +66,23 @@ class ElementType(str, Enum):
 
 class ExtractionMode(str, Enum):
     """Wie Inhalte extrahiert werden."""
-    TEXT = "text"            # Nur sichtbarer Text
-    HTML = "html"            # Rohes HTML
-    MARKDOWN = "markdown"    # Strukturiertes Markdown
-    TABLES = "tables"        # Tabellen als JSON
-    LINKS = "links"          # Alle Links
-    FORMS = "forms"          # Formular-Felder
+
+    TEXT = "text"  # Nur sichtbarer Text
+    HTML = "html"  # Rohes HTML
+    MARKDOWN = "markdown"  # Strukturiertes Markdown
+    TABLES = "tables"  # Tabellen als JSON
+    LINKS = "links"  # Alle Links
+    FORMS = "forms"  # Formular-Felder
     STRUCTURED = "structured"  # Intelligente Struktur-Erkennung
 
 
 # ── Element Info ─────────────────────────────────────────────────
 
+
 @dataclass
 class ElementInfo:
     """Beschreibt ein interaktives Element auf der Seite."""
+
     selector: str
     element_type: ElementType
     text: str = ""
@@ -93,11 +99,17 @@ class ElementInfo:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "selector": self.selector, "type": self.element_type.value,
-            "text": self.text, "value": self.value, "name": self.name,
-            "placeholder": self.placeholder, "href": self.href,
-            "aria_label": self.aria_label, "visible": self.is_visible,
-            "enabled": self.is_enabled, "required": self.is_required,
+            "selector": self.selector,
+            "type": self.element_type.value,
+            "text": self.text,
+            "value": self.value,
+            "name": self.name,
+            "placeholder": self.placeholder,
+            "href": self.href,
+            "aria_label": self.aria_label,
+            "visible": self.is_visible,
+            "enabled": self.is_enabled,
+            "required": self.is_required,
         }
 
     @property
@@ -119,9 +131,11 @@ class ElementInfo:
 
 # ── Form Info ────────────────────────────────────────────────────
 
+
 @dataclass
 class FormField:
     """Ein Feld innerhalb eines Formulars."""
+
     name: str
     field_type: str  # text, email, password, number, date, select, etc.
     label: str = ""
@@ -133,8 +147,10 @@ class FormField:
 
     def to_dict(self) -> dict[str, Any]:
         r: dict[str, Any] = {
-            "name": self.name, "type": self.field_type,
-            "label": self.label, "required": self.required,
+            "name": self.name,
+            "type": self.field_type,
+            "label": self.label,
+            "required": self.required,
         }
         if self.value:
             r["value"] = self.value
@@ -148,6 +164,7 @@ class FormField:
 @dataclass
 class FormInfo:
     """Beschreibt ein erkanntes Formular."""
+
     action: str = ""
     method: str = "GET"
     fields: list[FormField] = field(default_factory=list)
@@ -157,7 +174,9 @@ class FormInfo:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "action": self.action, "method": self.method, "name": self.name,
+            "action": self.action,
+            "method": self.method,
+            "name": self.name,
             "fields": [f.to_dict() for f in self.fields],
             "submit_selector": self.submit_selector,
         }
@@ -165,9 +184,11 @@ class FormInfo:
 
 # ── Page State ───────────────────────────────────────────────────
 
+
 @dataclass
 class PageState:
     """Snapshot des aktuellen Seiten-Zustands."""
+
     url: str = ""
     title: str = ""
     text_content: str = ""
@@ -198,7 +219,8 @@ class PageState:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "url": self.url, "title": self.title,
+            "url": self.url,
+            "title": self.title,
             "text_length": len(self.text_content),
             "html_length": self.html_length,
             "load_time_ms": self.load_time_ms,
@@ -246,9 +268,11 @@ class PageState:
 
 # ── Browser Action ───────────────────────────────────────────────
 
+
 @dataclass
 class BrowserAction:
     """Eine einzelne Browser-Aktion."""
+
     action_type: ActionType
     params: dict[str, Any] = field(default_factory=dict)
     description: str = ""  # Menschenlesbare Beschreibung
@@ -260,14 +284,17 @@ class BrowserAction:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "id": self.action_id, "action": self.action_type.value,
-            "params": self.params, "description": self.description,
+            "id": self.action_id,
+            "action": self.action_type.value,
+            "params": self.params,
+            "description": self.description,
         }
 
 
 @dataclass
 class ActionResult:
     """Ergebnis einer ausgeführten Browser-Aktion."""
+
     action_id: str
     success: bool
     data: Any = None
@@ -279,7 +306,8 @@ class ActionResult:
 
     def to_dict(self) -> dict[str, Any]:
         r: dict[str, Any] = {
-            "action_id": self.action_id, "success": self.success,
+            "action_id": self.action_id,
+            "success": self.success,
             "duration_ms": self.duration_ms,
         }
         if self.error:
@@ -294,6 +322,7 @@ class ActionResult:
 
 # ── Workflow ─────────────────────────────────────────────────────
 
+
 class WorkflowStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
@@ -306,6 +335,7 @@ class WorkflowStatus(str, Enum):
 @dataclass
 class BrowserWorkflow:
     """Multi-Step Browser-Automatisierung."""
+
     workflow_id: str = ""
     name: str = ""
     description: str = ""
@@ -325,8 +355,11 @@ class BrowserWorkflow:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "id": self.workflow_id, "name": self.name, "status": self.status.value,
-            "steps": len(self.steps), "current_step": self.current_step,
+            "id": self.workflow_id,
+            "name": self.name,
+            "status": self.status.value,
+            "steps": len(self.steps),
+            "current_step": self.current_step,
             "completed": len(self.results),
             "success_rate": self.success_rate,
         }
@@ -339,15 +372,20 @@ class BrowserWorkflow:
 
     @property
     def is_complete(self) -> bool:
-        return self.status in (WorkflowStatus.COMPLETED, WorkflowStatus.FAILED,
-                               WorkflowStatus.CANCELED)
+        return self.status in (
+            WorkflowStatus.COMPLETED,
+            WorkflowStatus.FAILED,
+            WorkflowStatus.CANCELED,
+        )
 
 
 # ── Session Config ───────────────────────────────────────────────
 
+
 @dataclass
 class BrowserConfig:
     """Konfiguration für Browser-Sessions."""
+
     headless: bool = True
     viewport_width: int = 1280
     viewport_height: int = 720
@@ -364,14 +402,16 @@ class BrowserConfig:
     proxy: str = ""
     # Vision-Integration
     vision_enabled: bool = False
-    vision_model: str = ""       # z.B. "gpt-4o", "claude-sonnet-4-20250514", "llava:13b"
+    vision_model: str = ""  # z.B. "gpt-4o", "claude-sonnet-4-20250514", "llava:13b"
     vision_backend: str = "ollama"
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "headless": self.headless,
             "viewport": f"{self.viewport_width}x{self.viewport_height}",
-            "timeout_ms": self.timeout_ms, "locale": self.locale,
-            "timezone": self.timezone, "persist_cookies": self.persist_cookies,
+            "timeout_ms": self.timeout_ms,
+            "locale": self.locale,
+            "timezone": self.timezone,
+            "persist_cookies": self.persist_cookies,
             "max_pages": self.max_pages,
         }

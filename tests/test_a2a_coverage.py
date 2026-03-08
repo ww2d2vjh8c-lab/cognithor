@@ -1,4 +1,5 @@
 """Tests for a2a/client.py and a2a/http_handler.py -- Coverage boost."""
+
 from __future__ import annotations
 
 import json
@@ -37,9 +38,15 @@ def _make_mock_httpx(async_client_instance):
     return mock_httpx
 
 
-def _make_async_client(*, get_return=None, get_side_effect=None,
-                       post_return=None, post_side_effect=None,
-                       stream_cm=None, stream_side_effect=None):
+def _make_async_client(
+    *,
+    get_return=None,
+    get_side_effect=None,
+    post_return=None,
+    post_side_effect=None,
+    stream_cm=None,
+    stream_side_effect=None,
+):
     """Create a mock AsyncClient instance with async context-manager support."""
     ac = AsyncMock()
     ac.__aenter__ = AsyncMock(return_value=ac)
@@ -270,7 +277,8 @@ class TestA2AClientTaskOps:
         client = A2AClient()
         client.register_remote("http://r.local")
         task_data = {
-            "id": "t1", "contextId": "ctx1",
+            "id": "t1",
+            "contextId": "ctx1",
             "status": {"state": "completed", "timestamp": "2025-01-01T00:00:00Z"},
         }
         resp_data = {"jsonrpc": "2.0", "id": 1, "result": task_data}
@@ -290,7 +298,8 @@ class TestA2AClientTaskOps:
     async def test_send_message_with_message_object(self):
         client = A2AClient()
         task_data = {
-            "id": "t2", "contextId": "ctx2",
+            "id": "t2",
+            "contextId": "ctx2",
             "status": {"state": "working"},
         }
         resp_data = {"jsonrpc": "2.0", "id": 1, "result": task_data}
@@ -301,8 +310,11 @@ class TestA2AClientTaskOps:
         msg = Message(role=MessageRole.USER, parts=[TextPart(text="Hi")])
         with patch.dict(sys.modules, {"httpx": mock_httpx}):
             task = await client.send_message(
-                "http://r.local", message=msg,
-                task_id="t2", context_id="ctx2", metadata={"key": "val"},
+                "http://r.local",
+                message=msg,
+                task_id="t2",
+                context_id="ctx2",
+                metadata={"key": "val"},
             )
 
         assert task is not None
@@ -339,7 +351,9 @@ class TestA2AClientTaskOps:
     @pytest.mark.asyncio
     async def test_send_task_alias(self):
         client = A2AClient()
-        with patch.object(client, "send_message", new_callable=AsyncMock, return_value=None) as mock_send:
+        with patch.object(
+            client, "send_message", new_callable=AsyncMock, return_value=None
+        ) as mock_send:
             await client.send_task("http://r.local", text="Hi")
             mock_send.assert_awaited_once()
 
@@ -347,7 +361,8 @@ class TestA2AClientTaskOps:
     async def test_get_task(self):
         client = A2AClient()
         task_data = {
-            "id": "t1", "contextId": "ctx1",
+            "id": "t1",
+            "contextId": "ctx1",
             "status": {"state": "completed"},
         }
         resp_data = {"jsonrpc": "2.0", "id": 1, "result": task_data}
@@ -398,7 +413,9 @@ class TestA2AClientTaskOps:
     @pytest.mark.asyncio
     async def test_continue_task(self):
         client = A2AClient()
-        with patch.object(client, "send_message", new_callable=AsyncMock, return_value=None) as mock_send:
+        with patch.object(
+            client, "send_message", new_callable=AsyncMock, return_value=None
+        ) as mock_send:
             await client.continue_task("http://r.local", "t1", "More text")
             mock_send.assert_awaited_once()
 
@@ -406,10 +423,13 @@ class TestA2AClientTaskOps:
     async def test_send_task_local_success(self):
         client = A2AClient()
         server = AsyncMock()
-        server.dispatch = AsyncMock(return_value={
-            "id": "t1", "contextId": "c1",
-            "status": {"state": "completed"},
-        })
+        server.dispatch = AsyncMock(
+            return_value={
+                "id": "t1",
+                "contextId": "c1",
+                "status": {"state": "completed"},
+            }
+        )
         task = await client.send_task_local(server, text="Hello")
         assert task is not None
 
@@ -417,10 +437,13 @@ class TestA2AClientTaskOps:
     async def test_send_task_local_with_message(self):
         client = A2AClient()
         server = AsyncMock()
-        server.dispatch = AsyncMock(return_value={
-            "id": "t1", "contextId": "c1",
-            "status": {"state": "completed"},
-        })
+        server.dispatch = AsyncMock(
+            return_value={
+                "id": "t1",
+                "contextId": "c1",
+                "status": {"state": "completed"},
+            }
+        )
         msg = Message(role=MessageRole.USER, parts=[TextPart(text="Hi")])
         task = await client.send_task_local(server, message=msg, task_id="t1", context_id="c1")
         assert task is not None
@@ -458,7 +481,8 @@ class TestParseTaskResponse:
     def test_parse_full_response(self):
         client = A2AClient()
         data = {
-            "id": "t1", "contextId": "ctx1",
+            "id": "t1",
+            "contextId": "ctx1",
             "status": {
                 "state": "completed",
                 "message": {"role": "agent", "parts": [{"type": "text", "text": "Done"}]},
@@ -586,7 +610,9 @@ class TestA2AHTTPHandler:
         adapter = AsyncMock()
         adapter.handle_a2a_request = AsyncMock(return_value={"result": "ok"})
         handler = A2AHTTPHandler(adapter)
-        result = await handler.handle_jsonrpc({"method": "test"}, auth_header="Bearer t", client_version="1.0")
+        result = await handler.handle_jsonrpc(
+            {"method": "test"}, auth_header="Bearer t", client_version="1.0"
+        )
         assert result == {"result": "ok"}
 
     @pytest.mark.asyncio
@@ -612,7 +638,10 @@ class TestA2AHTTPHandler:
         adapter = MagicMock()
         handler = A2AHTTPHandler(adapter)
         app = MagicMock()
-        with patch.dict("sys.modules", {"starlette": None, "starlette.requests": None, "starlette.responses": None}):
+        with patch.dict(
+            "sys.modules",
+            {"starlette": None, "starlette.requests": None, "starlette.responses": None},
+        ):
             handler.register_routes(app)
 
     @pytest.mark.asyncio

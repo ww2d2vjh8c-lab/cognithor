@@ -110,9 +110,14 @@ class TaskBoard:
     async def post(self, agent: str, role: AgentRole, content: str, **meta: Any) -> None:
         """Post a contribution to the board."""
         async with self._lock:
-            self._entries.append(BoardEntry(
-                agent=agent, role=role, content=content, metadata=meta,
-            ))
+            self._entries.append(
+                BoardEntry(
+                    agent=agent,
+                    role=role,
+                    content=content,
+                    metadata=meta,
+                )
+            )
 
     async def vote(self, voter: str, target_agent: str, score: float) -> None:
         """Cast a vote for an agent's contribution (0.0 - 1.0)."""
@@ -133,11 +138,7 @@ class TaskBoard:
         for voter_scores in self._votes.values():
             for agent, score in voter_scores.items():
                 totals.setdefault(agent, []).append(score)
-        return {
-            agent: sum(scores) / len(scores)
-            for agent, scores in totals.items()
-            if scores
-        }
+        return {agent: sum(scores) / len(scores) for agent, scores in totals.items() if scores}
 
     def get_winner(self) -> BoardEntry | None:
         """Get the entry with the highest aggregated score."""
@@ -282,7 +283,7 @@ class CollaborationEngine:
                 prev_entries = board.get_entries()
                 context = "\n\nVorherige Beiträge:\n" + "\n".join(
                     f"- {e.agent} ({e.role}): {e.content[:200]}"
-                    for e in prev_entries[-len(participants):]
+                    for e in prev_entries[-len(participants) :]
                 )
 
             tasks = []
@@ -318,8 +319,7 @@ class CollaborationEngine:
             result.consensus_score = winner.score
 
         result.contributions = [
-            {"agent": e.agent, "role": e.role.value, "content": e.content[:300]}
-            for e in entries
+            {"agent": e.agent, "role": e.role.value, "content": e.content[:300]} for e in entries
         ]
         result.duration_ms = (time.monotonic() - start) * 1000
         self._history.append(result)
@@ -425,7 +425,10 @@ class CollaborationEngine:
             await board.post(critic.agent_name, critic.role, critique)
 
             # Check if the critic approves
-            if any(word in critique.lower() for word in ["gut", "korrekt", "akzeptiert", "approve", "ok"]):
+            if any(
+                word in critique.lower()
+                for word in ["gut", "korrekt", "akzeptiert", "approve", "ok"]
+            ):
                 break
 
             # Producer revises
@@ -528,8 +531,7 @@ class CollaborationEngine:
             result.consensus_score = 1.0
 
         result.contributions = [
-            {"agent": e.agent, "role": e.role.value, "content": e.content[:300]}
-            for e in entries
+            {"agent": e.agent, "role": e.role.value, "content": e.content[:300]} for e in entries
         ]
         result.duration_ms = (time.monotonic() - start) * 1000
         self._history.append(result)

@@ -95,6 +95,7 @@ class WorkflowTemplate:
 
 # === Built-in Templates ===
 
+
 def _team_onboarding_template() -> WorkflowTemplate:
     return WorkflowTemplate(
         template_id="wf-onboarding",
@@ -105,14 +106,28 @@ def _team_onboarding_template() -> WorkflowTemplate:
         estimated_minutes=120,
         tags=["hr", "onboarding", "team"],
         steps=[
-            WorkflowStep("s1", "Willkommens-Nachricht", "Begrüßung via Teams/Slack senden", "notification"),
-            WorkflowStep("s2", "Accounts erstellen", "E-Mail, Jira, Git, CRM-Zugänge anlegen", "agent_task",
-                         config={"tools": ["jira", "teams", "crm"]}),
-            WorkflowStep("s3", "Einarbeitungsplan", "Persönlichen Einarbeitungsplan erstellen", "agent_task"),
-            WorkflowStep("s4", "Mentor zuweisen", "Buddy/Mentor-Vorschlag und Benachrichtigung", "approval"),
-            WorkflowStep("s5", "Check-in planen", "30-Tage Check-in Termin erstellen", "agent_task"),
+            WorkflowStep(
+                "s1", "Willkommens-Nachricht", "Begrüßung via Teams/Slack senden", "notification"
+            ),
+            WorkflowStep(
+                "s2",
+                "Accounts erstellen",
+                "E-Mail, Jira, Git, CRM-Zugänge anlegen",
+                "agent_task",
+                config={"tools": ["jira", "teams", "crm"]},
+            ),
+            WorkflowStep(
+                "s3", "Einarbeitungsplan", "Persönlichen Einarbeitungsplan erstellen", "agent_task"
+            ),
+            WorkflowStep(
+                "s4", "Mentor zuweisen", "Buddy/Mentor-Vorschlag und Benachrichtigung", "approval"
+            ),
+            WorkflowStep(
+                "s5", "Check-in planen", "30-Tage Check-in Termin erstellen", "agent_task"
+            ),
         ],
     )
+
 
 def _sales_pipeline_template() -> WorkflowTemplate:
     return WorkflowTemplate(
@@ -124,14 +139,22 @@ def _sales_pipeline_template() -> WorkflowTemplate:
         estimated_minutes=30,
         tags=["sales", "crm", "follow-up"],
         steps=[
-            WorkflowStep("s1", "Lead-Daten sammeln", "CRM-Daten des Leads abrufen", "agent_task",
-                         config={"tools": ["crm"]}),
-            WorkflowStep("s2", "Follow-up E-Mail", "Personalisierte Follow-up-Mail generieren", "agent_task"),
+            WorkflowStep(
+                "s1",
+                "Lead-Daten sammeln",
+                "CRM-Daten des Leads abrufen",
+                "agent_task",
+                config={"tools": ["crm"]},
+            ),
+            WorkflowStep(
+                "s2", "Follow-up E-Mail", "Personalisierte Follow-up-Mail generieren", "agent_task"
+            ),
             WorkflowStep("s3", "Genehmigung", "Vertriebsleiter genehmigt den Entwurf", "approval"),
             WorkflowStep("s4", "E-Mail senden", "Genehmigte E-Mail versenden", "agent_task"),
             WorkflowStep("s5", "Reminder setzen", "7-Tage Follow-up Reminder im CRM", "agent_task"),
         ],
     )
+
 
 def _incident_response_template() -> WorkflowTemplate:
     return WorkflowTemplate(
@@ -143,15 +166,28 @@ def _incident_response_template() -> WorkflowTemplate:
         estimated_minutes=60,
         tags=["ops", "incident", "servicenow"],
         steps=[
-            WorkflowStep("s1", "Incident erstellen", "ServiceNow-Ticket automatisch anlegen", "agent_task",
-                         config={"tools": ["servicenow"]}),
-            WorkflowStep("s2", "Team benachrichtigen", "On-Call-Team via Teams/Slack informieren", "notification"),
+            WorkflowStep(
+                "s1",
+                "Incident erstellen",
+                "ServiceNow-Ticket automatisch anlegen",
+                "agent_task",
+                config={"tools": ["servicenow"]},
+            ),
+            WorkflowStep(
+                "s2",
+                "Team benachrichtigen",
+                "On-Call-Team via Teams/Slack informieren",
+                "notification",
+            ),
             WorkflowStep("s3", "Diagnose", "Agent sammelt Logs und analysiert", "agent_task"),
             WorkflowStep("s4", "Lösung vorschlagen", "Agent schlägt Remediation vor", "agent_task"),
             WorkflowStep("s5", "Bestätigung", "Mensch bestätigt die Lösung", "approval"),
-            WorkflowStep("s6", "Post-Mortem", "Automatisches Post-Mortem-Dokument erstellen", "agent_task"),
+            WorkflowStep(
+                "s6", "Post-Mortem", "Automatisches Post-Mortem-Dokument erstellen", "agent_task"
+            ),
         ],
     )
+
 
 def _code_review_template() -> WorkflowTemplate:
     return WorkflowTemplate(
@@ -164,10 +200,17 @@ def _code_review_template() -> WorkflowTemplate:
         tags=["dev", "code-review", "ci-cd"],
         steps=[
             WorkflowStep("s1", "Diff laden", "Code-Änderungen aus Git laden", "agent_task"),
-            WorkflowStep("s2", "Sicherheits-Check", "Red-Team-Scanner auf neuen Code anwenden", "agent_task"),
+            WorkflowStep(
+                "s2", "Sicherheits-Check", "Red-Team-Scanner auf neuen Code anwenden", "agent_task"
+            ),
             WorkflowStep("s3", "Style-Check", "Code-Style und Best-Practices prüfen", "agent_task"),
-            WorkflowStep("s4", "Review-Kommentar", "Zusammenfassung als Jira-Kommentar posten", "agent_task",
-                         config={"tools": ["jira"]}),
+            WorkflowStep(
+                "s4",
+                "Review-Kommentar",
+                "Zusammenfassung als Jira-Kommentar posten",
+                "agent_task",
+                config={"tools": ["jira"]},
+            ),
         ],
     )
 
@@ -211,7 +254,9 @@ class WorkflowEngine:
         self._instances: dict[str, WorkflowInstance] = {}
 
     def start(self, template: WorkflowTemplate, *, created_by: str = "") -> WorkflowInstance:
-        instance_id = hashlib.sha256(f"{template.template_id}:{time.time()}".encode()).hexdigest()[:12]
+        instance_id = hashlib.sha256(f"{template.template_id}:{time.time()}".encode()).hexdigest()[
+            :12
+        ]
         instance = WorkflowInstance(
             instance_id=instance_id,
             template_id=template.template_id,
@@ -321,11 +366,11 @@ class TemplateLibrary:
 class SecurityTier(Enum):
     """Sicherheitsstufe eines Skills."""
 
-    UNVERIFIED = "unverified"     # Keine Prüfung
-    COMMUNITY = "community"       # Community-geprüft
-    REVIEWED = "reviewed"         # Code-Review bestanden
-    CERTIFIED = "certified"       # Vollständig zertifiziert
-    TRUSTED = "trusted"           # Offizieller Jarvis-Partner
+    UNVERIFIED = "unverified"  # Keine Prüfung
+    COMMUNITY = "community"  # Community-geprüft
+    REVIEWED = "reviewed"  # Code-Review bestanden
+    CERTIFIED = "certified"  # Vollständig zertifiziert
+    TRUSTED = "trusted"  # Offizieller Jarvis-Partner
 
 
 @dataclass
@@ -350,16 +395,42 @@ class SkillSecurityRequirement:
 
 # Standard-Anforderungen
 _ECOSYSTEM_REQUIREMENTS: list[SkillSecurityRequirement] = [
-    SkillSecurityRequirement("ESR-001", "Code-Signatur", "Skill muss digital signiert sein", SecurityTier.COMMUNITY),
-    SkillSecurityRequirement("ESR-002", "Keine Netzwerk-Calls", "Kein unkontrollierter Netzwerkzugriff", SecurityTier.COMMUNITY),
-    SkillSecurityRequirement("ESR-003", "Sandbox-kompatibel", "Muss innerhalb der Sandbox laufen", SecurityTier.COMMUNITY),
-    SkillSecurityRequirement("ESR-004", "Lizenz-Deklaration", "Open-Source-Lizenz muss angegeben sein", SecurityTier.COMMUNITY),
-    SkillSecurityRequirement("ESR-005", "Static-Analysis", "Keine bekannten CVEs in Dependencies", SecurityTier.REVIEWED),
-    SkillSecurityRequirement("ESR-006", "Input-Validation", "Alle Inputs müssen validiert werden", SecurityTier.REVIEWED),
-    SkillSecurityRequirement("ESR-007", "Code-Review", "Manuelles Code-Review durch Kurator", SecurityTier.REVIEWED),
-    SkillSecurityRequirement("ESR-008", "Penetration-Test", "Red-Team-Test bestanden", SecurityTier.CERTIFIED),
-    SkillSecurityRequirement("ESR-009", "Audit-Trail", "Alle Aktionen werden geloggt", SecurityTier.CERTIFIED),
-    SkillSecurityRequirement("ESR-010", "DSGVO-Konformität", "Keine unerlaubte Datenverarbeitung", SecurityTier.CERTIFIED),
+    SkillSecurityRequirement(
+        "ESR-001", "Code-Signatur", "Skill muss digital signiert sein", SecurityTier.COMMUNITY
+    ),
+    SkillSecurityRequirement(
+        "ESR-002",
+        "Keine Netzwerk-Calls",
+        "Kein unkontrollierter Netzwerkzugriff",
+        SecurityTier.COMMUNITY,
+    ),
+    SkillSecurityRequirement(
+        "ESR-003", "Sandbox-kompatibel", "Muss innerhalb der Sandbox laufen", SecurityTier.COMMUNITY
+    ),
+    SkillSecurityRequirement(
+        "ESR-004",
+        "Lizenz-Deklaration",
+        "Open-Source-Lizenz muss angegeben sein",
+        SecurityTier.COMMUNITY,
+    ),
+    SkillSecurityRequirement(
+        "ESR-005", "Static-Analysis", "Keine bekannten CVEs in Dependencies", SecurityTier.REVIEWED
+    ),
+    SkillSecurityRequirement(
+        "ESR-006", "Input-Validation", "Alle Inputs müssen validiert werden", SecurityTier.REVIEWED
+    ),
+    SkillSecurityRequirement(
+        "ESR-007", "Code-Review", "Manuelles Code-Review durch Kurator", SecurityTier.REVIEWED
+    ),
+    SkillSecurityRequirement(
+        "ESR-008", "Penetration-Test", "Red-Team-Test bestanden", SecurityTier.CERTIFIED
+    ),
+    SkillSecurityRequirement(
+        "ESR-009", "Audit-Trail", "Alle Aktionen werden geloggt", SecurityTier.CERTIFIED
+    ),
+    SkillSecurityRequirement(
+        "ESR-010", "DSGVO-Konformität", "Keine unerlaubte Datenverarbeitung", SecurityTier.CERTIFIED
+    ),
 ]
 
 
@@ -420,8 +491,13 @@ class EcosystemPolicy:
         self._minimum_tier = value
 
     def requirements_for_tier(self, tier: SecurityTier) -> list[SkillSecurityRequirement]:
-        tier_order = [SecurityTier.UNVERIFIED, SecurityTier.COMMUNITY, SecurityTier.REVIEWED,
-                      SecurityTier.CERTIFIED, SecurityTier.TRUSTED]
+        tier_order = [
+            SecurityTier.UNVERIFIED,
+            SecurityTier.COMMUNITY,
+            SecurityTier.REVIEWED,
+            SecurityTier.CERTIFIED,
+            SecurityTier.TRUSTED,
+        ]
         tier_idx = tier_order.index(tier)
         return [r for r in self._requirements if tier_order.index(r.tier) <= tier_idx]
 
@@ -458,8 +534,13 @@ class EcosystemPolicy:
         failed = [rid for rid, passed in checks.items() if not passed]
 
         # Höchste erreichbare Stufe bestimmen
-        tier_order = [SecurityTier.UNVERIFIED, SecurityTier.COMMUNITY, SecurityTier.REVIEWED,
-                      SecurityTier.CERTIFIED, SecurityTier.TRUSTED]
+        tier_order = [
+            SecurityTier.UNVERIFIED,
+            SecurityTier.COMMUNITY,
+            SecurityTier.REVIEWED,
+            SecurityTier.CERTIFIED,
+            SecurityTier.TRUSTED,
+        ]
         achieved_tier = SecurityTier.UNVERIFIED
 
         for tier in tier_order[1:]:
@@ -485,8 +566,13 @@ class EcosystemPolicy:
         badge = self._badges.get(skill_id)
         if not badge:
             return False
-        tier_order = [SecurityTier.UNVERIFIED, SecurityTier.COMMUNITY, SecurityTier.REVIEWED,
-                      SecurityTier.CERTIFIED, SecurityTier.TRUSTED]
+        tier_order = [
+            SecurityTier.UNVERIFIED,
+            SecurityTier.COMMUNITY,
+            SecurityTier.REVIEWED,
+            SecurityTier.CERTIFIED,
+            SecurityTier.TRUSTED,
+        ]
         return tier_order.index(badge.tier) >= tier_order.index(self._minimum_tier)
 
     def get_badge(self, skill_id: str) -> ComplianceBadge | None:

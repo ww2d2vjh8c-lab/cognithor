@@ -226,8 +226,7 @@ class OllamaBackend(LLMBackend):
                 usage={
                     "prompt_tokens": data.get("prompt_eval_count", 0),
                     "completion_tokens": data.get("eval_count", 0),
-                    "total_tokens": data.get("prompt_eval_count", 0)
-                    + data.get("eval_count", 0),
+                    "total_tokens": data.get("prompt_eval_count", 0) + data.get("eval_count", 0),
                 },
                 raw=data,
             )
@@ -366,7 +365,9 @@ class OpenAIBackend(LLMBackend):
             self._client = httpx.AsyncClient(
                 base_url=self._base_url,
                 headers=headers,
-                timeout=httpx.Timeout(connect=10.0, read=float(self._timeout), write=30.0, pool=10.0),
+                timeout=httpx.Timeout(
+                    connect=10.0, read=float(self._timeout), write=30.0, pool=10.0
+                ),
                 trust_env=False,
             )
         return self._client
@@ -438,9 +439,11 @@ class OpenAIBackend(LLMBackend):
                         parsed_args = _json.loads(args) if isinstance(args, str) else args
                     except _json.JSONDecodeError:
                         parsed_args = {"raw": args}
-                    tool_calls.append({
-                        "function": {"name": fn.get("name", ""), "arguments": parsed_args},
-                    })
+                    tool_calls.append(
+                        {
+                            "function": {"name": fn.get("name", ""), "arguments": parsed_args},
+                        }
+                    )
 
             usage = data.get("usage", {})
             return ChatResponse(
@@ -573,7 +576,9 @@ class AnthropicBackend(LLMBackend):
                     "anthropic-version": self.API_VERSION,
                     "Content-Type": "application/json",
                 },
-                timeout=httpx.Timeout(connect=10.0, read=float(self._timeout), write=30.0, pool=10.0),
+                timeout=httpx.Timeout(
+                    connect=10.0, read=float(self._timeout), write=30.0, pool=10.0
+                ),
                 trust_env=False,
             )
         return self._client
@@ -639,12 +644,14 @@ class AnthropicBackend(LLMBackend):
                 if block.get("type") == "text":
                     content_parts.append(block.get("text", ""))
                 elif block.get("type") == "tool_use":
-                    tool_calls.append({
-                        "function": {
-                            "name": block.get("name", ""),
-                            "arguments": block.get("input", {}),
-                        },
-                    })
+                    tool_calls.append(
+                        {
+                            "function": {
+                                "name": block.get("name", ""),
+                                "arguments": block.get("input", {}),
+                            },
+                        }
+                    )
 
             usage = data.get("usage", {})
             return ChatResponse(
@@ -654,8 +661,7 @@ class AnthropicBackend(LLMBackend):
                 usage={
                     "prompt_tokens": usage.get("input_tokens", 0),
                     "completion_tokens": usage.get("output_tokens", 0),
-                    "total_tokens": usage.get("input_tokens", 0)
-                    + usage.get("output_tokens", 0),
+                    "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
                 },
                 raw=data,
             )
@@ -719,8 +725,7 @@ class AnthropicBackend(LLMBackend):
         # Anthropic bietet keine Embedding-API an.
         # Fallback: Ollama oder OpenAI-Embeddings verwenden.
         raise LLMBackendError(
-            "Anthropic bietet keine Embedding-API. "
-            "Verwende Ollama oder OpenAI für Embeddings."
+            "Anthropic bietet keine Embedding-API. Verwende Ollama oder OpenAI für Embeddings."
         )
 
     async def is_available(self) -> bool:
@@ -759,17 +764,23 @@ class AnthropicBackend(LLMBackend):
         for tool in tools:
             if "function" in tool:
                 fn = tool["function"]
-                result.append({
-                    "name": fn.get("name", ""),
-                    "description": fn.get("description", ""),
-                    "input_schema": fn.get("parameters", {"type": "object", "properties": {}}),
-                })
+                result.append(
+                    {
+                        "name": fn.get("name", ""),
+                        "description": fn.get("description", ""),
+                        "input_schema": fn.get("parameters", {"type": "object", "properties": {}}),
+                    }
+                )
             elif "name" in tool:
-                result.append({
-                    "name": tool["name"],
-                    "description": tool.get("description", ""),
-                    "input_schema": tool.get("inputSchema", {"type": "object", "properties": {}}),
-                })
+                result.append(
+                    {
+                        "name": tool["name"],
+                        "description": tool.get("description", ""),
+                        "input_schema": tool.get(
+                            "inputSchema", {"type": "object", "properties": {}}
+                        ),
+                    }
+                )
         return result
 
 
@@ -842,10 +853,12 @@ class GeminiBackend(LLMBackend):
             else:
                 gemini_role = "model" if role == "assistant" else "user"
                 if isinstance(content, str):
-                    contents.append({
-                        "role": gemini_role,
-                        "parts": [{"text": content}],
-                    })
+                    contents.append(
+                        {
+                            "role": gemini_role,
+                            "parts": [{"text": content}],
+                        }
+                    )
                 elif isinstance(content, list):
                     parts = []
                     for block in content:
@@ -866,17 +879,21 @@ class GeminiBackend(LLMBackend):
         for tool in tools:
             if "function" in tool:
                 fn = tool["function"]
-                declarations.append({
-                    "name": fn.get("name", ""),
-                    "description": fn.get("description", ""),
-                    "parameters": fn.get("parameters", {"type": "object", "properties": {}}),
-                })
+                declarations.append(
+                    {
+                        "name": fn.get("name", ""),
+                        "description": fn.get("description", ""),
+                        "parameters": fn.get("parameters", {"type": "object", "properties": {}}),
+                    }
+                )
             elif "name" in tool:
-                declarations.append({
-                    "name": tool["name"],
-                    "description": tool.get("description", ""),
-                    "parameters": tool.get("inputSchema", {"type": "object", "properties": {}}),
-                })
+                declarations.append(
+                    {
+                        "name": tool["name"],
+                        "description": tool.get("description", ""),
+                        "parameters": tool.get("inputSchema", {"type": "object", "properties": {}}),
+                    }
+                )
         return declarations
 
     async def chat(
@@ -905,9 +922,11 @@ class GeminiBackend(LLMBackend):
                 "parts": [{"text": system_text.strip()}],
             }
         if tools:
-            payload["tools"] = [{
-                "functionDeclarations": self._convert_tools_to_gemini(tools),
-            }]
+            payload["tools"] = [
+                {
+                    "functionDeclarations": self._convert_tools_to_gemini(tools),
+                }
+            ]
         if format_json:
             payload["generationConfig"]["responseMimeType"] = "application/json"
 
@@ -940,12 +959,14 @@ class GeminiBackend(LLMBackend):
                     text_parts.append(part["text"])
                 elif "functionCall" in part:
                     fc = part["functionCall"]
-                    tool_calls.append({
-                        "function": {
-                            "name": fc.get("name", ""),
-                            "arguments": fc.get("args", {}),
-                        },
-                    })
+                    tool_calls.append(
+                        {
+                            "function": {
+                                "name": fc.get("name", ""),
+                                "arguments": fc.get("args", {}),
+                            },
+                        }
+                    )
 
             usage_meta = data.get("usageMetadata", {})
             return ChatResponse(
@@ -988,10 +1009,7 @@ class GeminiBackend(LLMBackend):
                 "parts": [{"text": system_text.strip()}],
             }
 
-        url = (
-            f"{self.API_URL}/models/{model}:streamGenerateContent"
-            f"?alt=sse"
-        )
+        url = f"{self.API_URL}/models/{model}:streamGenerateContent?alt=sse"
 
         import json as _json
 
@@ -1049,10 +1067,7 @@ class GeminiBackend(LLMBackend):
             url = f"{self.API_URL}/models"
             resp = await client.get(url)
             resp.raise_for_status()
-            return [
-                m.get("name", "").replace("models/", "")
-                for m in resp.json().get("models", [])
-            ]
+            return [m.get("name", "").replace("models/", "") for m in resp.json().get("models", [])]
         except Exception:
             return []
 

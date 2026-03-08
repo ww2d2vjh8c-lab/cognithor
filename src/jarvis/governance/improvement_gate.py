@@ -68,7 +68,9 @@ class ImprovementGate:
         # Rate-limit tracking: list of monotonic timestamps of recent changes
         self._change_timestamps: list[float] = []
 
-    def check(self, domain: ImprovementDomain, proposal: dict[str, Any] | None = None) -> GateVerdict:
+    def check(
+        self, domain: ImprovementDomain, proposal: dict[str, Any] | None = None
+    ) -> GateVerdict:
         """Check whether a self-improvement action in the given domain is allowed.
 
         Args:
@@ -93,8 +95,11 @@ class ImprovementGate:
         cutoff = now - 3600  # 1 hour
         self._change_timestamps = [t for t in self._change_timestamps if t > cutoff]
         if len(self._change_timestamps) >= self._config.max_changes_per_hour:
-            logger.info("improvement_gate_rate_limited", domain=domain_value,
-                        changes=len(self._change_timestamps))
+            logger.info(
+                "improvement_gate_rate_limited",
+                domain=domain_value,
+                changes=len(self._change_timestamps),
+            )
             return GateVerdict.COOLDOWN
 
         # 3. Cooldown after failure?
@@ -102,8 +107,11 @@ class ImprovementGate:
             elapsed = now - self._cooldowns[domain]
             cooldown_seconds = self._config.cooldown_minutes * 60
             if elapsed < cooldown_seconds:
-                logger.info("improvement_gate_cooldown", domain=domain_value,
-                            remaining_s=round(cooldown_seconds - elapsed))
+                logger.info(
+                    "improvement_gate_cooldown",
+                    domain=domain_value,
+                    remaining_s=round(cooldown_seconds - elapsed),
+                )
                 return GateVerdict.COOLDOWN
 
         # 4. Auto-allowed?
@@ -127,5 +135,8 @@ class ImprovementGate:
             logger.debug("improvement_gate_success", domain=domain.value)
         else:
             self._cooldowns[domain] = now
-            logger.info("improvement_gate_failure_cooldown", domain=domain.value,
-                        cooldown_min=self._config.cooldown_minutes)
+            logger.info(
+                "improvement_gate_failure_cooldown",
+                domain=domain.value,
+                cooldown_min=self._config.cooldown_minutes,
+            )

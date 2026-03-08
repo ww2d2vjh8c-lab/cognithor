@@ -333,13 +333,15 @@ class VaultConfig(BaseModel):
     auto_save_research: bool = False
     """Wenn True, werden Web-Recherche-Ergebnisse automatisch im Vault gespeichert."""
 
-    default_folders: dict[str, str] = Field(default_factory=lambda: {
-        "research": "recherchen",
-        "meetings": "meetings",
-        "knowledge": "wissen",
-        "projects": "projekte",
-        "daily": "daily",
-    })
+    default_folders: dict[str, str] = Field(
+        default_factory=lambda: {
+            "research": "recherchen",
+            "meetings": "meetings",
+            "knowledge": "wissen",
+            "projects": "projekte",
+            "daily": "daily",
+        }
+    )
     """Mapping von logischen Ordnernamen zu Verzeichnisnamen im Vault."""
 
 
@@ -365,8 +367,19 @@ class ContextPipelineConfig(BaseModel):
     """Maximale Zeichenzahl des injizierten Kontexts."""
 
     smalltalk_patterns: list[str] = [
-        "hallo", "hi", "hey", "guten morgen", "guten tag", "guten abend",
-        "danke", "tschüss", "bye", "ok", "ja", "nein", "alles klar",
+        "hallo",
+        "hi",
+        "hey",
+        "guten morgen",
+        "guten tag",
+        "guten abend",
+        "danke",
+        "tschüss",
+        "bye",
+        "ok",
+        "ja",
+        "nein",
+        "alles klar",
     ]
     """Patterns die als Smalltalk erkannt werden (keine Kontext-Suche)."""
 
@@ -429,6 +442,7 @@ class MemoryConfig(BaseModel):
 # --------------------------------------------------------------------------
 # Heartbeat- und Plugin-Konfigurationen
 # --------------------------------------------------------------------------
+
 
 class HeartbeatConfig(BaseModel):
     """Konfiguration für den Heartbeat-Mechanismus.
@@ -554,13 +568,17 @@ class CommunityMarketplaceConfig(BaseModel):
     """Basis-URL fuer das Registry-Repo.  Kann auf einen Fork zeigen."""
 
     auto_recall_check_interval: int = Field(
-        default=3600, ge=300, le=86400,
+        default=3600,
+        ge=300,
+        le=86400,
         description="Intervall fuer automatische Recall-Checks (Sekunden)",
     )
     """Wie oft nach zurueckgerufenen Skills gesucht wird (Default: 1h)."""
 
     min_publisher_reputation: float = Field(
-        default=0.0, ge=0.0, le=100.0,
+        default=0.0,
+        ge=0.0,
+        le=100.0,
         description="Minimaler Publisher-Reputation-Score fuer Installation",
     )
     """Skills von Publishern unter diesem Score werden mit Warnung installiert."""
@@ -573,7 +591,9 @@ class CommunityMarketplaceConfig(BaseModel):
     installiert.  Schraenkt die Auswahl stark ein."""
 
     max_tool_calls_default: int = Field(
-        default=10, ge=1, le=100,
+        default=10,
+        ge=1,
+        le=100,
         description="Default max Tool-Calls pro Community-Skill-Aufruf",
     )
     """Globaler Default fuer max_tool_calls wenn kein Manifest-Wert."""
@@ -588,6 +608,7 @@ class CommunityMarketplaceConfig(BaseModel):
 # --------------------------------------------------------------------------
 # Dashboard- und Modell-Override-Konfigurationen
 # --------------------------------------------------------------------------
+
 
 class DashboardConfig(BaseModel):
     """Konfiguration für das optionale Web-Dashboard.
@@ -1408,6 +1429,7 @@ class SecurityConfig(BaseModel):
 
 class DatabaseConfig(BaseModel):
     """Datenbank-Konfiguration."""
+
     backend: str = Field(default="sqlite", description="'sqlite' oder 'postgresql'")
     pg_host: str = "localhost"
     pg_port: int = Field(default=5432, ge=1, le=65535)
@@ -1474,7 +1496,7 @@ class JarvisConfig(BaseModel):
     language: Literal["de", "en"] = Field(
         default="de",
         description="UI language for error messages, greetings, and status texts. "
-                    "Set to 'en' for English. Also settable via JARVIS_LANGUAGE env var.",
+        "Set to 'en' for English. Also settable via JARVIS_LANGUAGE env var.",
     )
     owner_name: str = Field(
         default="User",
@@ -1489,10 +1511,22 @@ class JarvisConfig(BaseModel):
 
     # LLM-Backend
     llm_backend_type: Literal[
-        "ollama", "openai", "anthropic", "gemini",
-        "groq", "deepseek", "mistral", "together",
-        "openrouter", "xai", "cerebras", "github", "bedrock",
-        "huggingface", "moonshot", "lmstudio",
+        "ollama",
+        "openai",
+        "anthropic",
+        "gemini",
+        "groq",
+        "deepseek",
+        "mistral",
+        "together",
+        "openrouter",
+        "xai",
+        "cerebras",
+        "github",
+        "bedrock",
+        "huggingface",
+        "moonshot",
+        "lmstudio",
     ] = Field(
         default="ollama",
         description="LLM-Backend: 'ollama', 'openai', 'anthropic', 'gemini', 'groq', 'deepseek', 'mistral', 'together', 'openrouter', 'xai', 'cerebras', 'github', 'bedrock', 'huggingface', 'moonshot', 'lmstudio'",
@@ -1503,7 +1537,9 @@ class JarvisConfig(BaseModel):
         description="Base-URL für OpenAI-kompatibles Backend (auch für Together, Groq, vLLM)",
     )
     anthropic_api_key: str = Field(default="", description="API-Key für Anthropic Claude")
-    anthropic_max_tokens: int = Field(default=4096, ge=1, le=1_000_000, description="Max Output-Tokens für Claude")
+    anthropic_max_tokens: int = Field(
+        default=4096, ge=1, le=1_000_000, description="Max Output-Tokens für Claude"
+    )
     gemini_api_key: str = Field(default="", description="API-Key für Google Gemini")
     groq_api_key: str = Field(default="", description="API-Key für Groq")
     deepseek_api_key: str = Field(default="", description="API-Key für DeepSeek")
@@ -1513,13 +1549,23 @@ class JarvisConfig(BaseModel):
     xai_api_key: str = Field(default="", description="API-Key für xAI (Grok)")
     cerebras_api_key: str = Field(default="", description="API-Key für Cerebras")
     github_api_key: str = Field(default="", description="API-Key/Token für GitHub Models")
-    bedrock_api_key: str = Field(default="", description="API-Key für AWS Bedrock (OpenAI-kompatibel via Gateway)")
+    bedrock_api_key: str = Field(
+        default="", description="API-Key für AWS Bedrock (OpenAI-kompatibel via Gateway)"
+    )
     huggingface_api_key: str = Field(default="", description="API-Key für Hugging Face Inference")
     moonshot_api_key: str = Field(default="", description="API-Key für Moonshot/Kimi")
-    lmstudio_api_key: str = Field(default="lm-studio", description="API-Key für LM Studio (beliebiger Wert, da lokal)")
-    lmstudio_base_url: str = Field(default="http://localhost:1234/v1", description="Base-URL für LM Studio API")
-    vision_model: str = Field(default="openbmb/minicpm-v4.5", description="Standard-Vision-Modell (schnell)")
-    vision_model_detail: str = Field(default="qwen3-vl:32b", description="Detail-Vision-Modell (höchste Qualität)")
+    lmstudio_api_key: str = Field(
+        default="lm-studio", description="API-Key für LM Studio (beliebiger Wert, da lokal)"
+    )
+    lmstudio_base_url: str = Field(
+        default="http://localhost:1234/v1", description="Base-URL für LM Studio API"
+    )
+    vision_model: str = Field(
+        default="openbmb/minicpm-v4.5", description="Standard-Vision-Modell (schnell)"
+    )
+    vision_model_detail: str = Field(
+        default="qwen3-vl:32b", description="Detail-Vision-Modell (höchste Qualität)"
+    )
 
     # Basis-Pfade
     jarvis_home: Path = Field(default_factory=lambda: Path.home() / ".jarvis")
@@ -1548,7 +1594,9 @@ class JarvisConfig(BaseModel):
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     queue: QueueConfig = Field(default_factory=QueueConfig)
     marketplace: MarketplaceConfig = Field(default_factory=MarketplaceConfig)
-    community_marketplace: CommunityMarketplaceConfig = Field(default_factory=CommunityMarketplaceConfig)
+    community_marketplace: CommunityMarketplaceConfig = Field(
+        default_factory=CommunityMarketplaceConfig
+    )
     improvement: ImprovementGovernanceConfig = Field(default_factory=ImprovementGovernanceConfig)
     prompt_evolution: PromptEvolutionConfig = Field(default_factory=PromptEvolutionConfig)
 
@@ -1558,16 +1606,20 @@ class JarvisConfig(BaseModel):
     # an den Gateway-Handler sendet. Die PluginsConfig definiert, in
     # welchem Verzeichnis zusätzliche Skills (Prozeduren) installiert
     # werden und ob automatische Updates erlaubt sind.
-    heartbeat: 'HeartbeatConfig' = Field(default_factory=lambda: HeartbeatConfig())
-    plugins: 'PluginsConfig' = Field(default_factory=lambda: PluginsConfig())
+    heartbeat: "HeartbeatConfig" = Field(default_factory=lambda: HeartbeatConfig())
+    plugins: "PluginsConfig" = Field(default_factory=lambda: PluginsConfig())
 
     # Cost Tracking
     cost_tracking_enabled: bool = True
-    daily_budget_usd: float = Field(default=0.0, ge=0.0, description="Tageslimit in USD (0 = kein Limit)")
-    monthly_budget_usd: float = Field(default=0.0, ge=0.0, description="Monatslimit in USD (0 = kein Limit)")
+    daily_budget_usd: float = Field(
+        default=0.0, ge=0.0, description="Tageslimit in USD (0 = kein Limit)"
+    )
+    monthly_budget_usd: float = Field(
+        default=0.0, ge=0.0, description="Monatslimit in USD (0 = kein Limit)"
+    )
 
-    dashboard: 'DashboardConfig' = Field(default_factory=lambda: DashboardConfig())
-    model_overrides: 'ModelOverrideConfig' = Field(default_factory=lambda: ModelOverrideConfig())
+    dashboard: "DashboardConfig" = Field(default_factory=lambda: DashboardConfig())
+    model_overrides: "ModelOverrideConfig" = Field(default_factory=lambda: ModelOverrideConfig())
 
     # Multi-Instance / Distributed Locking
     lock_backend: Literal["local", "file", "redis"] = Field(
@@ -1581,11 +1633,20 @@ class JarvisConfig(BaseModel):
     )
 
     @field_validator(
-        "openai_api_key", "anthropic_api_key", "gemini_api_key",
-        "groq_api_key", "deepseek_api_key", "mistral_api_key",
-        "together_api_key", "openrouter_api_key", "xai_api_key",
-        "cerebras_api_key", "github_api_key", "bedrock_api_key",
-        "huggingface_api_key", "moonshot_api_key",
+        "openai_api_key",
+        "anthropic_api_key",
+        "gemini_api_key",
+        "groq_api_key",
+        "deepseek_api_key",
+        "mistral_api_key",
+        "together_api_key",
+        "openrouter_api_key",
+        "xai_api_key",
+        "cerebras_api_key",
+        "github_api_key",
+        "bedrock_api_key",
+        "huggingface_api_key",
+        "moonshot_api_key",
         mode="before",
     )
     @classmethod
@@ -1660,13 +1721,25 @@ class JarvisConfig(BaseModel):
 
         # Auto-detect OperationMode (VOR dem fruehen Return)
         from jarvis.models import OperationMode
-        _has_any_api_key = any([
-            self.openai_api_key, self.anthropic_api_key, self.gemini_api_key,
-            self.groq_api_key, self.deepseek_api_key, self.mistral_api_key,
-            self.together_api_key, self.openrouter_api_key, self.xai_api_key,
-            self.cerebras_api_key, self.github_api_key, self.bedrock_api_key,
-            self.huggingface_api_key, self.moonshot_api_key,
-        ])
+
+        _has_any_api_key = any(
+            [
+                self.openai_api_key,
+                self.anthropic_api_key,
+                self.gemini_api_key,
+                self.groq_api_key,
+                self.deepseek_api_key,
+                self.mistral_api_key,
+                self.together_api_key,
+                self.openrouter_api_key,
+                self.xai_api_key,
+                self.cerebras_api_key,
+                self.github_api_key,
+                self.bedrock_api_key,
+                self.huggingface_api_key,
+                self.moonshot_api_key,
+            ]
+        )
         if self.operation_mode == "auto":
             if _has_any_api_key:
                 object.__setattr__(self, "_resolved_operation_mode", OperationMode.ONLINE)
@@ -1674,9 +1747,13 @@ class JarvisConfig(BaseModel):
                 object.__setattr__(self, "_resolved_operation_mode", OperationMode.OFFLINE)
         else:
             try:
-                object.__setattr__(self, "_resolved_operation_mode", OperationMode(self.operation_mode))
+                object.__setattr__(
+                    self, "_resolved_operation_mode", OperationMode(self.operation_mode)
+                )
             except ValueError:
-                log.warning("Unbekannter operation_mode '%s', fallback auf OFFLINE", self.operation_mode)
+                log.warning(
+                    "Unbekannter operation_mode '%s', fallback auf OFFLINE", self.operation_mode
+                )
                 object.__setattr__(self, "_resolved_operation_mode", OperationMode.OFFLINE)
 
         if backend == "ollama" or backend not in _PROVIDER_MODEL_DEFAULTS:
@@ -1697,7 +1774,9 @@ class JarvisConfig(BaseModel):
                     object.__setattr__(current_model, "strengths", new_model.strengths)
                     object.__setattr__(current_model, "speed", new_model.speed)
                     if "embedding_dimensions" in role_defaults:
-                        object.__setattr__(current_model, "embedding_dimensions", new_model.embedding_dimensions)
+                        object.__setattr__(
+                            current_model, "embedding_dimensions", new_model.embedding_dimensions
+                        )
 
         # Heartbeat-Modell ebenfalls anpassen wenn noch auf Ollama-Default
         if self.heartbeat.model in _OLLAMA_DEFAULT_MODEL_NAMES:
@@ -1758,6 +1837,7 @@ class JarvisConfig(BaseModel):
     def resolved_operation_mode(self) -> Any:
         """Gibt den aufgeloesten Betriebsmodus zurueck (OperationMode Enum)."""
         from jarvis.models import OperationMode
+
         return getattr(self, "_resolved_operation_mode", OperationMode.OFFLINE)
 
     @property
@@ -1886,7 +1966,7 @@ def _apply_env_overrides(data: dict[str, Any]) -> dict[str, Any]:
     for key, value in os.environ.items():
         if not key.startswith(prefix):
             continue
-        parts = key[len(prefix):].lower().split("_")
+        parts = key[len(prefix) :].lower().split("_")
         if len(parts) >= 2:
             # Recursive descent: walk into existing dict sections,
             # then set the remaining parts (joined with _) as leaf key.
@@ -1943,8 +2023,10 @@ def load_config(config_path: Path | None = None) -> JarvisConfig:
                 data = file_data
         except yaml.YAMLError as exc:
             import logging
+
             logging.getLogger("jarvis.config").warning(
-                "Fehlerhafte config.yaml wird ignoriert: %s", exc,
+                "Fehlerhafte config.yaml wird ignoriert: %s",
+                exc,
             )
 
     # 2. Umgebungsvariablen anwenden

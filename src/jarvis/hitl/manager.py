@@ -46,12 +46,11 @@ log = get_logger(__name__)
 class ApprovalManager:
     """Zentrale Verwaltung für HITL-Approval-Workflows."""
 
-    def __init__(self, notifier: HITLNotifier | None = None,
-                 max_pending: int = 500) -> None:
+    def __init__(self, notifier: HITLNotifier | None = None, max_pending: int = 500) -> None:
         self._notifier = notifier or HITLNotifier()
-        self._tasks: dict[str, ReviewTask] = {}         # request_id → task
-        self._by_execution: dict[str, list[str]] = {}   # execution_id → [request_ids]
-        self._resolved_callbacks: dict[str, Any] = {}   # request_id → asyncio.Event
+        self._tasks: dict[str, ReviewTask] = {}  # request_id → task
+        self._by_execution: dict[str, list[str]] = {}  # execution_id → [request_ids]
+        self._resolved_callbacks: dict[str, Any] = {}  # request_id → asyncio.Event
         self._max_pending = max_pending
         self._total_created = 0
         self._total_approved = 0
@@ -89,8 +88,9 @@ class ApprovalManager:
             try:
                 if config.auto_approve_fn(request.context):
                     request.status = ApprovalStatus.APPROVED
-                    log.info("hitl_gate_auto_approved",
-                             request_id=request.request_id, node=node_name)
+                    log.info(
+                        "hitl_gate_auto_approved", request_id=request.request_id, node=node_name
+                    )
                     self._total_approved += 1
                     return request
             except Exception as exc:
@@ -112,18 +112,20 @@ class ApprovalManager:
         # Benachrichtigung
         await self._notifier.notify_new_request(request)
 
-        log.info("hitl_request_created",
-                 request_id=request.request_id,
-                 graph=graph_name, node=node_name,
-                 kind=config.node_kind.value,
-                 priority=config.priority.value)
+        log.info(
+            "hitl_request_created",
+            request_id=request.request_id,
+            graph=graph_name,
+            node=node_name,
+            kind=config.node_kind.value,
+            priority=config.priority.value,
+        )
 
         return request
 
     # ── Respond ──────────────────────────────────────────────────
 
-    async def respond(self, request_id: str,
-                      response: ApprovalResponse) -> ReviewTask | None:
+    async def respond(self, request_id: str, response: ApprovalResponse) -> ReviewTask | None:
         """Verarbeitet eine Reviewer-Antwort."""
         task = self._tasks.get(request_id)
         if task is None:
@@ -141,18 +143,19 @@ class ApprovalManager:
         if response.decision == ApprovalStatus.REJECTED:
             task.request.status = ApprovalStatus.REJECTED
             self._total_rejected += 1
-            log.info("hitl_rejected", request_id=request_id,
-                     reviewer=response.reviewer)
+            log.info("hitl_rejected", request_id=request_id, reviewer=response.reviewer)
         elif response.decision == ApprovalStatus.APPROVED:
             if task.is_fully_approved:
                 task.request.status = ApprovalStatus.APPROVED
                 self._total_approved += 1
-                log.info("hitl_approved", request_id=request_id,
-                         reviewer=response.reviewer)
+                log.info("hitl_approved", request_id=request_id, reviewer=response.reviewer)
             else:
-                log.info("hitl_partial_approval", request_id=request_id,
-                         approved=task.approval_count,
-                         required=task.request.config.required_approvals)
+                log.info(
+                    "hitl_partial_approval",
+                    request_id=request_id,
+                    approved=task.approval_count,
+                    required=task.request.config.required_approvals,
+                )
                 return task
 
         # Notify resolved
@@ -167,8 +170,9 @@ class ApprovalManager:
 
     # ── Wait for Resolution ──────────────────────────────────────
 
-    async def wait_for_resolution(self, request_id: str,
-                                   timeout: float | None = None) -> ReviewTask | None:
+    async def wait_for_resolution(
+        self, request_id: str, timeout: float | None = None
+    ) -> ReviewTask | None:
         """Wartet bis ein Request aufgelöst wird.
 
         Args:
@@ -246,8 +250,7 @@ class ApprovalManager:
                 task.request.config.assignees.append(policy.delegate_to)
             await self._notifier.notify_escalated(task.request)
             task.request.status = ApprovalStatus.PENDING
-            log.info("hitl_delegated", request_id=request_id,
-                     delegate_to=policy.delegate_to)
+            log.info("hitl_delegated", request_id=request_id, delegate_to=policy.delegate_to)
 
         elif action == EscalationAction.NOTIFY_SUPERVISOR:
             await self._notifier.notify_escalated(task.request)
@@ -269,8 +272,7 @@ class ApprovalManager:
 
     # ── Delegation ───────────────────────────────────────────────
 
-    async def delegate(self, request_id: str, delegate_to: str,
-                       delegated_by: str = "") -> bool:
+    async def delegate(self, request_id: str, delegate_to: str, delegated_by: str = "") -> bool:
         """Delegiert eine Anfrage an einen anderen Reviewer."""
         task = self._tasks.get(request_id)
         if task is None or task.request.is_resolved:
@@ -281,8 +283,7 @@ class ApprovalManager:
         task.request.updated_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
         await self._notifier.notify_new_request(task.request)
-        log.info("hitl_delegated_manually", request_id=request_id,
-                 to=delegate_to, by=delegated_by)
+        log.info("hitl_delegated_manually", request_id=request_id, to=delegate_to, by=delegated_by)
         return True
 
     # ── Cancel ───────────────────────────────────────────────────
@@ -308,9 +309,9 @@ class ApprovalManager:
     def get_task(self, request_id: str) -> ReviewTask | None:
         return self._tasks.get(request_id)
 
-    def get_pending(self, *, assignee: str = "",
-                    priority: ReviewPriority | None = None,
-                    limit: int = 50) -> list[ReviewTask]:
+    def get_pending(
+        self, *, assignee: str = "", priority: ReviewPriority | None = None, limit: int = 50
+    ) -> list[ReviewTask]:
         """Gibt offene Review-Tasks zurück."""
         results: list[ReviewTask] = []
         for task in self._tasks.values():
@@ -322,10 +323,12 @@ class ApprovalManager:
                 continue
             results.append(task)
 
-        results.sort(key=lambda t: (
-            -list(ReviewPriority).index(t.request.config.priority),
-            t.request.created_at,
-        ))
+        results.sort(
+            key=lambda t: (
+                -list(ReviewPriority).index(t.request.config.priority),
+                t.request.created_at,
+            )
+        )
         return results[:limit]
 
     def get_by_execution(self, execution_id: str) -> list[ReviewTask]:
@@ -333,8 +336,9 @@ class ApprovalManager:
         request_ids = self._by_execution.get(execution_id, [])
         return [self._tasks[rid] for rid in request_ids if rid in self._tasks]
 
-    def get_history(self, *, limit: int = 50,
-                    status: ApprovalStatus | None = None) -> list[ReviewTask]:
+    def get_history(
+        self, *, limit: int = 50, status: ApprovalStatus | None = None
+    ) -> list[ReviewTask]:
         """Gibt historische Tasks zurück."""
         results = list(self._tasks.values())
         if status:
@@ -354,8 +358,8 @@ class ApprovalManager:
                 continue
             try:
                 import calendar
-                ts = calendar.timegm(time.strptime(
-                    task.request.updated_at, "%Y-%m-%dT%H:%M:%SZ"))
+
+                ts = calendar.timegm(time.strptime(task.request.updated_at, "%Y-%m-%dT%H:%M:%SZ"))
                 if ts < cutoff:
                     del self._tasks[request_id]
                     self._resolved_callbacks.pop(request_id, None)

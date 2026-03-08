@@ -109,8 +109,15 @@ class CostTracker:
         self._conn.execute(
             "INSERT INTO llm_costs (id, timestamp, session_id, model, input_tokens, output_tokens, cost_usd) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (record.id, record.timestamp.isoformat(), record.session_id,
-             record.model, record.input_tokens, record.output_tokens, record.cost_usd),
+            (
+                record.id,
+                record.timestamp.isoformat(),
+                record.session_id,
+                record.model,
+                record.input_tokens,
+                record.output_tokens,
+                record.cost_usd,
+            ),
         )
         self._conn.commit()
         return record
@@ -200,6 +207,7 @@ class CostTracker:
     def get_cost_report(self, days: int = 30) -> CostReport:
         """Aggregierter Kosten-Report ueber die letzten N Tage."""
         from datetime import timedelta
+
         cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
         rows = self._conn.execute(

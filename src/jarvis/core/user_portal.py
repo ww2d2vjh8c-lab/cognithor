@@ -26,13 +26,13 @@ from typing import Any
 
 
 class ConsentPurpose(Enum):
-    AI_PROCESSING = "ai_processing"             # KI-Verarbeitung
-    DATA_ANALYSIS = "data_analysis"             # Datenanalyse
-    PROFILING = "profiling"                      # Profilbildung
-    THIRD_PARTY = "third_party_sharing"         # Weitergabe an Dritte
-    MARKETING = "marketing"                      # Marketing
-    INSURANCE_ADVICE = "insurance_advice"        # Versicherungsberatung
-    HEALTH_DATA = "health_data"                  # Gesundheitsdaten (BU)
+    AI_PROCESSING = "ai_processing"  # KI-Verarbeitung
+    DATA_ANALYSIS = "data_analysis"  # Datenanalyse
+    PROFILING = "profiling"  # Profilbildung
+    THIRD_PARTY = "third_party_sharing"  # Weitergabe an Dritte
+    MARKETING = "marketing"  # Marketing
+    INSURANCE_ADVICE = "insurance_advice"  # Versicherungsberatung
+    HEALTH_DATA = "health_data"  # Gesundheitsdaten (BU)
     AUTOMATED_DECISIONS = "automated_decisions"  # Automatisierte Entscheidungen
 
 
@@ -191,13 +191,15 @@ class SimpleDecisionView:
     """
 
     view_id: str
-    question: str                        # "Welche BU-Versicherung passt zu mir?"
-    recommendation: str                  # "WWK BU Premium"
-    confidence_label: str               # "Hohe Sicherheit" / "Mittlere Sicherheit"
-    why_this: list[str] = field(default_factory=list)         # ["Hohe Leistungsquote", ...]
-    what_else: list[str] = field(default_factory=list)        # ["R&V Classic als günstigere Alternative"]
-    what_to_watch: list[str] = field(default_factory=list)    # ["Gesundheitsfragen genau beantworten"]
-    data_used: list[str] = field(default_factory=list)        # ["Alter", "Beruf", "Gesundheitsstatus"]
+    question: str  # "Welche BU-Versicherung passt zu mir?"
+    recommendation: str  # "WWK BU Premium"
+    confidence_label: str  # "Hohe Sicherheit" / "Mittlere Sicherheit"
+    why_this: list[str] = field(default_factory=list)  # ["Hohe Leistungsquote", ...]
+    what_else: list[str] = field(default_factory=list)  # ["R&V Classic als günstigere Alternative"]
+    what_to_watch: list[str] = field(
+        default_factory=list
+    )  # ["Gesundheitsfragen genau beantworten"]
+    data_used: list[str] = field(default_factory=list)  # ["Alter", "Beruf", "Gesundheitsstatus"]
     ai_disclosure: str = "Diese Empfehlung wurde mit KI-Unterstützung erstellt (Art. 52 EU-AI-Act)."
     timestamp: str = ""
 
@@ -492,13 +494,15 @@ class UserPortal:
         consents = []
         for purpose in ConsentPurpose:
             c = self._consents.request_consent(
-                user_id, purpose,
+                user_id,
+                purpose,
                 description=f"Einwilligung zur {purpose.value}",
             )
             consents.append(c)
 
         self._notifications.notify(
-            user_id, NotificationType.CONSENT_REQUEST,
+            user_id,
+            NotificationType.CONSENT_REQUEST,
             "Einwilligungen erforderlich",
             "Bitte prüfen und bestätigen Sie Ihre Datenschutz-Einwilligungen.",
         )

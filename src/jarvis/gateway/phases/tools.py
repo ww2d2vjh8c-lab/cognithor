@@ -88,15 +88,14 @@ async def init_tools(
             except Exception:
                 log.debug("vision_analyzer_init_skipped", exc_info=True)
 
-        browser_agent = register_browser_use_tools(
-            mcp_client, vision_analyzer=vision_analyzer
-        )
+        browser_agent = register_browser_use_tools(mcp_client, vision_analyzer=vision_analyzer)
         log.info("browser_use_v17_registered")
     except Exception:
         log.debug("browser_use_v17_init_skipped", exc_info=True)
         # Fallback: Basic browser tools (v14)
         try:
             from jarvis.mcp.browser import register_browser_tools
+
             register_browser_tools(mcp_client)
         except Exception:
             log.warning("browser_tools_not_registered", exc_info=True)
@@ -107,6 +106,7 @@ async def init_tools(
     try:
         from jarvis.graph.engine import GraphEngine
         from jarvis.graph.state import StateManager
+
         graph_engine = GraphEngine(state_manager=StateManager())
         log.info("graph_engine_v18_registered")
     except Exception:
@@ -117,6 +117,7 @@ async def init_tools(
     telemetry_hub = None
     try:
         from jarvis.telemetry.instrumentation import TelemetryHub
+
         telemetry_hub = TelemetryHub(service_name="jarvis")
         log.info("telemetry_v19_registered")
     except Exception:
@@ -127,6 +128,7 @@ async def init_tools(
     hitl_manager = None
     try:
         from jarvis.hitl.manager import ApprovalManager
+
         hitl_manager = ApprovalManager()
         log.info("hitl_v20_registered")
     except Exception:
@@ -137,6 +139,7 @@ async def init_tools(
     media_pipeline = None
     try:
         from jarvis.mcp.media import register_media_tools
+
         media_pipeline = register_media_tools(mcp_client, config)
     except Exception:
         log.warning("media_tools_not_registered")
@@ -145,6 +148,7 @@ async def init_tools(
     vault_tools = None
     try:
         from jarvis.mcp.vault import register_vault_tools
+
         vault_tools = register_vault_tools(mcp_client, config)
         log.info("vault_tools_registered")
     except Exception:
@@ -155,6 +159,7 @@ async def init_tools(
     if media_pipeline is not None and hasattr(media_pipeline, "_set_llm_fn"):
         try:
             from jarvis.core.unified_llm import UnifiedLLMClient
+
             llm_client = UnifiedLLMClient.create(config)
             model_name = getattr(getattr(config, "models", None), "planner", None)
             model_name = getattr(model_name, "name", "") if model_name else ""
@@ -171,7 +176,11 @@ async def init_tools(
         except Exception:
             log.debug("media_llm_injection_skipped", exc_info=True)
 
-    if media_pipeline is not None and vault_tools is not None and hasattr(media_pipeline, "_set_vault"):
+    if (
+        media_pipeline is not None
+        and vault_tools is not None
+        and hasattr(media_pipeline, "_set_vault")
+    ):
         media_pipeline._set_vault(vault_tools)
         log.debug("media_vault_injected")
 
@@ -182,6 +191,7 @@ async def init_tools(
     synthesizer = None
     try:
         from jarvis.mcp.synthesis import register_synthesis_tools
+
         synthesizer = register_synthesis_tools(mcp_client, config)
         log.info("synthesis_tools_registered")
     except Exception:
@@ -193,14 +203,21 @@ async def init_tools(
         if hasattr(synthesizer, "_set_llm_fn"):
             try:
                 # Ensure LLM client + closure exist (may have been created above for media)
-                if media_pipeline is not None and hasattr(media_pipeline, "_llm_fn") and media_pipeline._llm_fn is not None:
+                if (
+                    media_pipeline is not None
+                    and hasattr(media_pipeline, "_llm_fn")
+                    and media_pipeline._llm_fn is not None
+                ):
                     # Reuse existing LLM function from media pipeline
                     synthesizer._set_llm_fn(media_pipeline._llm_fn, media_pipeline._llm_model)
                 else:
                     from jarvis.core.unified_llm import UnifiedLLMClient
+
                     llm_client_synth = UnifiedLLMClient.create(config)
                     model_name_synth = getattr(getattr(config, "models", None), "planner", None)
-                    model_name_synth = getattr(model_name_synth, "name", "") if model_name_synth else ""
+                    model_name_synth = (
+                        getattr(model_name_synth, "name", "") if model_name_synth else ""
+                    )
 
                     async def _llm_for_synthesis(prompt: str, model: str = "") -> str:
                         resp = await llm_client_synth.chat(
@@ -246,6 +263,7 @@ async def init_tools(
     a2a_adapter = None
     try:
         from jarvis.a2a.adapter import A2AAdapter
+
         a2a_adapter = A2AAdapter(config)
         if a2a_adapter.setup(interop, handle_message):
             log.info("a2a_protocol_enabled")
@@ -261,6 +279,7 @@ async def init_tools(
     if getattr(config, "cost_tracking_enabled", False):
         try:
             from jarvis.telemetry.cost_tracker import CostTracker
+
             cost_db = str(config.db_path.with_name("memory_costs.db"))
             cost_tracker = CostTracker(
                 db_path=cost_db,

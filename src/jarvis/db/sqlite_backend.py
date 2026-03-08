@@ -3,6 +3,7 @@
 Wrapped das bestehende sqlite3-Verhalten transparent.
 Async-Methoden nutzen asyncio.to_thread um den Event Loop nicht zu blockieren.
 """
+
 from __future__ import annotations
 
 import asyncio

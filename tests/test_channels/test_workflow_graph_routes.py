@@ -40,6 +40,7 @@ class FakeApp:
         def decorator(fn):
             self.routes[f"{method} {path}"] = fn
             return fn
+
         return decorator
 
     def get(self, path: str, **kwargs: Any):
@@ -117,6 +118,7 @@ def gateway(workflow_engine: WorkflowEngine, template_library: TemplateLibrary) 
 @pytest.fixture
 def registered_app(app: FakeApp, config_manager: ConfigManager, gateway: MagicMock) -> FakeApp:
     from jarvis.channels.config_routes import create_config_routes
+
     create_config_routes(app, config_manager, gateway=gateway)
     return app
 
@@ -161,12 +163,15 @@ class TestTemplateEndpoints:
         assert result["count"] == 4  # 4 built-in templates
         assert len(result["templates"]) == 4
 
-    async def test_list_templates_no_library(self, app: FakeApp, config_manager: ConfigManager) -> None:
+    async def test_list_templates_no_library(
+        self, app: FakeApp, config_manager: ConfigManager
+    ) -> None:
         gw = MagicMock()
         gw._workflow_engine = None
         gw._template_library = None
         gw._dag_workflow_engine = None
         from jarvis.channels.config_routes import create_config_routes
+
         create_config_routes(app, config_manager, gateway=gw)
         handler = app.routes["GET /api/v1/workflows/templates"]
         result = await handler()
@@ -243,7 +248,10 @@ class TestDagRunEndpoints:
         assert result["runs"] == []
 
     async def test_list_dag_runs_with_checkpoints(
-        self, app: FakeApp, config_manager: ConfigManager, tmp_path: Path,
+        self,
+        app: FakeApp,
+        config_manager: ConfigManager,
+        tmp_path: Path,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
@@ -267,6 +275,7 @@ class TestDagRunEndpoints:
         gw._dag_workflow_engine = dag_engine
 
         from jarvis.channels.config_routes import create_config_routes
+
         create_config_routes(app, config_manager, gateway=gw)
 
         handler = app.routes["GET /api/v1/workflows/dag/runs"]
@@ -276,7 +285,10 @@ class TestDagRunEndpoints:
         assert result["runs"][0]["node_count"] == 2
 
     async def test_get_dag_run_detail(
-        self, app: FakeApp, config_manager: ConfigManager, tmp_path: Path,
+        self,
+        app: FakeApp,
+        config_manager: ConfigManager,
+        tmp_path: Path,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
@@ -297,6 +309,7 @@ class TestDagRunEndpoints:
         gw._dag_workflow_engine = dag_engine
 
         from jarvis.channels.config_routes import create_config_routes
+
         create_config_routes(app, config_manager, gateway=gw)
 
         handler = app.routes["GET /api/v1/workflows/dag/runs/{run_id}"]
@@ -331,7 +344,10 @@ class TestStatsEndpoint:
         assert result["simple"]["running"] == 1
 
     async def test_stats_with_dag_runs(
-        self, app: FakeApp, config_manager: ConfigManager, tmp_path: Path,
+        self,
+        app: FakeApp,
+        config_manager: ConfigManager,
+        tmp_path: Path,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
@@ -347,6 +363,7 @@ class TestStatsEndpoint:
         gw._dag_workflow_engine = dag_engine
 
         from jarvis.channels.config_routes import create_config_routes
+
         create_config_routes(app, config_manager, gateway=gw)
 
         handler = app.routes["GET /api/v1/workflows/stats"]

@@ -128,13 +128,17 @@ class CapabilityMatrix:
             ),
             ToolCapabilitySpec(
                 tool_name="exec_command",
-                capabilities=frozenset({ToolCapability.EXEC_PROCESS, ToolCapability.FS_READ, ToolCapability.FS_WRITE}),
+                capabilities=frozenset(
+                    {ToolCapability.EXEC_PROCESS, ToolCapability.FS_READ, ToolCapability.FS_WRITE}
+                ),
                 max_memory_mb=1024,
                 max_timeout_seconds=120,
             ),
             ToolCapabilitySpec(
                 tool_name="run_python",
-                capabilities=frozenset({ToolCapability.EXEC_SCRIPT, ToolCapability.FS_READ, ToolCapability.FS_WRITE}),
+                capabilities=frozenset(
+                    {ToolCapability.EXEC_SCRIPT, ToolCapability.FS_READ, ToolCapability.FS_WRITE}
+                ),
                 max_memory_mb=1024,
                 max_timeout_seconds=120,
             ),
@@ -162,7 +166,9 @@ class CapabilityMatrix:
             ),
             ToolCapabilitySpec(
                 tool_name="email_send",
-                capabilities=frozenset({ToolCapability.NETWORK_HTTP, ToolCapability.CREDENTIAL_ACCESS}),
+                capabilities=frozenset(
+                    {ToolCapability.NETWORK_HTTP, ToolCapability.CREDENTIAL_ACCESS}
+                ),
                 max_timeout_seconds=30,
             ),
         ]
@@ -200,7 +206,9 @@ class CapabilityMatrix:
         violations: list[str] = []
         for cap in spec.capabilities:
             if not profile.is_capability_allowed(cap):
-                violations.append(f"Capability '{cap.value}' not allowed in profile '{profile.name}'")
+                violations.append(
+                    f"Capability '{cap.value}' not allowed in profile '{profile.name}'"
+                )
 
         if spec.max_memory_mb > profile.max_memory_mb:
             violations.append(

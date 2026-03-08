@@ -239,7 +239,9 @@ class TestBenchmarkRunner:
         runner = BenchmarkRunner(executor=self._mock_executor)
         results = runner.run(categories=[TaskCategory.RESEARCH])
         assert all(
-            any(t.task_id == r.task_id and t.category == TaskCategory.RESEARCH for t in runner.tasks)
+            any(
+                t.task_id == r.task_id and t.category == TaskCategory.RESEARCH for t in runner.tasks
+            )
             for r in results
         )
         assert len(results) >= 2
@@ -323,6 +325,7 @@ class TestBenchmarkReport:
                 tools_used=task.expected_tools,
                 tokens_used=100,
             )
+
         runner = BenchmarkRunner(tasks=BUILTIN_TASKS[:3], executor=executor)
         runner.run()
         return runner
@@ -349,6 +352,7 @@ class TestBenchmarkReport:
         BenchmarkReport.save_json(runner, path, version="1.0.0")
         assert path.exists()
         import json
+
         data = json.loads(path.read_text(encoding="utf-8"))
         assert data["version"] == "1.0.0"
 
@@ -369,8 +373,12 @@ class TestBenchmarkReport:
 class TestRegressionDetector:
     def test_no_regressions(self) -> None:
         detector = RegressionDetector()
-        old = [BenchmarkResult(task_id="t1", status=ResultStatus.PASSED, score=0.8, duration_ms=100)]
-        new = [BenchmarkResult(task_id="t1", status=ResultStatus.PASSED, score=0.85, duration_ms=95)]
+        old = [
+            BenchmarkResult(task_id="t1", status=ResultStatus.PASSED, score=0.8, duration_ms=100)
+        ]
+        new = [
+            BenchmarkResult(task_id="t1", status=ResultStatus.PASSED, score=0.85, duration_ms=95)
+        ]
         entries = detector.compare(old, new)
         assert not detector.has_regressions(entries)
 

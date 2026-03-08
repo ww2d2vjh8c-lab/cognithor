@@ -22,6 +22,7 @@ class PersonalityEngine:
     def __init__(self, config: PersonalityConfig | None = None) -> None:
         if config is None:
             from jarvis.config import PersonalityConfig
+
             config = PersonalityConfig()
         self._config = config
 
@@ -57,13 +58,9 @@ class PersonalityEngine:
 
         # Warmth directives (0.0 = neutral, 1.0 = very warm)
         if self._config.warmth >= 0.3:
-            directives.append(
-                "- Sei freundlich und zugewandt in deiner Kommunikation."
-            )
+            directives.append("- Sei freundlich und zugewandt in deiner Kommunikation.")
         if self._config.warmth >= 0.6:
-            directives.append(
-                "- Zeige Empathie und Verständnis für die Situation des Users."
-            )
+            directives.append("- Zeige Empathie und Verständnis für die Situation des Users.")
         if self._config.warmth >= 0.8:
             directives.append(
                 "- Formuliere Antworten wertschätzend. Erkenne Fortschritte und gute Ideen an."
@@ -75,15 +72,13 @@ class PersonalityEngine:
                 "- Ein gelegentlicher lockerer Kommentar ist erlaubt, aber übertreibe nicht."
             )
         if self._config.humor >= 0.6:
-            directives.append(
-                "- Du darfst ruhig mal eine witzige Bemerkung machen, wenn es passt."
-            )
+            directives.append("- Du darfst ruhig mal eine witzige Bemerkung machen, wenn es passt.")
 
         # Success celebration
         if self._config.success_celebration:
             directives.append(
                 "- Wenn eine Aufgabe erfolgreich abgeschlossen wurde, bestätige das positiv "
-                "(z.B. \"Perfekt, hat geklappt!\", \"Erledigt!\", \"Alles fertig!\")."
+                '(z.B. "Perfekt, hat geklappt!", "Erledigt!", "Alles fertig!").'
             )
 
         # Follow-up questions

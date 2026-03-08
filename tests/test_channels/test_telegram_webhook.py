@@ -81,7 +81,9 @@ class TestWebhookStart:
             MockAppCls.builder.return_value.token.return_value.concurrent_updates.return_value.build.return_value = mock_app
 
             # Patch aiohttp so we don't actually bind a port
-            with patch.object(TelegramChannel, "_start_webhook", new_callable=AsyncMock) as mock_start_wh:
+            with patch.object(
+                TelegramChannel, "_start_webhook", new_callable=AsyncMock
+            ) as mock_start_wh:
                 await ch.start(handler=AsyncMock())
 
                 mock_start_wh.assert_called_once()
@@ -110,9 +112,11 @@ class TestWebhookStart:
         mock_site = MagicMock()
         mock_site.start = AsyncMock()
 
-        with patch("aiohttp.web.Application") as MockWebApp, \
-             patch("aiohttp.web.AppRunner", return_value=mock_runner), \
-             patch("aiohttp.web.TCPSite", return_value=mock_site):
+        with (
+            patch("aiohttp.web.Application") as MockWebApp,
+            patch("aiohttp.web.AppRunner", return_value=mock_runner),
+            patch("aiohttp.web.TCPSite", return_value=mock_site),
+        ):
             await ch._start_webhook()
 
         mock_bot.set_webhook.assert_called_once()

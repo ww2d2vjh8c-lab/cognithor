@@ -114,28 +114,34 @@ class TestFeishuOnMessage:
     @pytest.mark.asyncio
     async def test_non_text_ignored(self, ch: FeishuChannel) -> None:
         ch._handler = AsyncMock()
-        await ch._on_message({
-            "message": {"message_type": "image", "content": "{}"},
-            "sender": {"sender_id": {}},
-        })
+        await ch._on_message(
+            {
+                "message": {"message_type": "image", "content": "{}"},
+                "sender": {"sender_id": {}},
+            }
+        )
         ch._handler.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_empty_text_ignored(self, ch: FeishuChannel) -> None:
         ch._handler = AsyncMock()
-        await ch._on_message({
-            "message": {"message_type": "text", "content": '{"text": "   "}'},
-            "sender": {"sender_id": {}},
-        })
+        await ch._on_message(
+            {
+                "message": {"message_type": "text", "content": '{"text": "   "}'},
+                "sender": {"sender_id": {}},
+            }
+        )
         ch._handler.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_bad_json_content(self, ch: FeishuChannel) -> None:
         ch._handler = AsyncMock()
-        await ch._on_message({
-            "message": {"message_type": "text", "content": "not json"},
-            "sender": {"sender_id": {}},
-        })
+        await ch._on_message(
+            {
+                "message": {"message_type": "text", "content": "not json"},
+                "sender": {"sender_id": {}},
+            }
+        )
         ch._handler.assert_not_called()  # empty after parsing
 
 
@@ -153,9 +159,14 @@ class TestFeishuOnCardAction:
         future = asyncio.get_event_loop().create_future()
         ch._approval_futures["appr_456"] = future
 
-        await ch._on_card_action({
-            "action": {"tag": "button", "value": {"approval_id": "appr_456", "action": "reject"}},
-        })
+        await ch._on_card_action(
+            {
+                "action": {
+                    "tag": "button",
+                    "value": {"approval_id": "appr_456", "action": "reject"},
+                },
+            }
+        )
         assert future.result() is False
 
 
@@ -177,7 +188,8 @@ class TestFeishuSend:
         ch._token_expires_at = time.time() + 3600  # skip refresh
 
         msg = OutgoingMessage(
-            channel="feishu", text="hello",
+            channel="feishu",
+            text="hello",
             metadata={"chat_id": "chat1", "message_id": "msg1"},
         )
         await ch.send(msg)
@@ -187,7 +199,8 @@ class TestFeishuSend:
     async def test_send_no_client(self, ch: FeishuChannel) -> None:
         ch._http_client = None
         msg = OutgoingMessage(
-            channel="feishu", text="hello",
+            channel="feishu",
+            text="hello",
             metadata={"chat_id": "chat1"},
         )
         await ch.send(msg)  # no crash
@@ -229,6 +242,7 @@ class TestFeishuRefreshToken:
     @pytest.mark.asyncio
     async def test_refresh_already_valid(self, ch: FeishuChannel) -> None:
         import time
+
         ch._token_expires_at = time.time() + 3600
         ch._http_client = AsyncMock()
         await ch._refresh_tenant_token()

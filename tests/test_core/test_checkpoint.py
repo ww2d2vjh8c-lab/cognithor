@@ -60,7 +60,8 @@ class TestCheckpointManager:
 
     def test_checkpoint_with_data(self):
         cp = self.mgr.create_checkpoint(
-            "s1", KernelState.EXECUTING,
+            "s1",
+            KernelState.EXECUTING,
             working_memory_snapshot={"key": "value"},
             completed_nodes=["n1", "n2"],
             tool_results=[ToolResult(tool_name="test", content="ok")],

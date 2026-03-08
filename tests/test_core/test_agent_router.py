@@ -186,7 +186,9 @@ class TestWorkspaceIsolation:
         assert "researcher" in str(workspace)
         assert workspace.exists()
 
-    def test_different_agents_different_dirs(self, full_router: AgentRouter, tmp_path: Path) -> None:
+    def test_different_agents_different_dirs(
+        self, full_router: AgentRouter, tmp_path: Path
+    ) -> None:
         ws_r = full_router.resolve_agent_workspace("researcher", tmp_path)
         ws_c = full_router.resolve_agent_workspace("coder", tmp_path)
         assert ws_r != ws_c

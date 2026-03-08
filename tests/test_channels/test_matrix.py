@@ -147,7 +147,9 @@ class TestMatrixLifecycle:
 
 class TestMatrixIncoming:
     @pytest.mark.asyncio
-    async def test_on_message_own_ignored(self, matrix_ch: MatrixChannel, handler: AsyncMock) -> None:
+    async def test_on_message_own_ignored(
+        self, matrix_ch: MatrixChannel, handler: AsyncMock
+    ) -> None:
         """Eigene Nachrichten werden ignoriert."""
         matrix_ch._handler = handler
         room = _make_room()
@@ -157,7 +159,9 @@ class TestMatrixIncoming:
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_on_message_blocked_room(self, matrix_ch: MatrixChannel, handler: AsyncMock) -> None:
+    async def test_on_message_blocked_room(
+        self, matrix_ch: MatrixChannel, handler: AsyncMock
+    ) -> None:
         """Nachrichten aus nicht-erlaubten Raeumen werden ignoriert."""
         matrix_ch._handler = handler
         room = _make_room("!other:matrix.test")
@@ -167,7 +171,9 @@ class TestMatrixIncoming:
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_on_message_empty_text(self, matrix_ch: MatrixChannel, handler: AsyncMock) -> None:
+    async def test_on_message_empty_text(
+        self, matrix_ch: MatrixChannel, handler: AsyncMock
+    ) -> None:
         matrix_ch._handler = handler
         room = _make_room()
         event = _make_event(body="")
@@ -176,7 +182,9 @@ class TestMatrixIncoming:
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_on_message_calls_handler(self, matrix_ch: MatrixChannel, handler: AsyncMock) -> None:
+    async def test_on_message_calls_handler(
+        self, matrix_ch: MatrixChannel, handler: AsyncMock
+    ) -> None:
         matrix_ch._handler = handler
         with patch.object(matrix_ch, "_send_to_room", new_callable=AsyncMock):
             room = _make_room()
@@ -445,7 +453,8 @@ class TestMatrixSend:
         matrix_ch._running = True
         with patch.object(matrix_ch, "_send_to_room", new_callable=AsyncMock) as send:
             msg = OutgoingMessage(
-                channel="matrix", text="Hi",
+                channel="matrix",
+                text="Hi",
                 session_id="unknown",
                 metadata={"room_id": "!room1:matrix.test"},
             )

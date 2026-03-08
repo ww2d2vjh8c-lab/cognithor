@@ -186,7 +186,8 @@ class GraphRanking:
             if diff < self._convergence:
                 logger.debug(
                     "pagerank_converged: iteration=%d, diff=%.8f",
-                    iteration + 1, diff,
+                    iteration + 1,
+                    diff,
                 )
                 break
 
@@ -220,7 +221,8 @@ class GraphRanking:
 
         logger.info(
             "pagerank_computed: entities=%d, iterations<=%d",
-            len(ranks), self._max_iterations,
+            len(ranks),
+            self._max_iterations,
         )
         return ranks
 
@@ -413,7 +415,8 @@ class GraphRanking:
 
                 logger.info(
                     "graph_pruned: %d entities, %d relations",
-                    len(to_prune), pruned_relations,
+                    len(to_prune),
+                    pruned_relations,
                 )
 
         return PruneResult(
@@ -497,9 +500,7 @@ class GraphRanking:
                 {"name": r.entity_name, "rank": round(r.combined_score, 4)}
                 for r in self.top_entities(3)
             ],
-            "last_computed": (
-                self._last_computed.isoformat() if self._last_computed else None
-            ),
+            "last_computed": (self._last_computed.isoformat() if self._last_computed else None),
         }
 
     def find_isolated_entities(self) -> list[EntityRank]:

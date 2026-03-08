@@ -125,6 +125,7 @@ class TestQueryDecomposer:
     @pytest.mark.asyncio
     async def test_llm_decomposition(self) -> None:
         """Mit LLM werden Sub-Queries generiert."""
+
         async def fake_llm(prompt: str) -> str:
             return "Sub-Query 1\nSub-Query 2"
 
@@ -136,6 +137,7 @@ class TestQueryDecomposer:
     @pytest.mark.asyncio
     async def test_llm_error_fallback(self) -> None:
         """Bei LLM-Fehler fällt es auf rule-based zurück."""
+
         async def failing_llm(prompt: str) -> str:
             raise RuntimeError("LLM down")
 
@@ -400,7 +402,7 @@ class TestEpisodicCompressor:
     def test_identify_compressible(self) -> None:
         today = date(2026, 2, 22)
         dates = [
-            date(2026, 1, 1),   # 52 Tage alt → komprimierbar
+            date(2026, 1, 1),  # 52 Tage alt → komprimierbar
             date(2026, 1, 20),  # 33 Tage alt → komprimierbar
             date(2026, 2, 15),  # 7 Tage alt → behalten
             date(2026, 2, 22),  # heute → behalten
@@ -526,11 +528,13 @@ class TestEnhancedSearchPipeline:
     def mock_search(self) -> AsyncMock:
         """Mock HybridSearch."""
         search = AsyncMock()
-        search.search = AsyncMock(return_value=[
-            _make_result("c1", text="BU Tarif Info", score=0.8),
-            _make_result("c2", text="Versicherung Details", score=0.5),
-            _make_result("c3", text="Andere Info", score=0.2),
-        ])
+        search.search = AsyncMock(
+            return_value=[
+                _make_result("c1", text="BU Tarif Info", score=0.8),
+                _make_result("c2", text="Versicherung Details", score=0.5),
+                _make_result("c3", text="Andere Info", score=0.2),
+            ]
+        )
         return search
 
     @pytest.mark.asyncio

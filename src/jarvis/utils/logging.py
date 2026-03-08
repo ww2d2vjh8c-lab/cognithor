@@ -105,6 +105,7 @@ class _StructlogCompatLogger:
     def __getattr__(self, name: str) -> Any:
         return getattr(self._logger, name)
 
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -227,6 +228,7 @@ def setup_logging(
         # Parameter was renamed between structlog versions:
         # <=25.4: pad_event, >=25.5: pad_event_to (pad_event deprecated)
         import inspect
+
         _cr_params = inspect.signature(structlog.dev.ConsoleRenderer).parameters
         _pad_kwarg = "pad_event_to" if "pad_event_to" in _cr_params else "pad_event"
         renderer = structlog.dev.ConsoleRenderer(

@@ -38,7 +38,10 @@ class TestHITLNotifier:
             notifications=[NotificationChannel(channel_type=NotificationType.LOG)],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 1
@@ -51,7 +54,10 @@ class TestHITLNotifier:
             notifications=[NotificationChannel(channel_type=NotificationType.IN_APP)],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 1
@@ -65,13 +71,18 @@ class TestHITLNotifier:
         notifier.register_callback("my_cb", handler)
 
         config = HITLConfig(
-            notifications=[NotificationChannel(
-                channel_type=NotificationType.CALLBACK,
-                endpoint="my_cb",
-            )],
+            notifications=[
+                NotificationChannel(
+                    channel_type=NotificationType.CALLBACK,
+                    endpoint="my_cb",
+                )
+            ],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 1
@@ -81,13 +92,18 @@ class TestHITLNotifier:
     async def test_callback_not_found(self) -> None:
         notifier = HITLNotifier()
         config = HITLConfig(
-            notifications=[NotificationChannel(
-                channel_type=NotificationType.CALLBACK,
-                endpoint="missing",
-            )],
+            notifications=[
+                NotificationChannel(
+                    channel_type=NotificationType.CALLBACK,
+                    endpoint="missing",
+                )
+            ],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 0
@@ -99,13 +115,18 @@ class TestHITLNotifier:
         notifier.set_webhook_handler(webhook)
 
         config = HITLConfig(
-            notifications=[NotificationChannel(
-                channel_type=NotificationType.WEBHOOK,
-                endpoint="https://example.com/hook",
-            )],
+            notifications=[
+                NotificationChannel(
+                    channel_type=NotificationType.WEBHOOK,
+                    endpoint="https://example.com/hook",
+                )
+            ],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 1
@@ -115,13 +136,18 @@ class TestHITLNotifier:
     async def test_notify_email(self) -> None:
         notifier = HITLNotifier()
         config = HITLConfig(
-            notifications=[NotificationChannel(
-                channel_type=NotificationType.EMAIL,
-                endpoint="test@example.com",
-            )],
+            notifications=[
+                NotificationChannel(
+                    channel_type=NotificationType.EMAIL,
+                    endpoint="test@example.com",
+                )
+            ],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 1
@@ -130,12 +156,18 @@ class TestHITLNotifier:
     async def test_disabled_channel_skipped(self) -> None:
         notifier = HITLNotifier()
         config = HITLConfig(
-            notifications=[NotificationChannel(
-                channel_type=NotificationType.LOG, enabled=False,
-            )],
+            notifications=[
+                NotificationChannel(
+                    channel_type=NotificationType.LOG,
+                    enabled=False,
+                )
+            ],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 0
@@ -147,7 +179,10 @@ class TestHITLNotifier:
             notifications=[NotificationChannel(channel_type=NotificationType.LOG)],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_reminder(request)
         assert sent == 1
@@ -159,10 +194,15 @@ class TestHITLNotifier:
             notifications=[NotificationChannel(channel_type=NotificationType.LOG)],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         response = ApprovalResponse(
-            request_id="r1", decision=ApprovalStatus.APPROVED, reviewer="user",
+            request_id="r1",
+            decision=ApprovalStatus.APPROVED,
+            reviewer="user",
         )
         sent = await notifier.notify_resolved(request, response)
         assert sent == 1
@@ -174,7 +214,10 @@ class TestHITLNotifier:
             notifications=[NotificationChannel(channel_type=NotificationType.LOG)],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_escalated(request)
         assert sent == 1
@@ -183,13 +226,18 @@ class TestHITLNotifier:
     async def test_render_custom_template(self) -> None:
         notifier = HITLNotifier()
         config = HITLConfig(
-            notifications=[NotificationChannel(
-                channel_type=NotificationType.LOG,
-                template="Custom: {event} for {graph}/{node}",
-            )],
+            notifications=[
+                NotificationChannel(
+                    channel_type=NotificationType.LOG,
+                    template="Custom: {event} for {graph}/{node}",
+                )
+            ],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="myg", node_name="myn", config=config,
+            execution_id="e1",
+            graph_name="myg",
+            node_name="myn",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 1
@@ -209,9 +257,7 @@ class TestHITLNotifier:
 
     def test_get_history(self) -> None:
         notifier = HITLNotifier()
-        notifier._history.append(
-            NotificationRecord("log", "r1", "msg", True)
-        )
+        notifier._history.append(NotificationRecord("log", "r1", "msg", True))
         history = notifier.get_history()
         assert len(history) == 1
         assert history[0]["success"] is True
@@ -229,13 +275,18 @@ class TestHITLNotifier:
         notifier.register_callback("bad", handler)
 
         config = HITLConfig(
-            notifications=[NotificationChannel(
-                channel_type=NotificationType.CALLBACK,
-                endpoint="bad",
-            )],
+            notifications=[
+                NotificationChannel(
+                    channel_type=NotificationType.CALLBACK,
+                    endpoint="bad",
+                )
+            ],
         )
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 0
@@ -246,7 +297,10 @@ class TestHITLNotifier:
         notifier = HITLNotifier()
         config = HITLConfig(notifications=[])
         request = ApprovalRequest(
-            execution_id="e1", graph_name="g", node_name="n", config=config,
+            execution_id="e1",
+            graph_name="g",
+            node_name="n",
+            config=config,
         )
         sent = await notifier.notify_new_request(request)
         assert sent == 1  # Falls back to LOG
@@ -411,10 +465,12 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_wait_for_resolution_timeout(self) -> None:
         mgr = ApprovalManager()
-        config = HITLConfig(escalation=EscalationPolicy(
-            timeout_seconds=0.1,
-            action=EscalationAction.AUTO_APPROVE,
-        ))
+        config = HITLConfig(
+            escalation=EscalationPolicy(
+                timeout_seconds=0.1,
+                action=EscalationAction.AUTO_APPROVE,
+            )
+        )
         req = await mgr.create_request("e1", "graph", "node", config)
         task = await mgr.wait_for_resolution(req.request_id, timeout=0.1)
         # Should auto-approve after timeout
@@ -435,10 +491,12 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_handle_timeout_auto_reject(self) -> None:
         mgr = ApprovalManager()
-        config = HITLConfig(escalation=EscalationPolicy(
-            timeout_seconds=0.01,
-            action=EscalationAction.AUTO_REJECT,
-        ))
+        config = HITLConfig(
+            escalation=EscalationPolicy(
+                timeout_seconds=0.01,
+                action=EscalationAction.AUTO_REJECT,
+            )
+        )
         req = await mgr.create_request("e1", "graph", "node", config)
         await mgr._handle_timeout(req.request_id)
         task = mgr.get_task(req.request_id)
@@ -447,11 +505,13 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_handle_timeout_delegate(self) -> None:
         mgr = ApprovalManager()
-        config = HITLConfig(escalation=EscalationPolicy(
-            timeout_seconds=0.01,
-            action=EscalationAction.DELEGATE,
-            delegate_to="admin",
-        ))
+        config = HITLConfig(
+            escalation=EscalationPolicy(
+                timeout_seconds=0.01,
+                action=EscalationAction.DELEGATE,
+                delegate_to="admin",
+            )
+        )
         req = await mgr.create_request("e1", "graph", "node", config)
         await mgr._handle_timeout(req.request_id)
         assert "admin" in req.config.assignees
@@ -459,10 +519,12 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_handle_timeout_notify_supervisor(self) -> None:
         mgr = ApprovalManager()
-        config = HITLConfig(escalation=EscalationPolicy(
-            timeout_seconds=0.01,
-            action=EscalationAction.NOTIFY_SUPERVISOR,
-        ))
+        config = HITLConfig(
+            escalation=EscalationPolicy(
+                timeout_seconds=0.01,
+                action=EscalationAction.NOTIFY_SUPERVISOR,
+            )
+        )
         req = await mgr.create_request("e1", "graph", "node", config)
         await mgr._handle_timeout(req.request_id)
         assert mgr.stats()["escalated"] == 1
@@ -470,10 +532,12 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_handle_timeout_pause_indefinitely(self) -> None:
         mgr = ApprovalManager()
-        config = HITLConfig(escalation=EscalationPolicy(
-            timeout_seconds=0.01,
-            action=EscalationAction.PAUSE_INDEFINITELY,
-        ))
+        config = HITLConfig(
+            escalation=EscalationPolicy(
+                timeout_seconds=0.01,
+                action=EscalationAction.PAUSE_INDEFINITELY,
+            )
+        )
         req = await mgr.create_request("e1", "graph", "node", config)
         await mgr._handle_timeout(req.request_id)
         task = mgr.get_task(req.request_id)
@@ -482,11 +546,13 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_handle_timeout_max_escalations(self) -> None:
         mgr = ApprovalManager()
-        config = HITLConfig(escalation=EscalationPolicy(
-            timeout_seconds=0.01,
-            max_escalations=0,
-            action=EscalationAction.AUTO_APPROVE,
-        ))
+        config = HITLConfig(
+            escalation=EscalationPolicy(
+                timeout_seconds=0.01,
+                max_escalations=0,
+                action=EscalationAction.AUTO_APPROVE,
+            )
+        )
         req = await mgr.create_request("e1", "graph", "node", config)
         await mgr._handle_timeout(req.request_id)
         task = mgr.get_task(req.request_id)

@@ -150,43 +150,63 @@ class CategoryInfo:
 # Standard-Kategorien mit Anzeige-Infos
 CATEGORY_INFOS: dict[SkillCategory, CategoryInfo] = {
     SkillCategory.INSURANCE: CategoryInfo(
-        SkillCategory.INSURANCE, "Versicherung", "🛡️",
+        SkillCategory.INSURANCE,
+        "Versicherung",
+        "🛡️",
         "BU, KV, LV Rechner und Vergleiche",
     ),
     SkillCategory.FINANCE: CategoryInfo(
-        SkillCategory.FINANCE, "Finanzen", "💰",
+        SkillCategory.FINANCE,
+        "Finanzen",
+        "💰",
         "Steuer, Investment, Buchhaltung",
     ),
     SkillCategory.PRODUCTIVITY: CategoryInfo(
-        SkillCategory.PRODUCTIVITY, "Produktivität", "⚡",
+        SkillCategory.PRODUCTIVITY,
+        "Produktivität",
+        "⚡",
         "Kalender, Aufgaben, Zeitmanagement",
     ),
     SkillCategory.COMMUNICATION: CategoryInfo(
-        SkillCategory.COMMUNICATION, "Kommunikation", "💬",
+        SkillCategory.COMMUNICATION,
+        "Kommunikation",
+        "💬",
         "E-Mail, Chat, CRM Integration",
     ),
     SkillCategory.DATA: CategoryInfo(
-        SkillCategory.DATA, "Daten", "📊",
+        SkillCategory.DATA,
+        "Daten",
+        "📊",
         "Analyse, Reporting, Visualisierung",
     ),
     SkillCategory.DEVELOPMENT: CategoryInfo(
-        SkillCategory.DEVELOPMENT, "Entwicklung", "💻",
+        SkillCategory.DEVELOPMENT,
+        "Entwicklung",
+        "💻",
         "Code-Tools, Testing, Deployment",
     ),
     SkillCategory.AUTOMATION: CategoryInfo(
-        SkillCategory.AUTOMATION, "Automatisierung", "🤖",
+        SkillCategory.AUTOMATION,
+        "Automatisierung",
+        "🤖",
         "Workflows, Cronjobs, Pipelines",
     ),
     SkillCategory.MEDIA: CategoryInfo(
-        SkillCategory.MEDIA, "Medien", "🎨",
+        SkillCategory.MEDIA,
+        "Medien",
+        "🎨",
         "Bilder, Videos, Audio, Dokumente",
     ),
     SkillCategory.INTEGRATION: CategoryInfo(
-        SkillCategory.INTEGRATION, "Integration", "🔗",
+        SkillCategory.INTEGRATION,
+        "Integration",
+        "🔗",
         "API-Anbindungen, Webhooks, Importer",
     ),
     SkillCategory.OTHER: CategoryInfo(
-        SkillCategory.OTHER, "Sonstiges", "📦",
+        SkillCategory.OTHER,
+        "Sonstiges",
+        "📦",
         "Weitere Skills",
     ),
 }
@@ -264,10 +284,7 @@ class SkillMarketplace:
 
         # Filter: Tags
         if tags:
-            results = [
-                r for r in results
-                if any(t in r.tags for t in tags)
-            ]
+            results = [r for r in results if any(t in r.tags for t in tags)]
 
         # Filter: Verified
         if verified_only:
@@ -281,7 +298,8 @@ class SkillMarketplace:
         if query:
             q_lower = query.lower()
             results = [
-                r for r in results
+                r
+                for r in results
                 if q_lower in r.name.lower()
                 or q_lower in r.description.lower()
                 or any(q_lower in t.lower() for t in r.tags)
@@ -469,8 +487,9 @@ class SkillMarketplace:
                 listing.is_verified = verified
                 count += 1
         if count:
-            self._verified_publishers.add(publisher_id) if verified else \
-                self._verified_publishers.discard(publisher_id)
+            self._verified_publishers.add(
+                publisher_id
+            ) if verified else self._verified_publishers.discard(publisher_id)
         return count
 
     def is_publisher_verified(self, publisher_id: str) -> bool:

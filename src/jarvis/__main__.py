@@ -267,7 +267,9 @@ def main() -> None:
                 api_token = os.environ.get("JARVIS_API_TOKEN")
                 if api_token:
                     cors_raw = os.environ.get("JARVIS_API_CORS_ORIGINS", "")
-                    cors_origins = [o.strip() for o in cors_raw.split(",") if o.strip()] if cors_raw else []
+                    cors_origins = (
+                        [o.strip() for o in cors_raw.split(",") if o.strip()] if cors_raw else []
+                    )
                 else:
                     cors_origins = ["*"]
 
@@ -306,7 +308,10 @@ def main() -> None:
                         _rate_hits[client] = hits = [t for t in hits if t > cutoff]
                         if len(hits) >= _rate_limit:
                             return _JSONResponse(
-                                {"error": "Too many requests", "retry_after_seconds": int(_rate_window)},
+                                {
+                                    "error": "Too many requests",
+                                    "retry_after_seconds": int(_rate_window),
+                                },
                                 status_code=429,
                             )
                         hits.append(now)
@@ -332,6 +337,7 @@ def main() -> None:
                 if getattr(config, "marketplace", None) and config.marketplace.enabled:
                     try:
                         from jarvis.skills.api import router as skills_router
+
                         if skills_router is not None:
                             api_app.include_router(skills_router)
                             log.info("skills_marketplace_api_registered")
@@ -343,16 +349,21 @@ def main() -> None:
                 if _cm_cfg and getattr(_cm_cfg, "enabled", False):
                     try:
                         from jarvis.skills.api import community_router
+
                         if community_router is not None:
                             api_app.include_router(community_router)
                             log.info("community_marketplace_api_registered")
                         else:
-                            log.warning("community_marketplace_router_none", hint="FastAPI nicht installiert?")
+                            log.warning(
+                                "community_marketplace_router_none",
+                                hint="FastAPI nicht installiert?",
+                            )
                     except Exception as _cm_exc:
                         log.warning("community_marketplace_api_failed", error=str(_cm_exc))
 
                 # ── WebSocket Chat-Endpoint ──────────────────────────────
                 import json as _json
+
                 _ws_connections: dict[str, WebSocket] = {}
 
                 @api_app.websocket("/ws/{session_id}")
@@ -365,23 +376,25 @@ def main() -> None:
 
                     if required_token:
                         import hmac as _hmac
+
                         try:
                             auth_raw = await asyncio.wait_for(
-                                websocket.receive_text(), timeout=10.0,
+                                websocket.receive_text(),
+                                timeout=10.0,
                             )
                             auth_msg = _json.loads(auth_raw)
                             client_token = (
-                                auth_msg.get("token", "")
-                                if auth_msg.get("type") == "auth"
-                                else ""
+                                auth_msg.get("token", "") if auth_msg.get("type") == "auth" else ""
                             )
                         except (asyncio.TimeoutError, Exception):
                             client_token = ""
                         if not _hmac.compare_digest(client_token, required_token):
-                            await websocket.send_json({
-                                "type": "error",
-                                "error": "Unauthorized",
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "error",
+                                    "error": "Unauthorized",
+                                }
+                            )
                             await websocket.close(code=4001, reason="Unauthorized")
                             log.warning(
                                 "cc_ws_auth_rejected",
@@ -407,7 +420,9 @@ def main() -> None:
                             try:
                                 msg = _json.loads(raw)
                             except _json.JSONDecodeError:
-                                await websocket.send_json({"type": "error", "error": "Ungültiges JSON"})
+                                await websocket.send_json(
+                                    {"type": "error", "error": "Ungültiges JSON"}
+                                )
                                 continue
 
                             msg_type = msg.get("type", "")
@@ -420,36 +435,60 @@ def main() -> None:
                                 text = (msg.get("text") or "").strip()
                                 metadata = msg.get("metadata", {})
                                 if not text:
-                                    await websocket.send_json({"type": "error", "error": "Leere Nachricht"})
+                                    await websocket.send_json(
+                                        {"type": "error", "error": "Leere Nachricht"}
+                                    )
                                     continue
 
                                 # ── Audio transcription ────────────────────
                                 audio_b64 = metadata.get("audio_base64")
-                                if not audio_b64 and metadata.get("file_type", "").startswith("audio/"):
+                                if not audio_b64 and metadata.get("file_type", "").startswith(
+                                    "audio/"
+                                ):
                                     audio_b64 = metadata.get("file_base64")
                                 if audio_b64:
                                     import base64 as _b64
                                     import tempfile as _tmpfile
+
                                     # Size-Limit: Base64-String vor Decode pruefen (50 MB decoded)
                                     _MAX_AUDIO_B64_BYTES = 52_428_800  # 50 MB
                                     estimated_size = len(audio_b64) * 3 // 4
                                     if estimated_size > _MAX_AUDIO_B64_BYTES:
-                                        await websocket.send_json({
-                                            "type": "error",
-                                            "error": f"Audiodatei zu gross ({estimated_size // 1_048_576} MB, max {_MAX_AUDIO_B64_BYTES // 1_048_576} MB)",
-                                        })
+                                        await websocket.send_json(
+                                            {
+                                                "type": "error",
+                                                "error": f"Audiodatei zu gross ({estimated_size // 1_048_576} MB, max {_MAX_AUDIO_B64_BYTES // 1_048_576} MB)",
+                                            }
+                                        )
                                         continue
-                                    audio_type = metadata.get("audio_type") or metadata.get("file_type") or "audio/webm"
-                                    ext = {"audio/webm": ".webm", "audio/ogg": ".ogg", "audio/wav": ".wav", "audio/mp3": ".mp3", "audio/mpeg": ".mp3", "audio/m4a": ".m4a", "audio/flac": ".flac"}.get(audio_type, ".webm")
+                                    audio_type = (
+                                        metadata.get("audio_type")
+                                        or metadata.get("file_type")
+                                        or "audio/webm"
+                                    )
+                                    ext = {
+                                        "audio/webm": ".webm",
+                                        "audio/ogg": ".ogg",
+                                        "audio/wav": ".wav",
+                                        "audio/mp3": ".mp3",
+                                        "audio/mpeg": ".mp3",
+                                        "audio/m4a": ".m4a",
+                                        "audio/flac": ".flac",
+                                    }.get(audio_type, ".webm")
                                     tmp_path = None
                                     try:
                                         raw_audio = _b64.b64decode(audio_b64)
-                                        with _tmpfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+                                        with _tmpfile.NamedTemporaryFile(
+                                            suffix=ext, delete=False
+                                        ) as tmp:
                                             tmp.write(raw_audio)
                                             tmp_path = tmp.name
                                         from jarvis.mcp.media import MediaPipeline
+
                                         _media = MediaPipeline()
-                                        result = await _media.transcribe_audio(tmp_path, language="de")
+                                        result = await _media.transcribe_audio(
+                                            tmp_path, language="de"
+                                        )
                                         if result.success and result.text and result.text.strip():
                                             text = result.text.strip()
                                             log.info("ws_audio_transcribed", text=text[:80])
@@ -460,28 +499,47 @@ def main() -> None:
                                             metadata["transcribed_from"] = "audio"
                                             # Tell frontend the real text so it can
                                             # update the user bubble
-                                            await websocket.send_json({
-                                                "type": "transcription",
-                                                "text": text,
-                                                "session_id": session_id,
-                                            })
+                                            await websocket.send_json(
+                                                {
+                                                    "type": "transcription",
+                                                    "text": text,
+                                                    "session_id": session_id,
+                                                }
+                                            )
                                         else:
-                                            log.warning("ws_audio_transcription_failed", error=getattr(result, "error", ""))
-                                            await websocket.send_json({"type": "error", "error": "Audiodatei konnte nicht transkribiert werden."})
+                                            log.warning(
+                                                "ws_audio_transcription_failed",
+                                                error=getattr(result, "error", ""),
+                                            )
+                                            await websocket.send_json(
+                                                {
+                                                    "type": "error",
+                                                    "error": "Audiodatei konnte nicht transkribiert werden.",
+                                                }
+                                            )
                                             continue
                                     except Exception as _audio_exc:
-                                        log.error("ws_audio_transcription_error", error=str(_audio_exc))
-                                        await websocket.send_json({"type": "error", "error": "Fehler bei der Audio-Transkription."})
+                                        log.error(
+                                            "ws_audio_transcription_error", error=str(_audio_exc)
+                                        )
+                                        await websocket.send_json(
+                                            {
+                                                "type": "error",
+                                                "error": "Fehler bei der Audio-Transkription.",
+                                            }
+                                        )
                                         continue
                                     finally:
                                         if tmp_path:
                                             try:
                                                 import os as _os
+
                                                 _os.unlink(tmp_path)
                                             except Exception:
                                                 pass
 
                                 from jarvis.models import IncomingMessage
+
                                 incoming = IncomingMessage(
                                     text=text,
                                     channel="webui",
@@ -491,24 +549,32 @@ def main() -> None:
                                 )
                                 try:
                                     response = await gateway.handle_message(incoming)
-                                    await websocket.send_json({
-                                        "type": "assistant_message",
-                                        "text": response.text,
-                                        "session_id": session_id,
-                                    })
-                                    await websocket.send_json({
-                                        "type": "stream_end",
-                                        "session_id": session_id,
-                                    })
+                                    await websocket.send_json(
+                                        {
+                                            "type": "assistant_message",
+                                            "text": response.text,
+                                            "session_id": session_id,
+                                        }
+                                    )
+                                    await websocket.send_json(
+                                        {
+                                            "type": "stream_end",
+                                            "session_id": session_id,
+                                        }
+                                    )
                                 except Exception as _ws_exc:
                                     log.error("cc_ws_handler_error", error=str(_ws_exc))
-                                    await websocket.send_json({
-                                        "type": "error",
-                                        "error": "Verarbeitungsfehler aufgetreten.",
-                                    })
+                                    await websocket.send_json(
+                                        {
+                                            "type": "error",
+                                            "error": "Verarbeitungsfehler aufgetreten.",
+                                        }
+                                    )
                                 continue
 
-                            await websocket.send_json({"type": "error", "error": f"Unbekannter Typ: {msg_type}"})
+                            await websocket.send_json(
+                                {"type": "error", "error": f"Unbekannter Typ: {msg_type}"}
+                            )
                     except WebSocketDisconnect:
                         log.info("cc_ws_disconnected", session_id=session_id)
                     except Exception as _ws_exc:
@@ -520,13 +586,20 @@ def main() -> None:
 
                 # ── TTS-Endpoint (Piper) ─────────────────────────────────
                 _voice_cfg = getattr(getattr(config, "channels", None), "voice_config", None)
-                _default_piper_voice = getattr(_voice_cfg, "piper_voice", "de_DE-thorsten_emotional-medium") if _voice_cfg else "de_DE-thorsten_emotional-medium"
-                _default_length_scale = getattr(_voice_cfg, "piper_length_scale", 1.0) if _voice_cfg else 1.0
+                _default_piper_voice = (
+                    getattr(_voice_cfg, "piper_voice", "de_DE-thorsten_emotional-medium")
+                    if _voice_cfg
+                    else "de_DE-thorsten_emotional-medium"
+                )
+                _default_length_scale = (
+                    getattr(_voice_cfg, "piper_length_scale", 1.0) if _voice_cfg else 1.0
+                )
 
                 @api_app.post("/api/v1/tts")
                 async def _cc_tts(body: dict[str, Any]) -> Any:
                     """Text-to-Speech via Piper TTS."""
                     from fastapi.responses import Response
+
                     text = (body.get("text") or "").strip()
                     if not text:
                         return {"error": "Kein Text angegeben"}
@@ -541,7 +614,9 @@ def main() -> None:
                         log.warning("tts_voice_validation_failed", voice=voice, error=str(_val_exc))
                         return {"error": "Ungueltiger Voice-Name"}
                     except FileNotFoundError:
-                        return {"error": "Piper TTS nicht installiert. Bitte: pip install piper-tts"}
+                        return {
+                            "error": "Piper TTS nicht installiert. Bitte: pip install piper-tts"
+                        }
                     except Exception as _tts_exc:
                         log.error("tts_error", error=str(_tts_exc))
                         return {"error": "TTS-Fehler aufgetreten"}
@@ -557,14 +632,46 @@ def main() -> None:
                         "current": _default_piper_voice,
                         "installed": installed,
                         "available": [
-                            {"id": "de_DE-pavoque-low", "name": "Pavoque (Maennlich, Bariton)", "quality": "low"},
-                            {"id": "de_DE-karlsson-low", "name": "Karlsson (Maennlich)", "quality": "low"},
-                            {"id": "de_DE-thorsten-high", "name": "Thorsten (Maennlich)", "quality": "high"},
-                            {"id": "de_DE-thorsten-medium", "name": "Thorsten (Maennlich)", "quality": "medium"},
-                            {"id": "de_DE-thorsten_emotional-medium", "name": "Thorsten Emotional", "quality": "medium"},
-                            {"id": "de_DE-kerstin-low", "name": "Kerstin (Weiblich)", "quality": "low"},
-                            {"id": "de_DE-ramona-low", "name": "Ramona (Weiblich)", "quality": "low"},
-                            {"id": "de_DE-eva_k-x_low", "name": "Eva K (Weiblich)", "quality": "x_low"},
+                            {
+                                "id": "de_DE-pavoque-low",
+                                "name": "Pavoque (Maennlich, Bariton)",
+                                "quality": "low",
+                            },
+                            {
+                                "id": "de_DE-karlsson-low",
+                                "name": "Karlsson (Maennlich)",
+                                "quality": "low",
+                            },
+                            {
+                                "id": "de_DE-thorsten-high",
+                                "name": "Thorsten (Maennlich)",
+                                "quality": "high",
+                            },
+                            {
+                                "id": "de_DE-thorsten-medium",
+                                "name": "Thorsten (Maennlich)",
+                                "quality": "medium",
+                            },
+                            {
+                                "id": "de_DE-thorsten_emotional-medium",
+                                "name": "Thorsten Emotional",
+                                "quality": "medium",
+                            },
+                            {
+                                "id": "de_DE-kerstin-low",
+                                "name": "Kerstin (Weiblich)",
+                                "quality": "low",
+                            },
+                            {
+                                "id": "de_DE-ramona-low",
+                                "name": "Ramona (Weiblich)",
+                                "quality": "low",
+                            },
+                            {
+                                "id": "de_DE-eva_k-x_low",
+                                "name": "Eva K (Weiblich)",
+                                "quality": "x_low",
+                            },
                         ],
                     }
 
@@ -575,7 +682,13 @@ def main() -> None:
 
                     # CWE-22: Inline validation + sanitizer defense-in-depth
                     # CodeQL requires visible inline guards before path construction
-                    if not voice or "/" in voice or "\\" in voice or ".." in voice or "\x00" in voice:
+                    if (
+                        not voice
+                        or "/" in voice
+                        or "\\" in voice
+                        or ".." in voice
+                        or "\x00" in voice
+                    ):
                         raise ValueError(f"Ungueltiger Stimmenname: {voice!r}")
                     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.\-]*", voice):
                         raise ValueError(f"Ungueltiger Stimmenname: {voice!r}")
@@ -586,6 +699,7 @@ def main() -> None:
 
                     # Defense-in-depth: normalize and validate path stays in voices_dir
                     import os.path as _osp
+
                     _norm_voices = _osp.normpath(_osp.realpath(str(voices_dir)))
                     _norm_model = _osp.normpath(_osp.join(_norm_voices, f"{voice}.onnx"))
                     if not _norm_model.startswith(_norm_voices + _osp.sep):
@@ -603,6 +717,7 @@ def main() -> None:
                         # Write text to a temp file with explicit UTF-8 encoding
                         # to avoid Windows cp1252 stdin encoding issues with umlauts
                         import tempfile as _tts_tmpfile
+
                         with _tts_tmpfile.NamedTemporaryFile(
                             mode="w", suffix=".txt", delete=False, encoding="utf-8"
                         ) as txt_tmp:
@@ -610,10 +725,15 @@ def main() -> None:
                             txt_input_path = txt_tmp.name
 
                         cmd = [
-                            sys.executable, "-m", "piper",
-                            "--model", str(model_path),
-                            "--output_file", tmp_path,
-                            "--length-scale", str(length_scale),
+                            sys.executable,
+                            "-m",
+                            "piper",
+                            "--model",
+                            str(model_path),
+                            "--output_file",
+                            tmp_path,
+                            "--length-scale",
+                            str(length_scale),
                         ]
                         # Multi-speaker models (e.g. thorsten_emotional) need --speaker
                         _norm_json = _osp.normpath(_osp.join(_norm_voices, f"{voice}.onnx.json"))
@@ -623,11 +743,16 @@ def main() -> None:
                         if model_json.exists():
                             try:
                                 import json as _mj
+
                                 _model_cfg = _mj.loads(model_json.read_text(encoding="utf-8"))
                                 _speaker_map = _model_cfg.get("speaker_id_map", {})
                                 if _model_cfg.get("num_speakers", 1) > 1 and _speaker_map:
                                     # Prefer "neutral", fallback to first speaker
-                                    _spk = "neutral" if "neutral" in _speaker_map else next(iter(_speaker_map))
+                                    _spk = (
+                                        "neutral"
+                                        if "neutral" in _speaker_map
+                                        else next(iter(_speaker_map))
+                                    )
                                     cmd.extend(["--speaker", str(_speaker_map[_spk])])
                             except Exception:
                                 pass
@@ -685,7 +810,10 @@ def main() -> None:
                     """Lädt ein Piper-Voicemodell von HuggingFace herunter."""
                     import hashlib
                     import urllib.request
-                    from jarvis.security.sanitizer import validate_voice_name, validate_model_path_containment
+                    from jarvis.security.sanitizer import (
+                        validate_voice_name,
+                        validate_model_path_containment,
+                    )
 
                     # CWE-22: Validate voice name before download
                     validate_voice_name(voice)
@@ -724,6 +852,7 @@ def main() -> None:
                 _ui_dist = Path(__file__).resolve().parent.parent.parent / "ui" / "dist"
                 if _ui_dist.is_dir() and (_ui_dist / "index.html").exists():
                     from fastapi.staticfiles import StaticFiles
+
                     api_app.mount("/", StaticFiles(directory=str(_ui_dist), html=True), name="ui")
                     log.info("prebuilt_ui_mounted", path=str(_ui_dist))
 
@@ -741,7 +870,12 @@ def main() -> None:
                 uvi_config = uvicorn.Config(**uvi_kwargs)
                 api_server = uvicorn.Server(uvi_config)
                 asyncio.create_task(api_server.serve())
-                log.info("control_center_api_started", host=api_host, port=args.api_port, tls=bool(_ssl_cert))
+                log.info(
+                    "control_center_api_started",
+                    host=api_host,
+                    port=args.api_port,
+                    tls=bool(_ssl_cert),
+                )
             except ImportError:
                 log.warning("control_center_api_requires_fastapi_uvicorn")
             except Exception as exc:
@@ -757,22 +891,28 @@ def main() -> None:
             if telegram_token:
                 from jarvis.channels.telegram import TelegramChannel
 
-                allowed = [int(u) for u in os.environ.get("JARVIS_TELEGRAM_ALLOWED_USERS", "").split(",") if u]
+                allowed = [
+                    int(u)
+                    for u in os.environ.get("JARVIS_TELEGRAM_ALLOWED_USERS", "").split(",")
+                    if u
+                ]
                 _tg_use_webhook = config.channels.telegram_use_webhook
                 _tg_webhook_url = config.channels.telegram_webhook_url
                 _tg_webhook_port = config.channels.telegram_webhook_port
                 _tg_webhook_host = config.channels.telegram_webhook_host
-                gateway.register_channel(TelegramChannel(
-                    token=telegram_token,
-                    allowed_users=allowed,
-                    session_store=_session_store,
-                    use_webhook=_tg_use_webhook,
-                    webhook_url=_tg_webhook_url,
-                    webhook_port=_tg_webhook_port,
-                    webhook_host=_tg_webhook_host,
-                    ssl_certfile=_ssl_cert,
-                    ssl_keyfile=_ssl_key,
-                ))
+                gateway.register_channel(
+                    TelegramChannel(
+                        token=telegram_token,
+                        allowed_users=allowed,
+                        session_store=_session_store,
+                        use_webhook=_tg_use_webhook,
+                        webhook_url=_tg_webhook_url,
+                        webhook_port=_tg_webhook_port,
+                        webhook_host=_tg_webhook_host,
+                        ssl_certfile=_ssl_cert,
+                        ssl_keyfile=_ssl_key,
+                    )
+                )
                 _tg_mode = "webhook" if (_tg_use_webhook and _tg_webhook_url) else "polling"
                 log.info("telegram_channel_registered", allowed_users=len(allowed), mode=_tg_mode)
 
@@ -801,7 +941,9 @@ def main() -> None:
             if discord_token:
                 from jarvis.channels.discord import DiscordChannel
 
-                channel_id = config.channels.discord_channel_id or os.environ.get("JARVIS_DISCORD_CHANNEL_ID")
+                channel_id = config.channels.discord_channel_id or os.environ.get(
+                    "JARVIS_DISCORD_CHANNEL_ID"
+                )
                 try:
                     channel_id_int = int(channel_id) if channel_id else 0
                 except Exception:
@@ -822,13 +964,11 @@ def main() -> None:
             if wa_token:
                 from jarvis.channels.whatsapp import WhatsAppChannel
 
-                phone_number_id = (
-                    config.channels.whatsapp_phone_number_id
-                    or os.environ.get("JARVIS_WHATSAPP_PHONE_NUMBER_ID", "")
+                phone_number_id = config.channels.whatsapp_phone_number_id or os.environ.get(
+                    "JARVIS_WHATSAPP_PHONE_NUMBER_ID", ""
                 )
-                verify_token = (
-                    config.channels.whatsapp_verify_token
-                    or os.environ.get("JARVIS_WHATSAPP_VERIFY_TOKEN", "")
+                verify_token = config.channels.whatsapp_verify_token or os.environ.get(
+                    "JARVIS_WHATSAPP_VERIFY_TOKEN", ""
                 )
                 allowed = config.channels.whatsapp_allowed_numbers
                 if phone_number_id:
@@ -868,12 +1008,9 @@ def main() -> None:
                 from jarvis.channels.matrix import MatrixChannel
 
                 homeserver = (
-                    os.environ.get("JARVIS_MATRIX_HOMESERVER")
-                    or config.channels.matrix_homeserver
+                    os.environ.get("JARVIS_MATRIX_HOMESERVER") or config.channels.matrix_homeserver
                 )
-                user_id = (
-                    os.environ.get("JARVIS_MATRIX_USER_ID") or config.channels.matrix_user_id
-                )
+                user_id = os.environ.get("JARVIS_MATRIX_USER_ID") or config.channels.matrix_user_id
                 if homeserver and user_id:
                     gateway.register_channel(
                         MatrixChannel(
@@ -885,7 +1022,9 @@ def main() -> None:
 
             # Teams-Channel (auto-detect: app_id + app_password → start)
             teams_app_id = os.environ.get("JARVIS_TEAMS_APP_ID", "")
-            teams_app_pw = os.environ.get("JARVIS_TEAMS_TOKEN") or os.environ.get("JARVIS_TEAMS_APP_PASSWORD", "")
+            teams_app_pw = os.environ.get("JARVIS_TEAMS_TOKEN") or os.environ.get(
+                "JARVIS_TEAMS_APP_PASSWORD", ""
+            )
             if teams_app_id or teams_app_pw:
                 from jarvis.channels.teams import TeamsChannel
 

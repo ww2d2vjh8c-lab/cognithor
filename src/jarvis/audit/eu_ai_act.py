@@ -30,6 +30,7 @@ from jarvis.audit.compliance import RiskLevel
 
 class SystemCategory(Enum):
     """Kategorien nach Annex III."""
+
     BIOMETRIC = "biometric_identification"
     CRITICAL_INFRASTRUCTURE = "critical_infrastructure"
     EDUCATION = "education_training"
@@ -216,14 +217,14 @@ class RiskClassifier:
 
 
 class DocumentType(Enum):
-    TECHNICAL_DOC = "technical_documentation"    # Art. 11
-    RISK_ASSESSMENT = "risk_assessment"          # Art. 9
-    QUALITY_MANAGEMENT = "quality_management"    # Art. 17
-    CONFORMITY = "conformity_assessment"         # Art. 43
-    INCIDENT_REPORT = "incident_report"          # Art. 62
-    TRANSPARENCY = "transparency_notice"         # Art. 52
-    DATA_GOVERNANCE = "data_governance"          # Art. 10
-    MONITORING_PLAN = "monitoring_plan"          # Art. 61
+    TECHNICAL_DOC = "technical_documentation"  # Art. 11
+    RISK_ASSESSMENT = "risk_assessment"  # Art. 9
+    QUALITY_MANAGEMENT = "quality_management"  # Art. 17
+    CONFORMITY = "conformity_assessment"  # Art. 43
+    INCIDENT_REPORT = "incident_report"  # Art. 62
+    TRANSPARENCY = "transparency_notice"  # Art. 52
+    DATA_GOVERNANCE = "data_governance"  # Art. 10
+    MONITORING_PLAN = "monitoring_plan"  # Art. 61
     TRAINING_RECORD = "training_record"
 
 
@@ -281,7 +282,9 @@ class ComplianceDocManager:
         self._documents[doc.doc_id] = doc
         return doc
 
-    def generate_technical_doc(self, system_name: str, system_info: dict[str, Any]) -> ComplianceDocument:
+    def generate_technical_doc(
+        self, system_name: str, system_info: dict[str, Any]
+    ) -> ComplianceDocument:
         """Generiert technische Dokumentation nach Art. 11."""
         content = {
             "1_system_description": {
@@ -316,7 +319,12 @@ class ComplianceDocManager:
                 "retention": system_info.get("retention_days", 90),
             },
         }
-        return self.create(DocumentType.TECHNICAL_DOC, f"Technische Dokumentation: {system_name}", system_name, content)
+        return self.create(
+            DocumentType.TECHNICAL_DOC,
+            f"Technische Dokumentation: {system_name}",
+            system_name,
+            content,
+        )
 
     def generate_incident_report(
         self, system_name: str, incident: dict[str, Any]
@@ -332,7 +340,12 @@ class ComplianceDocManager:
             "timeline": incident.get("timeline", {}),
             "notification_to_authority": incident.get("notified", False),
         }
-        return self.create(DocumentType.INCIDENT_REPORT, f"Incident-Report: {incident.get('id', '')}", system_name, content)
+        return self.create(
+            DocumentType.INCIDENT_REPORT,
+            f"Incident-Report: {incident.get('id', '')}",
+            system_name,
+            content,
+        )
 
     def get(self, doc_id: str) -> ComplianceDocument | None:
         return self._documents.get(doc_id)
@@ -411,7 +424,8 @@ class TransparencyRegister:
             entry_id=f"TRANS-{self._counter:04d}",
             system_name=system_name,
             purpose=purpose,
-            disclosure_text=disclosure_text or (
+            disclosure_text=disclosure_text
+            or (
                 f"Dieses System ({system_name}) nutzt künstliche Intelligenz. "
                 f"Zweck: {purpose}. Sie haben das Recht, dies zu erfahren (Art. 52 EU-AI-Act)."
             ),
@@ -454,7 +468,7 @@ class TrainingModule:
     topic: TrainingTopic
     title: str
     description: str
-    difficulty: str = "intermediate"   # beginner, intermediate, advanced
+    difficulty: str = "intermediate"  # beginner, intermediate, advanced
     duration_minutes: int = 60
     content_sections: list[str] = field(default_factory=list)
     exercises: list[str] = field(default_factory=list)
@@ -477,10 +491,12 @@ class TrainingCatalog:
 
     BUILT_IN_MODULES = [
         TrainingModule(
-            "TRN-001", TrainingTopic.PROMPT_INJECTION,
+            "TRN-001",
+            TrainingTopic.PROMPT_INJECTION,
             "Prompt-Injection verstehen & abwehren",
             "Wie Angreifer Agent-Prompts manipulieren und wie man sich schützt.",
-            "intermediate", 90,
+            "intermediate",
+            90,
             [
                 "Was ist Prompt-Injection?",
                 "Direkte vs. indirekte Injection",
@@ -495,10 +511,12 @@ class TrainingCatalog:
             ["OWASP LLM Top 10", "Jarvis Architektur-Bibel §5.1"],
         ),
         TrainingModule(
-            "TRN-002", TrainingTopic.TOOL_MISUSE,
+            "TRN-002",
+            TrainingTopic.TOOL_MISUSE,
             "Tool-Missbrauch erkennen & verhindern",
             "Wie Agenten Tools auf unbeabsichtigte Weise nutzen können.",
-            "advanced", 60,
+            "advanced",
+            60,
             [
                 "Gefährliche Tool-Kombinationen",
                 "Exfiltration über erlaubte Kanäle",
@@ -509,10 +527,12 @@ class TrainingCatalog:
             ["Jarvis Architektur-Bibel §7.2"],
         ),
         TrainingModule(
-            "TRN-003", TrainingTopic.MEMORY_POISONING,
+            "TRN-003",
+            TrainingTopic.MEMORY_POISONING,
             "Memory-Poisoning: Angriffe auf den Wissensspeicher",
             "Wie Angreifer Memory-Stores manipulieren und Gegenmaßnahmen.",
-            "advanced", 75,
+            "advanced",
+            75,
             [
                 "Angriffsvektoren auf Memory-Systeme",
                 "Plausibilitäts-Checks und Drift-Detection",
@@ -523,10 +543,12 @@ class TrainingCatalog:
             ["Jarvis Memory-Hygiene-Modul", "Architektur-Bibel §8.3"],
         ),
         TrainingModule(
-            "TRN-004", TrainingTopic.COMPLIANCE,
+            "TRN-004",
+            TrainingTopic.COMPLIANCE,
             "EU-AI-Act: Pflichten für KI-Agenten",
             "Regulatorische Anforderungen und Jarvis-Compliance.",
-            "beginner", 120,
+            "beginner",
+            120,
             [
                 "Überblick EU-AI-Act",
                 "Risikoklassifizierung",
@@ -646,7 +668,11 @@ class EUAIActGovernor:
             return 100.0
         # Jedes High-Risk-System braucht Tech-Doc + Risk-Assessment
         needed = len(high_risk) * 2
-        have = sum(1 for d in docs if d.doc_type in (DocumentType.TECHNICAL_DOC, DocumentType.RISK_ASSESSMENT))
+        have = sum(
+            1
+            for d in docs
+            if d.doc_type in (DocumentType.TECHNICAL_DOC, DocumentType.RISK_ASSESSMENT)
+        )
         doc_ratio = min(have / needed * 100, 100) if needed > 0 else 100
         # Approved-Rate
         approved_ratio = (len(approved) / len(docs) * 100) if docs else 0

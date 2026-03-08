@@ -17,6 +17,7 @@ Covers:
   - db/factory.py
   - forensics/replay_engine.py
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
@@ -32,6 +33,7 @@ import pytest
 class TestRateLimiter:
     def test_token_bucket_consume(self):
         from jarvis.security.rate_limiter import TokenBucket
+
         b = TokenBucket(rate=10.0, capacity=5.0)
         assert b.consume(1.0) is True
         assert b.consume(4.0) is True
@@ -40,6 +42,7 @@ class TestRateLimiter:
 
     def test_token_bucket_refill(self):
         from jarvis.security.rate_limiter import TokenBucket
+
         b = TokenBucket(rate=1000.0, capacity=10.0)
         b.consume(10.0)  # drain
         # Force time advance
@@ -49,6 +52,7 @@ class TestRateLimiter:
     @pytest.mark.asyncio
     async def test_rate_limiter_check(self):
         from jarvis.security.rate_limiter import RateLimiter
+
         rl = RateLimiter(rate=100.0, capacity=5.0)
         for _ in range(5):
             assert await rl.check("client1") is True
@@ -57,6 +61,7 @@ class TestRateLimiter:
     @pytest.mark.asyncio
     async def test_rate_limiter_different_clients(self):
         from jarvis.security.rate_limiter import RateLimiter
+
         rl = RateLimiter(rate=100.0, capacity=2.0)
         assert await rl.check("a") is True
         assert await rl.check("b") is True
@@ -64,6 +69,7 @@ class TestRateLimiter:
     @pytest.mark.asyncio
     async def test_rate_limiter_cleanup(self):
         from jarvis.security.rate_limiter import RateLimiter
+
         rl = RateLimiter(rate=10.0, capacity=10.0, cleanup_interval=0.0)
         await rl.check("old_client")
         # Force old timestamp
@@ -81,6 +87,7 @@ class TestRateLimiter:
 class TestCredentialStore:
     def test_store_retrieve_delete(self, tmp_path):
         from jarvis.security.credentials import CredentialStore
+
         store = CredentialStore(
             store_path=tmp_path / "creds.enc",
             passphrase="test_passphrase_123",
@@ -96,6 +103,7 @@ class TestCredentialStore:
 
     def test_agent_scoped_credentials(self, tmp_path):
         from jarvis.security.credentials import CredentialStore
+
         store = CredentialStore(
             store_path=tmp_path / "creds.enc",
             passphrase="test",
@@ -111,6 +119,7 @@ class TestCredentialStore:
 
     def test_list_entries(self, tmp_path):
         from jarvis.security.credentials import CredentialStore
+
         store = CredentialStore(
             store_path=tmp_path / "creds.enc",
             passphrase="test",
@@ -125,6 +134,7 @@ class TestCredentialStore:
 
     def test_inject_credentials(self, tmp_path):
         from jarvis.security.credentials import CredentialStore
+
         store = CredentialStore(
             store_path=tmp_path / "creds.enc",
             passphrase="test",
@@ -138,6 +148,7 @@ class TestCredentialStore:
 
     def test_inject_invalid_mapping(self, tmp_path):
         from jarvis.security.credentials import CredentialStore
+
         store = CredentialStore(
             store_path=tmp_path / "creds.enc",
             passphrase="test",
@@ -147,6 +158,7 @@ class TestCredentialStore:
 
     def test_count_and_encrypted(self, tmp_path):
         from jarvis.security.credentials import CredentialStore
+
         store = CredentialStore(
             store_path=tmp_path / "creds.enc",
             passphrase="test",
@@ -158,6 +170,7 @@ class TestCredentialStore:
 
     def test_persistence(self, tmp_path):
         from jarvis.security.credentials import CredentialStore
+
         store1 = CredentialStore(
             store_path=tmp_path / "creds.enc",
             passphrase="test",
@@ -173,6 +186,7 @@ class TestCredentialStore:
 
     def test_delete_agent_credential(self, tmp_path):
         from jarvis.security.credentials import CredentialStore
+
         store = CredentialStore(
             store_path=tmp_path / "creds.enc",
             passphrase="test",
@@ -183,6 +197,7 @@ class TestCredentialStore:
 
     def test_retrieve_nonexistent(self, tmp_path):
         from jarvis.security.credentials import CredentialStore
+
         store = CredentialStore(
             store_path=tmp_path / "creds.enc",
             passphrase="test",
@@ -191,6 +206,7 @@ class TestCredentialStore:
 
     def test_no_passphrase_raises(self, tmp_path, monkeypatch):
         from jarvis.security.credentials import CredentialStore
+
         monkeypatch.delenv("JARVIS_CREDENTIAL_KEY", raising=False)
         store = CredentialStore(
             store_path=tmp_path / "creds.enc",
@@ -211,19 +227,30 @@ class TestSandboxMocked:
     async def test_execute_docker_fallback_to_namespace(self):
         """Docker not available -> falls back to namespace -> then process."""
         from jarvis.security.sandbox import Sandbox
+
         sandbox = Sandbox()
         sandbox._capabilities = {
-            "process": True, "jobobject": False,
-            "bwrap": False, "nsjail": False, "docker": False,
+            "process": True,
+            "jobobject": False,
+            "bwrap": False,
+            "nsjail": False,
+            "docker": False,
         }
         # Mock _exec_process
-        sandbox._exec_process = AsyncMock(return_value=MagicMock(
-            exit_code=0, stdout="ok", stderr="", duration_ms=0,
-            sandbox_level=MagicMock(value="process"),
-            killed=False, timed_out=False,
-        ))
+        sandbox._exec_process = AsyncMock(
+            return_value=MagicMock(
+                exit_code=0,
+                stdout="ok",
+                stderr="",
+                duration_ms=0,
+                sandbox_level=MagicMock(value="process"),
+                killed=False,
+                timed_out=False,
+            )
+        )
 
         from jarvis.models import SandboxLevel
+
         result = await sandbox.execute("echo hello", level=SandboxLevel.CONTAINER)
         # Should have been downgraded
         sandbox._exec_process.assert_awaited()
@@ -231,6 +258,7 @@ class TestSandboxMocked:
     @pytest.mark.asyncio
     async def test_build_env(self):
         from jarvis.security.sandbox import Sandbox
+
         sandbox = Sandbox()
         env = sandbox._build_env({"CUSTOM": "val"})
         assert "CUSTOM" in env
@@ -238,6 +266,7 @@ class TestSandboxMocked:
 
     def test_capabilities(self):
         from jarvis.security.sandbox import Sandbox
+
         sandbox = Sandbox()
         caps = sandbox.capabilities
         assert "process" in caps
@@ -245,12 +274,14 @@ class TestSandboxMocked:
 
     def test_available_levels(self):
         from jarvis.security.sandbox import Sandbox
+
         sandbox = Sandbox()
         levels = sandbox.available_levels
         assert len(levels) >= 1  # at minimum PROCESS
 
     def test_max_level(self):
         from jarvis.security.sandbox import Sandbox
+
         sandbox = Sandbox()
         ml = sandbox.max_level
         assert ml is not None
@@ -264,6 +295,7 @@ class TestSandboxMocked:
 class TestDBFactory:
     def test_factory_sqlite(self, tmp_path):
         from jarvis.db.factory import create_backend
+
         config = MagicMock()
         config.database = None
         config.db_path = tmp_path / "test.db"
@@ -272,6 +304,7 @@ class TestDBFactory:
 
     def test_factory_postgresql(self):
         from jarvis.db.factory import create_backend
+
         db_config = MagicMock()
         db_config.backend = "postgresql"
         db_config.pg_host = "localhost"
@@ -290,6 +323,7 @@ class TestDBFactory:
             # Need to patch the import inside the function
             import importlib
             import jarvis.db.factory as factory_mod
+
             original_func = factory_mod.create_backend
 
             def patched_create(cfg):
@@ -304,6 +338,7 @@ class TestDBFactory:
 
     def test_factory_unknown(self):
         from jarvis.db.factory import create_backend
+
         db_config = MagicMock()
         db_config.backend = "unknown_db"
         config = MagicMock()
@@ -321,28 +356,32 @@ class TestPageAnalyzer:
     @pytest.mark.asyncio
     async def test_analyze(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         analyzer = PageAnalyzer()
         page = AsyncMock()
         page.url = "https://example.com"
         page.title = AsyncMock(return_value="Test Page")
-        page.evaluate = AsyncMock(return_value={
-            "url": "https://example.com",
-            "title": "Test Page",
-            "textLength": 100,
-            "htmlLength": 500,
-            "links": [],
-            "buttons": [],
-            "inputs": [],
-            "forms": [],
-            "tables": [],
-            "isLoaded": True,
-        })
+        page.evaluate = AsyncMock(
+            return_value={
+                "url": "https://example.com",
+                "title": "Test Page",
+                "textLength": 100,
+                "htmlLength": 500,
+                "links": [],
+                "buttons": [],
+                "inputs": [],
+                "forms": [],
+                "tables": [],
+                "isLoaded": True,
+            }
+        )
         state = await analyzer.analyze(page)
         assert state.url == "https://example.com"
 
     @pytest.mark.asyncio
     async def test_analyze_error(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         analyzer = PageAnalyzer()
         page = AsyncMock()
         # Make page.url raise to trigger the outer except
@@ -353,6 +392,7 @@ class TestPageAnalyzer:
     @pytest.mark.asyncio
     async def test_detect_cookie_banner(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         analyzer = PageAnalyzer()
         page = AsyncMock()
         page.evaluate = AsyncMock(return_value={"found": False})
@@ -361,6 +401,7 @@ class TestPageAnalyzer:
 
     def test_stats(self):
         from jarvis.browser.page_analyzer import PageAnalyzer
+
         analyzer = PageAnalyzer()
         s = analyzer.stats()
         assert "analysis_count" in s
@@ -375,15 +416,22 @@ class TestSessionManager:
     @pytest.mark.asyncio
     async def test_save_and_restore(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager
+
         sm = SessionManager(storage_dir=str(tmp_path))
         page = AsyncMock()
-        page.evaluate = AsyncMock(return_value={
-            "cookies": [], "localStorage": {}, "sessionStorage": {},
-        })
+        page.evaluate = AsyncMock(
+            return_value={
+                "cookies": [],
+                "localStorage": {},
+                "sessionStorage": {},
+            }
+        )
         context = AsyncMock()
-        context.cookies = AsyncMock(return_value=[
-            {"name": "sid", "value": "abc", "domain": ".example.com", "path": "/"},
-        ])
+        context.cookies = AsyncMock(
+            return_value=[
+                {"name": "sid", "value": "abc", "domain": ".example.com", "path": "/"},
+            ]
+        )
         page.context = context
         await sm.save_from_page(page, "session1")
 
@@ -394,6 +442,7 @@ class TestSessionManager:
 
     def test_stats(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager
+
         sm = SessionManager(storage_dir=str(tmp_path))
         s = sm.stats()
         assert isinstance(s, dict)
@@ -408,6 +457,7 @@ class TestCronEngine:
     @pytest.mark.asyncio
     async def test_start_stop(self):
         from jarvis.cron.engine import CronEngine
+
         engine = CronEngine()
         await engine.start()
         assert engine.running is True
@@ -416,6 +466,7 @@ class TestCronEngine:
 
     def test_properties(self):
         from jarvis.cron.engine import CronEngine
+
         engine = CronEngine()
         assert engine.running is False
         assert engine.job_count >= 0
@@ -430,6 +481,7 @@ class TestCronEngine:
 class TestCronJobs:
     def test_load_jobs_no_file(self, tmp_path):
         from jarvis.cron.jobs import JobStore
+
         js = JobStore(path=str(tmp_path / "nonexistent.yaml"))
         jobs = js.load()
         # Should create defaults
@@ -437,11 +489,19 @@ class TestCronJobs:
 
     def test_load_jobs_with_file(self, tmp_path):
         import yaml
+
         jobs_yaml = tmp_path / "jobs.yaml"
-        jobs_yaml.write_text(yaml.dump({"jobs": {
-            "test_job": {"schedule": "* * * * *", "prompt": "echo hi", "enabled": True},
-        }}))
+        jobs_yaml.write_text(
+            yaml.dump(
+                {
+                    "jobs": {
+                        "test_job": {"schedule": "* * * * *", "prompt": "echo hi", "enabled": True},
+                    }
+                }
+            )
+        )
         from jarvis.cron.jobs import JobStore
+
         js = JobStore(path=str(jobs_yaml))
         jobs = js.load()
         assert len(jobs) >= 1
@@ -455,6 +515,7 @@ class TestCronJobs:
 class TestReplayEngine:
     def test_replay_run_no_plans(self):
         from jarvis.forensics.replay_engine import ReplayEngine
+
         gatekeeper = MagicMock()
         gatekeeper.evaluate_plan = MagicMock(return_value=[])
         gatekeeper.get_policies = MagicMock(return_value=[])
@@ -471,6 +532,7 @@ class TestReplayEngine:
 
     def test_counterfactual_analysis(self):
         from jarvis.forensics.replay_engine import ReplayEngine
+
         gatekeeper = MagicMock()
         gatekeeper.evaluate_plan = MagicMock(return_value=[])
         gatekeeper.get_policies = MagicMock(return_value=[])
@@ -484,10 +546,13 @@ class TestReplayEngine:
         run.plans = []
         run.gate_decisions = []
 
-        results = engine.counterfactual_analysis(run, {
-            "strict": {"rules": [{"name": "block_all"}]},
-            "permissive": {"rules": []},
-        })
+        results = engine.counterfactual_analysis(
+            run,
+            {
+                "strict": {"rules": [{"name": "block_all"}]},
+                "permissive": {"rules": []},
+            },
+        )
         assert len(results) == 2
 
 
@@ -499,6 +564,7 @@ class TestReplayEngine:
 class TestAudit:
     def test_audit_trail_basic(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         h = trail.record_event("sess1", "test_action", {"key": "value"})
         assert h  # non-empty hash string
@@ -506,6 +572,7 @@ class TestAudit:
 
     def test_record_event_and_verify_chain(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         trail.record_event("s1", "login", {"user": "alice"})
         trail.record_event("s1", "logout", {"user": "alice"})
@@ -516,6 +583,7 @@ class TestAudit:
 
     def test_credential_masking(self, tmp_path):
         from jarvis.security.audit import AuditTrail, mask_credentials
+
         trail = AuditTrail(log_dir=tmp_path)
         # Log an event with credential-like data
         trail.record_event("sess1", "api_call", {"api_key": "sk-abcd12345678901234567890"})
@@ -526,12 +594,14 @@ class TestAudit:
 
     def test_mask_dict(self):
         from jarvis.security.audit import mask_dict
+
         data = {"password": "secret", "nested": {"token": "Bearer abc123456789"}}
         masked = mask_dict(data)
         assert "***" in masked["nested"]["token"]
 
     def test_mask_dict_depth_limit(self):
         from jarvis.security.audit import mask_dict
+
         # depth > 10 returns data as-is
         data = {"key": "value"}
         result = mask_dict(data, depth=11)
@@ -539,12 +609,14 @@ class TestAudit:
 
     def test_query_empty(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         results = trail.query(session_id="nonexistent")
         assert results == []
 
     def test_query_with_events(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         trail.record_event("sess1", "action_a", {"x": 1})
         trail.record_event("sess2", "action_b", {"x": 2})
@@ -554,6 +626,7 @@ class TestAudit:
 
     def test_verify_chain_empty(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         valid, total, broken = trail.verify_chain()
         assert valid is True
@@ -561,6 +634,7 @@ class TestAudit:
 
     def test_last_hash_and_log_path(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         assert trail.last_hash == "genesis"
         assert trail.log_path.exists() is False  # no entries yet
@@ -570,6 +644,7 @@ class TestAudit:
     def test_restore_chain_on_reinit(self, tmp_path):
         """Verify that a new AuditTrail restores the chain from disk."""
         from jarvis.security.audit import AuditTrail
+
         trail1 = AuditTrail(log_dir=tmp_path)
         trail1.record_event("s1", "ev1")
         last_hash = trail1.last_hash
@@ -588,8 +663,12 @@ class TestAudit:
 class TestSecurityFramework:
     def test_incident_tracker_create_and_get(self):
         from jarvis.security.framework import (
-            IncidentTracker, IncidentCategory, IncidentSeverity, IncidentStatus,
+            IncidentTracker,
+            IncidentCategory,
+            IncidentSeverity,
+            IncidentStatus,
         )
+
         tracker = IncidentTracker()
         inc = tracker.create(
             "SQL Injection Attempt",
@@ -603,8 +682,12 @@ class TestSecurityFramework:
 
     def test_incident_lifecycle(self):
         from jarvis.security.framework import (
-            IncidentTracker, IncidentCategory, IncidentSeverity, IncidentStatus,
+            IncidentTracker,
+            IncidentCategory,
+            IncidentSeverity,
+            IncidentStatus,
         )
+
         tracker = IncidentTracker()
         inc = tracker.create("Test", IncidentCategory.DATA_EXFILTRATION, IncidentSeverity.CRITICAL)
         tracker.transition(inc.incident_id, IncidentStatus.INVESTIGATING)
@@ -618,8 +701,11 @@ class TestSecurityFramework:
 
     def test_incident_assign(self):
         from jarvis.security.framework import (
-            IncidentTracker, IncidentCategory, IncidentSeverity,
+            IncidentTracker,
+            IncidentCategory,
+            IncidentSeverity,
         )
+
         tracker = IncidentTracker()
         inc = tracker.create("Test", IncidentCategory.DENIAL_OF_SERVICE, IncidentSeverity.MEDIUM)
         assert tracker.assign(inc.incident_id, "Alice", "analyst") is True
@@ -628,8 +714,12 @@ class TestSecurityFramework:
 
     def test_open_incidents_and_by_severity(self):
         from jarvis.security.framework import (
-            IncidentTracker, IncidentCategory, IncidentSeverity, IncidentStatus,
+            IncidentTracker,
+            IncidentCategory,
+            IncidentSeverity,
+            IncidentStatus,
         )
+
         tracker = IncidentTracker()
         i1 = tracker.create("A", IncidentCategory.CREDENTIAL_LEAK, IncidentSeverity.HIGH)
         i2 = tracker.create("B", IncidentCategory.CREDENTIAL_LEAK, IncidentSeverity.LOW)
@@ -641,8 +731,11 @@ class TestSecurityFramework:
 
     def test_tracker_stats(self):
         from jarvis.security.framework import (
-            IncidentTracker, IncidentCategory, IncidentSeverity,
+            IncidentTracker,
+            IncidentCategory,
+            IncidentSeverity,
         )
+
         tracker = IncidentTracker()
         tracker.create("X", IncidentCategory.BIAS_VIOLATION, IncidentSeverity.INFO)
         s = tracker.stats()
@@ -651,8 +744,12 @@ class TestSecurityFramework:
 
     def test_security_metrics(self):
         from jarvis.security.framework import (
-            SecurityMetrics, IncidentTracker, IncidentCategory, IncidentSeverity,
+            SecurityMetrics,
+            IncidentTracker,
+            IncidentCategory,
+            IncidentSeverity,
         )
+
         tracker = IncidentTracker()
         metrics = SecurityMetrics(tracker)
         assert metrics.mttd() == 0.0
@@ -665,6 +762,7 @@ class TestSecurityFramework:
 
     def test_posture_scorer_default(self):
         from jarvis.security.framework import PostureScorer
+
         scorer = PostureScorer()
         result = scorer.calculate()
         assert isinstance(result, dict)
@@ -674,6 +772,7 @@ class TestSecurityFramework:
 
     def test_posture_scorer_poor(self):
         from jarvis.security.framework import PostureScorer
+
         scorer = PostureScorer(mttr_threshold_seconds=100.0)
         result = scorer.calculate(
             resolution_rate=10.0,
@@ -687,9 +786,14 @@ class TestSecurityFramework:
 
     def test_security_team_auto_assign(self):
         from jarvis.security.framework import (
-            SecurityTeam, TeamMember, TeamRole,
-            IncidentTracker, IncidentCategory, IncidentSeverity,
+            SecurityTeam,
+            TeamMember,
+            TeamRole,
+            IncidentTracker,
+            IncidentCategory,
+            IncidentSeverity,
         )
+
         team = SecurityTeam()
         member = TeamMember("M1", "Alice", TeamRole.SECURITY_ANALYST, on_call=True)
         team.add_member(member)
@@ -703,8 +807,12 @@ class TestSecurityFramework:
 
     def test_security_incident_time_properties(self):
         from jarvis.security.framework import (
-            SecurityIncident, IncidentCategory, IncidentSeverity, IncidentStatus,
+            SecurityIncident,
+            IncidentCategory,
+            IncidentSeverity,
+            IncidentStatus,
         )
+
         inc = SecurityIncident(
             incident_id="INC-1",
             title="Test",
@@ -728,18 +836,24 @@ class TestSecurityFramework:
 class TestCICDGate:
     def test_security_gate_pass(self):
         from jarvis.security.cicd_gate import SecurityGate, GateVerdict
+
         gate = SecurityGate()
         result = gate.evaluate({})
         assert result.verdict == GateVerdict.PASS
 
     def test_security_gate_fail_critical(self):
         from jarvis.security.cicd_gate import SecurityGate, GateVerdict
+
         gate = SecurityGate()
         pipeline = {
             "stages": [
-                {"stage": "scan", "result": "done", "findings": [
-                    {"severity": "critical", "title": "SQL injection"},
-                ]},
+                {
+                    "stage": "scan",
+                    "result": "done",
+                    "findings": [
+                        {"severity": "critical", "title": "SQL injection"},
+                    ],
+                },
             ],
         }
         result = gate.evaluate(pipeline)
@@ -748,10 +862,15 @@ class TestCICDGate:
 
     def test_security_gate_override(self):
         from jarvis.security.cicd_gate import SecurityGate, GateVerdict
+
         gate = SecurityGate()
-        result = gate.evaluate({"stages": [
-            {"stage": "s1", "result": "ok", "findings": [{"severity": "critical"}]},
-        ]})
+        result = gate.evaluate(
+            {
+                "stages": [
+                    {"stage": "s1", "result": "ok", "findings": [{"severity": "critical"}]},
+                ]
+            }
+        )
         assert result.verdict == GateVerdict.FAIL
         overridden = gate.override(result.gate_id, "admin", "hotfix required for production")
         assert overridden is not None
@@ -760,6 +879,7 @@ class TestCICDGate:
 
     def test_history_and_pass_rate(self):
         from jarvis.security.cicd_gate import SecurityGate
+
         gate = SecurityGate()
         gate.evaluate({})
         gate.evaluate({})
@@ -770,6 +890,7 @@ class TestCICDGate:
 
     def test_stats(self):
         from jarvis.security.cicd_gate import SecurityGate
+
         gate = SecurityGate()
         gate.evaluate({})
         s = gate.stats()
@@ -779,6 +900,7 @@ class TestCICDGate:
 
     def test_gate_policy_to_dict(self):
         from jarvis.security.cicd_gate import GatePolicy
+
         policy = GatePolicy(policy_id="custom", block_on_critical=False)
         d = policy.to_dict()
         assert d["policy_id"] == "custom"
@@ -786,6 +908,7 @@ class TestCICDGate:
 
     def test_gate_result_to_dict(self):
         from jarvis.security.cicd_gate import SecurityGate
+
         gate = SecurityGate()
         result = gate.evaluate({})
         d = result.to_dict()
@@ -801,6 +924,7 @@ class TestCICDGate:
 class TestAgentVault:
     def test_agent_vault_manager_create_and_get(self):
         from jarvis.security.agent_vault import AgentVaultManager
+
         mgr = AgentVaultManager()
         vault = mgr.create_vault("agent1")
         assert vault is not None
@@ -809,6 +933,7 @@ class TestAgentVault:
 
     def test_vault_store_and_retrieve(self):
         from jarvis.security.agent_vault import AgentVault
+
         vault = AgentVault("agent1")
         secret = vault.store("my_api_key", "super_secret_value")
         assert secret.secret_id.startswith("SEC-")
@@ -817,11 +942,13 @@ class TestAgentVault:
 
     def test_vault_retrieve_nonexistent(self):
         from jarvis.security.agent_vault import AgentVault
+
         vault = AgentVault("agent1")
         assert vault.retrieve("nonexistent") is None
 
     def test_vault_rotate(self):
         from jarvis.security.agent_vault import AgentVault
+
         vault = AgentVault("agent1")
         secret = vault.store("key1", "old_value")
         rotated = vault.rotate(secret.secret_id, "new_value")
@@ -831,6 +958,7 @@ class TestAgentVault:
 
     def test_vault_revoke(self):
         from jarvis.security.agent_vault import AgentVault
+
         vault = AgentVault("agent1")
         secret = vault.store("key1", "val")
         assert vault.revoke(secret.secret_id) is True
@@ -839,6 +967,7 @@ class TestAgentVault:
 
     def test_vault_active_and_all_secrets(self):
         from jarvis.security.agent_vault import AgentVault
+
         vault = AgentVault("agent1")
         s1 = vault.store("k1", "v1")
         s2 = vault.store("k2", "v2")
@@ -850,6 +979,7 @@ class TestAgentVault:
 
     def test_vault_access_log(self):
         from jarvis.security.agent_vault import AgentVault
+
         vault = AgentVault("agent1")
         s = vault.store("k", "v")
         vault.retrieve(s.secret_id)
@@ -858,6 +988,7 @@ class TestAgentVault:
 
     def test_vault_stats(self):
         from jarvis.security.agent_vault import AgentVault
+
         vault = AgentVault("agent1")
         vault.store("k", "v")
         s = vault.stats()
@@ -866,6 +997,7 @@ class TestAgentVault:
 
     def test_manager_destroy_vault(self):
         from jarvis.security.agent_vault import AgentVaultManager
+
         mgr = AgentVaultManager()
         vault = mgr.create_vault("agent1")
         vault.store("k1", "v1")
@@ -875,6 +1007,7 @@ class TestAgentVault:
 
     def test_manager_stats(self):
         from jarvis.security.agent_vault import AgentVaultManager
+
         mgr = AgentVaultManager()
         mgr.create_vault("a1")
         s = mgr.stats()
@@ -889,6 +1022,7 @@ class TestAgentVault:
 class TestSandboxIsolation:
     def test_tenant_manager_create_get(self):
         from jarvis.security.sandbox_isolation import TenantManager
+
         tm = TenantManager()
         tenant = tm.create("t1", "Test Tenant")
         assert tenant.tenant_id == "t1"
@@ -897,6 +1031,7 @@ class TestSandboxIsolation:
 
     def test_tenant_manager_delete(self):
         from jarvis.security.sandbox_isolation import TenantManager
+
         tm = TenantManager()
         tm.create("t1", "Test Tenant")
         assert tm.delete("t1") is True
@@ -905,6 +1040,7 @@ class TestSandboxIsolation:
 
     def test_tenant_agent_limits(self):
         from jarvis.security.sandbox_isolation import TenantManager
+
         tm = TenantManager()
         tm.create("t1", "Tenant", max_agents=2)
         assert tm.can_add_agent("t1") is True
@@ -917,6 +1053,7 @@ class TestSandboxIsolation:
 
     def test_tenant_stats(self):
         from jarvis.security.sandbox_isolation import TenantManager
+
         tm = TenantManager()
         tm.create("t1", "Tenant")
         s = tm.stats()
@@ -925,6 +1062,7 @@ class TestSandboxIsolation:
 
     def test_sandbox_manager_create_get(self):
         from jarvis.security.sandbox_isolation import SandboxManager, SandboxState
+
         sm = SandboxManager()
         sb = sm.create("agent1")
         assert sb.state == SandboxState.RUNNING
@@ -934,6 +1072,7 @@ class TestSandboxIsolation:
 
     def test_sandbox_manager_terminate_suspend(self):
         from jarvis.security.sandbox_isolation import SandboxManager, SandboxState
+
         sm = SandboxManager()
         sb = sm.create("agent1")
         assert sm.suspend(sb.sandbox_id) is True
@@ -946,8 +1085,10 @@ class TestSandboxIsolation:
 
     def test_sandbox_tool_access(self):
         from jarvis.security.sandbox_isolation import AgentSandbox
+
         sb = AgentSandbox(
-            sandbox_id="sb1", agent_id="a1",
+            sandbox_id="sb1",
+            agent_id="a1",
             allowed_tools={"tool_a", "tool_b"},
             denied_tools={"tool_c"},
         )
@@ -957,8 +1098,10 @@ class TestSandboxIsolation:
 
     def test_sandbox_endpoint_access(self):
         from jarvis.security.sandbox_isolation import AgentSandbox
+
         sb = AgentSandbox(
-            sandbox_id="sb1", agent_id="a1",
+            sandbox_id="sb1",
+            agent_id="a1",
             allowed_endpoints={"https://api.example.com"},
         )
         assert sb.check_endpoint_access("https://api.example.com/v1") is True
@@ -966,8 +1109,10 @@ class TestSandboxIsolation:
 
     def test_sandbox_resource_consumption(self):
         from jarvis.security.sandbox_isolation import AgentSandbox, ResourceType, ResourceLimit
+
         sb = AgentSandbox(
-            sandbox_id="sb1", agent_id="a1",
+            sandbox_id="sb1",
+            agent_id="a1",
             limits={ResourceType.CPU: ResourceLimit(ResourceType.CPU, 100.0)},
         )
         assert sb.consume_resource(ResourceType.CPU, 50.0) is True
@@ -976,6 +1121,7 @@ class TestSandboxIsolation:
 
     def test_resource_limit_properties(self):
         from jarvis.security.sandbox_isolation import ResourceType, ResourceLimit
+
         rl = ResourceLimit(ResourceType.CPU, 100.0, current_value=75.0)
         assert rl.utilization == 75.0
         assert rl.exceeded is False
@@ -986,6 +1132,7 @@ class TestSandboxIsolation:
 
     def test_namespace_isolation(self):
         from jarvis.security.sandbox_isolation import NamespaceIsolation
+
         ni = NamespaceIsolation()
         ns = ni.create("agent1", "tenant1")
         assert ns.namespace_id == "tenant1:agent1"
@@ -998,6 +1145,7 @@ class TestSandboxIsolation:
 
     def test_isolation_enforcer_provision(self):
         from jarvis.security.sandbox_isolation import IsolationEnforcer, TenantManager
+
         enforcer = IsolationEnforcer()
         enforcer.tenants.create("default", "Default Tenant")
         result = enforcer.provision_agent("agent1")
@@ -1006,6 +1154,7 @@ class TestSandboxIsolation:
 
     def test_isolation_enforcer_decommission(self):
         from jarvis.security.sandbox_isolation import IsolationEnforcer
+
         enforcer = IsolationEnforcer()
         enforcer.tenants.create("default", "Default")
         enforcer.provision_agent("agent1")
@@ -1014,6 +1163,7 @@ class TestSandboxIsolation:
 
     def test_isolation_enforcer_stats(self):
         from jarvis.security.sandbox_isolation import IsolationEnforcer
+
         enforcer = IsolationEnforcer()
         s = enforcer.stats()
         assert "sandboxes" in s
@@ -1021,6 +1171,7 @@ class TestSandboxIsolation:
 
     def test_admin_manager(self):
         from jarvis.security.sandbox_isolation import AdminManager, AdminRole
+
         am = AdminManager()
         admin = am.create("admin@test.com", "t1", AdminRole.TENANT_ADMIN)
         assert am.get(admin.admin_id) is admin
@@ -1032,6 +1183,7 @@ class TestSandboxIsolation:
 
     def test_delegated_admin_super(self):
         from jarvis.security.sandbox_isolation import DelegatedAdmin, AdminRole
+
         admin = DelegatedAdmin("a1", "admin@x.com", "t1", AdminRole.SUPER_ADMIN)
         assert admin.can("anything") is True
         d = admin.to_dict()

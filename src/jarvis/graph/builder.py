@@ -92,7 +92,8 @@ class GraphBuilder:
     ) -> GraphBuilder:
         """Fügt einen Router-Node hinzu (Shortcut)."""
         return self.add_node(
-            name, handler,
+            name,
+            handler,
             node_type=NodeType.ROUTER,
             description=description or f"Router: {name}",
             timeout=timeout,
@@ -107,7 +108,8 @@ class GraphBuilder:
     ) -> GraphBuilder:
         """Fügt einen Human-in-the-Loop-Node hinzu."""
         return self.add_node(
-            name, handler,
+            name,
+            handler,
             node_type=NodeType.HITL,
             description=description or f"HITL: {name}",
             checkpoint_before=True,
@@ -130,8 +132,10 @@ class GraphBuilder:
         """Fügt eine Kante hinzu."""
         edge_type = EdgeType.CONDITIONAL if condition else EdgeType.DIRECT
         edge = Edge(
-            source=source, target=target,
-            edge_type=edge_type, condition=condition,
+            source=source,
+            target=target,
+            edge_type=edge_type,
+            condition=condition,
             priority=priority,
         )
         self._graph.add_edge(edge)
@@ -229,8 +233,8 @@ class GraphBuilder:
 
 # ── Prebuilt Graph Templates ────────────────────────────────────
 
-def linear_graph(name: str,
-                 steps: list[tuple[str, Callable]]) -> GraphDefinition:
+
+def linear_graph(name: str, steps: list[tuple[str, Callable]]) -> GraphDefinition:
     """Erstellt einen linearen Graphen (A → B → C → END).
 
     Args:

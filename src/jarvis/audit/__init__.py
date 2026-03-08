@@ -142,9 +142,13 @@ class AuditSummary:
             "by_category": self.by_category,
             "by_severity": self.by_severity,
             "by_agent": self.by_agent,
-            "top_tools": dict(sorted(
-                self.tool_usage.items(), key=lambda x: x[1], reverse=True,
-            )[:10]),
+            "top_tools": dict(
+                sorted(
+                    self.tool_usage.items(),
+                    key=lambda x: x[1],
+                    reverse=True,
+                )[:10]
+            ),
             "blocked_actions": self.blocked_actions,
             "warnings": self.warnings,
             "errors": self.errors,
@@ -492,7 +496,8 @@ class AuditLogger:
                 duration_count += 1
 
             if not entry.success and entry.category in (
-                AuditCategory.GATEKEEPER, AuditCategory.SECURITY,
+                AuditCategory.GATEKEEPER,
+                AuditCategory.SECURITY,
             ):
                 summary.blocked_actions += 1
 
@@ -508,9 +513,7 @@ class AuditLogger:
         summary.by_severity = dict(sev_counts)
         summary.by_agent = dict(agent_counts)
         summary.tool_usage = dict(tool_counts)
-        summary.avg_duration_ms = (
-            total_duration / duration_count if duration_count > 0 else 0.0
-        )
+        summary.avg_duration_ms = total_duration / duration_count if duration_count > 0 else 0.0
 
         return summary
 
@@ -574,15 +577,17 @@ class AuditLogger:
         before = len(self._entries)
 
         self._entries = deque(
-            (e for e in self._entries
-             if self._parse_ts(e.timestamp) > cutoff),
+            (e for e in self._entries if self._parse_ts(e.timestamp) > cutoff),
             maxlen=self._entries.maxlen,
         )
 
         removed = before - len(self._entries)
         if removed:
-            logger.info("Audit-Log: %d alte Einträge entfernt (Retention=%dd)",
-                        removed, self._retention_days)
+            logger.info(
+                "Audit-Log: %d alte Einträge entfernt (Retention=%dd)",
+                removed,
+                self._retention_days,
+            )
         return removed
 
     def delete_pii_entries(self) -> int:
@@ -626,8 +631,13 @@ class AuditLogger:
     def _sanitize_params(params: dict[str, Any]) -> dict[str, Any]:
         """Entfernt Credentials aus Parametern."""
         sensitive_keys = {
-            "password", "token", "api_key", "secret",
-            "authorization", "credential", "private_key",
+            "password",
+            "token",
+            "api_key",
+            "secret",
+            "authorization",
+            "credential",
+            "private_key",
         }
         sanitized = {}
         for key, value in params.items():
@@ -690,6 +700,7 @@ from jarvis.audit.eu_ai_act import (  # noqa: E402
     TrainingCatalog,
     TransparencyRegister,
 )
+
 # Alias damit beide RiskClassifier erreichbar sind
 AIActExportRiskClassifier = ExportRiskClassifier
 from jarvis.audit.impact_assessment import (  # noqa: E402

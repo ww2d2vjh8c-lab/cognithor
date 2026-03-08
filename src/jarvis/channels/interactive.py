@@ -115,10 +115,7 @@ class FormField:
                 "type": 3,  # SELECT_MENU
                 "custom_id": f"field_{self.name}",
                 "placeholder": self.placeholder or self.label,
-                "options": [
-                    {"label": o["text"], "value": o["value"]}
-                    for o in self.options[:25]
-                ],
+                "options": [{"label": o["text"], "value": o["value"]} for o in self.options[:25]],
                 "min_values": 1 if self.required else 0,
                 "max_values": len(self.options) if self.field_type == FieldType.MULTI_SELECT else 1,
             }
@@ -182,18 +179,22 @@ class SlackMessageBuilder:
         return self
 
     def header(self, text: str) -> SlackMessageBuilder:
-        self._blocks.append({
-            "type": "header",
-            "text": {"type": "plain_text", "text": text},
-        })
+        self._blocks.append(
+            {
+                "type": "header",
+                "text": {"type": "plain_text", "text": text},
+            }
+        )
         return self
 
     def context(self, elements: list[str]) -> SlackMessageBuilder:
         """Fügt einen Context-Block hinzu (kleine Schrift)."""
-        self._blocks.append({
-            "type": "context",
-            "elements": [{"type": "mrkdwn", "text": e} for e in elements],
-        })
+        self._blocks.append(
+            {
+                "type": "context",
+                "elements": [{"type": "mrkdwn", "text": e} for e in elements],
+            }
+        )
         return self
 
     def button(
@@ -240,10 +241,12 @@ class SlackMessageBuilder:
         empty = 10 - filled
         bar = "█" * filled + "░" * empty
         text = f"{label + ': ' if label else ''}`{bar}` {percent}%"
-        self._blocks.append({
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": text},
-        })
+        self._blocks.append(
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": text},
+            }
+        )
         return self
 
     def build(self) -> dict[str, Any]:
@@ -348,11 +351,13 @@ class DiscordMessageBuilder:
         assert self._current_embed is not None
         if "fields" not in self._current_embed:
             self._current_embed["fields"] = []
-        self._current_embed["fields"].append({
-            "name": name,
-            "value": value,
-            "inline": inline,
-        })
+        self._current_embed["fields"].append(
+            {
+                "name": name,
+                "value": value,
+                "inline": inline,
+            }
+        )
         return self
 
     def embed_footer(self, text: str, icon_url: str = "") -> DiscordMessageBuilder:
@@ -389,6 +394,7 @@ class DiscordMessageBuilder:
             self.embed()
         assert self._current_embed is not None
         from datetime import datetime, timezone
+
         self._current_embed["timestamp"] = datetime.now(timezone.utc).isoformat()
         return self
 
@@ -489,10 +495,12 @@ class DiscordMessageBuilder:
         components = []
         if form_fields:
             for f in form_fields[:5]:  # Discord: max 5 Felder
-                components.append({
-                    "type": 1,  # ACTION_ROW
-                    "components": [f.to_discord_component()],
-                })
+                components.append(
+                    {
+                        "type": 1,  # ACTION_ROW
+                        "components": [f.to_discord_component()],
+                    }
+                )
         return {
             "title": title[:45],
             "custom_id": custom_id,
@@ -646,8 +654,10 @@ class ProgressTracker:
 
     def to_discord_embed(self) -> dict[str, Any]:
         """Generiert Discord Embed für Fortschritts-Anzeige."""
-        color = DiscordColor.SUCCESS if self.is_complete and not self.has_failures else (
-            DiscordColor.ERROR if self.has_failures else DiscordColor.INFO
+        color = (
+            DiscordColor.SUCCESS
+            if self.is_complete and not self.has_failures
+            else (DiscordColor.ERROR if self.has_failures else DiscordColor.INFO)
         )
 
         builder = DiscordMessageBuilder()
@@ -773,9 +783,9 @@ class AdaptiveCard:
 class SlashCommand:
     """Definition eines Slash-Commands."""
 
-    name: str               # z.B. "/jarvis", "/approve"
+    name: str  # z.B. "/jarvis", "/approve"
     description: str
-    handler: str = ""       # Handler-Funktion-Name
+    handler: str = ""  # Handler-Funktion-Name
     options: list[dict[str, Any]] = field(default_factory=list)
     channels: list[str] = field(default_factory=lambda: ["slack", "discord"])
 
@@ -816,7 +826,8 @@ class SlashCommandRegistry:
     ) -> SlashCommand:
         """Registriert einen neuen Slash-Command."""
         cmd = SlashCommand(
-            name=name, description=description,
+            name=name,
+            description=description,
             handler=handler.__name__ if handler else "",
             options=options or [],
         )
@@ -938,9 +949,14 @@ class SignatureVerifier:
         import hmac
 
         basestring = f"v0:{timestamp}:{body.decode('utf-8')}"
-        expected = "v0=" + hmac.new(
-            self._slack_secret.encode(), basestring.encode(), hashlib.sha256,
-        ).hexdigest()
+        expected = (
+            "v0="
+            + hmac.new(
+                self._slack_secret.encode(),
+                basestring.encode(),
+                hashlib.sha256,
+            ).hexdigest()
+        )
         return hmac.compare_digest(expected, signature)
 
     def verify_discord(
@@ -954,6 +970,7 @@ class SignatureVerifier:
             return False
         try:
             from nacl.signing import VerifyKey
+
             verify_key = VerifyKey(bytes.fromhex(self._discord_key))
             verify_key.verify(timestamp.encode() + body, bytes.fromhex(signature))
             return True
@@ -980,7 +997,7 @@ class InteractionState:
 
     interaction_id: str
     user_id: str
-    action_type: str       # "approval", "config", "install", ...
+    action_type: str  # "approval", "config", "install", ...
     context: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=lambda: __import__("time").time())
     expires_at: float = 0.0
@@ -1010,6 +1027,7 @@ class InteractionStateStore:
         response_url: str = "",
     ) -> InteractionState:
         import time
+
         now = time.time()
         state = InteractionState(
             interaction_id=interaction_id,
@@ -1025,6 +1043,7 @@ class InteractionStateStore:
 
     def get(self, interaction_id: str) -> InteractionState | None:
         import time
+
         state = self._states.get(interaction_id)
         if state and state.expires_at < time.time():
             del self._states[interaction_id]
@@ -1041,6 +1060,7 @@ class InteractionStateStore:
     def cleanup_expired(self) -> int:
         """Entfernt abgelaufene States."""
         import time
+
         now = time.time()
         expired = [k for k, v in self._states.items() if v.expires_at < now]
         for k in expired:
@@ -1088,8 +1108,13 @@ class FallbackRenderer:
         """Rendert einen ProgressTracker als Plaintext."""
         lines: list[str] = [f"Fortschritt: {tracker._title}"]
         for step in tracker._steps:
-            emoji = {"pending": "○", "running": "►", "completed": "✓",
-                     "failed": "✗", "skipped": "--"}.get(step.status, "?")
+            emoji = {
+                "pending": "○",
+                "running": "►",
+                "completed": "✓",
+                "failed": "✗",
+                "skipped": "--",
+            }.get(step.status, "?")
             lines.append(f"  {emoji} {step.name}")
         return "\n".join(lines)
 

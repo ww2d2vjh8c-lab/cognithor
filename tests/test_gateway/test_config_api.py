@@ -134,12 +134,14 @@ class TestHeartbeatConfig:
         assert hb["interval_minutes"] == 30  # Unverändert
 
     def test_update_heartbeat_multiple_fields(self, mgr: ConfigManager) -> None:
-        result = mgr.update_heartbeat(HeartbeatUpdate(
-            enabled=True,
-            interval_minutes=15,
-            channel="slack",
-            model="llama3:8b",
-        ))
+        result = mgr.update_heartbeat(
+            HeartbeatUpdate(
+                enabled=True,
+                interval_minutes=15,
+                channel="slack",
+                model="llama3:8b",
+            )
+        )
         assert result["enabled"] is True
         assert result["interval_minutes"] == 15
         assert result["channel"] == "slack"
@@ -165,13 +167,15 @@ class TestAgentProfiles:
         assert mgr.list_agents() == []
 
     def test_create_agent(self, mgr: ConfigManager) -> None:
-        result = mgr.upsert_agent(AgentProfileDTO(
-            name="coder",
-            display_name="Code-Agent",
-            description="Schreibt und debuggt Code",
-            trigger_keywords=["code", "python", "debug"],
-            priority=10,
-        ))
+        result = mgr.upsert_agent(
+            AgentProfileDTO(
+                name="coder",
+                display_name="Code-Agent",
+                description="Schreibt und debuggt Code",
+                trigger_keywords=["code", "python", "debug"],
+                priority=10,
+            )
+        )
         assert result["name"] == "coder"
         assert result["display_name"] == "Code-Agent"
         assert "python" in result["trigger_keywords"]
@@ -207,34 +211,40 @@ class TestAgentProfiles:
         assert mgr.get_agent("jarvis") is not None
 
     def test_agent_with_credential_scope(self, mgr: ConfigManager) -> None:
-        mgr.upsert_agent(AgentProfileDTO(
-            name="coder",
-            credential_scope="coder",
-            credential_mappings={"api_key": "github:token"},
-        ))
+        mgr.upsert_agent(
+            AgentProfileDTO(
+                name="coder",
+                credential_scope="coder",
+                credential_mappings={"api_key": "github:token"},
+            )
+        )
         agent = mgr.get_agent("coder")
         assert agent is not None
         assert agent["credential_scope"] == "coder"
         assert agent["credential_mappings"]["api_key"] == "github:token"
 
     def test_agent_with_sandbox_config(self, mgr: ConfigManager) -> None:
-        mgr.upsert_agent(AgentProfileDTO(
-            name="untrusted",
-            sandbox_network="block",
-            sandbox_max_memory_mb=256,
-            sandbox_timeout=10,
-        ))
+        mgr.upsert_agent(
+            AgentProfileDTO(
+                name="untrusted",
+                sandbox_network="block",
+                sandbox_max_memory_mb=256,
+                sandbox_timeout=10,
+            )
+        )
         agent = mgr.get_agent("untrusted")
         assert agent is not None
         assert agent["sandbox_network"] == "block"
         assert agent["sandbox_max_memory_mb"] == 256
 
     def test_agent_with_delegation(self, mgr: ConfigManager) -> None:
-        mgr.upsert_agent(AgentProfileDTO(
-            name="lead",
-            can_delegate_to=["coder", "researcher"],
-            max_delegation_depth=3,
-        ))
+        mgr.upsert_agent(
+            AgentProfileDTO(
+                name="lead",
+                can_delegate_to=["coder", "researcher"],
+                max_delegation_depth=3,
+            )
+        )
         agent = mgr.get_agent("lead")
         assert agent is not None
         assert "coder" in agent["can_delegate_to"]
@@ -257,11 +267,13 @@ class TestBindingRules:
         assert mgr.list_bindings() == []
 
     def test_create_binding(self, mgr: ConfigManager) -> None:
-        result = mgr.upsert_binding(BindingRuleDTO(
-            name="slash_code",
-            target_agent="coder",
-            command_prefixes=["/code", "/debug"],
-        ))
+        result = mgr.upsert_binding(
+            BindingRuleDTO(
+                name="slash_code",
+                target_agent="coder",
+                command_prefixes=["/code", "/debug"],
+            )
+        )
         assert result["name"] == "slash_code"
         assert result["target_agent"] == "coder"
         assert "/code" in result["command_prefixes"]
@@ -292,42 +304,50 @@ class TestBindingRules:
         assert mgr.delete_binding("ghost") is False
 
     def test_binding_with_channels(self, mgr: ConfigManager) -> None:
-        mgr.upsert_binding(BindingRuleDTO(
-            name="tg_only",
-            target_agent="coder",
-            channels=["telegram"],
-        ))
+        mgr.upsert_binding(
+            BindingRuleDTO(
+                name="tg_only",
+                target_agent="coder",
+                channels=["telegram"],
+            )
+        )
         b = mgr.get_binding("tg_only")
         assert b is not None
         assert b["channels"] == ["telegram"]
 
     def test_binding_with_regex(self, mgr: ConfigManager) -> None:
-        mgr.upsert_binding(BindingRuleDTO(
-            name="regex_b",
-            target_agent="coder",
-            message_patterns=[r"(?i)python\b", r"(?i)bug\b"],
-        ))
+        mgr.upsert_binding(
+            BindingRuleDTO(
+                name="regex_b",
+                target_agent="coder",
+                message_patterns=[r"(?i)python\b", r"(?i)bug\b"],
+            )
+        )
         b = mgr.get_binding("regex_b")
         assert b is not None
         assert len(b["message_patterns"]) == 2
 
     def test_binding_with_metadata(self, mgr: ConfigManager) -> None:
-        mgr.upsert_binding(BindingRuleDTO(
-            name="meta_b",
-            target_agent="jarvis",
-            metadata_conditions={"priority": "high"},
-        ))
+        mgr.upsert_binding(
+            BindingRuleDTO(
+                name="meta_b",
+                target_agent="jarvis",
+                metadata_conditions={"priority": "high"},
+            )
+        )
         b = mgr.get_binding("meta_b")
         assert b is not None
         assert b["metadata_conditions"]["priority"] == "high"
 
     def test_binding_negation(self, mgr: ConfigManager) -> None:
-        mgr.upsert_binding(BindingRuleDTO(
-            name="not_cli",
-            target_agent="jarvis",
-            channels=["cli"],
-            negate=True,
-        ))
+        mgr.upsert_binding(
+            BindingRuleDTO(
+                name="not_cli",
+                target_agent="jarvis",
+                channels=["cli"],
+                negate=True,
+            )
+        )
         b = mgr.get_binding("not_cli")
         assert b is not None
         assert b["negate"] is True

@@ -285,7 +285,11 @@ class RemoteRegistry:
         results = []
         query_lower = query.lower()
         for manifest in self._index.values():
-            if query_lower and query_lower not in manifest.name.lower() and query_lower not in manifest.description.lower():
+            if (
+                query_lower
+                and query_lower not in manifest.name.lower()
+                and query_lower not in manifest.description.lower()
+            ):
                 continue
             if category and manifest.category != category:
                 continue
@@ -320,7 +324,9 @@ class RemoteRegistry:
 
         if not manifest:
             return InstallResult(
-                plugin=name, version="", status=InstallStatus.FAILED,
+                plugin=name,
+                version="",
+                status=InstallStatus.FAILED,
                 message=f"Plugin '{name}' not found in registry",
                 duration_ms=(time.monotonic() - start) * 1000,
             )
@@ -341,7 +347,8 @@ class RemoteRegistry:
         existing = self._installed.get(name)
         if existing and existing.version == manifest.version:
             return InstallResult(
-                plugin=name, version=manifest.version,
+                plugin=name,
+                version=manifest.version,
                 status=InstallStatus.INSTALLED,
                 message="Already installed at this version",
                 duration_ms=(time.monotonic() - start) * 1000,
@@ -351,7 +358,8 @@ class RemoteRegistry:
         if content and manifest.checksum:
             if not manifest.verify_checksum(content.encode("utf-8")):
                 return InstallResult(
-                    plugin=name, version=manifest.version,
+                    plugin=name,
+                    version=manifest.version,
                     status=InstallStatus.FAILED,
                     message="Checksum verification failed",
                     duration_ms=(time.monotonic() - start) * 1000,
@@ -362,7 +370,10 @@ class RemoteRegistry:
             plugin_dir = self._skills_dir / name
             plugin_dir.mkdir(parents=True, exist_ok=True)
             skill_file = plugin_dir / "skill.md"
-            skill_content = content or f"---\nname: {name}\nversion: {manifest.version}\ntrigger_keywords: {manifest.tags}\n---\n\n{manifest.description}"
+            skill_content = (
+                content
+                or f"---\nname: {name}\nversion: {manifest.version}\ntrigger_keywords: {manifest.tags}\n---\n\n{manifest.description}"
+            )
             skill_file.write_text(skill_content, encoding="utf-8")
 
             # Write manifest
@@ -394,7 +405,8 @@ class RemoteRegistry:
             log.info("plugin_installed", name=name, version=manifest.version)
 
             return InstallResult(
-                plugin=name, version=manifest.version,
+                plugin=name,
+                version=manifest.version,
                 status=InstallStatus.INSTALLED,
                 message=f"Installed {name} v{manifest.version}",
                 warnings=warnings,
@@ -403,7 +415,8 @@ class RemoteRegistry:
 
         except Exception as exc:
             return InstallResult(
-                plugin=name, version=manifest.version,
+                plugin=name,
+                version=manifest.version,
                 status=InstallStatus.FAILED,
                 message=f"Installation failed: {exc}",
                 duration_ms=(time.monotonic() - start) * 1000,
@@ -413,7 +426,8 @@ class RemoteRegistry:
         """Update an installed plugin to the latest version."""
         if name not in self._installed:
             return InstallResult(
-                plugin=name, version="",
+                plugin=name,
+                version="",
                 status=InstallStatus.FAILED,
                 message=f"Plugin '{name}' is not installed",
             )
@@ -426,7 +440,8 @@ class RemoteRegistry:
 
         if not installed:
             return InstallResult(
-                plugin=name, version="",
+                plugin=name,
+                version="",
                 status=InstallStatus.FAILED,
                 message=f"Plugin '{name}' is not installed",
                 duration_ms=(time.monotonic() - start) * 1000,
@@ -434,7 +449,8 @@ class RemoteRegistry:
 
         if not installed.previous_versions:
             return InstallResult(
-                plugin=name, version=installed.version,
+                plugin=name,
+                version=installed.version,
                 status=InstallStatus.FAILED,
                 message="No previous version to rollback to",
                 duration_ms=(time.monotonic() - start) * 1000,
@@ -449,7 +465,8 @@ class RemoteRegistry:
         log.info("plugin_rollback", name=name, version=prev_version)
 
         return InstallResult(
-            plugin=name, version=prev_version,
+            plugin=name,
+            version=prev_version,
             status=InstallStatus.INSTALLED,
             message=f"Rolled back to v{prev_version}",
             duration_ms=(time.monotonic() - start) * 1000,
@@ -461,7 +478,8 @@ class RemoteRegistry:
 
         if name not in self._installed:
             return InstallResult(
-                plugin=name, version="",
+                plugin=name,
+                version="",
                 status=InstallStatus.FAILED,
                 message=f"Plugin '{name}' is not installed",
                 duration_ms=(time.monotonic() - start) * 1000,
@@ -477,14 +495,16 @@ class RemoteRegistry:
             self._save_install_history()
 
             return InstallResult(
-                plugin=name, version=version,
+                plugin=name,
+                version=version,
                 status=InstallStatus.NOT_INSTALLED,
                 message=f"Uninstalled {name}",
                 duration_ms=(time.monotonic() - start) * 1000,
             )
         except Exception as exc:
             return InstallResult(
-                plugin=name, version="",
+                plugin=name,
+                version="",
                 status=InstallStatus.FAILED,
                 message=f"Uninstall failed: {exc}",
                 duration_ms=(time.monotonic() - start) * 1000,
@@ -496,11 +516,13 @@ class RemoteRegistry:
         for name, installed in self._installed.items():
             remote = self._index.get(name)
             if remote and remote.version != installed.version:
-                updates.append({
-                    "name": name,
-                    "installed_version": installed.version,
-                    "available_version": remote.version,
-                })
+                updates.append(
+                    {
+                        "name": name,
+                        "installed_version": installed.version,
+                        "available_version": remote.version,
+                    }
+                )
         return updates
 
     def get_installed(self, name: str) -> InstalledPlugin | None:
@@ -556,7 +578,9 @@ class RemoteRegistry:
         parent = self._install_history_file.parent
         parent.mkdir(parents=True, exist_ok=True)
         fd, tmp_path = _tempfile.mkstemp(
-            dir=str(parent), suffix=".tmp", prefix=".plugin_history_",
+            dir=str(parent),
+            suffix=".tmp",
+            prefix=".plugin_history_",
         )
         try:
             with _os.fdopen(fd, "w", encoding="utf-8") as fh:

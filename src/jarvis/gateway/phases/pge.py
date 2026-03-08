@@ -76,6 +76,7 @@ async def init_pge(
     # Task Profiler (optional)
     try:
         from jarvis.core.profiler import TaskProfiler
+
         task_profiler = TaskProfiler()
     except Exception:
         log.debug("task_profiler_init_skipped")
@@ -83,12 +84,14 @@ async def init_pge(
     # Task Telemetry + Error Clusterer (optional)
     try:
         from jarvis.telemetry.task_telemetry import TaskTelemetryCollector
+
         task_telemetry = TaskTelemetryCollector()
     except Exception:
         log.debug("task_telemetry_init_skipped")
 
     try:
         from jarvis.telemetry.error_clustering import ErrorClusterer
+
         error_clusterer = ErrorClusterer()
     except Exception:
         log.debug("error_clusterer_init_skipped")
@@ -96,6 +99,7 @@ async def init_pge(
     # Causal Analyzer (optional)
     try:
         from jarvis.learning.causal import CausalAnalyzer
+
         causal_analyzer = CausalAnalyzer()
     except Exception:
         log.debug("causal_analyzer_init_skipped")
@@ -104,6 +108,7 @@ async def init_pge(
     reward_calculator = None
     try:
         from jarvis.learning.reward import RewardCalculator
+
         reward_calculator = RewardCalculator()
     except Exception:
         log.debug("reward_calculator_init_skipped")
@@ -134,6 +139,7 @@ async def init_pge(
         sandbox_executor = None
         try:
             from jarvis.core.sandbox import SandboxExecutor
+
             sandbox_executor = SandboxExecutor(config)
         except Exception:
             log.debug("skill_sandbox_init_skipped")
@@ -153,6 +159,7 @@ async def init_pge(
         # Standalone GapDetector even without SkillGenerator (for telemetry)
         try:
             from jarvis.skills.generator import GapDetector
+
             gap_detector = GapDetector()
         except Exception:
             pass
@@ -161,6 +168,7 @@ async def init_pge(
     personality_engine = None
     try:
         from jarvis.core.personality import PersonalityEngine
+
         personality_config = getattr(config, "personality", None)
         personality_engine = PersonalityEngine(personality_config)
         log.info("personality_engine_initialized")
@@ -171,6 +179,7 @@ async def init_pge(
     user_pref_store = None
     try:
         from jarvis.core.user_preferences import UserPreferenceStore
+
         user_pref_store = UserPreferenceStore()
         log.info("user_pref_store_initialized")
     except Exception:
@@ -195,7 +204,9 @@ async def init_pge(
     # Planner (uses UnifiedLLMClient + optional causal suggestions + task profiler)
     try:
         result["planner"] = Planner(
-            config, llm, model_router,
+            config,
+            llm,
+            model_router,
             audit_logger=audit_logger,
             causal_analyzer=causal_analyzer,
             task_profiler=task_profiler,
@@ -210,7 +221,9 @@ async def init_pge(
     # Reflector (uses UnifiedLLMClient + episodic store + causal + weight optimizer + reward)
     try:
         result["reflector"] = Reflector(
-            config, llm, model_router,
+            config,
+            llm,
+            model_router,
             audit_logger=audit_logger,
             episodic_store=episodic_store,
             causal_analyzer=causal_analyzer,

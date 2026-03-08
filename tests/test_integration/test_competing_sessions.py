@@ -146,7 +146,7 @@ class TestConcurrentQuotas:
         quota_b.consume_tokens(200)
 
         assert not quota_a.check_token_budget(300)  # 800 + 300 > 1000
-        assert quota_b.check_token_budget(300)        # 200 + 300 <= 1000
+        assert quota_b.check_token_budget(300)  # 200 + 300 <= 1000
 
     def test_quota_utilization(self) -> None:
         from jarvis.core.isolation import AgentResourceQuota
@@ -274,9 +274,13 @@ class TestConcurrentHeartbeat:
         sched = AgentHeartbeatScheduler()
         for agent in ["coder", "researcher", "assistant"]:
             sched.configure_agent(AgentHeartbeatConfig(agent_id=agent))
-            sched.add_task(AgentTask(
-                task_id=f"{agent}_task", agent_id=agent, name=f"{agent} Task",
-            ))
+            sched.add_task(
+                AgentTask(
+                    task_id=f"{agent}_task",
+                    agent_id=agent,
+                    name=f"{agent} Task",
+                )
+            )
 
         dash = sched.global_dashboard()
         assert dash["agent_count"] == 3
@@ -336,7 +340,9 @@ class TestConcurrentRBAC:
 
         admin = DashboardUser(user_id="admin", display_name="Admin", role=UserRole.ADMIN)
         user = DashboardUser(
-            user_id="alex", display_name="Alex", role=UserRole.USER,
+            user_id="alex",
+            display_name="Alex",
+            role=UserRole.USER,
             agent_scope=["coder"],
         )
 
@@ -412,9 +418,13 @@ class TestEndToEndIsolation:
 
             # Heartbeat-Task
             heartbeat.configure_agent(AgentHeartbeatConfig(agent_id=agent_id))
-            heartbeat.add_task(AgentTask(
-                task_id=f"{agent_id}_main", agent_id=agent_id, name=f"{agent_id} Task",
-            ))
+            heartbeat.add_task(
+                AgentTask(
+                    task_id=f"{agent_id}_main",
+                    agent_id=agent_id,
+                    name=f"{agent_id} Task",
+                )
+            )
 
         # Verify
         assert heartbeat.global_dashboard()["agent_count"] == 3

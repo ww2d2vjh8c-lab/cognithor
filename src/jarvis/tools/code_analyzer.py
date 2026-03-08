@@ -39,9 +39,14 @@ def _max_nesting(node: ast.AST, depth: int = 0) -> int:
     """Berechnet die maximale Verschachtelungstiefe."""
     max_d = depth
     nesting_nodes = (
-        ast.If, ast.For, ast.While, ast.With,
-        ast.Try, ast.ExceptHandler,
-        ast.AsyncFor, ast.AsyncWith,
+        ast.If,
+        ast.For,
+        ast.While,
+        ast.With,
+        ast.Try,
+        ast.ExceptHandler,
+        ast.AsyncFor,
+        ast.AsyncWith,
     )
     for child in ast.iter_child_nodes(node):
         if isinstance(child, nesting_nodes):
@@ -141,7 +146,9 @@ class CodeSmellDetector:
         return smells
 
     def analyze_directory(
-        self, path: str | Path, recursive: bool = True,
+        self,
+        path: str | Path,
+        recursive: bool = True,
     ) -> list[CodeSmell]:
         """Analysiert ein Verzeichnis."""
         path = Path(path)
@@ -160,7 +167,9 @@ class CodeSmellDetector:
         return all_smells
 
     def _check_function(
-        self, node: ast.FunctionDef | ast.AsyncFunctionDef, file_path: str,
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        file_path: str,
     ) -> list[CodeSmell]:
         """Prueft eine Funktion auf Smells."""
         smells: list[CodeSmell] = []
@@ -195,11 +204,7 @@ class CodeSmellDetector:
 
         # Zu viele Parameter
         params = node.args
-        param_count = (
-            len(params.args)
-            + len(params.posonlyargs)
-            + len(params.kwonlyargs)
-        )
+        param_count = len(params.args) + len(params.posonlyargs) + len(params.kwonlyargs)
         # self/cls abziehen
         if params.args and params.args[0].arg in ("self", "cls"):
             param_count -= 1
@@ -223,10 +228,7 @@ class CodeSmellDetector:
         smells: list[CodeSmell] = []
 
         # God-Class: Zu viele Methoden
-        methods = [
-            n for n in node.body
-            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-        ]
+        methods = [n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
         if len(methods) > self._max_class_methods:
             smells.append(
                 CodeSmell(

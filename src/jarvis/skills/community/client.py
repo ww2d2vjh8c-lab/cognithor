@@ -38,6 +38,7 @@ _HTTP_TIMEOUT_S = 30
 # Datenmodelle
 # ============================================================================
 
+
 @dataclass
 class InstallResult:
     """Ergebnis einer Skill-Installation."""
@@ -86,9 +87,7 @@ class CommunityRegistryClient:
     """
 
     # Standard-Registry-URL (GitHub Raw Content)
-    DEFAULT_REGISTRY_URL = (
-        "https://raw.githubusercontent.com/cognithor/skill-registry/main"
-    )
+    DEFAULT_REGISTRY_URL = "https://raw.githubusercontent.com/cognithor/skill-registry/main"
 
     def __init__(
         self,
@@ -98,9 +97,7 @@ class CommunityRegistryClient:
         validator: SkillValidator | None = None,
         min_publisher_reputation: float = 0.0,
     ) -> None:
-        self._community_dir = community_dir or (
-            Path.home() / ".jarvis" / "skills" / "community"
-        )
+        self._community_dir = community_dir or (Path.home() / ".jarvis" / "skills" / "community")
         self._registry_url = registry_url or self.DEFAULT_REGISTRY_URL
         self._validator = validator or SkillValidator()
         self._min_publisher_reputation = min_publisher_reputation
@@ -272,7 +269,9 @@ class CommunityRegistryClient:
         async with self._lock:
             existing_names = set(self._registry_cache.keys()) - {skill_name}
         validation = self._validator.validate(
-            skill_md, manifest, existing_names=existing_names,
+            skill_md,
+            manifest,
+            existing_names=existing_names,
         )
         if not validation.valid:
             return InstallResult(
@@ -390,6 +389,7 @@ class CommunityRegistryClient:
         aiohttp_available = False
         try:
             import aiohttp
+
             aiohttp_available = True
         except ImportError:
             pass
@@ -397,11 +397,15 @@ class CommunityRegistryClient:
         if aiohttp_available:
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=_HTTP_TIMEOUT_S)) as resp:
+                    async with session.get(
+                        url, timeout=aiohttp.ClientTimeout(total=_HTTP_TIMEOUT_S)
+                    ) as resp:
                         resp.raise_for_status()
                         return await resp.text()
             except Exception as aio_exc:
-                log.debug("aiohttp_fetch_failed_falling_back_to_urllib", url=url, error=str(aio_exc))
+                log.debug(
+                    "aiohttp_fetch_failed_falling_back_to_urllib", url=url, error=str(aio_exc)
+                )
 
         # Fallback: urllib (synchron im Executor)
         import urllib.request

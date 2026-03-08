@@ -144,7 +144,9 @@ def _can_import(module_name: str) -> bool:
         return False
 
 
-def _pip_install(packages: list[str], *, quiet: bool = True, timeout: int = 300) -> tuple[bool, str]:
+def _pip_install(
+    packages: list[str], *, quiet: bool = True, timeout: int = 300
+) -> tuple[bool, str]:
     """Run ``pip install`` for the given packages.
 
     Returns (success, stderr_output).
@@ -305,9 +307,7 @@ class StartupChecker:
             success, stderr = _pip_install(missing_pkgs)
 
             if success:
-                report.fixes_applied.append(
-                    f"Installed [{group}]: {', '.join(missing_pkgs)}"
-                )
+                report.fixes_applied.append(f"Installed [{group}]: {', '.join(missing_pkgs)}")
                 log.info("startup_packages_installed", group=group, packages=missing_pkgs)
             else:
                 msg = f"Failed to install [{group}]: {', '.join(missing_pkgs)}"
@@ -342,9 +342,7 @@ class StartupChecker:
 
         ollama_url = _OLLAMA_URL
         if self._config is not None:
-            ollama_url = getattr(
-                getattr(self._config, "ollama", None), "base_url", _OLLAMA_URL
-            )
+            ollama_url = getattr(getattr(self._config, "ollama", None), "base_url", _OLLAMA_URL)
 
         if self._ollama_is_running(ollama_url):
             report.checks_passed.append("Ollama running")
@@ -364,9 +362,7 @@ class StartupChecker:
         # Try to find and start it (only with explicit --auto-install)
         ollama_path = self._find_ollama()
         if ollama_path is None:
-            report.warnings.append(
-                "Ollama not found. Install from https://ollama.com/download"
-            )
+            report.warnings.append("Ollama not found. Install from https://ollama.com/download")
             log.warning("startup_ollama_not_found")
             return report
 
@@ -378,8 +374,7 @@ class StartupChecker:
             log.info("startup_ollama_started")
         else:
             report.warnings.append(
-                "Ollama found but could not be started. "
-                f"Start manually: \"{ollama_path}\" serve"
+                f'Ollama found but could not be started. Start manually: "{ollama_path}" serve'
             )
             log.warning("startup_ollama_start_failed")
 
@@ -390,11 +385,24 @@ class StartupChecker:
     # ------------------------------------------------------------------
 
     # Backends where models are accessed via API, not downloaded locally
-    _CLOUD_BACKENDS = frozenset({
-        "openai", "anthropic", "gemini", "groq", "deepseek", "mistral",
-        "together", "openrouter", "xai", "cerebras", "github", "bedrock",
-        "huggingface", "moonshot",
-    })
+    _CLOUD_BACKENDS = frozenset(
+        {
+            "openai",
+            "anthropic",
+            "gemini",
+            "groq",
+            "deepseek",
+            "mistral",
+            "together",
+            "openrouter",
+            "xai",
+            "cerebras",
+            "github",
+            "bedrock",
+            "huggingface",
+            "moonshot",
+        }
+    )
 
     def check_models(self) -> StartupReport:
         """Check if required LLM models are available; auto-pull if missing.
@@ -416,9 +424,7 @@ class StartupChecker:
             log.debug("startup_skip_model_pull_cloud", backend=backend_type)
             return report
 
-        ollama_url = getattr(
-            getattr(self._config, "ollama", None), "base_url", _OLLAMA_URL
-        )
+        ollama_url = getattr(getattr(self._config, "ollama", None), "base_url", _OLLAMA_URL)
 
         # Gather required model names from config
         required_models: list[str] = []
@@ -454,8 +460,7 @@ class StartupChecker:
             if not self._auto_install:
                 # Without --auto-install: only warn, do not pull
                 report.warnings.append(
-                    f"Model '{model}' missing "
-                    f"-- run with --auto-install or: ollama pull {model}"
+                    f"Model '{model}' missing -- run with --auto-install or: ollama pull {model}"
                 )
                 log.warning("startup_model_missing", model=model)
                 continue
@@ -475,8 +480,7 @@ class StartupChecker:
                 log.info("startup_model_pulled", model=model)
             else:
                 report.warnings.append(
-                    f"Failed to pull model '{model}'. "
-                    f"Run manually: ollama pull {model}"
+                    f"Failed to pull model '{model}'. Run manually: ollama pull {model}"
                 )
                 log.warning("startup_model_pull_failed", model=model)
 

@@ -45,7 +45,10 @@ def sample_text_file(tmp_path: Path) -> Path:
 @pytest.fixture
 def sample_markdown_file(tmp_path: Path) -> Path:
     f = tmp_path / "readme.md"
-    f.write_text("# Titel\n\nEin Absatz mit **Markdown**.\n\n## Unterabschnitt\n\nMehr Text.", encoding="utf-8")
+    f.write_text(
+        "# Titel\n\nEin Absatz mit **Markdown**.\n\n## Unterabschnitt\n\nMehr Text.",
+        encoding="utf-8",
+    )
     return f
 
 
@@ -89,7 +92,9 @@ class TestExtractText:
         assert result.metadata["format"] == ".txt"
 
     @pytest.mark.asyncio
-    async def test_extract_markdown(self, pipeline: MediaPipeline, sample_markdown_file: Path) -> None:
+    async def test_extract_markdown(
+        self, pipeline: MediaPipeline, sample_markdown_file: Path
+    ) -> None:
         result = await pipeline.extract_text(str(sample_markdown_file))
         assert result.success is True
         assert "Titel" in result.text
@@ -103,7 +108,9 @@ class TestExtractText:
         assert "Berlin" in result.text
 
     @pytest.mark.asyncio
-    async def test_extract_html_strips_tags(self, pipeline: MediaPipeline, sample_html_file: Path) -> None:
+    async def test_extract_html_strips_tags(
+        self, pipeline: MediaPipeline, sample_html_file: Path
+    ) -> None:
         result = await pipeline.extract_text(str(sample_html_file))
         assert result.success is True
         assert "Überschrift" in result.text
@@ -125,7 +132,9 @@ class TestExtractText:
         assert "nicht gefunden" in result.error
 
     @pytest.mark.asyncio
-    async def test_extract_unsupported_format(self, pipeline: MediaPipeline, tmp_path: Path) -> None:
+    async def test_extract_unsupported_format(
+        self, pipeline: MediaPipeline, tmp_path: Path
+    ) -> None:
         f = tmp_path / "data.bin"
         f.write_bytes(b"\x00\x01\x02\x03")
         result = await pipeline.extract_text(str(f))
@@ -133,7 +142,9 @@ class TestExtractText:
         assert "Nicht unterstützt" in result.error
 
     @pytest.mark.asyncio
-    async def test_extract_truncates_long_text(self, pipeline: MediaPipeline, tmp_path: Path) -> None:
+    async def test_extract_truncates_long_text(
+        self, pipeline: MediaPipeline, tmp_path: Path
+    ) -> None:
         f = tmp_path / "long.txt"
         f.write_text("A" * (MAX_EXTRACT_LENGTH + 5000), encoding="utf-8")
         result = await pipeline.extract_text(str(f))
@@ -365,7 +376,9 @@ class TestMediaToolSchemas:
             assert "properties" in schema["inputSchema"], f"{name}: properties fehlt"
 
     def test_required_fields(self) -> None:
-        assert "audio_path" in MEDIA_TOOL_SCHEMAS["media_transcribe_audio"]["inputSchema"]["required"]
+        assert (
+            "audio_path" in MEDIA_TOOL_SCHEMAS["media_transcribe_audio"]["inputSchema"]["required"]
+        )
         assert "image_path" in MEDIA_TOOL_SCHEMAS["media_analyze_image"]["inputSchema"]["required"]
         assert "file_path" in MEDIA_TOOL_SCHEMAS["media_extract_text"]["inputSchema"]["required"]
         assert "input_path" in MEDIA_TOOL_SCHEMAS["media_convert_audio"]["inputSchema"]["required"]
@@ -381,7 +394,9 @@ class TestMediaToolSchemas:
 class TestFileSizeLimits:
     """Tests für Dateigrößen-Limits."""
 
-    async def test_extract_text_file_too_large(self, pipeline: MediaPipeline, tmp_path: Path) -> None:
+    async def test_extract_text_file_too_large(
+        self, pipeline: MediaPipeline, tmp_path: Path
+    ) -> None:
         """extract_text lehnt Dateien > MAX_EXTRACT_FILE_SIZE ab."""
         large_file = tmp_path / "huge.txt"
         # Erstelle eine Datei die das Limit überschreitet (sparse/truncated)
@@ -391,9 +406,15 @@ class TestFileSizeLimits:
             mock_stat.return_value = MagicMock(st_size=MAX_EXTRACT_FILE_SIZE + 1)
             result = await pipeline.extract_text(str(large_file))
         assert not result.success
-        assert "zu gross" in result.error.lower() or "too large" in result.error.lower() or "gross" in result.error.lower()
+        assert (
+            "zu gross" in result.error.lower()
+            or "too large" in result.error.lower()
+            or "gross" in result.error.lower()
+        )
 
-    async def test_transcribe_audio_file_too_large(self, pipeline: MediaPipeline, tmp_path: Path) -> None:
+    async def test_transcribe_audio_file_too_large(
+        self, pipeline: MediaPipeline, tmp_path: Path
+    ) -> None:
         """transcribe_audio lehnt Dateien > MAX_AUDIO_FILE_SIZE ab."""
         audio_file = tmp_path / "huge.wav"
         audio_file.write_bytes(b"\x00" * 1024)

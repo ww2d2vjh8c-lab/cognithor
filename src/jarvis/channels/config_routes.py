@@ -61,6 +61,7 @@ def create_config_routes(
     def _get_hub() -> Any:
         if _hub_holder["hub"] is None:
             from jarvis.gateway.monitoring import MonitoringHub
+
             _hub_holder["hub"] = MonitoringHub()
         return _hub_holder["hub"]
 
@@ -99,9 +100,11 @@ def _register_system_routes(
     async def serve_dashboard():
         """Liefert das Admin-Dashboard als HTML."""
         from pathlib import Path
+
         dashboard_path = Path(__file__).parent.parent / "gateway" / "dashboard.html"
         if dashboard_path.exists():
             from starlette.responses import HTMLResponse
+
             return HTMLResponse(dashboard_path.read_text(encoding="utf-8"))
         return {"error": "Dashboard nicht gefunden"}
 
@@ -119,6 +122,7 @@ def _register_system_routes(
         # RuntimeMonitor
         try:
             from jarvis.openclaw.runtime_monitor import RuntimeMonitor
+
             monitor = RuntimeMonitor()
             status["runtime"] = {"metrics_count": len(monitor._metrics)}
         except Exception:
@@ -163,6 +167,7 @@ def _register_system_routes(
         """Gibt eine kompakte Konfigurationsübersicht zurück."""
         try:
             from jarvis.gateway.config_api import ConfigManager as CfgMgr
+
             cfg_mgr = CfgMgr(config_manager.config)
             overview = cfg_mgr.get_overview()
             return overview.model_dump()
@@ -181,21 +186,23 @@ def _register_system_routes(
                 raw = yaml.safe_load(agents_path.read_text(encoding="utf-8")) or {}
                 agents = raw.get("agents", [])
             else:
-                agents = [{
-                    "name": "jarvis",
-                    "display_name": "Jarvis",
-                    "description": "Haupt-Agent (Default)",
-                    "system_prompt": "",
-                    "language": "de",
-                    "trigger_patterns": [],
-                    "trigger_keywords": [],
-                    "priority": 100,
-                    "allowed_tools": [],
-                    "blocked_tools": [],
-                    "preferred_model": "",
-                    "temperature": 0.7,
-                    "enabled": True,
-                }]
+                agents = [
+                    {
+                        "name": "jarvis",
+                        "display_name": "Jarvis",
+                        "description": "Haupt-Agent (Default)",
+                        "system_prompt": "",
+                        "language": "de",
+                        "trigger_patterns": [],
+                        "trigger_keywords": [],
+                        "priority": 100,
+                        "allowed_tools": [],
+                        "blocked_tools": [],
+                        "preferred_model": "",
+                        "temperature": 0.7,
+                        "enabled": True,
+                    }
+                ]
             return {"agents": agents}
         except Exception as exc:
             log.error("agents_list_failed", error=str(exc))
@@ -208,12 +215,12 @@ def _register_system_routes(
         """Listet alle gespeicherten Credentials (nur Keys, keine Werte)."""
         try:
             from jarvis.security.credentials import CredentialStore
+
             store = CredentialStore()
             global_creds = store.list_entries()
             return {
                 "credentials": [
-                    {"service": s, "key": k, "scope": "global"}
-                    for s, k in global_creds
+                    {"service": s, "key": k, "scope": "global"} for s, k in global_creds
                 ],
             }
         except Exception as exc:
@@ -222,11 +229,15 @@ def _register_system_routes(
 
     @app.post("/api/v1/credentials", dependencies=deps)
     async def store_credential(
-        service: str, key: str, value: str, agent_id: str = "",
+        service: str,
+        key: str,
+        value: str,
+        agent_id: str = "",
     ) -> dict[str, Any]:
         """Speichert ein Credential."""
         try:
             from jarvis.security.credentials import CredentialStore
+
             store = CredentialStore()
             store.store(service, key, value, agent_id=agent_id)
             return {"status": "ok", "service": service, "key": key, "scope": agent_id or "global"}
@@ -239,6 +250,7 @@ def _register_system_routes(
         """Löscht ein Credential."""
         try:
             from jarvis.security.credentials import CredentialStore
+
             store = CredentialStore()
             store.store(service, key, "", agent_id=agent_id)
             return {"status": "ok", "deleted": f"{service}:{key}"}
@@ -268,6 +280,7 @@ def _register_system_routes(
         """Erstellt oder aktualisiert eine Binding-Regel."""
         try:
             from jarvis.gateway.config_api import BindingRuleDTO, ConfigManager as CfgMgr
+
             cfg_mgr = CfgMgr(config_manager.config)
             dto = BindingRuleDTO(**data)
             return {"binding": cfg_mgr.upsert_binding(dto), "status": "ok"}
@@ -280,6 +293,7 @@ def _register_system_routes(
         """Löscht eine Binding-Regel."""
         try:
             from jarvis.gateway.config_api import ConfigManager as CfgMgr
+
             cfg_mgr = CfgMgr(config_manager.config)
             if cfg_mgr.delete_binding(name):
                 return {"status": "ok", "deleted": name}
@@ -295,6 +309,7 @@ def _register_system_routes(
         """Listet Trusted Circles."""
         try:
             from jarvis.skills.circles import CircleManager
+
             circles_mgr = CircleManager()
             circles = circles_mgr.list_circles(peer_id=peer_id)
             return {
@@ -320,6 +335,7 @@ def _register_system_routes(
         """Ecosystem-Statistiken."""
         try:
             from jarvis.skills.circles import CircleManager
+
             return CircleManager().stats()
         except Exception as exc:
             log.error("circles_stats_failed", error=str(exc))
@@ -332,6 +348,7 @@ def _register_system_routes(
         """Liest Sandbox-Konfiguration."""
         try:
             from jarvis.gateway.config_api import ConfigManager as CfgMgr
+
             cfg_mgr = CfgMgr(config_manager.config)
             return {"sandbox": cfg_mgr.get_sandbox()}
         except Exception as exc:
@@ -343,6 +360,7 @@ def _register_system_routes(
         """Aktualisiert Sandbox-Einstellungen."""
         try:
             from jarvis.gateway.config_api import ConfigManager as CfgMgr, SandboxUpdate
+
             cfg_mgr = CfgMgr(config_manager.config)
             update = SandboxUpdate(**values)
             return {"sandbox": cfg_mgr.update_sandbox(update), "status": "ok"}
@@ -356,6 +374,7 @@ def _register_system_routes(
     async def list_wizards() -> dict[str, Any]:
         """Alle verfügbaren Konfigurations-Assistenten."""
         from jarvis.gateway.wizards import WizardRegistry
+
         reg = WizardRegistry()
         return {"wizards": reg.list_wizards(), "count": reg.wizard_count}
 
@@ -363,6 +382,7 @@ def _register_system_routes(
     async def get_wizard(wizard_type: str) -> dict[str, Any]:
         """Details eines Wizards (Schritte + Templates)."""
         from jarvis.gateway.wizards import WizardRegistry
+
         reg = WizardRegistry()
         wizard = reg.get(wizard_type)
         if not wizard:
@@ -373,6 +393,7 @@ def _register_system_routes(
     async def run_wizard(wizard_type: str, body: dict[str, Any]) -> dict[str, Any]:
         """Führt einen Wizard aus und generiert Konfiguration."""
         from jarvis.gateway.wizards import WizardRegistry
+
         reg = WizardRegistry()
         result = reg.run_wizard(wizard_type, body.get("values", {}))
         if not result:
@@ -383,15 +404,23 @@ def _register_system_routes(
     async def wizard_templates(wizard_type: str) -> dict[str, Any]:
         """Templates eines Wizards."""
         from jarvis.gateway.wizards import WizardRegistry
+
         reg = WizardRegistry()
         wizard = reg.get(wizard_type)
         if not wizard:
             return {"error": f"Wizard '{wizard_type}' nicht gefunden"}
-        return {"templates": [
-            {"id": t.template_id, "name": t.name, "description": t.description,
-             "icon": t.icon, "preset_values": t.preset_values}
-            for t in wizard.templates
-        ]}
+        return {
+            "templates": [
+                {
+                    "id": t.template_id,
+                    "name": t.name,
+                    "description": t.description,
+                    "icon": t.icon,
+                    "preset_values": t.preset_values,
+                }
+                for t in wizard.templates
+            ]
+        }
 
     # -- RBAC -------------------------------------------------------------
 
@@ -399,18 +428,24 @@ def _register_system_routes(
     async def rbac_roles() -> dict[str, Any]:
         """Alle verfügbaren Rollen und ihre Berechtigungen."""
         from jarvis.gateway.wizards import ROLE_PERMISSIONS
-        return {"roles": {
-            role.value: {"permissions": [p.key for p in perms], "count": len(perms)}
-            for role, perms in ROLE_PERMISSIONS.items()
-        }}
+
+        return {
+            "roles": {
+                role.value: {"permissions": [p.key for p in perms], "count": len(perms)}
+                for role, perms in ROLE_PERMISSIONS.items()
+            }
+        }
 
     @app.get("/api/v1/rbac/check", dependencies=deps)
     async def rbac_check(user_id: str, resource: str, action: str) -> dict[str, Any]:
         """Prüft eine Berechtigung."""
         from jarvis.gateway.wizards import RBACManager
+
         mgr = RBACManager()
         return {
-            "user_id": user_id, "resource": resource, "action": action,
+            "user_id": user_id,
+            "resource": resource,
+            "action": action,
             "allowed": mgr.check_permission(user_id, resource, action),
         }
 
@@ -421,6 +456,7 @@ def _register_system_routes(
         """Auth-Gateway-Statistiken."""
         try:
             from jarvis.gateway.auth import AuthGateway
+
             return AuthGateway().stats()
         except Exception as exc:
             log.error("auth_stats_failed", error=str(exc))
@@ -433,6 +469,7 @@ def _register_system_routes(
         """Globale Dashboard-Übersicht aller Agent-Heartbeats."""
         try:
             from jarvis.core.agent_heartbeat import AgentHeartbeatScheduler
+
             return AgentHeartbeatScheduler().global_dashboard()
         except Exception as exc:
             log.error("heartbeat_dashboard_failed", error=str(exc))
@@ -443,6 +480,7 @@ def _register_system_routes(
         """Heartbeat-Zusammenfassung für einen Agent."""
         try:
             from jarvis.core.agent_heartbeat import AgentHeartbeatScheduler
+
             return AgentHeartbeatScheduler().agent_summary(agent_id)
         except Exception as exc:
             log.error("heartbeat_summary_failed", agent_id=agent_id, error=str(exc))
@@ -481,6 +519,7 @@ def _register_config_routes(
     async def update_config_top_level(updates: dict[str, Any]) -> dict[str, Any]:
         """Aktualisiert Top-Level-Felder."""
         from jarvis.config_manager import _is_secret_field
+
         results: list[dict[str, Any]] = []
         for key, value in updates.items():
             # Skip masked secret values — the UI sends "***" for untouched secrets.
@@ -505,8 +544,7 @@ def _register_config_routes(
         """Lädt die Konfiguration neu aus der Datei."""
         config_manager.reload()
         if gateway is not None and hasattr(gateway, "reload_components"):
-            gateway.reload_components(prompts=True, policies=True,
-                                       core_memory=True, config=True)
+            gateway.reload_components(prompts=True, policies=True, core_memory=True, config=True)
         return {"status": "ok", "message": "Konfiguration und Komponenten neu geladen"}
 
     # -- Presets (BEFORE {section} routes to avoid path parameter conflict) --
@@ -520,7 +558,11 @@ def _register_config_routes(
                     "name": "minimal",
                     "description": "Minimale Konfiguration (CLI-only, kleine Modelle)",
                     "sections": {
-                        "channels": {"cli_enabled": True, "telegram_enabled": False, "webui_enabled": False},
+                        "channels": {
+                            "cli_enabled": True,
+                            "telegram_enabled": False,
+                            "webui_enabled": False,
+                        },
                         "heartbeat": {"enabled": False},
                         "dashboard": {"enabled": False},
                     },
@@ -567,7 +609,9 @@ def _register_config_routes(
                 results.append({"section": section, "status": "ok"})
             except ValueError as exc:
                 log.warning("preset_section_update_failed", section=section, error=str(exc))
-                results.append({"section": section, "status": "error", "error": "Ungueltige Konfiguration"})
+                results.append(
+                    {"section": section, "status": "error", "error": "Ungueltige Konfiguration"}
+                )
         config_manager.save()
         return {"preset": preset_name, "results": results}
 
@@ -620,7 +664,9 @@ def _register_config_routes(
 
         # Get existing section values (raw, unmasked) for protection comparison
         raw_cfg = config_manager.config.model_dump(mode="json")
-        existing_section = raw_cfg.get(section, {}) if isinstance(raw_cfg.get(section), dict) else {}
+        existing_section = (
+            raw_cfg.get(section, {}) if isinstance(raw_cfg.get(section), dict) else {}
+        )
         cleaned = _deep_clean_secrets(values, existing_section)
         try:
             config_manager.update_section(section, cleaned)
@@ -688,6 +734,7 @@ def _register_session_routes(
         """Isolation-Statistiken (core)."""
         try:
             from jarvis.core.isolation import MultiUserIsolation
+
             iso = MultiUserIsolation()
             return iso.stats()
         except Exception as exc:
@@ -699,6 +746,7 @@ def _register_session_routes(
         """Quota-Übersicht aller Agents."""
         try:
             from jarvis.core.isolation import MultiUserIsolation
+
             iso = MultiUserIsolation()
             return {"quotas": iso.all_quota_summaries()}
         except Exception as exc:
@@ -710,6 +758,7 @@ def _register_session_routes(
         """Workspace-Violations."""
         try:
             from jarvis.core.isolation import WorkspaceGuard
+
             guard = WorkspaceGuard()
             return {"violations": guard.violations, "count": guard.violation_count}
         except Exception as exc:
@@ -788,6 +837,7 @@ def _register_memory_routes(
         """Memory-Einträge auf Injection/Credentials/Widersprüche scannen."""
         try:
             from jarvis.memory.hygiene import MemoryHygieneEngine
+
             engine = getattr(gateway, "_memory_hygiene", None) or MemoryHygieneEngine()
             body = await request.json()
             entries = body.get("entries", [])
@@ -803,7 +853,13 @@ def _register_memory_routes(
         """Memory-Hygiene Statistiken."""
         engine = getattr(gateway, "_memory_hygiene", None)
         if engine is None:
-            return {"total_scans": 0, "total_scanned": 0, "total_threats": 0, "quarantined": 0, "threat_rate": 0.0}
+            return {
+                "total_scans": 0,
+                "total_scanned": 0,
+                "total_threats": 0,
+                "quarantined": 0,
+                "threat_rate": 0.0,
+            }
         return engine.stats()
 
     @app.get("/api/v1/memory/hygiene/quarantine", dependencies=deps)
@@ -848,7 +904,12 @@ def _register_memory_routes(
         """Explainability-Engine Statistiken."""
         engine = getattr(gateway, "_explainability", None)
         if engine is None:
-            return {"total_requests": 0, "active_trails": 0, "completed_trails": 0, "avg_confidence": 0.0}
+            return {
+                "total_requests": 0,
+                "active_trails": 0,
+                "completed_trails": 0,
+                "avg_confidence": 0.0,
+            }
         return engine.stats()
 
     @app.get("/api/v1/explainability/low-trust", dependencies=deps)
@@ -872,7 +933,7 @@ def _register_memory_routes(
             entities = getattr(semantic, "entities", None) or {}
             relations = getattr(semantic, "relations", None) or []
             type_counts: dict[str, int] = {}
-            for e in (entities.values() if isinstance(entities, dict) else entities):
+            for e in entities.values() if isinstance(entities, dict) else entities:
                 etype = getattr(e, "type", None) or getattr(e, "entity_type", "unknown")
                 type_counts[etype] = type_counts.get(etype, 0) + 1
             return {
@@ -894,24 +955,34 @@ def _register_memory_routes(
             raw_relations = getattr(semantic, "relations", None) or []
 
             entities = []
-            for eid, e in (raw_entities.items() if isinstance(raw_entities, dict) else enumerate(raw_entities)):
+            for eid, e in (
+                raw_entities.items() if isinstance(raw_entities, dict) else enumerate(raw_entities)
+            ):
                 entity_id = str(getattr(e, "id", eid))
-                entities.append({
-                    "id": entity_id,
-                    "name": getattr(e, "name", str(e)),
-                    "type": getattr(e, "type", None) or getattr(e, "entity_type", "unknown"),
-                    "confidence": getattr(e, "confidence", 0.5),
-                    "attributes": getattr(e, "attributes", {}),
-                })
+                entities.append(
+                    {
+                        "id": entity_id,
+                        "name": getattr(e, "name", str(e)),
+                        "type": getattr(e, "type", None) or getattr(e, "entity_type", "unknown"),
+                        "confidence": getattr(e, "confidence", 0.5),
+                        "attributes": getattr(e, "attributes", {}),
+                    }
+                )
 
             relations = []
             for r in raw_relations:
-                relations.append({
-                    "source_entity": str(getattr(r, "source_entity", getattr(r, "source_name", ""))),
-                    "target_entity": str(getattr(r, "target_entity", getattr(r, "target_name", ""))),
-                    "relation_type": str(getattr(r, "relation_type", "related_to")),
-                    "confidence": getattr(r, "confidence", 0.5),
-                })
+                relations.append(
+                    {
+                        "source_entity": str(
+                            getattr(r, "source_entity", getattr(r, "source_name", ""))
+                        ),
+                        "target_entity": str(
+                            getattr(r, "target_entity", getattr(r, "target_name", ""))
+                        ),
+                        "relation_type": str(getattr(r, "relation_type", "related_to")),
+                        "confidence": getattr(r, "confidence", 0.5),
+                    }
+                )
 
             return {"entities": entities, "relations": relations}
         except Exception:
@@ -930,13 +1001,15 @@ def _register_memory_routes(
                 src = str(getattr(r, "source_entity", getattr(r, "source_name", "")))
                 tgt = str(getattr(r, "target_entity", getattr(r, "target_name", "")))
                 if src == entity_id or tgt == entity_id:
-                    entity_rels.append({
-                        "source_entity": src,
-                        "target_entity": tgt,
-                        "target_name": tgt,
-                        "relation_type": str(getattr(r, "relation_type", "related_to")),
-                        "confidence": getattr(r, "confidence", 0.5),
-                    })
+                    entity_rels.append(
+                        {
+                            "source_entity": src,
+                            "target_entity": tgt,
+                            "target_name": tgt,
+                            "relation_type": str(getattr(r, "relation_type", "related_to")),
+                            "confidence": getattr(r, "confidence", 0.5),
+                        }
+                    )
             return {"relations": entity_rels}
         except Exception:
             return {"relations": []}
@@ -962,6 +1035,7 @@ def _register_skill_routes(
         """Kuratierter Feed für die Startseite."""
         try:
             from jarvis.skills.marketplace import SkillMarketplace
+
             return SkillMarketplace().curated_feed()
         except Exception as exc:
             log.error("marketplace_feed_failed", error=str(exc))
@@ -969,17 +1043,23 @@ def _register_skill_routes(
 
     @app.get("/api/v1/marketplace/search", dependencies=deps)
     async def marketplace_search(
-        q: str = "", category: str = "", verified_only: bool = False,
-        sort_by: str = "relevance", max_results: int = 20,
+        q: str = "",
+        category: str = "",
+        verified_only: bool = False,
+        sort_by: str = "relevance",
+        max_results: int = 20,
     ) -> dict[str, Any]:
         """Durchsucht den Skill-Marktplatz."""
         try:
             from jarvis.skills.marketplace import SkillMarketplace
+
             mp = SkillMarketplace()
             results = mp.search(
-                query=q, category=category,
+                query=q,
+                category=category,
                 verified_only=verified_only,
-                sort_by=sort_by, max_results=max_results,
+                sort_by=sort_by,
+                max_results=max_results,
             )
             return {"results": [r.to_dict() for r in results], "count": len(results)}
         except Exception as exc:
@@ -991,6 +1071,7 @@ def _register_skill_routes(
         """Alle Skill-Kategorien mit Counts."""
         try:
             from jarvis.skills.marketplace import SkillMarketplace
+
             return {"categories": [c.to_dict() for c in SkillMarketplace().categories()]}
         except Exception as exc:
             log.error("marketplace_categories_failed", error=str(exc))
@@ -1001,6 +1082,7 @@ def _register_skill_routes(
         """Featured-Skills."""
         try:
             from jarvis.skills.marketplace import SkillMarketplace
+
             return {"featured": [s.to_dict() for s in SkillMarketplace().featured(n)]}
         except Exception as exc:
             log.error("marketplace_featured_failed", error=str(exc))
@@ -1011,6 +1093,7 @@ def _register_skill_routes(
         """Trending-Skills."""
         try:
             from jarvis.skills.marketplace import SkillMarketplace
+
             return {"trending": [s.to_dict() for s in SkillMarketplace().trending(window, n)]}
         except Exception as exc:
             log.error("marketplace_trending_failed", error=str(exc))
@@ -1021,6 +1104,7 @@ def _register_skill_routes(
         """Marktplatz-Statistiken."""
         try:
             from jarvis.skills.marketplace import SkillMarketplace
+
             return SkillMarketplace().stats()
         except Exception as exc:
             log.error("marketplace_stats_failed", error=str(exc))
@@ -1033,6 +1117,7 @@ def _register_skill_routes(
         """Skill-Updater-Statistiken."""
         try:
             from jarvis.skills.updater import SkillUpdater
+
             return SkillUpdater().stats()
         except Exception as exc:
             log.error("updater_stats_failed", error=str(exc))
@@ -1043,6 +1128,7 @@ def _register_skill_routes(
         """Ausstehende Updates."""
         try:
             from jarvis.skills.updater import SkillUpdater
+
             u = SkillUpdater()
             return {"updates": [c.to_dict() for c in u.pending_updates()]}
         except Exception as exc:
@@ -1054,6 +1140,7 @@ def _register_skill_routes(
         """Aktive Security-Recalls."""
         try:
             from jarvis.skills.updater import SkillUpdater
+
             u = SkillUpdater()
             return {"recalls": [r.to_dict() for r in u.active_recalls()]}
         except Exception as exc:
@@ -1065,6 +1152,7 @@ def _register_skill_routes(
         """Update-Historie."""
         try:
             from jarvis.skills.updater import SkillUpdater
+
             return {"history": SkillUpdater().update_history(n)}
         except Exception as exc:
             log.error("updater_history_failed", error=str(exc))
@@ -1077,8 +1165,12 @@ def _register_skill_routes(
         """Alle registrierten Slash-Commands."""
         try:
             from jarvis.channels.commands import CommandRegistry
+
             reg = CommandRegistry()
-            return {"commands": [c.to_dict() for c in reg.list_commands()], "count": reg.command_count}
+            return {
+                "commands": [c.to_dict() for c in reg.list_commands()],
+                "count": reg.command_count,
+            }
         except Exception as exc:
             log.error("commands_list_failed", error=str(exc))
             return {"error": "Commands konnten nicht geladen werden"}
@@ -1088,6 +1180,7 @@ def _register_skill_routes(
         """Slack Slash-Command-Definitionen."""
         try:
             from jarvis.channels.commands import CommandRegistry
+
             return {"definitions": CommandRegistry().slack_definitions()}
         except Exception as exc:
             log.error("commands_slack_failed", error=str(exc))
@@ -1098,6 +1191,7 @@ def _register_skill_routes(
         """Discord Application-Command-Definitionen."""
         try:
             from jarvis.channels.commands import CommandRegistry
+
             return {"definitions": CommandRegistry().discord_definitions()}
         except Exception as exc:
             log.error("commands_discord_failed", error=str(exc))
@@ -1118,7 +1212,11 @@ def _register_skill_routes(
         """Konnektor-Statistiken."""
         reg = getattr(gateway, "_connector_registry", None)
         if reg is None:
-            return {"total_connectors": 0, "connectors": [], "scope_guard": {"policies": 0, "violations": 0}}
+            return {
+                "total_connectors": 0,
+                "connectors": [],
+                "scope_guard": {"policies": 0, "violations": 0},
+            }
         return reg.stats()
 
     # -- Workflows (categories + legacy start — main endpoints in _register_workflow_graph_routes)
@@ -1276,7 +1374,10 @@ def _register_monitoring_routes(
 
     @app.get("/api/v1/monitoring/audit", dependencies=deps)
     async def audit_trail(
-        action: str = "", actor: str = "", severity: str = "", limit: int = 100,
+        action: str = "",
+        actor: str = "",
+        severity: str = "",
+        limit: int = 100,
     ) -> dict[str, Any]:
         """Durchsucht den Audit-Trail."""
         hub = get_hub()
@@ -1308,6 +1409,7 @@ def _register_monitoring_routes(
 
         async def event_generator():
             import asyncio
+
             try:
                 while True:
                     try:
@@ -1448,6 +1550,7 @@ def _register_security_routes(
         """EU-AI-Act + DSGVO Compliance-Report generieren."""
         try:
             from jarvis.audit.compliance import ComplianceFramework
+
             fw = getattr(gateway, "_compliance_framework", None) or ComplianceFramework()
             fw.auto_assess(
                 has_audit_log=True,
@@ -1470,23 +1573,33 @@ def _register_security_routes(
         """Compliance-Report exportieren (json/csv/markdown)."""
         try:
             from jarvis.audit.compliance import ComplianceFramework, ReportExporter
+
             fw = getattr(gateway, "_compliance_framework", None) or ComplianceFramework()
             fw.auto_assess(
-                has_audit_log=True, has_decision_log=True,
-                has_kill_switch=True, has_encryption=True,
-                has_rbac=True, has_sandbox=True,
-                has_approval_workflow=True, has_redteam=True,
+                has_audit_log=True,
+                has_decision_log=True,
+                has_kill_switch=True,
+                has_encryption=True,
+                has_rbac=True,
+                has_sandbox=True,
+                has_approval_workflow=True,
+                has_redteam=True,
             )
             report = fw.generate_report()
             if fmt == "json":
                 from starlette.responses import JSONResponse
+
                 return JSONResponse(content=report.to_dict())
             elif fmt == "csv":
                 from starlette.responses import PlainTextResponse
+
                 return PlainTextResponse(ReportExporter.to_csv(report), media_type="text/csv")
             elif fmt == "markdown":
                 from starlette.responses import PlainTextResponse
-                return PlainTextResponse(ReportExporter.to_markdown(report), media_type="text/markdown")
+
+                return PlainTextResponse(
+                    ReportExporter.to_markdown(report), media_type="text/markdown"
+                )
             return {"error": f"Unknown format: {fmt}. Use json/csv/markdown."}
         except Exception as exc:
             log.error("compliance_export_failed", error=str(exc))
@@ -1497,7 +1610,13 @@ def _register_security_routes(
         """Decision-Log Übersicht."""
         decision_log = getattr(gateway, "_decision_log", None)
         if decision_log is None:
-            return {"total_decisions": 0, "flagged_count": 0, "approval_rate": 0.0, "unique_agents": 0, "avg_confidence": 0.0}
+            return {
+                "total_decisions": 0,
+                "flagged_count": 0,
+                "approval_rate": 0.0,
+                "unique_agents": 0,
+                "avg_confidence": 0.0,
+            }
         return decision_log.stats()
 
     @app.get("/api/v1/compliance/remediations", dependencies=deps)
@@ -1621,7 +1740,12 @@ def _register_security_routes(
         """Security-Metriken (MTTD, MTTR, etc.)."""
         metrics = getattr(gateway, "_security_metrics", None)
         if metrics is None:
-            return {"mttd_seconds": 0, "mttr_seconds": 0, "resolution_rate": 100, "total_incidents": 0}
+            return {
+                "mttd_seconds": 0,
+                "mttr_seconds": 0,
+                "resolution_rate": 100,
+                "total_incidents": 0,
+            }
         return metrics.to_dict()
 
     @app.get("/api/v1/framework/incidents", dependencies=deps)
@@ -1762,7 +1886,12 @@ def _register_governance_routes(
         """Reputation-Engine Statistiken."""
         engine = getattr(gateway, "_reputation_engine", None)
         if engine is None:
-            return {"total_entities": 0, "avg_score": 0, "flagged_count": 0, "trust_distribution": {}}
+            return {
+                "total_entities": 0,
+                "avg_score": 0,
+                "flagged_count": 0,
+                "trust_distribution": {},
+            }
         return engine.stats()
 
     @app.get("/api/v1/governance/reputation/{entity_id}", dependencies=deps)
@@ -1989,6 +2118,7 @@ def _register_prompt_evolution_routes(
         gate = getattr(gateway, "_improvement_gate", None)
         if gate is not None:
             from jarvis.governance.improvement_gate import GateVerdict, ImprovementDomain
+
             verdict = gate.check(ImprovementDomain.PROMPT_TUNING)
             if verdict != GateVerdict.ALLOWED:
                 return {"error": f"gate_blocked: {verdict.value}"}
@@ -2008,6 +2138,7 @@ def _register_prompt_evolution_routes(
             if getattr(gateway, "_prompt_evolution", None) is None:
                 try:
                     from jarvis.learning.prompt_evolution import PromptEvolutionEngine
+
                     cfg = gateway._config
                     pe_db = str(cfg.db_path.with_name("memory_prompt_evolution.db"))
                     engine = PromptEvolutionEngine(
@@ -2025,7 +2156,10 @@ def _register_prompt_evolution_routes(
                         planner._prompt_evolution = engine
                 except Exception as exc:
                     log.error("prompt_evolution_toggle_failed", error=str(exc))
-                    return {"error": "Prompt-Evolution konnte nicht aktiviert werden", "enabled": False}
+                    return {
+                        "error": "Prompt-Evolution konnte nicht aktiviert werden",
+                        "enabled": False,
+                    }
         else:
             # Disable: disconnect from planner but keep engine for stats
             planner = getattr(gateway, "_planner", None)
@@ -2298,6 +2432,7 @@ def _register_ui_routes(
         # plannerSystem (.md bevorzugt, .txt als Migration-Fallback)
         try:
             from jarvis.core.planner import SYSTEM_PROMPT
+
             content = ""
             for fname in ("SYSTEM_PROMPT.md", "SYSTEM_PROMPT.txt"):
                 sys_path = prompts_dir / fname
@@ -2314,6 +2449,7 @@ def _register_ui_routes(
         # replanPrompt
         try:
             from jarvis.core.planner import REPLAN_PROMPT
+
             content = ""
             for fname in ("REPLAN_PROMPT.md", "REPLAN_PROMPT.txt"):
                 rp_path = prompts_dir / fname
@@ -2330,6 +2466,7 @@ def _register_ui_routes(
         # escalationPrompt
         try:
             from jarvis.core.planner import ESCALATION_PROMPT
+
             content = ""
             for fname in ("ESCALATION_PROMPT.md", "ESCALATION_PROMPT.txt"):
                 ep_path = prompts_dir / fname
@@ -2376,15 +2513,21 @@ def _register_ui_routes(
                 written.append("coreMd")
 
             if "plannerSystem" in body:
-                (prompts_dir / "SYSTEM_PROMPT.md").write_text(body["plannerSystem"], encoding="utf-8")
+                (prompts_dir / "SYSTEM_PROMPT.md").write_text(
+                    body["plannerSystem"], encoding="utf-8"
+                )
                 written.append("plannerSystem")
 
             if "replanPrompt" in body:
-                (prompts_dir / "REPLAN_PROMPT.md").write_text(body["replanPrompt"], encoding="utf-8")
+                (prompts_dir / "REPLAN_PROMPT.md").write_text(
+                    body["replanPrompt"], encoding="utf-8"
+                )
                 written.append("replanPrompt")
 
             if "escalationPrompt" in body:
-                (prompts_dir / "ESCALATION_PROMPT.md").write_text(body["escalationPrompt"], encoding="utf-8")
+                (prompts_dir / "ESCALATION_PROMPT.md").write_text(
+                    body["escalationPrompt"], encoding="utf-8"
+                )
                 written.append("escalationPrompt")
 
             if "policyYaml" in body:
@@ -2422,6 +2565,7 @@ def _register_ui_routes(
         """Reads cron jobs via JobStore."""
         try:
             from jarvis.cron.jobs import JobStore
+
             store = JobStore(config_manager.config.cron_config_file)
             jobs = store.load()
             return {
@@ -2448,6 +2592,7 @@ def _register_ui_routes(
         try:
             from jarvis.cron.jobs import JobStore
             from jarvis.models import CronJob
+
             body = await request.json()
             store = JobStore(config_manager.config.cron_config_file)
             store.load()
@@ -2474,7 +2619,11 @@ def _register_ui_routes(
             servers_raw = data.get("servers", {})
             # servers can be dict (name→config) or list; normalize to dict
             if isinstance(servers_raw, list):
-                servers_dict = {s.get("name", f"server_{i}"): s for i, s in enumerate(servers_raw) if isinstance(s, dict)}
+                servers_dict = {
+                    s.get("name", f"server_{i}"): s
+                    for i, s in enumerate(servers_raw)
+                    if isinstance(s, dict)
+                }
             elif isinstance(servers_raw, dict):
                 servers_dict = servers_raw
             else:
@@ -2496,7 +2645,11 @@ def _register_ui_routes(
             return result
         except Exception as exc:
             log.error("mcp_servers_load_failed", error=str(exc))
-            return {"mode": "disabled", "external_servers": {}, "error": "MCP-Server-Konfiguration konnte nicht geladen werden"}
+            return {
+                "mode": "disabled",
+                "external_servers": {},
+                "error": "MCP-Server-Konfiguration konnte nicht geladen werden",
+            }
 
     @app.put("/api/v1/mcp-servers", dependencies=deps)
     async def ui_put_mcp_servers(request: Request) -> dict[str, Any]:
@@ -2506,9 +2659,18 @@ def _register_ui_routes(
             mcp_path = config_manager.config.mcp_config_file
             data = _load_yaml(mcp_path)
             # Reconstruct server_mode from flat fields
-            sm_keys = ("mode", "http_host", "http_port", "server_name",
-                       "require_auth", "auth_token", "expose_tools",
-                       "expose_resources", "expose_prompts", "enable_sampling")
+            sm_keys = (
+                "mode",
+                "http_host",
+                "http_port",
+                "server_name",
+                "require_auth",
+                "auth_token",
+                "expose_tools",
+                "expose_resources",
+                "expose_prompts",
+                "enable_sampling",
+            )
             sm = data.get("server_mode", {})
             for k in sm_keys:
                 if k in body:
@@ -2521,7 +2683,10 @@ def _register_ui_routes(
             return {"status": "ok"}
         except Exception as exc:
             log.error("mcp_servers_put_failed", error=str(exc))
-            return {"error": "MCP-Server-Konfiguration konnte nicht gespeichert werden", "status": 400}
+            return {
+                "error": "MCP-Server-Konfiguration konnte nicht gespeichert werden",
+                "status": 400,
+            }
 
     # -- 3.9: A2A GET / PUT ----------------------------------------------
 
@@ -2538,7 +2703,11 @@ def _register_ui_routes(
                 "host": a2a.get("host", "0.0.0.0"),
                 "port": a2a.get("port", 8742),
                 "agent_name": a2a.get("agent_name", "jarvis"),
-                **{k: v for k, v in a2a.items() if k not in ("enabled", "host", "port", "agent_name")},
+                **{
+                    k: v
+                    for k, v in a2a.items()
+                    if k not in ("enabled", "host", "port", "agent_name")
+                },
             }
         except Exception as exc:
             log.error("a2a_get_failed", error=str(exc))
@@ -2656,15 +2825,17 @@ def _register_workflow_graph_routes(
             for cp_file in sorted(cp_dir.glob("*.json"), reverse=True):
                 try:
                     data = json.loads(cp_file.read_text(encoding="utf-8"))
-                    runs.append({
-                        "id": data.get("id", ""),
-                        "workflow_id": data.get("workflow_id", ""),
-                        "workflow_name": data.get("workflow_name", ""),
-                        "status": data.get("status", ""),
-                        "started_at": data.get("started_at"),
-                        "completed_at": data.get("completed_at"),
-                        "node_count": len(data.get("node_results", {})),
-                    })
+                    runs.append(
+                        {
+                            "id": data.get("id", ""),
+                            "workflow_id": data.get("workflow_id", ""),
+                            "workflow_name": data.get("workflow_name", ""),
+                            "status": data.get("status", ""),
+                            "started_at": data.get("started_at"),
+                            "completed_at": data.get("completed_at"),
+                            "node_count": len(data.get("node_results", {})),
+                        }
+                    )
                 except Exception:
                     continue
         return {"runs": runs}

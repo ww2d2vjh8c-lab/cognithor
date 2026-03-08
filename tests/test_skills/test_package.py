@@ -66,8 +66,10 @@ class TestSkillManifest:
 
     def test_description_too_long(self) -> None:
         m = SkillManifest(
-            name="valid_name", version="1.0.0",
-            description="x" * 201, author="a",
+            name="valid_name",
+            version="1.0.0",
+            description="x" * 201,
+            author="a",
         )
         assert any("Beschreibung" in e for e in m.validate())
 
@@ -77,22 +79,30 @@ class TestSkillManifest:
 
     def test_memory_limit(self) -> None:
         m = SkillManifest(
-            name="valid_name", version="1.0.0", description="x",
-            author="a", max_memory_mb=2000,
+            name="valid_name",
+            version="1.0.0",
+            description="x",
+            author="a",
+            max_memory_mb=2000,
         )
         assert any("max_memory_mb" in e for e in m.validate())
 
     def test_timeout_limit(self) -> None:
         m = SkillManifest(
-            name="valid_name", version="1.0.0", description="x",
-            author="a", timeout_seconds=500,
+            name="valid_name",
+            version="1.0.0",
+            description="x",
+            author="a",
+            timeout_seconds=500,
         )
         assert any("timeout_seconds" in e for e in m.validate())
 
     def test_serialization_roundtrip(self) -> None:
         m = SkillManifest(
-            name="test_skill", version="2.1.0",
-            description="Ein Test", author="Tester",
+            name="test_skill",
+            version="2.1.0",
+            description="Ein Test",
+            author="Tester",
             trigger_keywords=["test", "prüfung"],
             tools_required=["memory_search"],
             permissions=["file_read", "memory_access"],
@@ -106,8 +116,11 @@ class TestSkillManifest:
 
     def test_parsed_permissions(self) -> None:
         m = SkillManifest(
-            name="test_skill", version="1.0.0", description="x",
-            author="a", permissions=["file_read", "network", "invalid"],
+            name="test_skill",
+            version="1.0.0",
+            description="x",
+            author="a",
+            permissions=["file_read", "network", "invalid"],
         )
         perms = m.parsed_permissions
         assert SandboxPermission.FILE_READ in perms
@@ -183,14 +196,14 @@ async def handler(query: str) -> str:
         assert report.is_installable
 
     def test_dangerous_eval(self, analyzer: CodeAnalyzer) -> None:
-        code = 'result = eval(user_input)'
+        code = "result = eval(user_input)"
         report = analyzer.analyze(code)
         assert report.verdict == AnalysisVerdict.DANGEROUS
         assert not report.is_installable
         assert any("eval" in p for p in report.dangerous_patterns)
 
     def test_dangerous_exec(self, analyzer: CodeAnalyzer) -> None:
-        report = analyzer.analyze('exec("os.system(\'rm -rf /\')")')
+        report = analyzer.analyze("exec(\"os.system('rm -rf /')\")")
         assert report.verdict == AnalysisVerdict.DANGEROUS
 
     def test_dangerous_subprocess(self, analyzer: CodeAnalyzer) -> None:
@@ -198,11 +211,11 @@ async def handler(query: str) -> str:
         assert report.verdict == AnalysisVerdict.DANGEROUS
 
     def test_dangerous_network(self, analyzer: CodeAnalyzer) -> None:
-        report = analyzer.analyze('import socket\ns = socket.socket()')
+        report = analyzer.analyze("import socket\ns = socket.socket()")
         assert report.verdict == AnalysisVerdict.DANGEROUS
 
     def test_dangerous_pickle(self, analyzer: CodeAnalyzer) -> None:
-        report = analyzer.analyze('import pickle\nobj = pickle.loads(data)')
+        report = analyzer.analyze("import pickle\nobj = pickle.loads(data)")
         assert report.verdict == AnalysisVerdict.DANGEROUS
 
     def test_dangerous_credentials(self, analyzer: CodeAnalyzer) -> None:
@@ -214,12 +227,12 @@ async def handler(query: str) -> str:
         assert report.verdict == AnalysisVerdict.DANGEROUS
 
     def test_suspicious_getattr(self, analyzer: CodeAnalyzer) -> None:
-        report = analyzer.analyze('val = getattr(obj, name)')
+        report = analyzer.analyze("val = getattr(obj, name)")
         assert report.verdict == AnalysisVerdict.SUSPICIOUS
         assert report.is_installable  # Verdächtig, aber installierbar
 
     def test_suspicious_globals(self, analyzer: CodeAnalyzer) -> None:
-        report = analyzer.analyze('g = globals()')
+        report = analyzer.analyze("g = globals()")
         assert report.verdict == AnalysisVerdict.SUSPICIOUS
 
     def test_too_many_lines(self) -> None:
@@ -234,8 +247,11 @@ async def handler(query: str) -> str:
 
     def test_permission_cross_check_network(self, analyzer: CodeAnalyzer) -> None:
         manifest = SkillManifest(
-            name="test_skill", version="1.0.0", description="x",
-            author="a", network_allowed=False,
+            name="test_skill",
+            version="1.0.0",
+            description="x",
+            author="a",
+            network_allowed=False,
         )
         # httpx ohne Netzwerk-Permission → im Comment, not in actual code patterns
         code = "import aiohttp\n# This code uses network"
@@ -271,8 +287,10 @@ class TestSkillPackage:
 
     def test_roundtrip(self) -> None:
         manifest = SkillManifest(
-            name="test_pkg", version="1.0.0",
-            description="Test-Paket", author="Tester",
+            name="test_pkg",
+            version="1.0.0",
+            description="Test-Paket",
+            author="Tester",
         )
         original = SkillPackage(
             manifest=manifest,
@@ -293,8 +311,10 @@ class TestSkillPackage:
     def test_roundtrip_with_signature(self) -> None:
         signer = PackageSigner("key", "author")
         manifest = SkillManifest(
-            name="signed_pkg", version="2.0.0",
-            description="Signiert", author="author",
+            name="signed_pkg",
+            version="2.0.0",
+            description="Signiert",
+            author="author",
         )
         package = SkillPackage(
             manifest=manifest,
@@ -310,8 +330,10 @@ class TestSkillPackage:
 
     def test_content_hash_deterministic(self) -> None:
         manifest = SkillManifest(
-            name="hash_test", version="1.0.0",
-            description="x", author="a",
+            name="hash_test",
+            version="1.0.0",
+            description="x",
+            author="a",
         )
         p1 = SkillPackage(manifest=manifest, code="code", test_code="test")
         p2 = SkillPackage(manifest=manifest, code="code", test_code="test")
@@ -319,8 +341,10 @@ class TestSkillPackage:
 
     def test_package_id_format(self) -> None:
         manifest = SkillManifest(
-            name="my_skill", version="3.1.4",
-            description="x", author="a",
+            name="my_skill",
+            version="3.1.4",
+            description="x",
+            author="a",
         )
         p = SkillPackage(manifest=manifest, code="pass")
         assert p.package_id.startswith("my_skill@3.1.4-")
@@ -351,8 +375,10 @@ class TestPackageBuilder:
     @pytest.fixture
     def manifest(self) -> SkillManifest:
         return SkillManifest(
-            name="build_test", version="1.0.0",
-            description="Builder-Test", author="Builder",
+            name="build_test",
+            version="1.0.0",
+            description="Builder-Test",
+            author="Builder",
         )
 
     def test_build_unsigned(self, manifest: SkillManifest) -> None:
@@ -375,7 +401,10 @@ class TestPackageBuilder:
     def test_build_rejects_invalid_manifest(self) -> None:
         builder = PackageBuilder()
         bad_manifest = SkillManifest(
-            name="X", version="nope", description="x", author="",
+            name="X",
+            version="nope",
+            description="x",
+            author="",
         )
         with pytest.raises(ValueError, match="Manifest ungültig"):
             builder.build(bad_manifest, "pass")
@@ -409,8 +438,10 @@ class TestPackageInstaller:
     @pytest.fixture
     def signed_package(self, signer: PackageSigner) -> SkillPackage:
         manifest = SkillManifest(
-            name="install_test", version="1.0.0",
-            description="Install-Test", author="Tester",
+            name="install_test",
+            version="1.0.0",
+            description="Install-Test",
+            author="Tester",
             permissions=["file_read"],
             max_memory_mb=64,
             timeout_seconds=10,
@@ -419,7 +450,10 @@ class TestPackageInstaller:
         return builder.build(manifest, "async def handler(): return 'ok'")
 
     def test_install_signed_package(
-        self, tmp_path: Path, signer: PackageSigner, signed_package: SkillPackage,
+        self,
+        tmp_path: Path,
+        signer: PackageSigner,
+        signed_package: SkillPackage,
     ) -> None:
         installer = PackageInstaller(
             tmp_path / "skills",
@@ -434,8 +468,10 @@ class TestPackageInstaller:
 
     def test_install_rejects_unsigned(self, tmp_path: Path) -> None:
         manifest = SkillManifest(
-            name="unsigned_pkg", version="1.0.0",
-            description="x", author="a",
+            name="unsigned_pkg",
+            version="1.0.0",
+            description="x",
+            author="a",
         )
         pkg = SkillPackage(manifest=manifest, code="pass")
 
@@ -446,7 +482,9 @@ class TestPackageInstaller:
         assert "nicht signiert" in result.message
 
     def test_install_rejects_untrusted_signer(
-        self, tmp_path: Path, signed_package: SkillPackage,
+        self,
+        tmp_path: Path,
+        signed_package: SkillPackage,
     ) -> None:
         installer = PackageInstaller(
             tmp_path / "skills",
@@ -457,11 +495,15 @@ class TestPackageInstaller:
         assert "nicht vertrauenswürdig" in result.message
 
     def test_install_rejects_dangerous_code(
-        self, tmp_path: Path, signer: PackageSigner,
+        self,
+        tmp_path: Path,
+        signer: PackageSigner,
     ) -> None:
         manifest = SkillManifest(
-            name="evil_skill", version="1.0.0",
-            description="Böse", author="Hacker",
+            name="evil_skill",
+            version="1.0.0",
+            description="Böse",
+            author="Hacker",
         )
         # skip_analysis beim Build, aber Installer prüft nochmal
         pkg = SkillPackage(
@@ -479,8 +521,10 @@ class TestPackageInstaller:
 
     def test_install_without_signature_requirement(self, tmp_path: Path) -> None:
         manifest = SkillManifest(
-            name="no_sig_needed", version="1.0.0",
-            description="x", author="a",
+            name="no_sig_needed",
+            version="1.0.0",
+            description="x",
+            author="a",
         )
         pkg = SkillPackage(manifest=manifest, code="x = 1")
 
@@ -489,7 +533,10 @@ class TestPackageInstaller:
         assert result.success
 
     def test_uninstall(
-        self, tmp_path: Path, signer: PackageSigner, signed_package: SkillPackage,
+        self,
+        tmp_path: Path,
+        signer: PackageSigner,
+        signed_package: SkillPackage,
     ) -> None:
         installer = PackageInstaller(
             tmp_path / "skills",
@@ -505,7 +552,10 @@ class TestPackageInstaller:
         assert not (tmp_path / "skills" / "install_test").exists()
 
     def test_sandbox_config(
-        self, tmp_path: Path, signer: PackageSigner, signed_package: SkillPackage,
+        self,
+        tmp_path: Path,
+        signer: PackageSigner,
+        signed_package: SkillPackage,
     ) -> None:
         installer = PackageInstaller(
             tmp_path / "skills",
@@ -525,7 +575,10 @@ class TestPackageInstaller:
         assert installer.sandbox_config_for("nonexistent") == {}
 
     def test_list_installed(
-        self, tmp_path: Path, signer: PackageSigner, signed_package: SkillPackage,
+        self,
+        tmp_path: Path,
+        signer: PackageSigner,
+        signed_package: SkillPackage,
     ) -> None:
         installer = PackageInstaller(
             tmp_path / "skills",

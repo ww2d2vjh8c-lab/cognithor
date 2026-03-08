@@ -58,8 +58,10 @@ class TestAnonymizeAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
         )
         log = DataProcessingLog()
@@ -75,8 +77,10 @@ class TestAnonymizeAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
         )
         log = DataProcessingLog()
@@ -90,8 +94,10 @@ class TestAnonymizeAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
         )
         log = DataProcessingLog()
@@ -105,8 +111,10 @@ class TestAnonymizeAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
         )
         log = DataProcessingLog()
@@ -120,8 +128,10 @@ class TestAnonymizeAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
         )
         log = DataProcessingLog()
@@ -138,8 +148,10 @@ class TestAnonymizeAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
         )
         log = DataProcessingLog()
@@ -154,8 +166,10 @@ class TestAnonymizeAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
         )
         log = DataProcessingLog()
@@ -170,8 +184,10 @@ class TestAnonymizeAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
         )
         log = DataProcessingLog()
@@ -187,8 +203,10 @@ class TestAnonymizeAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
         )
         log = DataProcessingLog()
@@ -216,8 +234,10 @@ class TestArchiveAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="mem", category=DataCategory.MEMORY,
-                retention_days=30, action=RetentionAction.ARCHIVE,
+                name="mem",
+                category=DataCategory.MEMORY,
+                retention_days=30,
+                action=RetentionAction.ARCHIVE,
             ),
         )
         log = DataProcessingLog()
@@ -231,8 +251,10 @@ class TestArchiveAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="mem", category=DataCategory.MEMORY,
-                retention_days=30, action=RetentionAction.ARCHIVE,
+                name="mem",
+                category=DataCategory.MEMORY,
+                retention_days=30,
+                action=RetentionAction.ARCHIVE,
             ),
         )
         log = DataProcessingLog()
@@ -248,14 +270,20 @@ class TestArchiveAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="mem", category=DataCategory.MEMORY,
-                retention_days=30, action=RetentionAction.ARCHIVE,
+                name="mem",
+                category=DataCategory.MEMORY,
+                retention_days=30,
+                action=RetentionAction.ARCHIVE,
             ),
         )
         log = DataProcessingLog()
         rec = _old_record(
-            "r1", DataCategory.MEMORY, now,
-            user_id="u1", data_summary="important", third_party="api",
+            "r1",
+            DataCategory.MEMORY,
+            now,
+            user_id="u1",
+            data_summary="important",
+            third_party="api",
         )
         log._records.append(rec)
 
@@ -271,8 +299,10 @@ class TestArchiveAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="mem", category=DataCategory.MEMORY,
-                retention_days=30, action=RetentionAction.ARCHIVE,
+                name="mem",
+                category=DataCategory.MEMORY,
+                retention_days=30,
+                action=RetentionAction.ARCHIVE,
             ),
         )
         log = DataProcessingLog()
@@ -294,8 +324,10 @@ class TestArchiveAction:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="mem", category=DataCategory.MEMORY,
-                retention_days=30, action=RetentionAction.ARCHIVE,
+                name="mem",
+                category=DataCategory.MEMORY,
+                retention_days=30,
+                action=RetentionAction.ARCHIVE,
             ),
         )
         log = DataProcessingLog()
@@ -325,16 +357,22 @@ class TestCombinedActions:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="q", category=DataCategory.QUERY,
-                retention_days=30, action=RetentionAction.DELETE,
+                name="q",
+                category=DataCategory.QUERY,
+                retention_days=30,
+                action=RetentionAction.DELETE,
             ),
             RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
+                name="conv",
+                category=DataCategory.CONVERSATION,
+                retention_days=30,
+                action=RetentionAction.ANONYMIZE,
             ),
             RetentionPolicy(
-                name="mem", category=DataCategory.MEMORY,
-                retention_days=30, action=RetentionAction.ARCHIVE,
+                name="mem",
+                category=DataCategory.MEMORY,
+                retention_days=30,
+                action=RetentionAction.ARCHIVE,
             ),
         )
         log = DataProcessingLog()
@@ -362,17 +400,21 @@ class TestCombinedActions:
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         enforcer = _make_enforcer(
             RetentionPolicy(
-                name="q", category=DataCategory.QUERY,
-                retention_days=30, action=RetentionAction.DELETE,
+                name="q",
+                category=DataCategory.QUERY,
+                retention_days=30,
+                action=RetentionAction.DELETE,
             ),
         )
         log = DataProcessingLog()
         log._records.append(_old_record("r1", DataCategory.QUERY, now))
-        log._records.append(DataProcessingRecord(
-            record_id="r2",
-            timestamp=(now - timedelta(days=5)).isoformat(),
-            category=DataCategory.QUERY,
-        ))
+        log._records.append(
+            DataProcessingRecord(
+                record_id="r2",
+                timestamp=(now - timedelta(days=5)).isoformat(),
+                category=DataCategory.QUERY,
+            )
+        )
 
         counts = enforcer.enforce(log, now=now)
 

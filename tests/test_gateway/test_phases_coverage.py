@@ -24,6 +24,7 @@ def config(tmp_path) -> JarvisConfig:
 class TestCorePhase:
     def test_declare_core_attrs(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.core import declare_core_attrs
+
         result = declare_core_attrs(config)
         assert "ollama" in result
         assert "llm" in result
@@ -153,6 +154,7 @@ class TestCorePhase:
 class TestSecurityPhase:
     def test_declare_security_attrs(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.security import declare_security_attrs
+
         result = declare_security_attrs(config)
         assert "audit_logger" in result
         assert "gatekeeper" in result
@@ -160,6 +162,7 @@ class TestSecurityPhase:
     @pytest.mark.asyncio
     async def test_init_security(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.security import init_security
+
         result = await init_security(config)
         assert "audit_logger" in result
         assert "gatekeeper" in result
@@ -173,6 +176,7 @@ class TestSecurityPhase:
 class TestMemoryPhase:
     def test_declare_memory_attrs(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.memory import declare_memory_attrs
+
         result = declare_memory_attrs(config)
         assert "memory_manager" in result
 
@@ -208,6 +212,7 @@ class TestMemoryPhase:
 class TestToolsPhase:
     def test_declare_tools_attrs(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.tools import declare_tools_attrs
+
         result = declare_tools_attrs(config)
         assert "mcp_client" in result
 
@@ -229,6 +234,7 @@ class TestToolsPhase:
 class TestPGEPhase:
     def test_declare_pge_attrs(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.pge import declare_pge_attrs
+
         result = declare_pge_attrs(config)
         assert "planner" in result
         assert "executor" in result
@@ -280,6 +286,7 @@ class TestPGEPhase:
 class TestAgentsPhase:
     def test_declare_agents_attrs(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.agents import declare_agents_attrs
+
         result = declare_agents_attrs(config)
         assert "agent_router" in result
 
@@ -305,12 +312,14 @@ class TestAgentsPhase:
 class TestAdvancedPhase:
     def test_declare_advanced_attrs(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.advanced import declare_advanced_attrs
+
         result = declare_advanced_attrs(config)
         assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_init_advanced(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.advanced import init_advanced
+
         result = await init_advanced(config)
         assert isinstance(result, dict)
 
@@ -323,11 +332,13 @@ class TestAdvancedPhase:
 class TestCompliancePhase:
     def test_declare_compliance_attrs(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.compliance import declare_compliance_attrs
+
         result = declare_compliance_attrs(config)
         assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_init_compliance(self, config: JarvisConfig) -> None:
         from jarvis.gateway.phases.compliance import init_compliance
+
         result = await init_compliance(config)
         assert isinstance(result, dict)

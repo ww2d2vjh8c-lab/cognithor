@@ -88,9 +88,7 @@ class TestValidateVaultPath:
 class TestVaultReadTraversal:
     """Testet, dass vault_read gegen Path-Traversal geschützt ist."""
 
-    async def test_traversal_blocked(
-        self, vault: VaultTools, secret_file: Path
-    ) -> None:
+    async def test_traversal_blocked(self, vault: VaultTools, secret_file: Path) -> None:
         """../../secret.txt darf nicht gelesen werden."""
         relative = Path("..") / ".." / "secret.txt"
         result = await vault.vault_read(str(relative))
@@ -134,9 +132,7 @@ class TestVaultReadTraversal:
 class TestFindNoteTraversal:
     """Testet, dass _find_note gegen Path-Traversal geschützt ist."""
 
-    def test_traversal_returns_none(
-        self, vault: VaultTools, secret_file: Path
-    ) -> None:
+    def test_traversal_returns_none(self, vault: VaultTools, secret_file: Path) -> None:
         """../../secret.txt liefert None."""
         result = vault._find_note("../../secret.txt")
         assert result is None

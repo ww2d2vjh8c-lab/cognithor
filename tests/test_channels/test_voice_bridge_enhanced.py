@@ -131,7 +131,9 @@ class TestHandleAudioStopEmptyTranscription:
         bridge._stt_engine = MagicMock()
 
         await bridge.handle_ws_message(
-            "sess1", {"type": "audio_start", "format": "webm"}, send_fn,
+            "sess1",
+            {"type": "audio_start", "format": "webm"},
+            send_fn,
         )
         await bridge.handle_ws_message(
             "sess1",
@@ -141,7 +143,9 @@ class TestHandleAudioStopEmptyTranscription:
         send_fn.reset_mock()
 
         result = await bridge.handle_ws_message(
-            "sess1", {"type": "audio_stop"}, send_fn,
+            "sess1",
+            {"type": "audio_stop"},
+            send_fn,
         )
         assert result is None
 

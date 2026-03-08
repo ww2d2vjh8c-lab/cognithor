@@ -173,9 +173,7 @@ class UserPreferenceStore:
         if pref.avg_message_length == 0.0:
             pref.avg_message_length = float(msg_length)
         else:
-            pref.avg_message_length = (
-                alpha * msg_length + (1 - alpha) * pref.avg_message_length
-            )
+            pref.avg_message_length = alpha * msg_length + (1 - alpha) * pref.avg_message_length
 
         # Auto-derive verbosity after enough interactions
         if pref.interaction_count >= 5:

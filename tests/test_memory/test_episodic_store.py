@@ -52,17 +52,23 @@ class TestEpisodicStore:
 
     def test_get_similar_episodes(self):
         self.store.store_episode(
-            "s1", "API Test", "Tested API",
+            "s1",
+            "API Test",
+            "Tested API",
             tool_sequence=["read_file", "exec_command", "write_file"],
             success_score=0.9,
         )
         self.store.store_episode(
-            "s2", "Another Test", "Another test",
+            "s2",
+            "Another Test",
+            "Another test",
             tool_sequence=["read_file", "exec_command"],
             success_score=0.8,
         )
         self.store.store_episode(
-            "s3", "Unrelated", "Unrelated",
+            "s3",
+            "Unrelated",
+            "Unrelated",
             tool_sequence=["search_memory"],
             success_score=0.7,
         )
@@ -126,11 +132,13 @@ class TestEpisodicSummarizer:
     @pytest.mark.asyncio
     async def test_summarize_day_no_episodes(self):
         from datetime import date
+
         result = await self.summarizer.summarize_day(date(2025, 1, 1))
         assert "Keine Episoden" in result
 
     @pytest.mark.asyncio
     async def test_summarize_week_no_summaries(self):
         from datetime import date
+
         result = await self.summarizer.summarize_week(date(2025, 1, 1))
         assert "Keine Zusammenfassungen" in result

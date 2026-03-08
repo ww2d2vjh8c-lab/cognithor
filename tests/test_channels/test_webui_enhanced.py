@@ -97,15 +97,20 @@ class TestWebUISend:
 
 class TestWebUIVoiceBridge:
     @pytest.mark.asyncio
-    async def test_voice_message_transcription(self, channel: WebUIChannel, handler: AsyncMock) -> None:
+    async def test_voice_message_transcription(
+        self, channel: WebUIChannel, handler: AsyncMock
+    ) -> None:
         """Audio-basierte Nachricht wird transkribiert."""
         channel._handler = handler
         mock_ws = AsyncMock()
 
         audio_b64 = base64.b64encode(b"fake-audio").decode()
-        with patch.object(channel, "_transcribe_audio", new_callable=AsyncMock, return_value="Transkribiert"):
+        with patch.object(
+            channel, "_transcribe_audio", new_callable=AsyncMock, return_value="Transkribiert"
+        ):
             await channel._handle_ws_message(
-                mock_ws, "s1",
+                mock_ws,
+                "s1",
                 {
                     "type": "user_message",
                     "text": "",
@@ -125,7 +130,8 @@ class TestWebUIVoiceBridge:
 
         with patch.object(channel, "_transcribe_audio", new_callable=AsyncMock, return_value=None):
             await channel._handle_ws_message(
-                mock_ws, "s1",
+                mock_ws,
+                "s1",
                 {
                     "type": "user_message",
                     "text": "",

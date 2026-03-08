@@ -35,6 +35,7 @@ class FakeApp:
         def decorator(fn):
             self.routes[f"{method} {path}"] = fn
             return fn
+
         return decorator
 
     def get(self, path: str, **kwargs: Any):
@@ -136,6 +137,7 @@ def gateway() -> MagicMock:
 def registered_app(app: FakeApp, config_manager: ConfigManager, gateway: MagicMock) -> FakeApp:
     """App mit allen Routes registriert."""
     from jarvis.channels.config_routes import create_config_routes
+
     create_config_routes(app, config_manager, gateway=gateway)
     return app
 
@@ -375,6 +377,7 @@ class TestSystemRoutes:
         result = await handler()
         # Either HTMLResponse (if dashboard.html exists) or error dict
         from starlette.responses import HTMLResponse
+
         assert isinstance(result, (dict, HTMLResponse))
 
 
@@ -399,17 +402,13 @@ class TestConfigRoutes:
         assert "results" in result
 
     @pytest.mark.asyncio
-    async def test_update_config_skip_masked_secret(
-        self, registered_app: FakeApp
-    ) -> None:
+    async def test_update_config_skip_masked_secret(self, registered_app: FakeApp) -> None:
         handler = registered_app.routes["PATCH /api/v1/config"]
         result = await handler(updates={"telegram_token": "***"})
         assert result["results"][0]["status"] == "skipped"
 
     @pytest.mark.asyncio
-    async def test_config_reload(
-        self, registered_app: FakeApp, gateway: MagicMock
-    ) -> None:
+    async def test_config_reload(self, registered_app: FakeApp, gateway: MagicMock) -> None:
         handler = registered_app.routes["POST /api/v1/config/reload"]
         result = await handler()
         assert result["status"] == "ok"
@@ -457,9 +456,7 @@ class TestConfigRoutes:
         assert isinstance(result, dict)
 
     @pytest.mark.asyncio
-    async def test_update_config_section_secret_mask(
-        self, registered_app: FakeApp
-    ) -> None:
+    async def test_update_config_section_secret_mask(self, registered_app: FakeApp) -> None:
         handler = registered_app.routes["PATCH /api/v1/config/{section}"]
         # Masked secrets should be stripped
         result = await handler(

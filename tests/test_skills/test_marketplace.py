@@ -25,46 +25,70 @@ def market() -> SkillMarketplace:
 @pytest.fixture
 def populated_market(market: SkillMarketplace) -> SkillMarketplace:
     """Marketplace mit Beispiel-Skills."""
-    market.publish(SkillListing(
-        package_id="bu_calc", name="BU-Rechner",
-        description="Berufsunfähigkeits-Tarifvergleich mit 40+ Tarifen",
-        publisher_id="p_alex", publisher_name="Alex",
-        category=SkillCategory.INSURANCE,
-        tags=["bu", "tarif", "vergleich"],
-        icon="🛡️", is_verified=True,
-    ))
-    market.publish(SkillListing(
-        package_id="kv_check", name="KV-Tarifcheck",
-        description="Krankenversicherungs-Optimierung",
-        publisher_id="p_alex", publisher_name="Alex",
-        category=SkillCategory.INSURANCE,
-        tags=["kv", "krankenversicherung"],
-        icon="🏥", is_featured=True, is_verified=True,
-    ))
-    market.publish(SkillListing(
-        package_id="pdf_gen", name="PDF-Generator",
-        description="Professionelle Angebots-PDFs erstellen",
-        publisher_id="p_bob", publisher_name="Bob",
-        category=SkillCategory.PRODUCTIVITY,
-        tags=["pdf", "angebot", "dokument"],
-        icon="📄",
-    ))
-    market.publish(SkillListing(
-        package_id="crm_sync", name="CRM-Synchronisation",
-        description="Kundendaten mit externem CRM abgleichen",
-        publisher_id="p_carol", publisher_name="Carol",
-        category=SkillCategory.INTEGRATION,
-        tags=["crm", "sync", "kunde"],
-        icon="🔗", is_featured=True,
-    ))
-    market.publish(SkillListing(
-        package_id="code_review", name="Code-Review-Bot",
-        description="Automatische Code-Reviews mit AI",
-        publisher_id="p_bob", publisher_name="Bob",
-        category=SkillCategory.DEVELOPMENT,
-        tags=["code", "review", "ai"],
-        icon="💻",
-    ))
+    market.publish(
+        SkillListing(
+            package_id="bu_calc",
+            name="BU-Rechner",
+            description="Berufsunfähigkeits-Tarifvergleich mit 40+ Tarifen",
+            publisher_id="p_alex",
+            publisher_name="Alex",
+            category=SkillCategory.INSURANCE,
+            tags=["bu", "tarif", "vergleich"],
+            icon="🛡️",
+            is_verified=True,
+        )
+    )
+    market.publish(
+        SkillListing(
+            package_id="kv_check",
+            name="KV-Tarifcheck",
+            description="Krankenversicherungs-Optimierung",
+            publisher_id="p_alex",
+            publisher_name="Alex",
+            category=SkillCategory.INSURANCE,
+            tags=["kv", "krankenversicherung"],
+            icon="🏥",
+            is_featured=True,
+            is_verified=True,
+        )
+    )
+    market.publish(
+        SkillListing(
+            package_id="pdf_gen",
+            name="PDF-Generator",
+            description="Professionelle Angebots-PDFs erstellen",
+            publisher_id="p_bob",
+            publisher_name="Bob",
+            category=SkillCategory.PRODUCTIVITY,
+            tags=["pdf", "angebot", "dokument"],
+            icon="📄",
+        )
+    )
+    market.publish(
+        SkillListing(
+            package_id="crm_sync",
+            name="CRM-Synchronisation",
+            description="Kundendaten mit externem CRM abgleichen",
+            publisher_id="p_carol",
+            publisher_name="Carol",
+            category=SkillCategory.INTEGRATION,
+            tags=["crm", "sync", "kunde"],
+            icon="🔗",
+            is_featured=True,
+        )
+    )
+    market.publish(
+        SkillListing(
+            package_id="code_review",
+            name="Code-Review-Bot",
+            description="Automatische Code-Reviews mit AI",
+            publisher_id="p_bob",
+            publisher_name="Bob",
+            category=SkillCategory.DEVELOPMENT,
+            tags=["code", "review", "ai"],
+            icon="💻",
+        )
+    )
     return market
 
 
@@ -75,10 +99,14 @@ def populated_market(market: SkillMarketplace) -> SkillMarketplace:
 
 class TestPublishing:
     def test_publish(self, market: SkillMarketplace) -> None:
-        listing = market.publish(SkillListing(
-            package_id="test", name="Test", description="A test",
-            publisher_id="p1",
-        ))
+        listing = market.publish(
+            SkillListing(
+                package_id="test",
+                name="Test",
+                description="A test",
+                publisher_id="p1",
+            )
+        )
         assert listing.package_id == "test"
         assert market.listing_count == 1
 
@@ -246,7 +274,10 @@ class TestFeaturedTrending:
 class TestReviews:
     def test_add_review(self, populated_market: SkillMarketplace) -> None:
         review = populated_market.add_review(
-            "bu_calc", "user_1", 5, "Großartiger Rechner!",
+            "bu_calc",
+            "user_1",
+            5,
+            "Großartiger Rechner!",
         )
         assert review is not None
         assert review.rating == 5
@@ -319,28 +350,44 @@ class TestInstallation:
 class TestSkillListing:
     def test_average_rating(self) -> None:
         l = SkillListing(
-            package_id="t", name="T", description="T", publisher_id="p",
-            rating_sum=12.0, rating_count=3,
+            package_id="t",
+            name="T",
+            description="T",
+            publisher_id="p",
+            rating_sum=12.0,
+            rating_count=3,
         )
         assert l.average_rating == 4.0
 
     def test_average_rating_zero(self) -> None:
         l = SkillListing(
-            package_id="t", name="T", description="T", publisher_id="p",
+            package_id="t",
+            name="T",
+            description="T",
+            publisher_id="p",
         )
         assert l.average_rating == 0.0
 
     def test_popularity_score(self) -> None:
         l = SkillListing(
-            package_id="t", name="T", description="T", publisher_id="p",
-            install_count=50, rating_sum=20, rating_count=5,
+            package_id="t",
+            name="T",
+            description="T",
+            publisher_id="p",
+            install_count=50,
+            rating_sum=20,
+            rating_count=5,
         )
         assert l.popularity_score > 0
 
     def test_to_dict(self) -> None:
         l = SkillListing(
-            package_id="t", name="Test", description="D", publisher_id="p",
-            category=SkillCategory.INSURANCE, tags=["a", "b"],
+            package_id="t",
+            name="Test",
+            description="D",
+            publisher_id="p",
+            category=SkillCategory.INSURANCE,
+            tags=["a", "b"],
         )
         d = l.to_dict()
         assert d["package_id"] == "t"
@@ -412,24 +459,31 @@ class TestEmergencyRecall:
 
     def test_recall_with_publisher_ban(self, populated_market: SkillMarketplace) -> None:
         result = populated_market.recall_skill(
-            "bu_calc", reason="abuse", ban_publisher=True,
+            "bu_calc",
+            reason="abuse",
+            ban_publisher=True,
         )
         assert result["recalled"] is True
         assert result["publisher_banned"] is True
         # All skills from that publisher should be removed
         publisher_id = result["publisher_id"]
-        remaining = [l for l in populated_market._listings.values()
-                     if l.publisher_id == publisher_id]
+        remaining = [
+            l for l in populated_market._listings.values() if l.publisher_id == publisher_id
+        ]
         assert len(remaining) == 0
 
     def test_banned_publisher_cannot_publish(self, populated_market: SkillMarketplace) -> None:
         # bu_calc has publisher_id="p_alex"
         populated_market.recall_skill("bu_calc", ban_publisher=True)
         with pytest.raises(ValueError, match="banned"):
-            populated_market.publish(SkillListing(
-                package_id="new_skill", name="New", description="D",
-                publisher_id="p_alex",
-            ))
+            populated_market.publish(
+                SkillListing(
+                    package_id="new_skill",
+                    name="New",
+                    description="D",
+                    publisher_id="p_alex",
+                )
+            )
 
     def test_recall_log(self, populated_market: SkillMarketplace) -> None:
         populated_market.recall_skill("bu_calc", reason="test")
@@ -453,9 +507,14 @@ class TestPermissionsAndSecurity:
         assert market.get_permissions("nope") == []
 
     def test_set_scan_result(self, populated_market: SkillMarketplace) -> None:
-        assert populated_market.set_scan_result(
-            "bu_calc", passed=True, scan_report={"issues": 0},
-        ) is True
+        assert (
+            populated_market.set_scan_result(
+                "bu_calc",
+                passed=True,
+                scan_report={"issues": 0},
+            )
+            is True
+        )
         listing = populated_market.get_listing("bu_calc")
         assert listing is not None
         assert listing.security_scan_passed is True

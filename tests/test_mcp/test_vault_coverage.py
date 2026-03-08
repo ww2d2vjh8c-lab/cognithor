@@ -133,7 +133,9 @@ class TestBuildFrontmatter:
         assert "author: jarvis" in fm
 
     def test_with_sources(self, vault: VaultTools) -> None:
-        fm = vault._build_frontmatter("T", ["t"], sources=["https://example.test/page1", "https://example.test/page2"])
+        fm = vault._build_frontmatter(
+            "T", ["t"], sources=["https://example.test/page1", "https://example.test/page2"]
+        )
         assert "sources:" in fm
         assert "example.test/page1" in fm
 
@@ -205,7 +207,9 @@ class TestVaultSearch:
 
     @pytest.mark.asyncio
     async def test_search_finds_content(self, vault: VaultTools) -> None:
-        await vault.vault_save(title="Searchable", content="This contains a unique keyword here.", tags="test")
+        await vault.vault_save(
+            title="Searchable", content="This contains a unique keyword here.", tags="test"
+        )
         result = await vault.vault_search(query="unique keyword")
         assert "Searchable" in result
         assert "1 Treffer" in result
@@ -479,9 +483,7 @@ class TestRegisterVaultTools:
         config.vault.path = str(tmp_path / "vault")
         config.vault.default_folders = {}
         register_vault_tools(mock_client, config=config)
-        registered = [
-            call.args[0] for call in mock_client.register_builtin_handler.call_args_list
-        ]
+        registered = [call.args[0] for call in mock_client.register_builtin_handler.call_args_list]
         assert "vault_save" in registered
         assert "vault_search" in registered
         assert "vault_list" in registered

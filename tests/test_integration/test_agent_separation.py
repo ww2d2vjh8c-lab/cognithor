@@ -28,7 +28,9 @@ class TestSessionAgentIsolation:
         store = SessionStore(tmp_path / "sessions.db")
 
         # Session für Agent "jarvis" (Default)
-        s1 = SessionContext(session_id="s-jarvis", user_id="alex", channel="cli", agent_name="jarvis")
+        s1 = SessionContext(
+            session_id="s-jarvis", user_id="alex", channel="cli", agent_name="jarvis"
+        )
         store.save_session(s1)
 
         # Session für Agent "coder"
@@ -106,9 +108,7 @@ class TestSessionAgentIsolation:
                 timestamp REAL NOT NULL
             );
         """)
-        conn.execute(
-            "INSERT INTO sessions VALUES ('old-s', 'alex', 'cli', 1.0, 1.0, 0, 1, 10)"
-        )
+        conn.execute("INSERT INTO sessions VALUES ('old-s', 'alex', 'cli', 1.0, 1.0, 0, 1, 10)")
         conn.commit()
         conn.close()
 

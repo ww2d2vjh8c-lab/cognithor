@@ -202,10 +202,12 @@ class TestCollaborationResult:
 
 class TestDebate:
     async def test_successful_debate(self) -> None:
-        runner = _make_runner({
-            "researcher": "I found important data about market trends.",
-            "analyst": "The data shows a clear upward trend with 15% growth.",
-        })
+        runner = _make_runner(
+            {
+                "researcher": "I found important data about market trends.",
+                "analyst": "The data shows a clear upward trend with 15% growth.",
+            }
+        )
         engine = CollaborationEngine(agent_runner=runner)
         result = await engine.debate(
             "Analyze market trends",
@@ -257,10 +259,12 @@ class TestDebate:
 
 class TestVoting:
     async def test_voting_cross_vote(self) -> None:
-        runner = _make_runner({
-            "researcher": "Short answer.",
-            "analyst": "A much longer and more detailed analysis of the topic with many insights.",
-        })
+        runner = _make_runner(
+            {
+                "researcher": "Short answer.",
+                "analyst": "A much longer and more detailed analysis of the topic with many insights.",
+            }
+        )
         engine = CollaborationEngine(agent_runner=runner)
         result = await engine.vote(
             "task",
@@ -271,11 +275,13 @@ class TestVoting:
         assert result.winner != ""
 
     async def test_voting_with_explicit_voter(self) -> None:
-        runner = _make_runner({
-            "researcher": "Option A",
-            "analyst": "Option B",
-            "validator": "0.8",
-        })
+        runner = _make_runner(
+            {
+                "researcher": "Option A",
+                "analyst": "Option B",
+                "validator": "0.8",
+            }
+        )
         engine = CollaborationEngine(agent_runner=runner)
         result = await engine.vote(
             "task",
@@ -293,10 +299,12 @@ class TestVoting:
 
 class TestCriticReview:
     async def test_basic_review(self) -> None:
-        runner = _make_runner({
-            "executor": "Draft output",
-            "critic": "Gut, korrekt und vollständig.",
-        })
+        runner = _make_runner(
+            {
+                "executor": "Draft output",
+                "critic": "Gut, korrekt und vollständig.",
+            }
+        )
         engine = CollaborationEngine(agent_runner=runner)
         result = await engine.critic_review(
             "Write a summary",
@@ -332,10 +340,12 @@ class TestCriticReview:
         assert len(result.contributions) >= 3  # At least: initial + critique + revision
 
     async def test_review_max_revisions(self) -> None:
-        runner = _make_runner({
-            "executor": "Draft",
-            "critic": "Nicht gut, verbessern.",  # Never approves
-        })
+        runner = _make_runner(
+            {
+                "executor": "Draft",
+                "critic": "Nicht gut, verbessern.",  # Never approves
+            }
+        )
         engine = CollaborationEngine(agent_runner=runner)
         result = await engine.critic_review(
             "task",
@@ -354,11 +364,13 @@ class TestCriticReview:
 
 class TestPipeline:
     async def test_basic_pipeline(self) -> None:
-        runner = _make_runner({
-            "researcher": "Raw data collected.",
-            "analyst": "Analysis of the raw data.",
-            "synthesizer": "Final synthesis.",
-        })
+        runner = _make_runner(
+            {
+                "researcher": "Raw data collected.",
+                "analyst": "Analysis of the raw data.",
+                "synthesizer": "Final synthesis.",
+            }
+        )
         engine = CollaborationEngine(agent_runner=runner)
         result = await engine.pipeline(
             "Analyze topic",
@@ -394,10 +406,12 @@ class TestPipeline:
 
 class TestParallel:
     async def test_basic_parallel(self) -> None:
-        runner = _make_runner({
-            "researcher": "Research findings",
-            "analyst": "Analysis results",
-        })
+        runner = _make_runner(
+            {
+                "researcher": "Research findings",
+                "analyst": "Analysis results",
+            }
+        )
         engine = CollaborationEngine(agent_runner=runner)
         result = await engine.parallel(
             "Investigate topic",

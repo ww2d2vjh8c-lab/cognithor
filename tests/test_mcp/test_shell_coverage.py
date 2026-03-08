@@ -219,12 +219,14 @@ class TestValidateCommandExtended:
     def test_safe_file_command(self) -> None:
         """Datei-Zugriff innerhalb des Workspace -> kein Warning, kein Block."""
         import tempfile
+
         with tempfile.TemporaryDirectory() as ws:
             # Erstelle eine lokale Datei im Workspace
             local_file = Path(ws) / "local_file.txt"
             local_file.touch()
             result = ShellTools._validate_command(
-                f"cat {local_file}", ws,
+                f"cat {local_file}",
+                ws,
             )
             assert result is None
 

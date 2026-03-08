@@ -142,18 +142,26 @@ class TestJarvisMCPServer:
         from jarvis.mcp.server import MCPToolDef
 
         server = self._make_server()
-        server.register_tool(MCPToolDef(
-            name="test", description="", input_schema={}, handler=lambda **kw: "ok",
-        ))
+        server.register_tool(
+            MCPToolDef(
+                name="test",
+                description="",
+                input_schema={},
+                handler=lambda **kw: "ok",
+            )
+        )
         assert "test" in server._tools
 
     def test_register_resource(self) -> None:
         from jarvis.mcp.server import MCPResource
 
         server = self._make_server()
-        server.register_resource(MCPResource(
-            uri="jarvis://test", name="Test",
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://test",
+                name="Test",
+            )
+        )
         assert "jarvis://test" in server._resources
 
     def test_register_prompt(self) -> None:
@@ -168,9 +176,14 @@ class TestJarvisMCPServer:
         from jarvis.mcp.server import MCPToolDef
 
         server = self._make_server()
-        server.register_tool(MCPToolDef(
-            name="t", description="", input_schema={}, handler=lambda **kw: "",
-        ))
+        server.register_tool(
+            MCPToolDef(
+                name="t",
+                description="",
+                input_schema={},
+                handler=lambda **kw: "",
+            )
+        )
         result = await server.handle_initialize({})
         assert result["protocolVersion"] == "2025-11-25"
         assert "tools" in result["capabilities"]
@@ -181,10 +194,14 @@ class TestJarvisMCPServer:
         from jarvis.mcp.server import MCPToolDef
 
         server = self._make_server()
-        server.register_tool(MCPToolDef(
-            name="read_file", description="Liest Datei",
-            input_schema={"type": "object"}, handler=lambda **kw: "content",
-        ))
+        server.register_tool(
+            MCPToolDef(
+                name="read_file",
+                description="Liest Datei",
+                input_schema={"type": "object"},
+                handler=lambda **kw: "content",
+            )
+        )
         result = await server.handle_tools_list()
         assert len(result["tools"]) == 1
         assert result["tools"][0]["name"] == "read_file"
@@ -194,10 +211,14 @@ class TestJarvisMCPServer:
         from jarvis.mcp.server import MCPToolDef
 
         server = self._make_server()
-        server.register_tool(MCPToolDef(
-            name="greet", description="Begrüßung",
-            input_schema={}, handler=lambda **kw: f"Hallo {kw.get('name', 'Welt')}",
-        ))
+        server.register_tool(
+            MCPToolDef(
+                name="greet",
+                description="Begrüßung",
+                input_schema={},
+                handler=lambda **kw: f"Hallo {kw.get('name', 'Welt')}",
+            )
+        )
         result = await server.handle_tools_call("greet", {"name": "Alexander"})
         assert result["isError"] is False
         assert "Alexander" in result["content"][0]["text"]
@@ -210,10 +231,14 @@ class TestJarvisMCPServer:
             return "async result"
 
         server = self._make_server()
-        server.register_tool(MCPToolDef(
-            name="async_tool", description="", input_schema={},
-            handler=async_handler,
-        ))
+        server.register_tool(
+            MCPToolDef(
+                name="async_tool",
+                description="",
+                input_schema={},
+                handler=async_handler,
+            )
+        )
         result = await server.handle_tools_call("async_tool")
         assert "async result" in result["content"][0]["text"]
 
@@ -231,10 +256,14 @@ class TestJarvisMCPServer:
             raise ValueError("Boom!")
 
         server = self._make_server()
-        server.register_tool(MCPToolDef(
-            name="fail", description="", input_schema={},
-            handler=failing_handler,
-        ))
+        server.register_tool(
+            MCPToolDef(
+                name="fail",
+                description="",
+                input_schema={},
+                handler=failing_handler,
+            )
+        )
         result = await server.handle_tools_call("fail")
         assert result["isError"] is True
         assert "Tool-Fehler" in result["content"][0]["text"]
@@ -244,9 +273,13 @@ class TestJarvisMCPServer:
         from jarvis.mcp.server import MCPResource
 
         server = self._make_server()
-        server.register_resource(MCPResource(
-            uri="jarvis://test", name="Test", mime_type="text/plain",
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://test",
+                name="Test",
+                mime_type="text/plain",
+            )
+        )
         result = await server.handle_resources_list()
         assert len(result["resources"]) == 1
 
@@ -255,10 +288,13 @@ class TestJarvisMCPServer:
         from jarvis.mcp.server import MCPResource
 
         server = self._make_server()
-        server.register_resource(MCPResource(
-            uri="jarvis://test/data", name="Test",
-            handler=lambda **kw: "test-content",
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://test/data",
+                name="Test",
+                handler=lambda **kw: "test-content",
+            )
+        )
         result = await server.handle_resources_read("jarvis://test/data")
         assert result["contents"][0]["text"] == "test-content"
 
@@ -273,11 +309,13 @@ class TestJarvisMCPServer:
         from jarvis.mcp.server import MCPResourceTemplate
 
         server = self._make_server()
-        server.register_resource_template(MCPResourceTemplate(
-            uri_template="jarvis://entity/{id}",
-            name="Entity",
-            handler=lambda **kw: f"entity-data-for-{kw.get('uri', '')}",
-        ))
+        server.register_resource_template(
+            MCPResourceTemplate(
+                uri_template="jarvis://entity/{id}",
+                name="Entity",
+                handler=lambda **kw: f"entity-data-for-{kw.get('uri', '')}",
+            )
+        )
         result = await server.handle_resources_read("jarvis://entity/42")
         assert "entity-data-for-jarvis://entity/42" in result["contents"][0]["text"]
 
@@ -296,12 +334,21 @@ class TestJarvisMCPServer:
         from jarvis.mcp.server import MCPPrompt
 
         def handler(**kw: str) -> list:
-            return [{"role": "user", "content": {"type": "text", "text": f"Fasse zusammen: {kw.get('text', '')}"}}]
+            return [
+                {
+                    "role": "user",
+                    "content": {"type": "text", "text": f"Fasse zusammen: {kw.get('text', '')}"},
+                }
+            ]
 
         server = self._make_server()
-        server.register_prompt(MCPPrompt(
-            name="summarize", description="", handler=handler,
-        ))
+        server.register_prompt(
+            MCPPrompt(
+                name="summarize",
+                description="",
+                handler=handler,
+            )
+        )
         result = await server.handle_prompts_get("summarize", {"text": "Test"})
         assert len(result["messages"]) == 1
 
@@ -327,11 +374,13 @@ class TestJarvisMCPServer:
     @pytest.mark.asyncio
     async def test_process_jsonrpc_request(self) -> None:
         server = self._make_server()
-        response = await server.process_jsonrpc_message({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "ping",
-        })
+        response = await server.process_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "ping",
+            }
+        )
         assert response is not None
         assert response["id"] == 1
         assert "result" in response
@@ -339,31 +388,37 @@ class TestJarvisMCPServer:
     @pytest.mark.asyncio
     async def test_process_jsonrpc_notification(self) -> None:
         server = self._make_server()
-        response = await server.process_jsonrpc_message({
-            "jsonrpc": "2.0",
-            "method": "ping",
-            # Kein id → Notification
-        })
+        response = await server.process_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "method": "ping",
+                # Kein id → Notification
+            }
+        )
         assert response is None
 
     @pytest.mark.asyncio
     async def test_handle_http_request_single(self) -> None:
         server = self._make_server()
-        result = await server.handle_http_request({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "ping",
-        })
+        result = await server.handle_http_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "ping",
+            }
+        )
         assert isinstance(result, dict)
         assert result.get("id") == 1
 
     @pytest.mark.asyncio
     async def test_handle_http_request_batch(self) -> None:
         server = self._make_server()
-        result = await server.handle_http_request([
-            {"jsonrpc": "2.0", "id": 1, "method": "ping"},
-            {"jsonrpc": "2.0", "id": 2, "method": "ping"},
-        ])
+        result = await server.handle_http_request(
+            [
+                {"jsonrpc": "2.0", "id": 1, "method": "ping"},
+                {"jsonrpc": "2.0", "id": 2, "method": "ping"},
+            ]
+        )
         assert isinstance(result, list)
         assert len(result) == 2
 
@@ -398,7 +453,9 @@ class TestJarvisMCPServer:
         from jarvis.mcp.server import MCPToolDef, MCPResource, MCPPrompt
 
         server = self._make_server()
-        server.register_tool(MCPToolDef(name="t", description="", input_schema={}, handler=lambda **kw: ""))
+        server.register_tool(
+            MCPToolDef(name="t", description="", input_schema={}, handler=lambda **kw: "")
+        )
         server.register_resource(MCPResource(uri="jarvis://x", name="X"))
         server.register_prompt(MCPPrompt(name="p"))
 
@@ -445,6 +502,7 @@ class TestJarvisMCPServer:
 class TestJarvisResourceProvider:
     def _make_provider(self) -> JarvisResourceProvider:  # noqa: F821
         from jarvis.mcp.resources import JarvisResourceProvider
+
         return JarvisResourceProvider(config=None, memory=None)
 
     def test_register_all(self) -> None:
@@ -503,6 +561,7 @@ class TestJarvisResourceProvider:
 class TestJarvisPromptProvider:
     def _make_provider(self) -> JarvisPromptProvider:  # noqa: F821
         from jarvis.mcp.prompts import JarvisPromptProvider
+
         return JarvisPromptProvider()
 
     def test_register_all(self) -> None:
@@ -646,12 +705,16 @@ class TestDiscoveryManager:
         from jarvis.mcp.discovery import DiscoveryManager
 
         dm = DiscoveryManager()
-        skills = dm._derive_skills([
-            "read_file", "write_file",
-            "browse_url", "browse_click",
-            "web_search",
-            "exec_command",
-        ])
+        skills = dm._derive_skills(
+            [
+                "read_file",
+                "write_file",
+                "browse_url",
+                "browse_click",
+                "web_search",
+                "exec_command",
+            ]
+        )
         skill_ids = [s.id for s in skills]
         assert "file_management" in skill_ids
         assert "browser_automation" in skill_ids
@@ -798,7 +861,7 @@ class TestMCPBridge:
         config = self._make_mock_config()
         bridge = MCPBridge(config)
         await bridge.start()  # Should not crash
-        await bridge.stop()   # Should not crash
+        await bridge.stop()  # Should not crash
 
 
 # ============================================================================
@@ -815,30 +878,45 @@ class TestMCPIntegration:
         from jarvis.mcp.server import JarvisMCPServer, MCPServerConfig, MCPServerMode, MCPToolDef
 
         server = JarvisMCPServer(MCPServerConfig(mode=MCPServerMode.HTTP))
-        server.register_tool(MCPToolDef(
-            name="greet", description="Begrüßung",
-            input_schema={"type": "object", "properties": {"name": {"type": "string"}}},
-            handler=lambda **kw: f"Hallo {kw.get('name', 'Welt')}!",
-        ))
+        server.register_tool(
+            MCPToolDef(
+                name="greet",
+                description="Begrüßung",
+                input_schema={"type": "object", "properties": {"name": {"type": "string"}}},
+                handler=lambda **kw: f"Hallo {kw.get('name', 'Welt')}!",
+            )
+        )
 
         # 1. Initialize
-        init_response = await server.process_jsonrpc_message({
-            "jsonrpc": "2.0", "id": 1, "method": "initialize",
-            "params": {"protocolVersion": "2025-11-25", "capabilities": {}},
-        })
+        init_response = await server.process_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {"protocolVersion": "2025-11-25", "capabilities": {}},
+            }
+        )
         assert init_response["result"]["protocolVersion"] == "2025-11-25"
 
         # 2. List Tools
-        list_response = await server.process_jsonrpc_message({
-            "jsonrpc": "2.0", "id": 2, "method": "tools/list",
-        })
+        list_response = await server.process_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/list",
+            }
+        )
         assert len(list_response["result"]["tools"]) == 1
 
         # 3. Call Tool
-        call_response = await server.process_jsonrpc_message({
-            "jsonrpc": "2.0", "id": 3, "method": "tools/call",
-            "params": {"name": "greet", "arguments": {"name": "Jarvis"}},
-        })
+        call_response = await server.process_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 3,
+                "method": "tools/call",
+                "params": {"name": "greet", "arguments": {"name": "Jarvis"}},
+            }
+        )
         assert "Jarvis" in call_response["result"]["content"][0]["text"]
 
     @pytest.mark.asyncio
@@ -847,11 +925,14 @@ class TestMCPIntegration:
         from jarvis.mcp.server import JarvisMCPServer, MCPServerConfig, MCPServerMode, MCPResource
 
         server = JarvisMCPServer(MCPServerConfig(mode=MCPServerMode.HTTP))
-        server.register_resource(MCPResource(
-            uri="jarvis://test/data", name="Test Data",
-            mime_type="application/json",
-            handler=lambda **kw: '{"key": "value"}',
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://test/data",
+                name="Test Data",
+                mime_type="application/json",
+                handler=lambda **kw: '{"key": "value"}',
+            )
+        )
 
         # List
         list_resp = await server.dispatch("resources/list")
@@ -876,8 +957,11 @@ class TestMCPIntegration:
         assert len(list_resp["prompts"]) == 8
 
         # Get specific prompt
-        get_resp = await server.dispatch("prompts/get", {
-            "name": "summarize",
-            "arguments": {"content": "Test-Text", "length": "short"},
-        })
+        get_resp = await server.dispatch(
+            "prompts/get",
+            {
+                "name": "summarize",
+                "arguments": {"content": "Test-Text", "length": "short"},
+            },
+        )
         assert len(get_resp["messages"]) > 0

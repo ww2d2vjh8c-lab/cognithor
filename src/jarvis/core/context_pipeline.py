@@ -88,15 +88,20 @@ class ContextPipeline:
 
         # Parallel sammeln
         memory_task = asyncio.get_running_loop().run_in_executor(
-            None, self._search_memory, user_message,
+            None,
+            self._search_memory,
+            user_message,
         )
         vault_task = self._search_vault(user_message)
         episode_task = asyncio.get_running_loop().run_in_executor(
-            None, self._get_episodes,
+            None,
+            self._get_episodes,
         )
 
         memory_results, vault_snippets, episode_snippets = await asyncio.gather(
-            memory_task, vault_task, episode_task,
+            memory_task,
+            vault_task,
+            episode_task,
             return_exceptions=True,
         )
 
@@ -147,7 +152,8 @@ class ContextPipeline:
             return []
         try:
             return self._memory_manager.search_memory_sync(
-                query=query, top_k=self._config.memory_top_k,
+                query=query,
+                top_k=self._config.memory_top_k,
             )
         except Exception:
             logger.debug("context_memory_search_failed", exc_info=True)
@@ -159,7 +165,8 @@ class ContextPipeline:
             return []
         try:
             result = await self._vault_tools.vault_search(
-                query=query, limit=self._config.vault_top_k,
+                query=query,
+                limit=self._config.vault_top_k,
             )
             # result ist ein String mit formatierten Treffern
             if result and "Keine Treffer" not in result:
@@ -178,11 +185,7 @@ class ContextPipeline:
             if episodic is None:
                 return []
             recent = episodic.get_recent(days=self._config.episode_days)
-            return [
-                f"[{d.isoformat()}] {text[:500]}"
-                for d, text in recent
-                if text.strip()
-            ]
+            return [f"[{d.isoformat()}] {text[:500]}" for d, text in recent if text.strip()]
         except Exception:
             logger.debug("context_episode_fetch_failed", exc_info=True)
             return []

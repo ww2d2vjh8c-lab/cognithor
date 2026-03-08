@@ -76,11 +76,19 @@ class TestExecutionRecording:
         )
         rec.events = [
             ExecutionEvent(event_id="e0", event_type=EventType.USER_MESSAGE, sequence=0),
-            ExecutionEvent(event_id="e1", event_type=EventType.LLM_REQUEST, sequence=1, iteration=1),
-            ExecutionEvent(event_id="e2", event_type=EventType.LLM_RESPONSE, sequence=2, iteration=1),
+            ExecutionEvent(
+                event_id="e1", event_type=EventType.LLM_REQUEST, sequence=1, iteration=1
+            ),
+            ExecutionEvent(
+                event_id="e2", event_type=EventType.LLM_RESPONSE, sequence=2, iteration=1
+            ),
             ExecutionEvent(event_id="e3", event_type=EventType.TOOL_CALL, sequence=3, iteration=1),
-            ExecutionEvent(event_id="e4", event_type=EventType.TOOL_RESULT, sequence=4, iteration=1),
-            ExecutionEvent(event_id="e5", event_type=EventType.AGENT_RESPONSE, sequence=5, iteration=1),
+            ExecutionEvent(
+                event_id="e4", event_type=EventType.TOOL_RESULT, sequence=4, iteration=1
+            ),
+            ExecutionEvent(
+                event_id="e5", event_type=EventType.AGENT_RESPONSE, sequence=5, iteration=1
+            ),
         ]
         return rec
 
@@ -214,9 +222,7 @@ class TestExecutionRecorder:
     def test_record_agent_response(self) -> None:
         recorder = ExecutionRecorder()
         rec = recorder.start("s1")
-        event = recorder.record_agent_response(
-            rec.recording_id, response="The weather is sunny"
-        )
+        event = recorder.record_agent_response(rec.recording_id, response="The weather is sunny")
         assert event.event_type == EventType.AGENT_RESPONSE
 
     def test_sequence_increments(self) -> None:
@@ -259,7 +265,9 @@ class TestExecutionRecorder:
         recorder.record_llm_response(rec.recording_id, response="I'll help", iteration=1)
         recorder.record_plan(rec.recording_id, goal="help", steps=[], iteration=1)
         recorder.record_tool_call(rec.recording_id, tool="memory_search", iteration=1)
-        recorder.record_tool_result(rec.recording_id, tool="memory_search", result="found", iteration=1)
+        recorder.record_tool_result(
+            rec.recording_id, tool="memory_search", result="found", iteration=1
+        )
         recorder.record_agent_response(rec.recording_id, response="Here's my answer")
         recorder.finish(rec.recording_id, success=True)
 
@@ -361,28 +369,45 @@ class TestReplayEngine:
         )
         rec.events = [
             ExecutionEvent(
-                event_id="rec1:0000", event_type=EventType.USER_MESSAGE, sequence=0,
+                event_id="rec1:0000",
+                event_type=EventType.USER_MESSAGE,
+                sequence=0,
                 data={"message_preview": "Hello", "message_length": 5},
             ),
             ExecutionEvent(
-                event_id="rec1:0001", event_type=EventType.LLM_REQUEST, sequence=1,
-                data={"prompt_preview": "Plan for: Hello", "model": "qwen3:32b"}, iteration=1,
+                event_id="rec1:0001",
+                event_type=EventType.LLM_REQUEST,
+                sequence=1,
+                data={"prompt_preview": "Plan for: Hello", "model": "qwen3:32b"},
+                iteration=1,
             ),
             ExecutionEvent(
-                event_id="rec1:0002", event_type=EventType.LLM_RESPONSE, sequence=2,
-                data={"response_preview": "I'll help", "tokens": 50}, iteration=1,
+                event_id="rec1:0002",
+                event_type=EventType.LLM_RESPONSE,
+                sequence=2,
+                data={"response_preview": "I'll help", "tokens": 50},
+                iteration=1,
             ),
             ExecutionEvent(
-                event_id="rec1:0003", event_type=EventType.TOOL_CALL, sequence=3,
-                data={"tool": "web_search", "params": {"query": "test"}}, iteration=1,
+                event_id="rec1:0003",
+                event_type=EventType.TOOL_CALL,
+                sequence=3,
+                data={"tool": "web_search", "params": {"query": "test"}},
+                iteration=1,
             ),
             ExecutionEvent(
-                event_id="rec1:0004", event_type=EventType.TOOL_RESULT, sequence=4,
-                data={"tool": "web_search", "result_preview": "Results"}, iteration=1,
+                event_id="rec1:0004",
+                event_type=EventType.TOOL_RESULT,
+                sequence=4,
+                data={"tool": "web_search", "result_preview": "Results"},
+                iteration=1,
             ),
             ExecutionEvent(
-                event_id="rec1:0005", event_type=EventType.AGENT_RESPONSE, sequence=5,
-                data={"response_preview": "Here's what I found"}, iteration=1,
+                event_id="rec1:0005",
+                event_type=EventType.AGENT_RESPONSE,
+                sequence=5,
+                data={"response_preview": "Here's what I found"},
+                iteration=1,
             ),
         ]
         return rec
@@ -404,9 +429,12 @@ class TestReplayEngine:
     def test_replay_with_override(self) -> None:
         engine = ReplayEngine()
         rec = self._make_recording()
-        result = engine.replay(rec, overrides={
-            "rec1:0002": {"data": {"response_preview": "Different answer"}},
-        })
+        result = engine.replay(
+            rec,
+            overrides={
+                "rec1:0002": {"data": {"response_preview": "Different answer"}},
+            },
+        )
         assert result.success is True
         assert result.deterministic is False  # Override changes data
 
@@ -449,9 +477,12 @@ class TestReplayEngine:
     def test_override_by_short_id(self) -> None:
         engine = ReplayEngine()
         rec = self._make_recording()
-        result = engine.replay(rec, overrides={
-            "0002": {"data": {"response_preview": "Short ID override"}},
-        })
+        result = engine.replay(
+            rec,
+            overrides={
+                "0002": {"data": {"response_preview": "Short ID override"}},
+            },
+        )
         # Find the overridden event
         overridden = [e for e in result.events if e.sequence == 2][0]
         assert overridden.data["response_preview"] == "Short ID override"
@@ -505,14 +536,22 @@ class TestReplayDiff:
     def test_compare(self) -> None:
         rec = ExecutionRecording(recording_id="r1", started_at=100.0, finished_at=105.0)
         rec.events = [
-            ExecutionEvent(event_id="e1", event_type=EventType.TOOL_CALL, sequence=0,
-                           data={"tool": "web_search"}),
+            ExecutionEvent(
+                event_id="e1",
+                event_type=EventType.TOOL_CALL,
+                sequence=0,
+                data={"tool": "web_search"},
+            ),
         ]
         result = ReplayResult(
             recording_id="r1",
             events=[
-                ExecutionEvent(event_id="re1", event_type=EventType.TOOL_CALL, sequence=0,
-                               data={"tool": "web_search"}),
+                ExecutionEvent(
+                    event_id="re1",
+                    event_type=EventType.TOOL_CALL,
+                    sequence=0,
+                    data={"tool": "web_search"},
+                ),
             ],
             success=True,
             deterministic=True,

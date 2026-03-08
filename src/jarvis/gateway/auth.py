@@ -30,10 +30,10 @@ log = get_logger(__name__)
 class AuthMethod(Enum):
     """Unterstützte Authentifizierungs-Methoden."""
 
-    TOKEN = "token"          # Gateway-Token
-    API_KEY = "api_key"      # API-Schlüssel
-    SSO = "sso"              # Single-Sign-On
-    LOCAL = "local"          # Lokale Authentifizierung
+    TOKEN = "token"  # Gateway-Token
+    API_KEY = "api_key"  # API-Schlüssel
+    SSO = "sso"  # Single-Sign-On
+    LOCAL = "local"  # Lokale Authentifizierung
 
 
 @dataclass
@@ -141,7 +141,7 @@ class AuthGateway:
 
     def __init__(self, *, token_ttl: int = DEFAULT_TOKEN_TTL) -> None:
         self._tokens: dict[str, GatewayToken] = {}  # token_id → Token
-        self._token_hashes: dict[str, str] = {}      # hash → token_id
+        self._token_hashes: dict[str, str] = {}  # hash → token_id
         self._sessions: dict[str, AgentSession] = {}  # session_key → Session
         self._user_sessions: dict[str, list[str]] = {}  # user_id → [session_keys]
         self._token_ttl = token_ttl
@@ -171,6 +171,7 @@ class AuthGateway:
 
         ttl = ttl_seconds if ttl_seconds is not None else self._token_ttl
         from datetime import timedelta
+
         expires = datetime.now(UTC) + timedelta(seconds=ttl) if ttl > 0 else None
 
         token = GatewayToken(
@@ -213,9 +214,7 @@ class AuthGateway:
             return False
         token.revoked = True
         # Aus Hash-Index entfernen um Memory Leak zu verhindern
-        self._token_hashes = {
-            h: tid for h, tid in self._token_hashes.items() if tid != token_id
-        }
+        self._token_hashes = {h: tid for h, tid in self._token_hashes.items() if tid != token_id}
         self._audit_log("token_revoked", token.user_id, token.agent_id, token_id=token_id)
         return True
 
@@ -232,8 +231,7 @@ class AuthGateway:
         if revoked_ids:
             revoked_set = set(revoked_ids)
             self._token_hashes = {
-                h: tid for h, tid in self._token_hashes.items()
-                if tid not in revoked_set
+                h: tid for h, tid in self._token_hashes.items() if tid not in revoked_set
             }
             self._audit_log("all_tokens_revoked", user_id, "", count=count)
         return count
@@ -301,22 +299,18 @@ class AuthGateway:
 
         # Revoked Tokens entfernen die älter als 1h sind
         expired_token_ids = [
-            tid for tid, token in self._tokens.items()
+            tid
+            for tid, token in self._tokens.items()
             if (token.revoked and token.created_at < one_hour_ago)
             or (token.is_expired and token.expires_at and token.expires_at < one_hour_ago)
         ]
         for tid in expired_token_ids:
             token = self._tokens.pop(tid, None)
             if token:
-                self._token_hashes = {
-                    h: t for h, t in self._token_hashes.items() if t != tid
-                }
+                self._token_hashes = {h: t for h, t in self._token_hashes.items() if t != tid}
 
         # Inaktive Sessions entfernen
-        inactive_keys = [
-            key for key, session in self._sessions.items()
-            if not session.active
-        ]
+        inactive_keys = [key for key, session in self._sessions.items() if not session.active]
         for key in inactive_keys:
             session = self._sessions.pop(key, None)
             if session:
@@ -360,7 +354,9 @@ class AuthGateway:
         result: dict[str, tuple[str, AgentSession]] = {}
         for agent_id in agent_ids:
             raw_token, token = self.create_token(
-                user_id, agent_id, auth_method=auth_method,
+                user_id,
+                agent_id,
+                auth_method=auth_method,
             )
             session = self.create_session(user_id, agent_id, token.token_id)
             result[agent_id] = (raw_token, session)
@@ -419,10 +415,12 @@ class AuthGateway:
     def _audit_log(self, action: str, user_id: str, agent_id: str, **extra: Any) -> None:
         if len(self._audit) >= self._AUDIT_MAX_SIZE:
             self._audit = self._audit[-self._AUDIT_MAX_SIZE // 2 :]
-        self._audit.append({
-            "action": action,
-            "user_id": user_id,
-            "agent_id": agent_id,
-            "timestamp": datetime.now(UTC).isoformat(),
-            **extra,
-        })
+        self._audit.append(
+            {
+                "action": action,
+                "user_id": user_id,
+                "agent_id": agent_id,
+                "timestamp": datetime.now(UTC).isoformat(),
+                **extra,
+            }
+        )

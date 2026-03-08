@@ -153,7 +153,9 @@ class A2AServer:
         return {"jsonrpc": "2.0", "id": msg_id, "result": result}
 
     async def handle_http_request(
-        self, body: dict[str, Any], auth_token: str | None = None,
+        self,
+        body: dict[str, Any],
+        auth_token: str | None = None,
         client_version: str = "",
     ) -> dict[str, Any]:
         """HTTP-Request-Handler mit Version-Negotiation."""
@@ -161,7 +163,8 @@ class A2AServer:
         if self._config.require_auth:
             if not auth_token or not hmac.compare_digest(auth_token, self._config.auth_token):
                 return {
-                    "jsonrpc": "2.0", "id": body.get("id"),
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
                     "error": {"code": A2AErrorCode.UNAUTHORIZED, "message": "Unauthorized"},
                 }
 
@@ -171,7 +174,8 @@ class A2AServer:
             major_server = A2A_PROTOCOL_VERSION.split(".")[0]
             if major_client != major_server:
                 return {
-                    "jsonrpc": "2.0", "id": body.get("id"),
+                    "jsonrpc": "2.0",
+                    "id": body.get("id"),
                     "error": {
                         "code": A2AErrorCode.INCOMPATIBLE_VERSION,
                         "message": f"Incompatible version. Server: {A2A_PROTOCOL_VERSION}, Client: {client_version}",
@@ -184,12 +188,14 @@ class A2AServer:
     # ── Streaming Handler ────────────────────────────────────────
 
     async def handle_stream_request(
-        self, body: dict[str, Any], auth_token: str | None = None,
+        self,
+        body: dict[str, Any],
+        auth_token: str | None = None,
     ) -> AsyncIterator[str]:
         """Handles message/stream -- returns SSE events."""
         if self._config.require_auth:
             if not auth_token or not hmac.compare_digest(auth_token, self._config.auth_token):
-                yield f"event: error\ndata: {{\"code\": {A2AErrorCode.UNAUTHORIZED}}}\n\n"
+                yield f'event: error\ndata: {{"code": {A2AErrorCode.UNAUTHORIZED}}}\n\n'
                 return
 
         params = body.get("params", {})
@@ -203,7 +209,8 @@ class A2AServer:
 
         # Initial status
         yield TaskStatusUpdateEvent(
-            task_id=task.id, context_id=task.context_id,
+            task_id=task.id,
+            context_id=task.context_id,
             status=task.status,
         ).to_sse()
 
@@ -213,17 +220,24 @@ class A2AServer:
                 async for event in self._stream_handler(task):
                     yield event.to_sse()
             except Exception as exc:
-                task.transition(TaskState.FAILED, Message(
-                    role=MessageRole.AGENT, parts=[TextPart(text=str(exc))],
-                ))
+                task.transition(
+                    TaskState.FAILED,
+                    Message(
+                        role=MessageRole.AGENT,
+                        parts=[TextPart(text=str(exc))],
+                    ),
+                )
                 yield TaskStatusUpdateEvent(
-                    task_id=task.id, context_id=task.context_id,
-                    status=task.status, final=True,
+                    task_id=task.id,
+                    context_id=task.context_id,
+                    status=task.status,
+                    final=True,
                 ).to_sse()
         elif self._task_handler:
             task.transition(TaskState.WORKING)
             yield TaskStatusUpdateEvent(
-                task_id=task.id, context_id=task.context_id,
+                task_id=task.id,
+                context_id=task.context_id,
                 status=task.status,
             ).to_sse()
 
@@ -234,20 +248,30 @@ class A2AServer:
                 )
                 for artifact in result_task.artifacts:
                     yield TaskArtifactUpdateEvent(
-                        task_id=task.id, context_id=task.context_id,
-                        artifact=artifact, last_chunk=True,
+                        task_id=task.id,
+                        context_id=task.context_id,
+                        artifact=artifact,
+                        last_chunk=True,
                     ).to_sse()
                 yield TaskStatusUpdateEvent(
-                    task_id=task.id, context_id=task.context_id,
-                    status=result_task.status, final=True,
+                    task_id=task.id,
+                    context_id=task.context_id,
+                    status=result_task.status,
+                    final=True,
                 ).to_sse()
             except Exception as exc:
-                task.transition(TaskState.FAILED, Message(
-                    role=MessageRole.AGENT, parts=[TextPart(text=str(exc))],
-                ))
+                task.transition(
+                    TaskState.FAILED,
+                    Message(
+                        role=MessageRole.AGENT,
+                        parts=[TextPart(text=str(exc))],
+                    ),
+                )
                 yield TaskStatusUpdateEvent(
-                    task_id=task.id, context_id=task.context_id,
-                    status=task.status, final=True,
+                    task_id=task.id,
+                    context_id=task.context_id,
+                    status=task.status,
+                    final=True,
                 ).to_sse()
 
     # ── Method Handlers (RC v1.0) ────────────────────────────────
@@ -266,8 +290,10 @@ class A2AServer:
         if task_id and task_id in self._tasks:
             task = self._tasks[task_id]
             if task.is_complete:
-                return self._error(A2AErrorCode.INVALID_REQUEST,
-                                   f"Task '{task_id}' already in terminal state: {task.state.value}")
+                return self._error(
+                    A2AErrorCode.INVALID_REQUEST,
+                    f"Task '{task_id}' already in terminal state: {task.state.value}",
+                )
             if message:
                 task.messages.append(message)
             if task.state == TaskState.INPUT_REQUIRED:
@@ -333,7 +359,7 @@ class A2AServer:
                 tasks = [t for t in tasks if t.state.value in state_filter]
 
         total = len(tasks)
-        tasks = tasks[offset:offset + limit]
+        tasks = tasks[offset : offset + limit]
 
         return {
             "tasks": [t.to_dict() for t in tasks],
@@ -348,8 +374,9 @@ class A2AServer:
         if task is None:
             return self._error(A2AErrorCode.TASK_NOT_FOUND, f"Task '{task_id}' not found")
         if task.is_complete:
-            return self._error(A2AErrorCode.TASK_NOT_CANCELABLE,
-                               f"Task in terminal state: {task.state.value}")
+            return self._error(
+                A2AErrorCode.TASK_NOT_CANCELABLE, f"Task in terminal state: {task.state.value}"
+            )
 
         cancel_msg = Message(role=MessageRole.AGENT, parts=[TextPart(text="Task canceled.")])
         if not task.transition(TaskState.CANCELED, cancel_msg):
@@ -371,6 +398,7 @@ class A2AServer:
 
         # SSRF protection: only allow https URLs
         from urllib.parse import urlparse
+
         parsed = urlparse(url)
         if parsed.scheme not in ("https", "http"):
             return self._error(A2AErrorCode.INVALID_PARAMS, "Push URL must use http(s) scheme")
@@ -389,7 +417,9 @@ class A2AServer:
             )
 
         config = PushNotificationConfig(
-            task_id=task_id, url=url, authentication=auth,
+            task_id=task_id,
+            url=url,
+            authentication=auth,
             metadata=params.get("metadata", {}),
         )
         self._push_configs[config.config_id] = config
@@ -431,6 +461,7 @@ class A2AServer:
 
     def _make_task_done_callback(self, a2a_task: Task):  # noqa: ANN201
         """Creates a done-callback that transitions the A2A task on failure."""
+
         def _callback(asyncio_task: asyncio.Task[None]) -> None:
             if asyncio_task.cancelled():
                 return
@@ -444,18 +475,26 @@ class A2AServer:
                 )
                 # Safety net: transition to FAILED if still in non-terminal state
                 if a2a_task.is_active:
-                    a2a_task.transition(TaskState.FAILED, Message(
-                        role=MessageRole.AGENT,
-                        parts=[TextPart(text=f"Unexpected error: {exc}")],
-                    ))
+                    a2a_task.transition(
+                        TaskState.FAILED,
+                        Message(
+                            role=MessageRole.AGENT,
+                            parts=[TextPart(text=f"Unexpected error: {exc}")],
+                        ),
+                    )
                     self._tasks_failed += 1
+
         return _callback
 
     async def _execute_task(self, task: Task) -> None:
         if not self._task_handler:
-            task.transition(TaskState.FAILED, Message(
-                role=MessageRole.AGENT, parts=[TextPart(text="No task handler registered.")],
-            ))
+            task.transition(
+                TaskState.FAILED,
+                Message(
+                    role=MessageRole.AGENT,
+                    parts=[TextPart(text="No task handler registered.")],
+                ),
+            )
             self._tasks_failed += 1
             return
 
@@ -477,15 +516,22 @@ class A2AServer:
             await self._send_push_notification(task)
 
         except asyncio.TimeoutError:
-            task.transition(TaskState.FAILED, Message(
-                role=MessageRole.AGENT,
-                parts=[TextPart(text=f"Timeout after {self._config.task_timeout_seconds}s")],
-            ))
+            task.transition(
+                TaskState.FAILED,
+                Message(
+                    role=MessageRole.AGENT,
+                    parts=[TextPart(text=f"Timeout after {self._config.task_timeout_seconds}s")],
+                ),
+            )
             self._tasks_failed += 1
         except Exception as exc:
-            task.transition(TaskState.FAILED, Message(
-                role=MessageRole.AGENT, parts=[TextPart(text=f"Error: {exc}")],
-            ))
+            task.transition(
+                TaskState.FAILED,
+                Message(
+                    role=MessageRole.AGENT,
+                    parts=[TextPart(text=f"Error: {exc}")],
+                ),
+            )
             self._tasks_failed += 1
 
     async def _send_push_notification(self, task: Task) -> None:
@@ -494,12 +540,14 @@ class A2AServer:
         for config in configs:
             try:
                 import httpx
+
                 headers: dict[str, str] = {"Content-Type": A2A_CONTENT_TYPE}
                 if config.authentication and config.authentication.credentials:
                     headers["Authorization"] = f"Bearer {config.authentication.credentials}"
 
                 payload = {
-                    "taskId": task.id, "contextId": task.context_id,
+                    "taskId": task.id,
+                    "contextId": task.context_id,
                     "status": task.status.to_dict(),
                 }
                 async with httpx.AsyncClient(timeout=10.0) as client:
@@ -570,6 +618,7 @@ class A2AServer:
 
     def cleanup_completed(self, max_age_seconds: int = 3600) -> int:
         import calendar
+
         now = time.time()
         to_remove = []
         for tid, task in self._tasks.items():
@@ -592,7 +641,8 @@ class A2AServer:
             s = task.state.value
             state_counts[s] = state_counts.get(s, 0) + 1
         return {
-            "enabled": self._config.enabled, "running": self._running,
+            "enabled": self._config.enabled,
+            "running": self._running,
             "protocol_version": A2A_PROTOCOL_VERSION,
             "uptime_seconds": round(uptime, 1),
             "total_requests": self._request_count,

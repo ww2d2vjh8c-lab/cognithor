@@ -124,12 +124,14 @@ class TestUnifiedLLMBackendMode:
         from jarvis.core.llm_backend import ChatResponse
 
         mock_backend = AsyncMock()
-        mock_backend.chat = AsyncMock(return_value=ChatResponse(
-            content="Hello!",
-            model="gpt-4",
-            tool_calls=None,
-            usage={"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
-        ))
+        mock_backend.chat = AsyncMock(
+            return_value=ChatResponse(
+                content="Hello!",
+                model="gpt-4",
+                tool_calls=None,
+                usage={"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
+            )
+        )
 
         client = UnifiedLLMClient(ollama_client=None, backend=mock_backend)
         result = await client.chat(
@@ -151,12 +153,14 @@ class TestUnifiedLLMBackendMode:
 
         tool_calls = [{"function": {"name": "web_search", "arguments": {"q": "test"}}}]
         mock_backend = AsyncMock()
-        mock_backend.chat = AsyncMock(return_value=ChatResponse(
-            content="",
-            model="gpt-4",
-            tool_calls=tool_calls,
-            usage=None,
-        ))
+        mock_backend.chat = AsyncMock(
+            return_value=ChatResponse(
+                content="",
+                model="gpt-4",
+                tool_calls=tool_calls,
+                usage=None,
+            )
+        )
 
         client = UnifiedLLMClient(ollama_client=None, backend=mock_backend)
         result = await client.chat(
@@ -225,10 +229,12 @@ class TestUnifiedLLMBackendMode:
         from jarvis.core.llm_backend import EmbedResponse
 
         mock_backend = AsyncMock()
-        mock_backend.embed = AsyncMock(return_value=EmbedResponse(
-            embedding=[0.1, 0.2, 0.3],
-            model="text-embedding-3-small",
-        ))
+        mock_backend.embed = AsyncMock(
+            return_value=EmbedResponse(
+                embedding=[0.1, 0.2, 0.3],
+                model="text-embedding-3-small",
+            )
+        )
 
         client = UnifiedLLMClient(ollama_client=None, backend=mock_backend)
         result = await client.embed("text-embedding-3-small", "Hello")

@@ -46,6 +46,7 @@ from pydantic import BaseModel, Field
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -57,6 +58,7 @@ def _new_id() -> str:
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
+
 
 class NodeType(StrEnum):
     """Type of workflow node."""
@@ -89,6 +91,7 @@ class RetryStrategy(StrEnum):
 # ---------------------------------------------------------------------------
 # Workflow Definition (immutable)
 # ---------------------------------------------------------------------------
+
 
 class WorkflowNode(BaseModel, frozen=True):
     """A single node in the workflow DAG."""
@@ -159,6 +162,7 @@ class WorkflowDefinition(BaseModel, frozen=True):
 # Runtime State (mutable)
 # ---------------------------------------------------------------------------
 
+
 class NodeResult(BaseModel):
     """Result of executing a single workflow node."""
 
@@ -198,23 +202,19 @@ class WorkflowRun(BaseModel):
         if not self.is_complete:
             return False
         return all(
-            r.status in (NodeStatus.SUCCESS, NodeStatus.SKIPPED)
-            for r in self.node_results.values()
+            r.status in (NodeStatus.SUCCESS, NodeStatus.SKIPPED) for r in self.node_results.values()
         )
 
     @property
     def failed_nodes(self) -> list[str]:
         """Node IDs that ended with FAILURE status."""
-        return [
-            nid
-            for nid, r in self.node_results.items()
-            if r.status == NodeStatus.FAILURE
-        ]
+        return [nid for nid, r in self.node_results.items() if r.status == NodeStatus.FAILURE]
 
 
 # ---------------------------------------------------------------------------
 # Exceptions
 # ---------------------------------------------------------------------------
+
 
 class WorkflowValidationError(Exception):
     """Raised when a workflow definition fails validation."""

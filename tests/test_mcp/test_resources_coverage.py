@@ -31,11 +31,15 @@ def server() -> JarvisMCPServer:
 
 
 class TestRegisterAll:
-    def test_registers_resources(self, provider: JarvisResourceProvider, server: JarvisMCPServer) -> None:
+    def test_registers_resources(
+        self, provider: JarvisResourceProvider, server: JarvisMCPServer
+    ) -> None:
         count = provider.register_all(server)
         assert count == 8  # 7 resources + 1 template
 
-    def test_returns_count(self, provider_with_deps: JarvisResourceProvider, server: JarvisMCPServer) -> None:
+    def test_returns_count(
+        self, provider_with_deps: JarvisResourceProvider, server: JarvisMCPServer
+    ) -> None:
         count = provider_with_deps.register_all(server)
         assert count > 0
 
@@ -164,12 +168,14 @@ class TestReadTools:
         assert result["tools"] == []
 
     def test_with_tools(self, provider: JarvisResourceProvider, server: JarvisMCPServer) -> None:
-        server.register_tool(MCPToolDef(
-            name="test_tool",
-            description="A test tool",
-            input_schema={},
-            handler=lambda: None,
-        ))
+        server.register_tool(
+            MCPToolDef(
+                name="test_tool",
+                description="A test tool",
+                input_schema={},
+                handler=lambda: None,
+            )
+        )
         result = json.loads(provider._read_tools(server))
         assert result["count"] == 1
         assert result["tools"][0]["name"] == "test_tool"
@@ -187,7 +193,9 @@ class TestReadWorkspaceFiles:
         result = json.loads(provider._read_workspace_files())
         assert "error" in result
 
-    def test_no_workspace_dir(self, provider_with_deps: JarvisResourceProvider, tmp_path: Path) -> None:
+    def test_no_workspace_dir(
+        self, provider_with_deps: JarvisResourceProvider, tmp_path: Path
+    ) -> None:
         provider_with_deps._config.jarvis_home = tmp_path
         # workspace dir does not exist
         result = json.loads(provider_with_deps._read_workspace_files())

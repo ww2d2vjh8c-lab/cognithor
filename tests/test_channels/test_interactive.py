@@ -39,22 +39,13 @@ class TestSlackMessageBuilder:
         assert msg["blocks"] == []
 
     def test_text_and_section(self) -> None:
-        msg = (
-            SlackMessageBuilder()
-            .text("Fallback")
-            .section("*Hallo Welt*")
-            .build()
-        )
+        msg = SlackMessageBuilder().text("Fallback").section("*Hallo Welt*").build()
         assert msg["text"] == "Fallback"
         assert msg["blocks"][0]["type"] == "section"
         assert msg["blocks"][0]["text"]["type"] == "mrkdwn"
 
     def test_fields(self) -> None:
-        msg = (
-            SlackMessageBuilder()
-            .fields([("Status", "✅ Online"), ("Version", "1.0")])
-            .build()
-        )
+        msg = SlackMessageBuilder().fields([("Status", "✅ Online"), ("Version", "1.0")]).build()
         assert len(msg["blocks"][0]["fields"]) == 2
 
     def test_header(self) -> None:
@@ -71,40 +62,23 @@ class TestSlackMessageBuilder:
         assert len(msg["blocks"][0]["elements"]) == 2
 
     def test_single_button(self) -> None:
-        msg = (
-            SlackMessageBuilder()
-            .button("Klick", "btn_1", style=ButtonStyle.PRIMARY)
-            .build()
-        )
+        msg = SlackMessageBuilder().button("Klick", "btn_1", style=ButtonStyle.PRIMARY).build()
         actions = msg["blocks"][0]
         assert actions["type"] == "actions"
         assert actions["elements"][0]["style"] == "primary"
         assert actions["elements"][0]["action_id"] == "btn_1"
 
     def test_multiple_buttons_same_row(self) -> None:
-        msg = (
-            SlackMessageBuilder()
-            .button("A", "a")
-            .button("B", "b")
-            .build()
-        )
+        msg = SlackMessageBuilder().button("A", "a").button("B", "b").build()
         assert len(msg["blocks"]) == 1  # Gleiche Actions-Row
         assert len(msg["blocks"][0]["elements"]) == 2
 
     def test_button_with_url(self) -> None:
-        msg = (
-            SlackMessageBuilder()
-            .button("Öffnen", "open", url="https://example.com")
-            .build()
-        )
+        msg = SlackMessageBuilder().button("Öffnen", "open", url="https://example.com").build()
         assert msg["blocks"][0]["elements"][0]["url"] == "https://example.com"
 
     def test_image(self) -> None:
-        msg = (
-            SlackMessageBuilder()
-            .image("https://img.example.com/x.png", "Bild", "Titel")
-            .build()
-        )
+        msg = SlackMessageBuilder().image("https://img.example.com/x.png", "Bild", "Titel").build()
         assert msg["blocks"][0]["type"] == "image"
 
     def test_progress_bar(self) -> None:
@@ -116,10 +90,15 @@ class TestSlackMessageBuilder:
     def test_build_modal(self) -> None:
         fields = [
             FormField(name="email", label="E-Mail", field_type=FieldType.EMAIL, required=True),
-            FormField(name="plan", label="Tarif", field_type=FieldType.SELECT, options=[
-                {"text": "Basis", "value": "basis"},
-                {"text": "Premium", "value": "premium"},
-            ]),
+            FormField(
+                name="plan",
+                label="Tarif",
+                field_type=FieldType.SELECT,
+                options=[
+                    {"text": "Basis", "value": "basis"},
+                    {"text": "Premium", "value": "premium"},
+                ],
+            ),
         ]
         modal = (
             SlackMessageBuilder()
@@ -139,12 +118,14 @@ class TestSlackMessageBuilder:
             SlackMessageBuilder()
             .text("Dashboard-Update")
             .header("📊 Jarvis Status")
-            .fields([
-                ("Agent", "jarvis (main)"),
-                ("Uptime", "4h 23m"),
-                ("Sessions", "12 aktiv"),
-                ("Token", "45.2k / 100k"),
-            ])
+            .fields(
+                [
+                    ("Agent", "jarvis (main)"),
+                    ("Uptime", "4h 23m"),
+                    ("Sessions", "12 aktiv"),
+                    ("Token", "45.2k / 100k"),
+                ]
+            )
             .divider()
             .section("Letzte Aktion: *BU-Vergleich* für Kunde Müller")
             .button("Details", "show_details", style=ButtonStyle.PRIMARY)
@@ -166,11 +147,7 @@ class TestDiscordMessageBuilder:
         assert msg["content"] == "Hallo"
 
     def test_embed(self) -> None:
-        msg = (
-            DiscordMessageBuilder()
-            .embed("Titel", "Beschreibung", DiscordColor.SUCCESS)
-            .build()
-        )
+        msg = DiscordMessageBuilder().embed("Titel", "Beschreibung", DiscordColor.SUCCESS).build()
         assert len(msg["embeds"]) == 1
         assert msg["embeds"][0]["title"] == "Titel"
         assert msg["embeds"][0]["color"] == 0x2ECC71
@@ -189,12 +166,7 @@ class TestDiscordMessageBuilder:
         assert fields[1]["inline"] is False
 
     def test_embed_footer(self) -> None:
-        msg = (
-            DiscordMessageBuilder()
-            .embed("X")
-            .embed_footer("Powered by Jarvis")
-            .build()
-        )
+        msg = DiscordMessageBuilder().embed("X").embed_footer("Powered by Jarvis").build()
         assert msg["embeds"][0]["footer"]["text"] == "Powered by Jarvis"
 
     def test_embed_author(self) -> None:
@@ -216,20 +188,11 @@ class TestDiscordMessageBuilder:
         assert "thumbnail" in msg["embeds"][0]
 
     def test_multiple_embeds(self) -> None:
-        msg = (
-            DiscordMessageBuilder()
-            .embed("Embed 1")
-            .embed("Embed 2")
-            .build()
-        )
+        msg = DiscordMessageBuilder().embed("Embed 1").embed("Embed 2").build()
         assert len(msg["embeds"]) == 2
 
     def test_button(self) -> None:
-        msg = (
-            DiscordMessageBuilder()
-            .button("Klick", "btn_1", ButtonStyle.PRIMARY)
-            .build()
-        )
+        msg = DiscordMessageBuilder().button("Klick", "btn_1", ButtonStyle.PRIMARY).build()
         assert len(msg["components"]) == 1
         assert msg["components"][0]["type"] == 1  # ACTION_ROW
         btn = msg["components"][0]["components"][0]
@@ -237,33 +200,27 @@ class TestDiscordMessageBuilder:
         assert btn["label"] == "Klick"
 
     def test_buttons_grouped(self) -> None:
-        msg = (
-            DiscordMessageBuilder()
-            .button("A", "a")
-            .button("B", "b")
-            .build()
-        )
+        msg = DiscordMessageBuilder().button("A", "a").button("B", "b").build()
         assert len(msg["components"]) == 1  # Eine Action-Row
         assert len(msg["components"][0]["components"]) == 2
 
     def test_select_menu(self) -> None:
         msg = (
             DiscordMessageBuilder()
-            .select_menu("select_tarif", "Tarif wählen", [
-                {"text": "Basis", "value": "basis"},
-                {"text": "Premium", "value": "premium"},
-            ])
+            .select_menu(
+                "select_tarif",
+                "Tarif wählen",
+                [
+                    {"text": "Basis", "value": "basis"},
+                    {"text": "Premium", "value": "premium"},
+                ],
+            )
             .build()
         )
         assert msg["components"][0]["components"][0]["type"] == 3  # STRING_SELECT
 
     def test_progress_bar(self) -> None:
-        msg = (
-            DiscordMessageBuilder()
-            .embed("Status")
-            .progress_bar(60, "Fortschritt")
-            .build()
-        )
+        msg = DiscordMessageBuilder().embed("Status").progress_bar(60, "Fortschritt").build()
         desc = msg["embeds"][0]["description"]
         assert "60%" in desc
         assert "▓" in desc
@@ -271,9 +228,14 @@ class TestDiscordMessageBuilder:
     def test_build_modal(self) -> None:
         fields = [
             FormField(name="name", label="Name", required=True),
-            FormField(name="plan", label="Tarif", field_type=FieldType.SELECT, options=[
-                {"text": "Basis", "value": "basis"},
-            ]),
+            FormField(
+                name="plan",
+                label="Tarif",
+                field_type=FieldType.SELECT,
+                options=[
+                    {"text": "Basis", "value": "basis"},
+                ],
+            ),
         ]
         modal = DiscordMessageBuilder().build_modal("Formular", "form_1", fields)
         assert modal["title"] == "Formular"
@@ -285,11 +247,7 @@ class TestDiscordMessageBuilder:
         assert builder.embed_count == 2
 
     def test_button_with_url(self) -> None:
-        msg = (
-            DiscordMessageBuilder()
-            .button("Link", "x", url="https://example.com")
-            .build()
-        )
+        msg = DiscordMessageBuilder().button("Link", "x", url="https://example.com").build()
         btn = msg["components"][0]["components"][0]
         assert btn["style"] == 5  # LINK style
         assert btn["url"] == "https://example.com"
@@ -309,7 +267,9 @@ class TestFormField:
 
     def test_select_to_slack(self) -> None:
         f = FormField(
-            name="plan", label="Plan", field_type=FieldType.SELECT,
+            name="plan",
+            label="Plan",
+            field_type=FieldType.SELECT,
             options=[{"text": "A", "value": "a"}],
         )
         block = f.to_slack_block()
@@ -317,7 +277,9 @@ class TestFormField:
 
     def test_multiselect_to_slack(self) -> None:
         f = FormField(
-            name="tags", label="Tags", field_type=FieldType.MULTI_SELECT,
+            name="tags",
+            label="Tags",
+            field_type=FieldType.MULTI_SELECT,
             options=[{"text": "A", "value": "a"}, {"text": "B", "value": "b"}],
         )
         block = f.to_slack_block()
@@ -330,7 +292,9 @@ class TestFormField:
 
     def test_checkbox_to_slack(self) -> None:
         f = FormField(
-            name="agree", label="Zustimmung", field_type=FieldType.CHECKBOX,
+            name="agree",
+            label="Zustimmung",
+            field_type=FieldType.CHECKBOX,
             options=[{"text": "Ja", "value": "yes"}],
         )
         block = f.to_slack_block()
@@ -338,7 +302,9 @@ class TestFormField:
 
     def test_select_to_discord(self) -> None:
         f = FormField(
-            name="plan", label="Plan", field_type=FieldType.SELECT,
+            name="plan",
+            label="Plan",
+            field_type=FieldType.SELECT,
             options=[{"text": "A", "value": "a"}],
         )
         comp = f.to_discord_component()
@@ -463,11 +429,7 @@ class TestAdaptiveCard:
         assert result["embeds"][0]["color"] == DiscordColor.SUCCESS.value
 
     def test_cross_platform_consistency(self) -> None:
-        card = (
-            AdaptiveCard("Test", "Body")
-            .add_field("A", "1")
-            .add_button("OK", "ok")
-        )
+        card = AdaptiveCard("Test", "Body").add_field("A", "1").add_button("OK", "ok")
         slack = card.to_slack()
         discord = card.to_discord()
         # Beide haben Content
@@ -491,8 +453,10 @@ class TestSlashCommandRegistry:
 
     def test_register_with_handler(self) -> None:
         reg = SlashCommandRegistry()
+
         def handler(payload: dict) -> dict:
             return {"text": "OK"}
+
         reg.register("/schedule", "Schedule task", handler)
         result = reg.dispatch("/schedule", {"text": "daily briefing"})
         assert result["text"] == "OK"
@@ -525,15 +489,18 @@ class TestSlashCommandRegistry:
 
     def test_handler_error_returns_error(self) -> None:
         reg = SlashCommandRegistry()
+
         def bad_handler(p: dict) -> dict:
             raise ValueError("broken")
+
         reg.register("/bad", "Bad", bad_handler)
         result = reg.dispatch("/bad", {})
         assert "error" in result
 
     def test_slash_command_to_dict(self) -> None:
         cmd = SlashCommand(
-            name="/test", description="Test cmd",
+            name="/test",
+            description="Test cmd",
             options=[{"name": "arg", "type": 3}],
         )
         d = cmd.to_discord()
@@ -549,12 +516,16 @@ class TestSlashCommandRegistry:
 class TestModalHandler:
     def test_register_and_handle(self) -> None:
         mh = ModalHandler()
+
         def config_handler(sub: ModalSubmission) -> dict:
             return {"ok": True, "values": sub.values}
+
         mh.register("config_modal", config_handler)
         sub = ModalSubmission(
-            callback_id="config_modal", user_id="u1",
-            channel="slack", values={"name": "test"},
+            callback_id="config_modal",
+            user_id="u1",
+            channel="slack",
+            values={"name": "test"},
         )
         result = mh.handle(sub)
         assert result["ok"] is True
@@ -579,7 +550,7 @@ class TestModalHandler:
 
     def test_handler_error(self) -> None:
         mh = ModalHandler()
-        mh.register("bad", lambda s: 1/0)
+        mh.register("bad", lambda s: 1 / 0)
         sub = ModalSubmission(callback_id="bad", user_id="u1", channel="slack")
         result = mh.handle(sub)
         assert "error" in result
@@ -604,13 +575,19 @@ class TestSignatureVerifier:
     def test_slack_signature_valid(self) -> None:
         import hashlib
         import hmac
+
         secret = "test_secret_key"
         body = b'{"text":"hello"}'
         timestamp = "1234567890"
         basestring = f"v0:{timestamp}:{body.decode('utf-8')}"
-        expected = "v0=" + hmac.new(
-            secret.encode(), basestring.encode(), hashlib.sha256,
-        ).hexdigest()
+        expected = (
+            "v0="
+            + hmac.new(
+                secret.encode(),
+                basestring.encode(),
+                hashlib.sha256,
+            ).hexdigest()
+        )
         v = SignatureVerifier(slack_signing_secret=secret)
         assert v.verify_slack(body, timestamp, expected) is True
 
@@ -653,6 +630,7 @@ class TestInteractionStateStore:
         store = InteractionStateStore(ttl=0)  # Sofort abgelaufen
         store.create("int_1", "u1", "test")
         import time
+
         time.sleep(0.01)
         assert store.get("int_1") is None
 
@@ -661,6 +639,7 @@ class TestInteractionStateStore:
         store.create("int_1", "u1", "test")
         store.create("int_2", "u2", "test")
         import time
+
         time.sleep(0.01)
         removed = store.cleanup_expired()
         assert removed == 2
@@ -675,7 +654,9 @@ class TestInteractionStateStore:
     def test_response_url_stored(self) -> None:
         store = InteractionStateStore()
         state = store.create(
-            "int_1", "u1", "approval",
+            "int_1",
+            "u1",
+            "approval",
             response_url="https://hooks.slack.com/actions/T/B/123",
         )
         assert state.response_url.startswith("https://")
@@ -724,12 +705,15 @@ class TestFallbackRenderer:
     def test_render_form(self) -> None:
         fields = [
             FormField(
-                name="name", label="Name",
+                name="name",
+                label="Name",
                 field_type=FieldType.TEXT,
-                required=True, placeholder="z.B. coder",
+                required=True,
+                placeholder="z.B. coder",
             ),
             FormField(
-                name="desc", label="Beschreibung",
+                name="desc",
+                label="Beschreibung",
                 field_type=FieldType.TEXT,
                 required=False,
             ),

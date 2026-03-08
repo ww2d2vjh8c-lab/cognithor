@@ -75,7 +75,7 @@ METRIC_DEFINITIONS: dict[str, dict[str, str]] = {
 # ── Label Escaping ────────────────────────────────────────────────
 
 _LABEL_VALUE_ESCAPE_RE = re.compile(r'([\\"\n])')
-_METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:][a-zA-Z0-9_:]*$')
+_METRIC_NAME_RE = re.compile(r"^[a-zA-Z_:][a-zA-Z0-9_:]*$")
 
 
 def _escape_label_value(value: str) -> str:
@@ -95,7 +95,7 @@ def _escape_label_value(value: str) -> str:
 def _sanitize_metric_name(name: str) -> str:
     """Sanitize a metric name to match [a-zA-Z_:][a-zA-Z0-9_:]*."""
     # Replace dots, hyphens with underscores
-    sanitized = re.sub(r'[^a-zA-Z0-9_:]', '_', name)
+    sanitized = re.sub(r"[^a-zA-Z0-9_:]", "_", name)
     # Ensure starts with letter or underscore
     if sanitized and sanitized[0].isdigit():
         sanitized = "_" + sanitized
@@ -198,10 +198,13 @@ class PrometheusExporter:
             name, labels = self._parse_key(key)
             full_name = self._full_name(name)
             if full_name not in emitted_names:
-                lines.extend(self._type_help_lines(
-                    full_name, "counter",
-                    METRIC_DEFINITIONS.get(name, {}).get("help", ""),
-                ))
+                lines.extend(
+                    self._type_help_lines(
+                        full_name,
+                        "counter",
+                        METRIC_DEFINITIONS.get(name, {}).get("help", ""),
+                    )
+                )
                 emitted_names.add(full_name)
             lines.append(f"{full_name}{_format_labels(labels)} {_format_value(value)}")
 
@@ -210,10 +213,13 @@ class PrometheusExporter:
             name, labels = self._parse_key(key)
             full_name = self._full_name(name)
             if full_name not in emitted_names:
-                lines.extend(self._type_help_lines(
-                    full_name, "gauge",
-                    METRIC_DEFINITIONS.get(name, {}).get("help", ""),
-                ))
+                lines.extend(
+                    self._type_help_lines(
+                        full_name,
+                        "gauge",
+                        METRIC_DEFINITIONS.get(name, {}).get("help", ""),
+                    )
+                )
                 emitted_names.add(full_name)
             lines.append(f"{full_name}{_format_labels(labels)} {_format_value(value)}")
 
@@ -222,10 +228,13 @@ class PrometheusExporter:
             name, labels = self._parse_key(key)
             full_name = self._full_name(name)
             if full_name not in emitted_names:
-                lines.extend(self._type_help_lines(
-                    full_name, "histogram",
-                    METRIC_DEFINITIONS.get(name, {}).get("help", ""),
-                ))
+                lines.extend(
+                    self._type_help_lines(
+                        full_name,
+                        "histogram",
+                        METRIC_DEFINITIONS.get(name, {}).get("help", ""),
+                    )
+                )
                 emitted_names.add(full_name)
             lines.extend(self._format_histogram(full_name, hist, labels))
 
@@ -267,30 +276,44 @@ class PrometheusExporter:
         # Uptime
         uptime_name = self._full_name("uptime_seconds")
         uptime = time.monotonic() - self._process_start
-        lines.extend(self._type_help_lines(
-            uptime_name, "gauge", "Process uptime in seconds",
-        ))
+        lines.extend(
+            self._type_help_lines(
+                uptime_name,
+                "gauge",
+                "Process uptime in seconds",
+            )
+        )
         lines.append(f"{uptime_name} {_format_value(uptime)}")
 
         # Memory usage (RSS)
         try:
             import resource
+
             rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024  # KB -> bytes
             mem_name = self._full_name("memory_usage_bytes")
-            lines.extend(self._type_help_lines(
-                mem_name, "gauge", "Process memory usage in bytes (RSS)",
-            ))
+            lines.extend(
+                self._type_help_lines(
+                    mem_name,
+                    "gauge",
+                    "Process memory usage in bytes (RSS)",
+                )
+            )
             lines.append(f"{mem_name} {_format_value(float(rss))}")
         except ImportError:
             # Windows: use psutil or os-specific approach
             try:
                 import psutil
+
                 proc = psutil.Process(os.getpid())
                 rss = proc.memory_info().rss
                 mem_name = self._full_name("memory_usage_bytes")
-                lines.extend(self._type_help_lines(
-                    mem_name, "gauge", "Process memory usage in bytes (RSS)",
-                ))
+                lines.extend(
+                    self._type_help_lines(
+                        mem_name,
+                        "gauge",
+                        "Process memory usage in bytes (RSS)",
+                    )
+                )
                 lines.append(f"{mem_name} {_format_value(float(rss))}")
             except (ImportError, Exception):
                 pass  # Memory metric unavailable on this platform
@@ -324,18 +347,18 @@ class PrometheusExporter:
             cumulative += hist.bucket_counts[i] if i < len(hist.bucket_counts) else 0
             bucket_labels = label_str_base.copy()
             bucket_labels["le"] = _format_value(float(boundary))
-            lines.append(
-                f"{full_name}_bucket{_format_labels(bucket_labels)} {cumulative}"
-            )
+            lines.append(f"{full_name}_bucket{_format_labels(bucket_labels)} {cumulative}")
 
         # +Inf bucket (total count)
         if hist.bucket_counts:
-            cumulative += hist.bucket_counts[-1] if len(hist.bucket_counts) > len(hist.bucket_boundaries) else 0
+            cumulative += (
+                hist.bucket_counts[-1]
+                if len(hist.bucket_counts) > len(hist.bucket_boundaries)
+                else 0
+            )
         inf_labels = label_str_base.copy()
         inf_labels["le"] = "+Inf"
-        lines.append(
-            f"{full_name}_bucket{_format_labels(inf_labels)} {hist.count}"
-        )
+        lines.append(f"{full_name}_bucket{_format_labels(inf_labels)} {hist.count}")
 
         # _sum and _count
         lines.append(f"{full_name}_sum{_format_labels(label_str_base)} {_format_value(hist.total)}")

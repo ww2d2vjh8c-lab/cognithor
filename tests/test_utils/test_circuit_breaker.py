@@ -95,7 +95,10 @@ class TestStates:
     @pytest.mark.asyncio
     async def test_half_open_success_closes(self) -> None:
         cb = CircuitBreaker(
-            name="test", failure_threshold=2, recovery_timeout=0.1, half_open_max_calls=1,
+            name="test",
+            failure_threshold=2,
+            recovery_timeout=0.1,
+            half_open_max_calls=1,
         )
         for _ in range(2):
             with pytest.raises(RuntimeError):
@@ -244,8 +247,6 @@ class TestConcurrency:
             await asyncio.sleep(0.01)
             return "ok"
 
-        results = await asyncio.gather(
-            *[cb.call(delayed_succeed()) for _ in range(10)]
-        )
+        results = await asyncio.gather(*[cb.call(delayed_succeed()) for _ in range(10)])
         assert all(r == "ok" for r in results)
         assert cb.stats["total_calls"] == 10

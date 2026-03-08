@@ -1,9 +1,9 @@
 """Tests: Encrypted Vault & Session Isolation (Review-Punkt 3).
 
-  - EncryptedVault: Verschlüsselung, Entschlüsselung, Integrität
-  - VaultManager: Cross-Agent-Blockade, Agent-Isolation
-  - IsolatedSessionStore: Session-Trennung, Token-Lookup
-  - SessionIsolationGuard: Violation-Detection
+- EncryptedVault: Verschlüsselung, Entschlüsselung, Integrität
+- VaultManager: Cross-Agent-Blockade, Agent-Isolation
+- IsolatedSessionStore: Session-Trennung, Token-Lookup
+- SessionIsolationGuard: Violation-Detection
 """
 
 from __future__ import annotations

@@ -109,7 +109,11 @@ class TestParseToListing:
 
     def test_icons_for_categories(self, tmp_path: Path) -> None:
         # Test a few icon assignments
-        for cat, icon in [("produktivitaet", "\u26a1"), ("daten", "\U0001f4ca"), ("sonstiges", "\U0001f4e6")]:
+        for cat, icon in [
+            ("produktivitaet", "\u26a1"),
+            ("daten", "\U0001f4ca"),
+            ("sonstiges", "\U0001f4e6"),
+        ]:
             md = tmp_path / f"icon_{cat}.md"
             md.write_text(f"---\nname: Icon {cat}\ncategory: {cat}\n---\nBody.", encoding="utf-8")
             listing = _parse_procedure_to_listing(md)
@@ -140,10 +144,12 @@ class TestSeedMarketplace:
         proc_dir = tmp_path / "procedures"
         proc_dir.mkdir()
         (proc_dir / "good.md").write_text(
-            "---\nname: Good\n---\nBody.", encoding="utf-8",
+            "---\nname: Good\n---\nBody.",
+            encoding="utf-8",
         )
         (proc_dir / "bad.md").write_text(
-            "---\n: [invalid\n---\nBody.", encoding="utf-8",
+            "---\n: [invalid\n---\nBody.",
+            encoding="utf-8",
         )
 
         store = MagicMock()

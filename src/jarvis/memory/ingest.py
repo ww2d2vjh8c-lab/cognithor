@@ -45,8 +45,13 @@ log = get_logger(__name__)
 
 
 SUPPORTED_EXTENSIONS = {
-    ".md", ".txt", ".csv", ".json", ".xml",
-    ".html", ".htm",
+    ".md",
+    ".txt",
+    ".csv",
+    ".json",
+    ".xml",
+    ".html",
+    ".htm",
     ".pdf",
     ".docx",
 }
@@ -61,7 +66,9 @@ class IngestConfig:
 
     # Verzeichnisse
     watch_dir: Path = field(default_factory=lambda: Path.home() / ".jarvis" / "ingest")
-    processed_dir: Path = field(default_factory=lambda: Path.home() / ".jarvis" / "ingest" / "processed")
+    processed_dir: Path = field(
+        default_factory=lambda: Path.home() / ".jarvis" / "ingest" / "processed"
+    )
     failed_dir: Path = field(default_factory=lambda: Path.home() / ".jarvis" / "ingest" / "failed")
 
     # Verarbeitung
@@ -119,6 +126,7 @@ class TextExtractor:
         """Versucht MediaPipeline zu laden (optional)."""
         try:
             from jarvis.mcp.media import MediaPipeline
+
             self._media_pipeline = MediaPipeline()
         except ImportError:
             log.debug("media_pipeline_not_available_for_ingest")
@@ -347,7 +355,9 @@ class IngestPipeline:
             if self._memory is not None:
                 source_path = f"ingest://{file_name}"
 
-                if self._config.generate_embeddings and hasattr(self._memory, "index_with_embeddings"):
+                if self._config.generate_embeddings and hasattr(
+                    self._memory, "index_with_embeddings"
+                ):
                     chunks_created = await self._memory.index_with_embeddings(file_path)
                 elif hasattr(self._memory, "index_text"):
                     chunks_created = self._memory.index_text(text, source_path)
@@ -431,7 +441,8 @@ class IngestPipeline:
             return results
 
         files = sorted(
-            f for f in self._config.watch_dir.iterdir()
+            f
+            for f in self._config.watch_dir.iterdir()
             if f.is_file() and f.suffix.lower() in SUPPORTED_EXTENSIONS
         )
 
@@ -500,7 +511,8 @@ class IngestPipeline:
 
         if self._config.watch_dir.exists():
             pending = sum(
-                1 for f in self._config.watch_dir.iterdir()
+                1
+                for f in self._config.watch_dir.iterdir()
                 if f.is_file() and f.suffix.lower() in SUPPORTED_EXTENSIONS
             )
         if self._config.processed_dir.exists():

@@ -42,24 +42,27 @@ def _is_secret_field(field_name: str) -> bool:
         return False
     return any(pat in lower for pat in _SECRET_PATTERNS)
 
+
 # Felder die NIEMALS via API zurückgegeben werden
-_SECRET_FIELDS = frozenset({
-    "openai_api_key",
-    "anthropic_api_key",
-    "slack_token",
-    "slack_app_token",
-    "telegram_token",
-    "discord_token",
-    "whatsapp_token",
-    "whatsapp_verify_token",
-    "matrix_token",
-    "teams_token",
-    "signal_token",
-    "pg_password",
-    "api_key",
-    "secret_key",
-    "webhook_secret",
-})
+_SECRET_FIELDS = frozenset(
+    {
+        "openai_api_key",
+        "anthropic_api_key",
+        "slack_token",
+        "slack_app_token",
+        "telegram_token",
+        "discord_token",
+        "whatsapp_token",
+        "whatsapp_verify_token",
+        "matrix_token",
+        "teams_token",
+        "signal_token",
+        "pg_password",
+        "api_key",
+        "secret_key",
+        "webhook_secret",
+    }
+)
 
 # Patterns in field names that indicate sensitive data.
 # Any field whose name contains one of these substrings (case-insensitive)
@@ -69,61 +72,65 @@ _SECRET_PATTERN_EXCLUSIONS = (
     "key_file",
     "keyboard",
     # Numeric *token* fields that are NOT secrets
-    "_tokens",        # chunk_size_tokens, chunk_overlap_tokens
-    "token_budget",   # response_token_budget
-    "max_tokens",     # anthropic_max_tokens
+    "_tokens",  # chunk_size_tokens, chunk_overlap_tokens
+    "token_budget",  # response_token_budget
+    "max_tokens",  # anthropic_max_tokens
 )
 
 # Sektionen die über die API editierbar sind
-_EDITABLE_SECTIONS = frozenset({
-    "ollama",
-    "models",
-    "gatekeeper",
-    "planner",
-    "memory",
-    "channels",
-    "sandbox",
-    "logging",
-    "security",
-    "heartbeat",
-    "plugins",
-    "dashboard",
-    "model_overrides",
-    "web",
-    "database",
-    "prompt_evolution",
-    "improvement",
-    "executor",
-})
+_EDITABLE_SECTIONS = frozenset(
+    {
+        "ollama",
+        "models",
+        "gatekeeper",
+        "planner",
+        "memory",
+        "channels",
+        "sandbox",
+        "logging",
+        "security",
+        "heartbeat",
+        "plugins",
+        "dashboard",
+        "model_overrides",
+        "web",
+        "database",
+        "prompt_evolution",
+        "improvement",
+        "executor",
+    }
+)
 
 # Top-Level-Felder die editierbar sind
-_EDITABLE_TOP_LEVEL = frozenset({
-    "owner_name",
-    "llm_backend_type",
-    "operation_mode",
-    "cost_tracking_enabled",
-    "daily_budget_usd",
-    "monthly_budget_usd",
-    "vision_model",
-    "vision_model_detail",
-    "openai_base_url",
-    "anthropic_max_tokens",
-    # API keys — the UI sends these; the update handler skips masked "***" values
-    "openai_api_key",
-    "anthropic_api_key",
-    "gemini_api_key",
-    "groq_api_key",
-    "deepseek_api_key",
-    "mistral_api_key",
-    "together_api_key",
-    "openrouter_api_key",
-    "xai_api_key",
-    "cerebras_api_key",
-    "github_api_key",
-    "bedrock_api_key",
-    "huggingface_api_key",
-    "moonshot_api_key",
-})
+_EDITABLE_TOP_LEVEL = frozenset(
+    {
+        "owner_name",
+        "llm_backend_type",
+        "operation_mode",
+        "cost_tracking_enabled",
+        "daily_budget_usd",
+        "monthly_budget_usd",
+        "vision_model",
+        "vision_model_detail",
+        "openai_base_url",
+        "anthropic_max_tokens",
+        # API keys — the UI sends these; the update handler skips masked "***" values
+        "openai_api_key",
+        "anthropic_api_key",
+        "gemini_api_key",
+        "groq_api_key",
+        "deepseek_api_key",
+        "mistral_api_key",
+        "together_api_key",
+        "openrouter_api_key",
+        "xai_api_key",
+        "cerebras_api_key",
+        "github_api_key",
+        "bedrock_api_key",
+        "huggingface_api_key",
+        "moonshot_api_key",
+    }
+)
 
 
 class ConfigManager:
@@ -227,6 +234,7 @@ class ConfigManager:
 
         if isinstance(current[section], dict):
             from jarvis.config import _deep_merge
+
             merged = _deep_merge(current[section], values)
         else:
             merged = values
@@ -273,7 +281,7 @@ class ConfigManager:
                     "config_secret_field_cleared",
                     key=key,
                     msg="A secret field with a real value is being cleared — "
-                        "this may indicate a UI bug sending default values",
+                    "this may indicate a UI bug sending default values",
                 )
             else:
                 log.info(

@@ -65,9 +65,7 @@ class RegistrySync:
         self._registry_url = registry_url or (
             "https://raw.githubusercontent.com/cognithor/skill-registry/main"
         )
-        self._community_dir = community_dir or (
-            Path.home() / ".jarvis" / "skills" / "community"
-        )
+        self._community_dir = community_dir or (Path.home() / ".jarvis" / "skills" / "community")
         self._check_interval = check_interval
         self._marketplace_store = marketplace_store
         self._skill_registry = skill_registry
@@ -266,6 +264,7 @@ class RegistrySync:
         aiohttp_available = False
         try:
             import aiohttp
+
             aiohttp_available = True
         except ImportError:
             pass
@@ -273,11 +272,15 @@ class RegistrySync:
         if aiohttp_available:
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=_HTTP_TIMEOUT_S)) as resp:
+                    async with session.get(
+                        url, timeout=aiohttp.ClientTimeout(total=_HTTP_TIMEOUT_S)
+                    ) as resp:
                         resp.raise_for_status()
                         return await resp.text()
             except Exception as aio_exc:
-                log.debug("aiohttp_fetch_failed_falling_back_to_urllib", url=url, error=str(aio_exc))
+                log.debug(
+                    "aiohttp_fetch_failed_falling_back_to_urllib", url=url, error=str(aio_exc)
+                )
 
         # Fallback: urllib (synchron im Executor)
         import urllib.request

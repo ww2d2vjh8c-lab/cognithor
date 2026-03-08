@@ -178,9 +178,7 @@ class TestConstructor:
     """Verify that each channel can be instantiated without errors."""
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    def test_instantiation_succeeds(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    def test_instantiation_succeeds(self, factory: Any, expected_name: str) -> None:
         channel = factory()
         assert channel is not None
 
@@ -194,23 +192,17 @@ class TestNameProperty:
     """Verify the `name` property for every channel."""
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    def test_name_returns_expected(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    def test_name_returns_expected(self, factory: Any, expected_name: str) -> None:
         channel = factory()
         assert channel.name == expected_name
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    def test_name_is_string(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    def test_name_is_string(self, factory: Any, expected_name: str) -> None:
         channel = factory()
         assert isinstance(channel.name, str)
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    def test_name_is_non_empty(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    def test_name_is_non_empty(self, factory: Any, expected_name: str) -> None:
         channel = factory()
         assert len(channel.name) > 0
 
@@ -228,9 +220,7 @@ class TestSendWithoutStart:
     """
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    async def test_send_before_start_no_crash(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    async def test_send_before_start_no_crash(self, factory: Any, expected_name: str) -> None:
         channel = factory()
         msg = OutgoingMessage(
             channel=expected_name,
@@ -250,9 +240,7 @@ class TestEmptyMessages:
     """send() with empty or whitespace-only text must not crash."""
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    async def test_send_empty_string(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    async def test_send_empty_string(self, factory: Any, expected_name: str) -> None:
         channel = factory()
         msg = OutgoingMessage(
             channel=expected_name,
@@ -262,9 +250,7 @@ class TestEmptyMessages:
         await channel.send(msg)
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    async def test_send_whitespace_only(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    async def test_send_whitespace_only(self, factory: Any, expected_name: str) -> None:
         channel = factory()
         msg = OutgoingMessage(
             channel=expected_name,
@@ -283,9 +269,7 @@ class TestStopWithoutStart:
     """Calling stop() on an un-started channel should be safe."""
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    async def test_stop_before_start_no_crash(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    async def test_stop_before_start_no_crash(self, factory: Any, expected_name: str) -> None:
         channel = factory()
         await channel.stop()
 
@@ -299,9 +283,7 @@ class TestStreamingTokenWithoutStart:
     """send_streaming_token() before start() must not raise."""
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    async def test_streaming_token_before_start(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    async def test_streaming_token_before_start(self, factory: Any, expected_name: str) -> None:
         channel = factory()
         await channel.send_streaming_token("test-session-004", "hello")
 
@@ -350,9 +332,7 @@ class TestChannelNameUniqueness:
             factory = param.values[0]
             channel = factory()
             names.append(channel.name)
-        assert len(names) == len(set(names)), (
-            f"Duplicate channel names found: {names}"
-        )
+        assert len(names) == len(set(names)), f"Duplicate channel names found: {names}"
 
 
 # ===========================================================================
@@ -364,9 +344,7 @@ class TestInheritance:
     """Every channel must be a subclass of the abstract Channel base."""
 
     @pytest.mark.parametrize("factory,expected_name", CHANNEL_PARAMS)
-    def test_is_channel_subclass(
-        self, factory: Any, expected_name: str
-    ) -> None:
+    def test_is_channel_subclass(self, factory: Any, expected_name: str) -> None:
         from jarvis.channels.base import Channel
 
         channel = factory()

@@ -34,12 +34,12 @@ class AgentIdentity:
     agent_id: str
     instance_name: str
     version: str = "1.0.0"
-    endpoint: str = ""            # URL oder lokale Adresse
-    public_key: str = ""          # Für signierte Nachrichten
+    endpoint: str = ""  # URL oder lokale Adresse
+    public_key: str = ""  # Für signierte Nachrichten
     owner: str = ""
     registered_at: str = ""
     last_seen: str = ""
-    status: str = "online"        # online, offline, busy, maintenance
+    status: str = "online"  # online, offline, busy, maintenance
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -118,13 +118,13 @@ class InteropMessage:
     message_id: str
     msg_type: MessageType
     sender_id: str
-    receiver_id: str            # "" = broadcast
+    receiver_id: str  # "" = broadcast
     payload: dict[str, Any] = field(default_factory=dict)
     priority: MessagePriority = MessagePriority.NORMAL
     timestamp: str = ""
-    correlation_id: str = ""    # Für Request/Response-Paare
-    ttl_seconds: int = 300      # Time-to-Live
-    signature: str = ""         # Optionale Signatur
+    correlation_id: str = ""  # Für Request/Response-Paare
+    ttl_seconds: int = 300  # Time-to-Live
+    signature: str = ""  # Optionale Signatur
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -408,7 +408,8 @@ class FederationManager:
 
     def links_for_agent(self, agent_id: str) -> list[FederationLink]:
         return [
-            l for l in self._links.values()
+            l
+            for l in self._links.values()
             if l.local_agent_id == agent_id or l.remote_agent_id == agent_id
         ]
 

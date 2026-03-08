@@ -24,8 +24,10 @@ from typing import Any, Callable, Awaitable
 
 # ── Enums ────────────────────────────────────────────────────────
 
+
 class ApprovalStatus(str, Enum):
     """Status einer Approval-Anfrage."""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -37,6 +39,7 @@ class ApprovalStatus(str, Enum):
 
 class ReviewPriority(str, Enum):
     """Priorität eines Reviews."""
+
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
@@ -45,6 +48,7 @@ class ReviewPriority(str, Enum):
 
 class EscalationAction(str, Enum):
     """Aktion bei Eskalation."""
+
     AUTO_APPROVE = "auto_approve"
     AUTO_REJECT = "auto_reject"
     DELEGATE = "delegate"
@@ -54,6 +58,7 @@ class EscalationAction(str, Enum):
 
 class NotificationType(str, Enum):
     """Art der Benachrichtigung."""
+
     IN_APP = "in_app"
     WEBHOOK = "webhook"
     CALLBACK = "callback"
@@ -63,22 +68,25 @@ class NotificationType(str, Enum):
 
 class HITLNodeKind(str, Enum):
     """Art des HITL-Knotens."""
-    APPROVAL = "approval"       # Ja/Nein-Entscheidung
-    REVIEW = "review"           # Prüfung mit Kommentar
-    INPUT = "input"             # Menschliche Eingabe benötigt
-    GATE = "gate"               # Bedingter Stopp (nur bei Risiko)
-    EDIT = "edit"               # Mensch editiert State-Daten
-    SELECTION = "selection"     # Auswahl aus Optionen
+
+    APPROVAL = "approval"  # Ja/Nein-Entscheidung
+    REVIEW = "review"  # Prüfung mit Kommentar
+    INPUT = "input"  # Menschliche Eingabe benötigt
+    GATE = "gate"  # Bedingter Stopp (nur bei Risiko)
+    EDIT = "edit"  # Mensch editiert State-Daten
+    SELECTION = "selection"  # Auswahl aus Optionen
 
 
 # ── Notification Channel ─────────────────────────────────────────
 
+
 @dataclass
 class NotificationChannel:
     """Definition eines Benachrichtigungs-Kanals."""
+
     channel_type: NotificationType = NotificationType.LOG
-    endpoint: str = ""          # URL für webhook, Callback-ID, E-Mail
-    template: str = ""          # Nachricht-Template mit {placeholders}
+    endpoint: str = ""  # URL für webhook, Callback-ID, E-Mail
+    template: str = ""  # Nachricht-Template mit {placeholders}
     enabled: bool = True
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -92,6 +100,7 @@ class NotificationChannel:
 
 # ── Escalation Policy ───────────────────────────────────────────
 
+
 @dataclass
 class EscalationPolicy:
     """Regeln für Timeout und Eskalation.
@@ -99,11 +108,12 @@ class EscalationPolicy:
     Definiert was passiert wenn innerhalb von timeout_seconds
     keine Antwort kommt.
     """
-    timeout_seconds: int = 3600             # Default: 1 Stunde
+
+    timeout_seconds: int = 3600  # Default: 1 Stunde
     action: EscalationAction = EscalationAction.PAUSE_INDEFINITELY
-    delegate_to: str = ""                   # User/Rolle für Delegation
+    delegate_to: str = ""  # User/Rolle für Delegation
     max_escalations: int = 3
-    reminder_interval_seconds: int = 900    # Alle 15 Min Erinnerung
+    reminder_interval_seconds: int = 900  # Alle 15 Min Erinnerung
     auto_approve_conditions: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -119,16 +129,18 @@ class EscalationPolicy:
 
 # ── HITL Config ──────────────────────────────────────────────────
 
+
 @dataclass
 class HITLConfig:
     """Konfiguration für einen HITL-Knoten."""
+
     node_kind: HITLNodeKind = HITLNodeKind.APPROVAL
     title: str = ""
     description: str = ""
     instructions: str = ""
     assignees: list[str] = field(default_factory=list)
     priority: ReviewPriority = ReviewPriority.NORMAL
-    required_approvals: int = 1         # Wie viele Approvals nötig
+    required_approvals: int = 1  # Wie viele Approvals nötig
     escalation: EscalationPolicy = field(default_factory=EscalationPolicy)
     notifications: list[NotificationChannel] = field(default_factory=list)
     context_keys: list[str] = field(default_factory=list)  # State-Keys die angezeigt werden
@@ -152,9 +164,11 @@ class HITLConfig:
 
 # ── Approval Request ─────────────────────────────────────────────
 
+
 @dataclass
 class ApprovalRequest:
     """Anfrage an menschlichen Reviewer."""
+
     request_id: str = ""
     execution_id: str = ""
     graph_name: str = ""
@@ -185,14 +199,17 @@ class ApprovalRequest:
     @property
     def is_resolved(self) -> bool:
         return self.status in (
-            ApprovalStatus.APPROVED, ApprovalStatus.REJECTED,
-            ApprovalStatus.TIMED_OUT, ApprovalStatus.CANCELED,
+            ApprovalStatus.APPROVED,
+            ApprovalStatus.REJECTED,
+            ApprovalStatus.TIMED_OUT,
+            ApprovalStatus.CANCELED,
         )
 
     @property
     def age_seconds(self) -> float:
         try:
             import calendar
+
             created = calendar.timegm(time.strptime(self.created_at, "%Y-%m-%dT%H:%M:%SZ"))
             return time.time() - created
         except (ValueError, OverflowError):
@@ -221,16 +238,18 @@ class ApprovalRequest:
 
 # ── Approval Response ────────────────────────────────────────────
 
+
 @dataclass
 class ApprovalResponse:
     """Antwort eines menschlichen Reviewers."""
+
     response_id: str = ""
     request_id: str = ""
     decision: ApprovalStatus = ApprovalStatus.APPROVED
     reviewer: str = ""
     comment: str = ""
     modifications: dict[str, Any] = field(default_factory=dict)
-    selected_option: str = ""   # Für SELECTION-Typ
+    selected_option: str = ""  # Für SELECTION-Typ
     timestamp: str = ""
 
     def __post_init__(self) -> None:
@@ -258,9 +277,11 @@ class ApprovalResponse:
 
 # ── Review Task ──────────────────────────────────────────────────
 
+
 @dataclass
 class ReviewTask:
     """Vollständiger Review-Auftrag mit Kontext für UI/API."""
+
     request: ApprovalRequest
     responses: list[ApprovalResponse] = field(default_factory=list)
     notifications_sent: int = 0
@@ -284,8 +305,7 @@ class ReviewTask:
 
     @property
     def needs_more_approvals(self) -> bool:
-        return (not self.is_rejected and
-                self.approval_count < self.request.config.required_approvals)
+        return not self.is_rejected and self.approval_count < self.request.config.required_approvals
 
     def to_dict(self) -> dict[str, Any]:
         return {

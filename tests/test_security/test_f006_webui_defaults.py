@@ -24,9 +24,11 @@ class TestCreateAppDefaults:
         from jarvis.channels.webui import create_app
 
         # Sicherstellen dass keine Env-Var gesetzt ist
-        env = {k: v for k, v in os.environ.items()
-               if k not in ("JARVIS_WEBUI_HOST", "JARVIS_WEBUI_CORS_ORIGINS",
-                             "JARVIS_API_TOKEN")}
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in ("JARVIS_WEBUI_HOST", "JARVIS_WEBUI_CORS_ORIGINS", "JARVIS_API_TOKEN")
+        }
         with patch.dict(os.environ, env, clear=True):
             app = create_app()
         # App wurde erstellt (kein Crash)
@@ -53,9 +55,7 @@ class TestCreateAppDefaults:
 
         source = inspect.getsource(create_app)
         cors_line = source.split("JARVIS_WEBUI_CORS_ORIGINS")[1].split("\n")[0]
-        assert '\"*\"' not in cors_line, (
-            "Default fuer JARVIS_WEBUI_CORS_ORIGINS darf nicht '*' sein"
-        )
+        assert '"*"' not in cors_line, "Default fuer JARVIS_WEBUI_CORS_ORIGINS darf nicht '*' sein"
 
     def test_explicit_0000_via_env_still_works(self) -> None:
         """Explizites Opt-in fuer 0.0.0.0 via Env-Var muss weiterhin funktionieren."""
@@ -64,6 +64,7 @@ class TestCreateAppDefaults:
         env["JARVIS_WEBUI_CORS_ORIGINS"] = "*"
         with patch.dict(os.environ, env, clear=True):
             from jarvis.channels.webui import create_app
+
             app = create_app()
         assert app is not None
 
@@ -73,6 +74,7 @@ class TestCreateAppDefaults:
         env["JARVIS_WEBUI_CORS_ORIGINS"] = "https://myapp.example.com,https://other.example.com"
         with patch.dict(os.environ, env, clear=True):
             from jarvis.channels.webui import create_app
+
             app = create_app()
         assert app is not None
 

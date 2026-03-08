@@ -32,7 +32,9 @@ from jarvis.security.framework import (
 class TestIncidentTracker:
     def test_create_incident(self) -> None:
         tracker = IncidentTracker()
-        inc = tracker.create("Prompt Injection", IncidentCategory.PROMPT_INJECTION, IncidentSeverity.HIGH)
+        inc = tracker.create(
+            "Prompt Injection", IncidentCategory.PROMPT_INJECTION, IncidentSeverity.HIGH
+        )
         assert inc.incident_id == "INC-00001"
         assert inc.status == IncidentStatus.DETECTED
 
@@ -254,8 +256,14 @@ class TestCapabilityRegistry:
 
     def test_best_agent_prefer_cheap(self) -> None:
         reg = CapabilityRegistry()
-        reg.register("expensive", [AgentCapability(CapabilityType.DATA_ANALYSIS, cost_per_call=1.0, avg_response_ms=50)])
-        reg.register("cheap", [AgentCapability(CapabilityType.DATA_ANALYSIS, cost_per_call=0.1, avg_response_ms=200)])
+        reg.register(
+            "expensive",
+            [AgentCapability(CapabilityType.DATA_ANALYSIS, cost_per_call=1.0, avg_response_ms=50)],
+        )
+        reg.register(
+            "cheap",
+            [AgentCapability(CapabilityType.DATA_ANALYSIS, cost_per_call=0.1, avg_response_ms=200)],
+        )
         assert reg.best_agent_for(CapabilityType.DATA_ANALYSIS, prefer_fast=False) == "cheap"
 
     def test_find_by_language(self) -> None:
@@ -273,7 +281,9 @@ class TestCapabilityRegistry:
 
     def test_stats(self) -> None:
         reg = CapabilityRegistry()
-        reg.register("a1", [AgentCapability(CapabilityType.EMAIL), AgentCapability(CapabilityType.CRM)])
+        reg.register(
+            "a1", [AgentCapability(CapabilityType.EMAIL), AgentCapability(CapabilityType.CRM)]
+        )
         stats = reg.stats()
         assert stats["registered_agents"] == 1
         assert stats["total_capabilities"] == 2
@@ -341,8 +351,9 @@ class TestFederationManager:
 
     def test_can_delegate(self) -> None:
         fm = FederationManager()
-        link = fm.propose("local", "remote", "https://remote.jarvis.io",
-                          [CapabilityType.CODE_GENERATION])
+        link = fm.propose(
+            "local", "remote", "https://remote.jarvis.io", [CapabilityType.CODE_GENERATION]
+        )
         fm.accept(link.link_id)
         assert fm.can_delegate(link.link_id, CapabilityType.CODE_GENERATION)
         assert not fm.can_delegate(link.link_id, CapabilityType.CRM)
@@ -359,7 +370,8 @@ class TestFederationManager:
 
     def test_active_links(self) -> None:
         fm = FederationManager()
-        l1 = fm.propose("a", "b", "url1"); fm.accept(l1.link_id)
+        l1 = fm.propose("a", "b", "url1")
+        fm.accept(l1.link_id)
         fm.propose("a", "c", "url2")  # pending
         assert len(fm.active_links()) == 1
 

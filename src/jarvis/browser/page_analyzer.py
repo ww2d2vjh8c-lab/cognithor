@@ -187,10 +187,12 @@ class PageAnalyzer:
     def __init__(self) -> None:
         self._analysis_count = 0
 
-    async def analyze(self, page: Any, *, extract_text: bool = True,
-                      max_text_length: int = 5000) -> PageState:
+    async def analyze(
+        self, page: Any, *, extract_text: bool = True, max_text_length: int = 5000
+    ) -> PageState:
         """Vollständige Seiten-Analyse."""
         import time as _time
+
         start = _time.monotonic()
         state = PageState()
 
@@ -209,7 +211,9 @@ class PageAnalyzer:
 
             # HTML-Länge
             try:
-                state.html_length = await page.evaluate("() => document.documentElement.outerHTML.length")
+                state.html_length = await page.evaluate(
+                    "() => document.documentElement.outerHTML.length"
+                )
             except Exception:
                 pass
 
@@ -279,8 +283,10 @@ class PageAnalyzer:
             raw = await page.evaluate(JS_EXTRACT_LINKS)
             return [
                 ElementInfo(
-                    selector=r.get("selector", ""), element_type=ElementType.LINK,
-                    text=r.get("text", ""), href=r.get("href", ""),
+                    selector=r.get("selector", ""),
+                    element_type=ElementType.LINK,
+                    text=r.get("text", ""),
+                    href=r.get("href", ""),
                     is_visible=r.get("visible", True),
                     aria_label=r.get("ariaLabel", ""),
                 )
@@ -294,8 +300,10 @@ class PageAnalyzer:
             raw = await page.evaluate(JS_EXTRACT_BUTTONS)
             return [
                 ElementInfo(
-                    selector=r.get("selector", ""), element_type=ElementType.BUTTON,
-                    text=r.get("text", ""), is_visible=r.get("visible", True),
+                    selector=r.get("selector", ""),
+                    element_type=ElementType.BUTTON,
+                    text=r.get("text", ""),
+                    is_visible=r.get("visible", True),
                     is_enabled=r.get("enabled", True),
                     aria_label=r.get("ariaLabel", ""),
                 )
@@ -308,7 +316,7 @@ class PageAnalyzer:
         try:
             raw = await page.evaluate(JS_EXTRACT_INPUTS)
             results: list[ElementInfo] = []
-            for r in (raw or []):
+            for r in raw or []:
                 rtype = r.get("type", "text")
                 if rtype == "checkbox":
                     etype = ElementType.CHECKBOX
@@ -323,15 +331,19 @@ class PageAnalyzer:
                 else:
                     etype = ElementType.INPUT
 
-                results.append(ElementInfo(
-                    selector=r.get("selector", ""), element_type=etype,
-                    name=r.get("name", ""), value=r.get("value", ""),
-                    placeholder=r.get("placeholder", ""),
-                    aria_label=r.get("ariaLabel", ""),
-                    is_visible=r.get("visible", True),
-                    is_enabled=r.get("enabled", True),
-                    is_required=r.get("required", False),
-                ))
+                results.append(
+                    ElementInfo(
+                        selector=r.get("selector", ""),
+                        element_type=etype,
+                        name=r.get("name", ""),
+                        value=r.get("value", ""),
+                        placeholder=r.get("placeholder", ""),
+                        aria_label=r.get("ariaLabel", ""),
+                        is_visible=r.get("visible", True),
+                        is_enabled=r.get("enabled", True),
+                        is_required=r.get("required", False),
+                    )
+                )
             return results
         except Exception:
             return []
@@ -340,11 +352,13 @@ class PageAnalyzer:
         try:
             raw = await page.evaluate(JS_EXTRACT_FORMS)
             forms: list[FormInfo] = []
-            for r in (raw or []):
+            for r in raw or []:
                 fields = [
                     FormField(
-                        name=f.get("name", ""), field_type=f.get("type", "text"),
-                        label=f.get("label", ""), value=f.get("value", ""),
+                        name=f.get("name", ""),
+                        field_type=f.get("type", "text"),
+                        label=f.get("label", ""),
+                        value=f.get("value", ""),
                         placeholder=f.get("placeholder", ""),
                         required=f.get("required", False),
                         options=f.get("options", []),
@@ -352,11 +366,16 @@ class PageAnalyzer:
                     )
                     for f in r.get("fields", [])
                 ]
-                forms.append(FormInfo(
-                    action=r.get("action", ""), method=r.get("method", "GET"),
-                    fields=fields, submit_selector=r.get("submitSelector", ""),
-                    selector=r.get("selector", ""), name=r.get("name", ""),
-                ))
+                forms.append(
+                    FormInfo(
+                        action=r.get("action", ""),
+                        method=r.get("method", "GET"),
+                        fields=fields,
+                        submit_selector=r.get("submitSelector", ""),
+                        selector=r.get("selector", ""),
+                        name=r.get("name", ""),
+                    )
+                )
             return forms
         except Exception:
             return []

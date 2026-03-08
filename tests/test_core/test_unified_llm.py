@@ -115,7 +115,9 @@ class TestUnifiedLLMInit:
 
 class TestChatOllama:
     @pytest.mark.asyncio
-    async def test_chat_delegates_to_ollama(self, ollama_client: UnifiedLLMClient, mock_ollama: AsyncMock) -> None:
+    async def test_chat_delegates_to_ollama(
+        self, ollama_client: UnifiedLLMClient, mock_ollama: AsyncMock
+    ) -> None:
         result = await ollama_client.chat(
             model="qwen3:8b",
             messages=[{"role": "user", "content": "Hallo"}],
@@ -126,7 +128,9 @@ class TestChatOllama:
         assert result["done"] is True
 
     @pytest.mark.asyncio
-    async def test_chat_passes_all_params(self, ollama_client: UnifiedLLMClient, mock_ollama: AsyncMock) -> None:
+    async def test_chat_passes_all_params(
+        self, ollama_client: UnifiedLLMClient, mock_ollama: AsyncMock
+    ) -> None:
         await ollama_client.chat(
             model="qwen3:32b",
             messages=[{"role": "user", "content": "Test"}],
@@ -151,7 +155,9 @@ class TestChatOllama:
 
 class TestChatBackend:
     @pytest.mark.asyncio
-    async def test_chat_uses_backend(self, openai_client: UnifiedLLMClient, mock_backend: AsyncMock) -> None:
+    async def test_chat_uses_backend(
+        self, openai_client: UnifiedLLMClient, mock_backend: AsyncMock
+    ) -> None:
         result = await openai_client.chat(
             model="gpt-4o",
             messages=[{"role": "user", "content": "Hallo"}],
@@ -165,7 +171,9 @@ class TestChatBackend:
         assert result["done"] is True
 
     @pytest.mark.asyncio
-    async def test_chat_converts_tool_calls(self, openai_client: UnifiedLLMClient, mock_backend: AsyncMock) -> None:
+    async def test_chat_converts_tool_calls(
+        self, openai_client: UnifiedLLMClient, mock_backend: AsyncMock
+    ) -> None:
         mock_backend.chat.return_value = MockChatResponse(
             content="",
             tool_calls=[{"name": "read_file", "arguments": {"path": "/tmp"}}],
@@ -214,19 +222,25 @@ class TestChatBackend:
 
 class TestEmbeddings:
     @pytest.mark.asyncio
-    async def test_embed_ollama_mode(self, ollama_client: UnifiedLLMClient, mock_ollama: AsyncMock) -> None:
+    async def test_embed_ollama_mode(
+        self, ollama_client: UnifiedLLMClient, mock_ollama: AsyncMock
+    ) -> None:
         result = await ollama_client.embed("nomic-embed-text", "Hallo Welt")
         mock_ollama.embed.assert_awaited_once()
         assert result["embedding"] == [0.1, 0.2, 0.3]
 
     @pytest.mark.asyncio
-    async def test_embed_backend_mode(self, openai_client: UnifiedLLMClient, mock_backend: AsyncMock) -> None:
+    async def test_embed_backend_mode(
+        self, openai_client: UnifiedLLMClient, mock_backend: AsyncMock
+    ) -> None:
         result = await openai_client.embed("text-embedding-3-small", "Hallo Welt")
         mock_backend.embed.assert_awaited_once()
         assert result["embedding"] == [0.4, 0.5, 0.6]
 
     @pytest.mark.asyncio
-    async def test_embed_anthropic_fallback(self, mock_ollama: AsyncMock, mock_backend: AsyncMock) -> None:
+    async def test_embed_anthropic_fallback(
+        self, mock_ollama: AsyncMock, mock_backend: AsyncMock
+    ) -> None:
         """Anthropic hat kein Embedding → Fallback auf Ollama."""
         mock_backend.embed.side_effect = NotImplementedError("No embedding support")
 
@@ -253,7 +267,9 @@ class TestMetaMethods:
         assert await openai_client.is_available() is True
 
     @pytest.mark.asyncio
-    async def test_is_available_backend_error(self, mock_ollama: AsyncMock, mock_backend: AsyncMock) -> None:
+    async def test_is_available_backend_error(
+        self, mock_ollama: AsyncMock, mock_backend: AsyncMock
+    ) -> None:
         mock_backend.is_available.side_effect = Exception("Network error")
         client = UnifiedLLMClient(mock_ollama, backend=mock_backend)
         assert await client.is_available() is False
@@ -269,7 +285,9 @@ class TestMetaMethods:
         assert "gpt-4o" in models
 
     @pytest.mark.asyncio
-    async def test_close_closes_both(self, openai_client: UnifiedLLMClient, mock_ollama: AsyncMock, mock_backend: AsyncMock) -> None:
+    async def test_close_closes_both(
+        self, openai_client: UnifiedLLMClient, mock_ollama: AsyncMock, mock_backend: AsyncMock
+    ) -> None:
         await openai_client.close()
         mock_backend.close.assert_awaited_once()
         mock_ollama.close.assert_awaited_once()
@@ -363,7 +381,9 @@ class TestPlannerCompatibility:
         assert tool_calls == []
 
     @pytest.mark.asyncio
-    async def test_planner_error_pattern(self, openai_client: UnifiedLLMClient, mock_backend: AsyncMock) -> None:
+    async def test_planner_error_pattern(
+        self, openai_client: UnifiedLLMClient, mock_backend: AsyncMock
+    ) -> None:
         """Planner fängt OllamaError — muss auch bei Backend-Fehlern funktionieren."""
         mock_backend.chat.side_effect = RuntimeError("Rate limit exceeded")
 

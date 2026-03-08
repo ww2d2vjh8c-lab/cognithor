@@ -87,8 +87,7 @@ class TestOlmNotAvailable:
 
             warning_calls = [str(c) for c in mock_logger.warning.call_args_list]
             assert any("UNVERSCHLUESSELT" in w for w in warning_calls), (
-                f"Keine Warnung ueber unverschluesselte Nachrichten. "
-                f"Warning-Calls: {warning_calls}"
+                f"Keine Warnung ueber unverschluesselte Nachrichten. Warning-Calls: {warning_calls}"
             )
 
         await ch.stop()

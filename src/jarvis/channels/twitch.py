@@ -78,9 +78,12 @@ class TwitchChannel(Channel):
 
         try:
             import ssl as ssl_mod
+
             ssl_ctx = ssl_mod.create_default_context()
             self._reader, self._writer = await asyncio.open_connection(
-                _TMI_HOST, _TMI_PORT_SSL, ssl=ssl_ctx,
+                _TMI_HOST,
+                _TMI_PORT_SSL,
+                ssl=ssl_ctx,
             )
         except Exception as exc:
             logger.error("Twitch Verbindung fehlgeschlagen: %s", exc)
@@ -181,7 +184,7 @@ class TwitchChannel(Channel):
             return
 
         # Prefix entfernen
-        text = text[len(self._command_prefix):].strip()
+        text = text[len(self._command_prefix) :].strip()
         if not text:
             return
 
@@ -224,6 +227,7 @@ class TwitchChannel(Channel):
                 logger.error("Twitch: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
@@ -232,6 +236,7 @@ class TwitchChannel(Channel):
     async def _send_chat(self, text: str) -> None:
         """Sendet eine Chat-Nachricht mit Rate Limiting."""
         import time
+
         now = time.monotonic()
         elapsed = now - self._last_msg_time
         if elapsed < _MIN_MSG_INTERVAL:
@@ -276,7 +281,10 @@ class TwitchChannel(Channel):
         await self._send_chat(message.text)
 
     async def request_approval(
-        self, session_id: str, action: PlannedAction, reason: str,
+        self,
+        session_id: str,
+        action: PlannedAction,
+        reason: str,
     ) -> bool:
         """Twitch: Textbasierte Approval via ja/nein im Chat."""
         if not self._writer:
@@ -309,6 +317,8 @@ class TwitchChannel(Channel):
             if text.strip():
                 await self.send(
                     OutgoingMessage(
-                        channel=self.name, text=text, session_id=session_id,
+                        channel=self.name,
+                        text=text,
+                        session_id=session_id,
                     )
                 )

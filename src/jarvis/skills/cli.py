@@ -44,9 +44,7 @@ def main(argv: List[str] | None = None) -> None:
     list_parser = subparsers.add_parser("list", help="Verfügbare Skills auflisten")
 
     # create command
-    create_parser = subparsers.add_parser(
-        "create", help="Neuen Skill (Prozedur) anlegen"
-    )
+    create_parser = subparsers.add_parser("create", help="Neuen Skill (Prozedur) anlegen")
     create_parser.add_argument("name", help="Name des neuen Skills")
     create_parser.add_argument(
         "--triggers",
@@ -56,9 +54,7 @@ def main(argv: List[str] | None = None) -> None:
     )
 
     # search command
-    search_parser = subparsers.add_parser(
-        "search", help="Skills in einem Remote-Repository suchen"
-    )
+    search_parser = subparsers.add_parser("search", help="Skills in einem Remote-Repository suchen")
     search_parser.add_argument("query", help="Suchbegriff für Skills")
     search_parser.add_argument(
         "--limit",
@@ -110,9 +106,7 @@ def main(argv: List[str] | None = None) -> None:
 
         results = search_remote_skills(args.query, limit=args.limit)
         if not results:
-            print(
-                "Keine Ergebnisse gefunden oder Remote-Suche nicht verfügbar."
-            )
+            print("Keine Ergebnisse gefunden oder Remote-Suche nicht verfügbar.")
         else:
             print("Gefundene Skills:")
             for name in results:

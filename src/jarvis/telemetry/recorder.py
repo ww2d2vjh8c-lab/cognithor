@@ -232,9 +232,7 @@ class ExecutionRecorder:
         metadata: dict[str, Any] | None = None,
     ) -> ExecutionRecording:
         """Start a new execution recording."""
-        recording_id = hashlib.sha256(
-            f"rec:{session_id}:{time.time()}".encode()
-        ).hexdigest()[:16]
+        recording_id = hashlib.sha256(f"rec:{session_id}:{time.time()}".encode()).hexdigest()[:16]
 
         rec = ExecutionRecording(
             recording_id=recording_id,

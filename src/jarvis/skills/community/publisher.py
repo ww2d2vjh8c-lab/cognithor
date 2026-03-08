@@ -92,11 +92,7 @@ class PublisherIdentity:
 
         # Downgrade wenn Bedingungen nicht erfuellt
         if base_level == TrustLevel.VERIFIED:
-            if (
-                self.skills_published < 3
-                or self.recalls > 0
-                or self.account_age_days < 90
-            ):
+            if self.skills_published < 3 or self.recalls > 0 or self.account_age_days < 90:
                 base_level = TrustLevel.HIGH
 
         if base_level == TrustLevel.HIGH:
@@ -208,10 +204,12 @@ class PublisherVerifier:
                 if local:
                     # Lokale Reputation hat Vorrang (aktueller)
                     identity.reputation_score = local.get(
-                        "reputation_score", identity.reputation_score,
+                        "reputation_score",
+                        identity.reputation_score,
                     )
                     identity.abuse_reports = local.get(
-                        "abuse_reports", identity.abuse_reports,
+                        "abuse_reports",
+                        identity.abuse_reports,
                     )
                     identity.recalls = local.get("recalls", identity.recalls)
 
@@ -238,7 +236,8 @@ class PublisherVerifier:
             self._cache.clear()
 
     async def _fetch_publisher_profile(
-        self, github_username: str,
+        self,
+        github_username: str,
     ) -> dict[str, Any] | None:
         """Laedt ein Publisher-Profil aus dem Registry-Repo."""
         import json
@@ -259,6 +258,7 @@ class PublisherVerifier:
         aiohttp_available = False
         try:
             import aiohttp
+
             aiohttp_available = True
         except ImportError:
             pass
@@ -266,11 +266,15 @@ class PublisherVerifier:
         if aiohttp_available:
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=_HTTP_TIMEOUT_S)) as resp:
+                    async with session.get(
+                        url, timeout=aiohttp.ClientTimeout(total=_HTTP_TIMEOUT_S)
+                    ) as resp:
                         resp.raise_for_status()
                         return await resp.text()
             except Exception as aio_exc:
-                log.debug("aiohttp_fetch_failed_falling_back_to_urllib", url=url, error=str(aio_exc))
+                log.debug(
+                    "aiohttp_fetch_failed_falling_back_to_urllib", url=url, error=str(aio_exc)
+                )
 
         # Fallback: urllib (synchron im Executor)
         import urllib.request

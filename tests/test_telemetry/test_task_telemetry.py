@@ -21,7 +21,7 @@ class TestTaskTelemetryCollector:
         self.collector.record_task("s2", True, 100.0)
         self.collector.record_task("s3", False, 100.0)
         rate = self.collector.get_success_rate(window_hours=24)
-        assert abs(rate - 2.0/3.0) < 0.01
+        assert abs(rate - 2.0 / 3.0) < 0.01
 
     def test_success_rate_empty(self):
         rate = self.collector.get_success_rate()
@@ -42,9 +42,12 @@ class TestTaskTelemetryCollector:
 
     def test_record_with_error(self):
         self.collector.record_task(
-            "s1", False, 50.0, ["exec_command"],
+            "s1",
+            False,
+            50.0,
+            ["exec_command"],
             error_type="TimeoutError",
-            error_message="Command timed out"
+            error_message="Command timed out",
         )
         assert self.collector.get_total_tasks() == 1
         rate = self.collector.get_success_rate()

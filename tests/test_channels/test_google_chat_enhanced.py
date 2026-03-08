@@ -133,7 +133,8 @@ class TestGoogleChatSend:
         ch._http_client = AsyncMock()
         ch._credentials = None
         msg = OutgoingMessage(
-            channel="google_chat", text="test",
+            channel="google_chat",
+            text="test",
             metadata={"space_name": "spaces/abc"},
         )
         await ch.send(msg)  # no crash since _get_auth_headers returns {}
@@ -176,11 +177,14 @@ class TestGoogleChatStart:
         creds.write_text("{}")
         ch = GoogleChatChannel(credentials_path=str(creds))
         handler = AsyncMock()
-        with patch.dict("sys.modules", {
-            "google": None,
-            "google.oauth2": None,
-            "google.oauth2.service_account": None,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": None,
+                "google.oauth2": None,
+                "google.oauth2.service_account": None,
+            },
+        ):
             await ch.start(handler)
         assert ch._running is False
 
@@ -190,11 +194,14 @@ class TestGoogleChatStart:
         handler = AsyncMock()
 
         mock_sa = MagicMock()
-        with patch.dict("sys.modules", {
-            "google": MagicMock(),
-            "google.oauth2": MagicMock(),
-            "google.oauth2.service_account": mock_sa,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": MagicMock(),
+                "google.oauth2": MagicMock(),
+                "google.oauth2.service_account": mock_sa,
+            },
+        ):
             await ch.start(handler)
         assert ch._running is False
 
@@ -211,11 +218,14 @@ class TestGoogleChatStart:
         mock_oauth2 = MagicMock()
         mock_oauth2.service_account = mock_sa
 
-        with patch.dict("sys.modules", {
-            "google": MagicMock(),
-            "google.oauth2": mock_oauth2,
-            "google.oauth2.service_account": mock_sa,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": MagicMock(),
+                "google.oauth2": mock_oauth2,
+                "google.oauth2.service_account": mock_sa,
+            },
+        ):
             await ch.start(handler)
 
         assert ch._running is True
@@ -233,11 +243,14 @@ class TestGoogleChatStart:
         mock_oauth2 = MagicMock()
         mock_oauth2.service_account = mock_sa
 
-        with patch.dict("sys.modules", {
-            "google": MagicMock(),
-            "google.oauth2": mock_oauth2,
-            "google.oauth2.service_account": mock_sa,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": MagicMock(),
+                "google.oauth2": mock_oauth2,
+                "google.oauth2.service_account": mock_sa,
+            },
+        ):
             await ch.start(handler)
 
         assert ch._running is False
@@ -256,12 +269,15 @@ class TestGetAuthHeaders:
         ch._credentials.token = "test-token"
 
         mock_request = MagicMock()
-        with patch.dict("sys.modules", {
-            "google": MagicMock(),
-            "google.auth": MagicMock(),
-            "google.auth.transport": MagicMock(),
-            "google.auth.transport.requests": MagicMock(Request=mock_request),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": MagicMock(),
+                "google.auth": MagicMock(),
+                "google.auth.transport": MagicMock(),
+                "google.auth.transport.requests": MagicMock(Request=mock_request),
+            },
+        ):
             headers = await ch._get_auth_headers()
         assert headers["Authorization"] == "Bearer test-token"
 
@@ -271,12 +287,15 @@ class TestGetAuthHeaders:
         ch._credentials.refresh.side_effect = RuntimeError("refresh failed")
 
         mock_request = MagicMock()
-        with patch.dict("sys.modules", {
-            "google": MagicMock(),
-            "google.auth": MagicMock(),
-            "google.auth.transport": MagicMock(),
-            "google.auth.transport.requests": MagicMock(Request=mock_request),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": MagicMock(),
+                "google.auth": MagicMock(),
+                "google.auth.transport": MagicMock(),
+                "google.auth.transport.requests": MagicMock(Request=mock_request),
+            },
+        ):
             headers = await ch._get_auth_headers()
         assert headers == {}
 
@@ -293,14 +312,18 @@ class TestGoogleChatSendSuccess:
         ch._http_client.post = AsyncMock(return_value=mock_resp)
 
         mock_request = MagicMock()
-        with patch.dict("sys.modules", {
-            "google": MagicMock(),
-            "google.auth": MagicMock(),
-            "google.auth.transport": MagicMock(),
-            "google.auth.transport.requests": MagicMock(Request=mock_request),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": MagicMock(),
+                "google.auth": MagicMock(),
+                "google.auth.transport": MagicMock(),
+                "google.auth.transport.requests": MagicMock(Request=mock_request),
+            },
+        ):
             msg = OutgoingMessage(
-                channel="google_chat", text="Hello",
+                channel="google_chat",
+                text="Hello",
                 metadata={"space_name": "spaces/abc"},
             )
             await ch.send(msg)
@@ -317,14 +340,18 @@ class TestGoogleChatSendSuccess:
         ch._http_client.post = AsyncMock(return_value=mock_resp)
 
         mock_request = MagicMock()
-        with patch.dict("sys.modules", {
-            "google": MagicMock(),
-            "google.auth": MagicMock(),
-            "google.auth.transport": MagicMock(),
-            "google.auth.transport.requests": MagicMock(Request=mock_request),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": MagicMock(),
+                "google.auth": MagicMock(),
+                "google.auth.transport": MagicMock(),
+                "google.auth.transport.requests": MagicMock(Request=mock_request),
+            },
+        ):
             msg = OutgoingMessage(
-                channel="google_chat", text="Reply",
+                channel="google_chat",
+                text="Reply",
                 metadata={"space_name": "spaces/abc", "thread_name": "thread1"},
             )
             await ch.send(msg)
@@ -343,14 +370,18 @@ class TestGoogleChatSendSuccess:
         ch._http_client.post = AsyncMock(return_value=mock_resp)
 
         mock_request = MagicMock()
-        with patch.dict("sys.modules", {
-            "google": MagicMock(),
-            "google.auth": MagicMock(),
-            "google.auth.transport": MagicMock(),
-            "google.auth.transport.requests": MagicMock(Request=mock_request),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": MagicMock(),
+                "google.auth": MagicMock(),
+                "google.auth.transport": MagicMock(),
+                "google.auth.transport.requests": MagicMock(Request=mock_request),
+            },
+        ):
             msg = OutgoingMessage(
-                channel="google_chat", text="Hello",
+                channel="google_chat",
+                text="Hello",
                 metadata={"space_name": "spaces/abc"},
             )
             await ch.send(msg)  # logs error but no crash
@@ -363,14 +394,18 @@ class TestGoogleChatSendSuccess:
         ch._http_client.post = AsyncMock(side_effect=RuntimeError("network error"))
 
         mock_request = MagicMock()
-        with patch.dict("sys.modules", {
-            "google": MagicMock(),
-            "google.auth": MagicMock(),
-            "google.auth.transport": MagicMock(),
-            "google.auth.transport.requests": MagicMock(Request=mock_request),
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "google": MagicMock(),
+                "google.auth": MagicMock(),
+                "google.auth.transport": MagicMock(),
+                "google.auth.transport.requests": MagicMock(Request=mock_request),
+            },
+        ):
             msg = OutgoingMessage(
-                channel="google_chat", text="Hello",
+                channel="google_chat",
+                text="Hello",
                 metadata={"space_name": "spaces/abc"},
             )
             await ch.send(msg)  # no crash
@@ -383,7 +418,9 @@ class TestGoogleChatApprovalFlow:
         ch._credentials = MagicMock()
 
         action = PlannedAction(tool="test", params={})
-        with patch("jarvis.channels.google_chat.asyncio.wait_for", side_effect=asyncio.TimeoutError):
+        with patch(
+            "jarvis.channels.google_chat.asyncio.wait_for", side_effect=asyncio.TimeoutError
+        ):
             result = await ch.request_approval("s1", action, "reason")
         assert result is False
 

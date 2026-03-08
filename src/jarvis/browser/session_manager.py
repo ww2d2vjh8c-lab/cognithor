@@ -25,6 +25,7 @@ log = get_logger(__name__)
 @dataclass
 class SessionSnapshot:
     """Snapshot einer Browser-Session."""
+
     session_id: str
     domain: str
     cookies: list[dict[str, Any]] = field(default_factory=list)
@@ -112,6 +113,7 @@ class SessionManager:
         """Extrahiert Cookies + Storage aus einer Playwright-Page."""
         try:
             from urllib.parse import urlparse
+
             domain = urlparse(page.url).netloc or "unknown"
         except Exception:
             domain = "unknown"
@@ -131,9 +133,21 @@ class SessionManager:
             context = page.context
             cookies = await context.cookies()
             snapshot.cookies = [
-                {k: v for k, v in c.items() if k in (
-                    "name", "value", "domain", "path", "expires", "httpOnly", "secure", "sameSite"
-                )}
+                {
+                    k: v
+                    for k, v in c.items()
+                    if k
+                    in (
+                        "name",
+                        "value",
+                        "domain",
+                        "path",
+                        "expires",
+                        "httpOnly",
+                        "secure",
+                        "sameSite",
+                    )
+                }
                 for c in cookies
             ]
         except Exception as exc:
@@ -198,7 +212,8 @@ class SessionManager:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             snapshot = SessionSnapshot(
-                session_id=data["session_id"], domain=data.get("domain", ""),
+                session_id=data["session_id"],
+                domain=data.get("domain", ""),
                 cookies=data.get("cookies", []),
                 local_storage=data.get("local_storage", {}),
                 last_url=data.get("last_url", ""),
@@ -229,6 +244,7 @@ class SessionManager:
         """Löscht Sessions die älter als max_age_days sind."""
         self._load_all()
         import calendar
+
         cutoff = time.time() - (max_age_days * 86400)
         removed = 0
         for sid in list(self._sessions):

@@ -201,16 +201,14 @@ class PolicyStore:
             # Remove rules that already exist in default.yaml
             default_rules = self._load_default_rules()
             default_names = {r.get("name") for r in default_rules}
-            custom_rules = [
-                r for r in data["rules"]
-                if r.get("name") not in default_names
-            ]
+            custom_rules = [r for r in data["rules"] if r.get("name") not in default_names]
 
             # Backup current custom.yaml before overwriting
             custom_path = self._dir / "custom.yaml"
             backup_path = custom_path.with_suffix(".backup")
             if custom_path.exists():
                 import shutil
+
                 shutil.copy2(str(custom_path), str(backup_path))
 
             # Save as new custom.yaml and record as new version
@@ -232,6 +230,7 @@ class PolicyStore:
             backup_path = custom_path.with_suffix(".backup")
             if backup_path.exists():
                 import shutil
+
                 shutil.copy2(str(backup_path), str(custom_path))
                 backup_path.unlink()
                 log.info("rollback_restored_from_backup", version=version)
@@ -266,10 +265,7 @@ class PolicyStore:
 
         added = [n for n in names2 if n not in names1]
         removed = [n for n in names1 if n not in names2]
-        changed = [
-            n for n in names1
-            if n in names2 and names1[n] != names2[n]
-        ]
+        changed = [n for n in names1 if n in names2 and names1[n] != names2[n]]
 
         return {
             "from_version": v1,

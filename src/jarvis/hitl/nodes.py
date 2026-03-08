@@ -51,6 +51,7 @@ log = get_logger(__name__)
 
 # ── Approval Node ────────────────────────────────────────────────
 
+
 def create_approval_node(
     manager: ApprovalManager,
     config: HITLConfig | None = None,
@@ -73,6 +74,7 @@ def create_approval_node(
         __hitl_request_id__: ID der Anfrage
     """
     from dataclasses import replace as _replace
+
     if config is not None:
         # Defensiv-Kopie um Mutation der Caller-Config zu verhindern
         cfg = _replace(config, assignees=list(config.assignees))
@@ -131,9 +133,7 @@ def create_approval_node(
         # Bei Ablehnung: Error
         if request.status == ApprovalStatus.REJECTED:
             comment = task.responses[-1].comment if task.responses else ""
-            raise ValueError(
-                f"HITL rejected by {state.get('__hitl_reviewer__', '?')}: {comment}"
-            )
+            raise ValueError(f"HITL rejected by {state.get('__hitl_reviewer__', '?')}: {comment}")
 
         return state
 
@@ -141,6 +141,7 @@ def create_approval_node(
 
 
 # ── Review Node ──────────────────────────────────────────────────
+
 
 def create_review_node(
     manager: ApprovalManager,
@@ -157,6 +158,7 @@ def create_review_node(
     Wie Approval, aber mit Instruktionen und Multi-Approval-Support.
     """
     from dataclasses import replace as _replace
+
     if config is not None:
         cfg = _replace(config, assignees=list(config.assignees))
     else:
@@ -174,6 +176,7 @@ def create_review_node(
 
 
 # ── Input Node ───────────────────────────────────────────────────
+
 
 def create_input_node(
     manager: ApprovalManager,
@@ -215,7 +218,8 @@ def create_input_node(
         state["__hitl_request_id__"] = request.request_id
 
         task = await manager.wait_for_resolution(
-            request.request_id, timeout=timeout,
+            request.request_id,
+            timeout=timeout,
         )
 
         if task and task.responses:
@@ -232,6 +236,7 @@ def create_input_node(
 
 
 # ── Gate Node ────────────────────────────────────────────────────
+
 
 def create_gate_node(
     manager: ApprovalManager,
@@ -262,6 +267,7 @@ def create_gate_node(
 
 
 # ── Selection Node ───────────────────────────────────────────────
+
 
 def create_selection_node(
     manager: ApprovalManager,
@@ -303,7 +309,8 @@ def create_selection_node(
         state["__hitl_request_id__"] = request.request_id
 
         task = await manager.wait_for_resolution(
-            request.request_id, timeout=timeout,
+            request.request_id,
+            timeout=timeout,
         )
 
         if task and task.responses:
@@ -321,6 +328,7 @@ def create_selection_node(
 
 
 # ── Edit Node ────────────────────────────────────────────────────
+
 
 def create_edit_node(
     manager: ApprovalManager,
@@ -348,6 +356,7 @@ def create_edit_node(
 
 
 # ── Helper ───────────────────────────────────────────────────────
+
 
 def _extract_context(state: GraphState, keys: list[str]) -> dict[str, Any]:
     """Extrahiert Kontext-Daten aus State für den Reviewer."""

@@ -51,6 +51,7 @@ def _levenshtein_ratio(s1: str, s2: str) -> float:
 
 class _ErrorEntry:
     """Interner Error-Eintrag."""
+
     __slots__ = ("error_type", "message", "context", "timestamp")
 
     def __init__(self, error_type: str, message: str, context: str, timestamp: datetime) -> None:
@@ -84,7 +85,7 @@ class ErrorClusterer:
         self._errors.append(entry)
         # Evict old entries if over limit
         if len(self._errors) > self._max_entries:
-            self._errors = self._errors[-self._max_entries:]
+            self._errors = self._errors[-self._max_entries :]
 
     def get_clusters(self) -> list[dict[str, Any]]:
         """Gruppiert aehnliche Fehler (pre-bucketed by error_type)."""
@@ -120,17 +121,24 @@ class ErrorClusterer:
                 examples = list({e.message for e in cluster_entries})[:5]
 
                 hash_input = f"{entry.error_type}:{entry.message[:100]}"
-                cluster_id = f"{entry.error_type}_{hashlib.md5(hash_input.encode()).hexdigest()[:8]}"
-                clusters.append({
-                    "id": cluster_id,
-                    "pattern": f"{entry.error_type}: {entry.message[:100]}",
-                    "count": len(cluster_entries),
-                    "examples": examples,
-                    "first_seen": min(timestamps),
-                    "last_seen": max(timestamps),
-                    "severity": "high" if len(cluster_entries) >= 10 else
-                               "medium" if len(cluster_entries) >= 3 else "low",
-                })
+                cluster_id = (
+                    f"{entry.error_type}_{hashlib.md5(hash_input.encode()).hexdigest()[:8]}"
+                )
+                clusters.append(
+                    {
+                        "id": cluster_id,
+                        "pattern": f"{entry.error_type}: {entry.message[:100]}",
+                        "count": len(cluster_entries),
+                        "examples": examples,
+                        "first_seen": min(timestamps),
+                        "last_seen": max(timestamps),
+                        "severity": "high"
+                        if len(cluster_entries) >= 10
+                        else "medium"
+                        if len(cluster_entries) >= 3
+                        else "low",
+                    }
+                )
 
         clusters.sort(key=lambda c: c["count"], reverse=True)
         return clusters

@@ -81,46 +81,67 @@ class TestCreateSkill:
 
     def test_empty_name(self, skill_tools: SkillTools) -> None:
         result = skill_tools.create_skill(
-            name="", description="desc", trigger_keywords="kw", body="body",
+            name="",
+            description="desc",
+            trigger_keywords="kw",
+            body="body",
         )
         assert "Fehler" in result
         assert "name" in result
 
     def test_empty_description(self, skill_tools: SkillTools) -> None:
         result = skill_tools.create_skill(
-            name="Test", description="", trigger_keywords="kw", body="body",
+            name="Test",
+            description="",
+            trigger_keywords="kw",
+            body="body",
         )
         assert "Fehler" in result
         assert "description" in result
 
     def test_empty_keywords(self, skill_tools: SkillTools) -> None:
         result = skill_tools.create_skill(
-            name="Test", description="desc", trigger_keywords="", body="body",
+            name="Test",
+            description="desc",
+            trigger_keywords="",
+            body="body",
         )
         assert "Fehler" in result
         assert "trigger_keywords" in result
 
     def test_empty_body(self, skill_tools: SkillTools) -> None:
         result = skill_tools.create_skill(
-            name="Test", description="desc", trigger_keywords="kw", body="",
+            name="Test",
+            description="desc",
+            trigger_keywords="kw",
+            body="",
         )
         assert "Fehler" in result
         assert "body" in result
 
     def test_whitespace_only_name(self, skill_tools: SkillTools) -> None:
         result = skill_tools.create_skill(
-            name="   ", description="desc", trigger_keywords="kw", body="body",
+            name="   ",
+            description="desc",
+            trigger_keywords="kw",
+            body="body",
         )
         assert "Fehler" in result
 
     def test_file_already_exists(self, skill_tools: SkillTools) -> None:
         # Create first
         skill_tools.create_skill(
-            name="Existing", description="desc", trigger_keywords="kw", body="body",
+            name="Existing",
+            description="desc",
+            trigger_keywords="kw",
+            body="body",
         )
         # Try to create again
         result = skill_tools.create_skill(
-            name="Existing", description="desc2", trigger_keywords="kw2", body="body2",
+            name="Existing",
+            description="desc2",
+            trigger_keywords="kw2",
+            body="body2",
         )
         assert "existiert bereits" in result
 

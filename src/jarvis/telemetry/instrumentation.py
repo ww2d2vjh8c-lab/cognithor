@@ -32,6 +32,7 @@ log = get_logger(__name__)
 
 # ── Decorator: Trace Function ───────────────────────────────────
 
+
 def trace(
     tracer: TracerProvider,
     name: str = "",
@@ -46,6 +47,7 @@ def trace(
         async def handle(msg):
             ...
     """
+
     def decorator(fn: Callable) -> Callable:
         span_name = name or fn.__qualname__
 
@@ -80,6 +82,7 @@ def trace(
 
 # ── Decorator: Measure Latency ───────────────────────────────────
 
+
 def measure(
     metrics: MetricsProvider,
     histogram_name: str,
@@ -93,6 +96,7 @@ def measure(
         async def call_llm(prompt):
             ...
     """
+
     def decorator(fn: Callable) -> Callable:
         @functools.wraps(fn)
         async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -137,6 +141,7 @@ def measure(
 
 # ── TelemetryHub ─────────────────────────────────────────────────
 
+
 class TelemetryHub:
     """Zentrale Telemetry-Instanz -- verbindet Tracer + Metrics.
 
@@ -170,8 +175,9 @@ class TelemetryHub:
 
     # ── Request Tracing ──────────────────────────────────────────
 
-    def trace_request(self, method: str, path: str,
-                      headers: dict[str, str] | None = None) -> SpanContextManager:
+    def trace_request(
+        self, method: str, path: str, headers: dict[str, str] | None = None
+    ) -> SpanContextManager:
         """Startet einen Request-Span (SERVER).
 
         Extrahiert ggf. Parent-Context aus Headers.
@@ -216,12 +222,12 @@ class TelemetryHub:
             attributes={"graph.name": graph_name},
         )
 
-    def trace_a2a_message(self, remote_agent: str,
-                          direction: str = "outbound") -> SpanContextManager:
+    def trace_a2a_message(
+        self, remote_agent: str, direction: str = "outbound"
+    ) -> SpanContextManager:
         """Startet einen A2A-Nachrichten-Span."""
         kind = SpanKind.CLIENT if direction == "outbound" else SpanKind.SERVER
-        self.metrics.counter("a2a_messages_total", 1,
-                             agent=remote_agent, direction=direction)
+        self.metrics.counter("a2a_messages_total", 1, agent=remote_agent, direction=direction)
         return self.tracer.start_span(
             f"a2a.{direction}.{remote_agent}",
             kind=kind,
@@ -242,35 +248,29 @@ class TelemetryHub:
 
     # ── Metric Shortcuts ─────────────────────────────────────────
 
-    def record_request(self, method: str, status: int,
-                       latency_ms: float) -> None:
+    def record_request(self, method: str, status: int, latency_ms: float) -> None:
         """Zeichnet Request-Metriken auf."""
-        self.metrics.counter("requests_total", 1, method=method,
-                             status=str(status))
-        self.metrics.histogram("request_latency_ms", latency_ms,
-                               method=method)
+        self.metrics.counter("requests_total", 1, method=method, status=str(status))
+        self.metrics.histogram("request_latency_ms", latency_ms, method=method)
         if status >= 400:
-            self.metrics.counter("errors_total", 1, method=method,
-                                 status=str(status))
+            self.metrics.counter("errors_total", 1, method=method, status=str(status))
 
-    def record_llm_usage(self, model: str, latency_ms: float,
-                         input_tokens: int = 0, output_tokens: int = 0) -> None:
+    def record_llm_usage(
+        self, model: str, latency_ms: float, input_tokens: int = 0, output_tokens: int = 0
+    ) -> None:
         """Zeichnet LLM-Nutzung auf."""
         self.metrics.histogram("llm_latency_ms", latency_ms, model=model)
         if input_tokens:
-            self.metrics.counter("llm_tokens_total", input_tokens,
-                                 model=model, direction="input")
+            self.metrics.counter("llm_tokens_total", input_tokens, model=model, direction="input")
         if output_tokens:
-            self.metrics.counter("llm_tokens_total", output_tokens,
-                                 model=model, direction="output")
+            self.metrics.counter("llm_tokens_total", output_tokens, model=model, direction="output")
 
-    def record_graph_execution(self, graph_name: str, latency_ms: float,
-                                status: str = "completed") -> None:
+    def record_graph_execution(
+        self, graph_name: str, latency_ms: float, status: str = "completed"
+    ) -> None:
         """Zeichnet Graph-Execution-Metriken auf."""
-        self.metrics.histogram("graph_execution_latency_ms", latency_ms,
-                               graph=graph_name)
-        self.metrics.counter("graph_executions_total", 1,
-                             graph=graph_name, status=status)
+        self.metrics.histogram("graph_execution_latency_ms", latency_ms, graph=graph_name)
+        self.metrics.counter("graph_executions_total", 1, graph=graph_name, status=status)
 
     def set_active_sessions(self, count: int) -> None:
         self.metrics.gauge("active_sessions", count)
@@ -283,9 +283,7 @@ class TelemetryHub:
             "service": self._service_name,
             "tracer": self.tracer.stats(),
             "metrics": self.metrics.snapshot(),
-            "recent_traces": [
-                t.to_dict() for t in self.tracer.get_recent_traces(10)
-            ],
+            "recent_traces": [t.to_dict() for t in self.tracer.get_recent_traces(10)],
         }
 
     # ── Lifecycle ────────────────────────────────────────────────

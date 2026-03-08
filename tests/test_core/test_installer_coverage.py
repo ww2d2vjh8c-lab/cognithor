@@ -89,8 +89,11 @@ class TestHardwareDetector:
 
     def test_from_specs(self) -> None:
         profile = HardwareDetector.from_specs(
-            cpu="test", cores=8, ram_gb=32,
-            gpu_name="RTX 4090", vram_gb=24,
+            cpu="test",
+            cores=8,
+            ram_gb=32,
+            gpu_name="RTX 4090",
+            vram_gb=24,
         )
         assert profile.cpu_name == "test"
         assert profile.cpu_cores == 8
@@ -152,9 +155,14 @@ class TestModelRecommender:
 
     def test_model_recommendation_to_dict(self) -> None:
         mr = ModelRecommendation(
-            model_name="test:7b", model_size="7B", quantization="Q4_K_M",
-            vram_required_gb=5, ram_required_gb=8, quality_score=7,
-            speed_score=7, use_case="test",
+            model_name="test:7b",
+            model_size="7B",
+            quantization="Q4_K_M",
+            vram_required_gb=5,
+            ram_required_gb=8,
+            quality_score=7,
+            speed_score=7,
+            use_case="test",
         )
         d = mr.to_dict()
         assert d["model"] == "test:7b"

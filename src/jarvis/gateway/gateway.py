@@ -186,6 +186,7 @@ class Gateway:
             cp_config = getattr(self._config, "context_pipeline", None)
             if cp_config is None:
                 from jarvis.config import ContextPipelineConfig
+
                 cp_config = ContextPipelineConfig()
             if cp_config.enabled:
                 self._context_pipeline = ContextPipeline(cp_config)
@@ -241,8 +242,10 @@ class Gateway:
         # Wire Orchestrator runner (Sub-Agent execution via handle_message)
         if getattr(self, "_orchestrator", None):
             try:
+
                 async def _agent_runner(
-                    config: "SubAgentConfig", agent_name: str,
+                    config: "SubAgentConfig",
+                    agent_name: str,
                 ) -> "AgentResult":
                     msg = IncomingMessage(
                         channel="sub_agent",
@@ -310,6 +313,7 @@ class Gateway:
         # Wire prompt_evolution LLM client (meta-prompt generation)
         if getattr(self, "_prompt_evolution", None) and self._llm and self._model_router:
             try:
+
                 async def _pe_llm_call(prompt: str) -> str:
                     model = self._model_router.select_model("planning", "high")
                     resp = await self._llm.chat(
@@ -318,6 +322,7 @@ class Gateway:
                         temperature=0.8,
                     )
                     return resp.get("message", {}).get("content", "")
+
                 self._prompt_evolution._llm_client = _pe_llm_call
             except Exception:
                 log.debug("prompt_evolution_llm_wiring_skipped", exc_info=True)
@@ -335,8 +340,12 @@ class Gateway:
         compliance_attrs = {
             k: getattr(self, f"_{k}", None)
             for k in (
-                "compliance_framework", "decision_log", "remediation_tracker",
-                "economic_governor", "compliance_exporter", "impact_assessor",
+                "compliance_framework",
+                "decision_log",
+                "remediation_tracker",
+                "economic_governor",
+                "compliance_exporter",
+                "impact_assessor",
                 "explainability",
             )
         }
@@ -346,6 +355,7 @@ class Gateway:
         if self._cron_engine and hasattr(self, "_governance_agent") and self._governance_agent:
             try:
                 from jarvis.cron.jobs import governance_analysis
+
                 self._cron_engine.add_system_job(
                     name="governance_analysis",
                     schedule="0 2 * * *",
@@ -359,8 +369,11 @@ class Gateway:
         if self._cron_engine and getattr(self, "_prompt_evolution", None):
             try:
                 from jarvis.cron.jobs import prompt_evolution_check
+
                 interval_h = self._config.prompt_evolution.evolution_interval_hours
-                cron_expr = f"0 */{interval_h} * * *" if interval_h < 24 else f"0 {interval_h % 24} * * *"
+                cron_expr = (
+                    f"0 */{interval_h} * * *" if interval_h < 24 else f"0 {interval_h % 24} * * *"
+                )
                 self._cron_engine.add_system_job(
                     name="prompt_evolution_check",
                     schedule=cron_expr,
@@ -431,14 +444,9 @@ class Gateway:
 
         inventory = (
             "## INVENTAR (auto-aktualisiert)\n\n"
-            f"### Registrierte Tools ({len(tools)})\n"
-            + "\n".join(tool_lines)
-            + "\n\n"
-            f"### Installierte Skills ({len(skill_lines)})\n"
-            + "\n".join(skill_lines)
-            + "\n\n"
-            f"### Gelernte Prozeduren ({len(proc_lines)})\n"
-            + "\n".join(proc_lines)
+            f"### Registrierte Tools ({len(tools)})\n" + "\n".join(tool_lines) + "\n\n"
+            f"### Installierte Skills ({len(skill_lines)})\n" + "\n".join(skill_lines) + "\n\n"
+            f"### Gelernte Prozeduren ({len(proc_lines)})\n" + "\n".join(proc_lines)
         )
 
         # Bestehenden INVENTAR-Abschnitt ersetzen oder am Ende anhängen
@@ -446,13 +454,19 @@ class Gateway:
         if marker_start in content:
             # Alles von marker_start bis zum nächsten ## oder Dateiende ersetzen
             import re
+
             pattern = re.escape(marker_start) + r".*?(?=\n## (?!INVENTAR)|\Z)"
             content = re.sub(pattern, inventory, content, flags=re.DOTALL)
         else:
             content = content.rstrip() + "\n\n---\n\n" + inventory + "\n"
 
         core_path.write_text(content, encoding="utf-8")
-        log.info("core_inventory_synced", tools=len(tools), skills=len(skill_lines), procedures=len(proc_lines))
+        log.info(
+            "core_inventory_synced",
+            tools=len(tools),
+            skills=len(skill_lines),
+            procedures=len(proc_lines),
+        )
 
     def register_channel(self, channel: Channel) -> None:
         """Registriert einen Kommunikationskanal."""
@@ -490,6 +504,7 @@ class Gateway:
                     if hasattr(channel, "app") and channel.app is not None:
                         try:
                             from jarvis.a2a.http_handler import A2AHTTPHandler
+
                             a2a_http = A2AHTTPHandler(self._a2a_adapter)
                             a2a_http.register_routes(channel.app)
                         except Exception as exc:
@@ -648,6 +663,7 @@ class Gateway:
             raise RuntimeError("DAG WorkflowEngine ist nicht verfügbar")
 
         from jarvis.core.workflow_schema import WorkflowDefinition
+
         workflow = WorkflowDefinition.from_yaml(workflow_yaml)
 
         errors = engine.validate(workflow)
@@ -678,6 +694,7 @@ class Gateway:
             raise RuntimeError("DAG WorkflowEngine ist nicht verfügbar")
 
         from jarvis.core.workflow_adapter import action_plan_to_workflow
+
         workflow = action_plan_to_workflow(
             plan,
             max_parallel=getattr(self._config.executor, "max_parallel_tools", 4),
@@ -690,9 +707,15 @@ class Gateway:
         run = await engine.execute(workflow)
         return run.model_dump(mode="json")
 
-    def reload_components(self, *, prompts: bool = False, policies: bool = False,
-                          config: bool = False, core_memory: bool = False,
-                          skills: bool = False) -> dict:
+    def reload_components(
+        self,
+        *,
+        prompts: bool = False,
+        policies: bool = False,
+        config: bool = False,
+        core_memory: bool = False,
+        skills: bool = False,
+    ) -> dict:
         """Reload-Koordinator für Live-Updates vom UI."""
         reloaded = []
         if prompts and self._planner:
@@ -786,12 +809,21 @@ class Gateway:
         self._record_metric("requests_total", 1, channel=msg.channel)
 
         # Phase 1: Agent-Routing, Session, WM, Skills, Workspace
-        route_decision, session, wm, active_skill, agent_workspace, agent_name = \
-            await self._resolve_agent_route(msg)
+        (
+            route_decision,
+            session,
+            wm,
+            active_skill,
+            agent_workspace,
+            agent_name,
+        ) = await self._resolve_agent_route(msg)
 
         # Phase 2: Profiler, Budget, Run-Recording, Policy-Snapshot
         run_id, budget_response = await self._prepare_execution_context(
-            msg, session, wm, route_decision,
+            msg,
+            session,
+            wm,
+            route_decision,
         )
         if budget_response is not None:
             return budget_response
@@ -838,7 +870,9 @@ class Gateway:
                     # NOTE: Do NOT call set_coding_override() here — asyncio.create_task()
                     # runs in a copied context, so ContextVar changes are invisible to the
                     # parent. The override is applied in the parent after await (line below).
-                    log.info("coding_task_detected", complexity=_coding_complexity, model=_coding_model)
+                    log.info(
+                        "coding_task_detected", complexity=_coding_complexity, model=_coding_model
+                    )
             except Exception:
                 log.debug("coding_classification_skipped", exc_info=True)
             return _is_coding, _coding_model, _coding_complexity
@@ -847,6 +881,7 @@ class Gateway:
             return await self._maybe_presearch(msg, wm)
 
         import asyncio as _aio
+
         _ctx_task = _aio.create_task(_run_context_pipeline())
         _coding_task = _aio.create_task(_run_coding_classification())
         _presearch_task = _aio.create_task(_run_presearch())
@@ -862,16 +897,23 @@ class Gateway:
 
         # ── Sentiment Detection (Modul 3) ──
         try:
-            from jarvis.core.sentiment import detect_sentiment, get_sentiment_system_message, Sentiment
+            from jarvis.core.sentiment import (
+                detect_sentiment,
+                get_sentiment_system_message,
+                Sentiment,
+            )
+
             sentiment_result = detect_sentiment(msg.text)
             if sentiment_result.sentiment != Sentiment.NEUTRAL:
                 hint = get_sentiment_system_message(sentiment_result.sentiment)
                 if hint:
-                    wm.add_message(Message(
-                        role=MessageRole.SYSTEM,
-                        content=hint,
-                        channel=msg.channel,
-                    ))
+                    wm.add_message(
+                        Message(
+                            role=MessageRole.SYSTEM,
+                            content=hint,
+                            channel=msg.channel,
+                        )
+                    )
                     log.info(
                         "sentiment_detected",
                         sentiment=sentiment_result.sentiment,
@@ -887,11 +929,13 @@ class Gateway:
                 pref = self._user_pref_store.record_interaction(msg.user_id, len(msg.text))
                 verbosity_hint = pref.verbosity_hint
                 if verbosity_hint:
-                    wm.add_message(Message(
-                        role=MessageRole.SYSTEM,
-                        content=verbosity_hint,
-                        channel=msg.channel,
-                    ))
+                    wm.add_message(
+                        Message(
+                            role=MessageRole.SYSTEM,
+                            content=verbosity_hint,
+                            channel=msg.channel,
+                        )
+                    )
             except Exception:
                 log.debug("user_preferences_skipped", exc_info=True)
 
@@ -924,7 +968,13 @@ class Gateway:
                             active_skill.skill if hasattr(active_skill, "skill") else None,
                         )
                     final_response, all_results, all_plans, all_audit = await self._run_pge_loop(
-                        msg, session, wm, tool_schemas, route_decision, agent_workspace, run_id,
+                        msg,
+                        session,
+                        wm,
+                        tool_schemas,
+                        route_decision,
+                        agent_workspace,
+                        run_id,
                     )
                 else:
                     log.info("presearch_bypass_used", response_chars=len(final_response))
@@ -936,7 +986,13 @@ class Gateway:
                         active_skill.skill if hasattr(active_skill, "skill") else None,
                     )
                 final_response, all_results, all_plans, all_audit = await self._run_pge_loop(
-                    msg, session, wm, tool_schemas, route_decision, agent_workspace, run_id,
+                    msg,
+                    session,
+                    wm,
+                    tool_schemas,
+                    route_decision,
+                    agent_workspace,
+                    run_id,
                 )
         finally:
             _cleanup_skill_state()
@@ -962,10 +1018,10 @@ class Gateway:
             audit_entries=all_audit,
             total_iterations=session.iteration_count,
             total_duration_ms=int((time.monotonic() - _handle_start) * 1000),
-            model_used=coding_model if is_coding else (
-                self._model_router.select_model("planning", "high")
-                if self._model_router
-                else ""
+            model_used=coding_model
+            if is_coding
+            else (
+                self._model_router.select_model("planning", "high") if self._model_router else ""
             ),
             success=not any(r.is_error for r in all_results) if all_results else True,
         )
@@ -995,7 +1051,8 @@ class Gateway:
     # ── handle_message sub-methods ────────────────────────────────
 
     async def _resolve_agent_route(
-        self, msg: IncomingMessage,
+        self,
+        msg: IncomingMessage,
     ) -> tuple[RouteDecision | None, "SessionContext", "WorkingMemory", Any, Any, str]:
         """Phase 1: Agent-Routing, Session, Working Memory, Skills, Workspace."""
         route_decision = None
@@ -1020,9 +1077,11 @@ class Gateway:
 
             if route_decision is None:
                 from jarvis.core.bindings import MessageContext as _MsgCtx
+
                 msg_context = _MsgCtx.from_incoming(msg)
                 route_decision = self._agent_router.route(
-                    msg.text, context=msg_context,
+                    msg.text,
+                    context=msg_context,
                 )
 
             agent_name = route_decision.agent.name
@@ -1036,30 +1095,42 @@ class Gateway:
 
         if self._audit_logger:
             self._audit_logger.log_user_input(
-                msg.channel, msg.text[:100],
+                msg.channel,
+                msg.text[:100],
                 agent_name=agent_name,
             )
 
         if route_decision and route_decision.agent.system_prompt:
-            wm.add_message(Message(
-                role=MessageRole.SYSTEM,
-                content=route_decision.agent.system_prompt,
-                channel=msg.channel,
-            ))
+            wm.add_message(
+                Message(
+                    role=MessageRole.SYSTEM,
+                    content=route_decision.agent.system_prompt,
+                    channel=msg.channel,
+                )
+            )
 
         # Gap Detection: Erkennung expliziter Tool-/Skill-Erstellungswünsche
         if hasattr(self, "_skill_generator") and self._skill_generator:
             _lower = msg.text.lower()
             _tool_request_triggers = (
-                "erstelle ein tool", "erstelle einen skill", "baue ein tool",
-                "create a tool", "build a tool", "neues tool", "neuer skill",
-                "tool erstellen", "skill erstellen", "ich brauche ein tool",
-                "kannst du ein tool", "mach ein tool",
+                "erstelle ein tool",
+                "erstelle einen skill",
+                "baue ein tool",
+                "create a tool",
+                "build a tool",
+                "neues tool",
+                "neuer skill",
+                "tool erstellen",
+                "skill erstellen",
+                "ich brauche ein tool",
+                "kannst du ein tool",
+                "mach ein tool",
             )
             for trigger in _tool_request_triggers:
                 if trigger in _lower:
                     self._skill_generator.gap_detector.report_user_request(
-                        msg.text[:200], context=msg.text,
+                        msg.text[:200],
+                        context=msg.text,
                     )
                     break
 
@@ -1068,10 +1139,16 @@ class Gateway:
             try:
                 tool_list = self._mcp_client.get_tool_list() if self._mcp_client else []
                 active_skill = self._skill_registry.inject_into_working_memory(
-                    msg.text, wm, available_tools=tool_list,
+                    msg.text,
+                    wm,
+                    available_tools=tool_list,
                 )
                 # Gap Detection: Melde wenn kein Skill zur Anfrage passt
-                if active_skill is None and hasattr(self, "_skill_generator") and self._skill_generator:
+                if (
+                    active_skill is None
+                    and hasattr(self, "_skill_generator")
+                    and self._skill_generator
+                ):
                     self._skill_generator.gap_detector.report_no_skill_match(msg.text)
             except Exception as exc:
                 log.debug("skill_match_error", error=str(exc))
@@ -1156,13 +1233,19 @@ class Gateway:
 
         Returns an async callable (status_type: str, text: str) -> None.
         """
+
         async def _send_status(status_type: str, text: str) -> None:
             channel = self._channels.get(channel_name)
             if channel is None:
                 return
             try:
                 from jarvis.channels.base import StatusType
-                st = StatusType(status_type) if status_type in StatusType.__members__.values() else StatusType.PROCESSING
+
+                st = (
+                    StatusType(status_type)
+                    if status_type in StatusType.__members__.values()
+                    else StatusType.PROCESSING
+                )
                 await asyncio.wait_for(
                     channel.send_status(session_id, st, text),
                     timeout=2.0,
@@ -1253,17 +1336,22 @@ class Gateway:
                 params_hash = hashlib.sha256(
                     _json.dumps(step.params, sort_keys=True, default=str).encode()
                 ).hexdigest()
-                all_audit.append(AuditEntry(
-                    session_id=session.session_id,
-                    action_tool=step.tool,
-                    action_params_hash=params_hash,
-                    decision_status=decision.status,
-                    decision_reason=decision.reason,
-                ))
+                all_audit.append(
+                    AuditEntry(
+                        session_id=session.session_id,
+                        action_tool=step.tool,
+                        action_params_hash=params_hash,
+                        decision_status=decision.status,
+                        decision_reason=decision.reason,
+                    )
+                )
 
             # Approvals
             approved_decisions = await self._handle_approvals(
-                plan.steps, decisions, session, msg.channel,
+                plan.steps,
+                decisions,
+                session,
+                msg.channel,
             )
 
             all_blocked = all(d.status == GateStatus.BLOCK for d in approved_decisions)
@@ -1281,6 +1369,7 @@ class Gateway:
                 else:
                     try:
                         from jarvis.utils.error_messages import all_actions_blocked_message
+
                         final_response = all_actions_blocked_message(plan.steps, approved_decisions)
                     except Exception:
                         final_response = "Alle geplanten Aktionen wurden vom Gatekeeper blockiert."
@@ -1321,23 +1410,30 @@ class Gateway:
             all_results.extend(results)
 
             for result in results:
-                all_audit.append(AuditEntry(
-                    session_id=session.session_id,
-                    action_tool=result.tool_name,
-                    action_params_hash="",
-                    decision_status=GateStatus.ALLOW,
-                    decision_reason=f"executed success={result.success}",
-                    execution_result="ok" if result.success else result.error_message or "error",
-                ))
+                all_audit.append(
+                    AuditEntry(
+                        session_id=session.session_id,
+                        action_tool=result.tool_name,
+                        action_params_hash="",
+                        decision_status=GateStatus.ALLOW,
+                        decision_reason=f"executed success={result.success}",
+                        execution_result="ok"
+                        if result.success
+                        else result.error_message or "error",
+                    )
+                )
                 # Prometheus: Tool-Aufruf-Metriken
                 self._record_metric("tool_calls_total", 1, tool_name=result.tool_name)
                 if hasattr(result, "duration_ms") and result.duration_ms:
                     self._record_metric(
-                        "tool_duration_ms", result.duration_ms, tool_name=result.tool_name,
+                        "tool_duration_ms",
+                        result.duration_ms,
+                        tool_name=result.tool_name,
                     )
                 if result.is_error:
                     self._record_metric(
-                        "errors_total", 1,
+                        "errors_total",
+                        1,
                         channel=msg.channel,
                         error_type="tool_error",
                     )
@@ -1358,7 +1454,13 @@ class Gateway:
 
             # Coding-Tools: Nicht sofort breaken -- Replan entscheidet
             # ob weitere Schritte noetig sind (Code testen, analysieren, fixen)
-            _CODING_TOOLS = {"run_python", "exec_command", "write_file", "edit_file", "analyze_code"}
+            _CODING_TOOLS = {
+                "run_python",
+                "exec_command",
+                "write_file",
+                "edit_file",
+                "analyze_code",
+            }
             used_coding_tool = any(r.tool_name in _CODING_TOOLS for r in results)
 
             # Multi-Step-Tasks: Nicht nach erstem Erfolg abbrechen, sondern
@@ -1443,14 +1545,19 @@ class Gateway:
                     else (0.8 if success else 0.3)
                 )
                 self._skill_registry.record_usage(
-                    active_skill.skill.slug, success=success, score=score,
+                    active_skill.skill.slug,
+                    success=success,
+                    score=score,
                 )
                 # Failure-Pattern in Prozedur speichern (für Lerneffekt)
                 if not success and self._memory_manager and active_skill.procedure_name:
                     try:
-                        error_summary = agent_result.error[:200] if agent_result.error else "unknown"
+                        error_summary = (
+                            agent_result.error[:200] if agent_result.error else "unknown"
+                        )
                         self._memory_manager.procedural.add_failure_pattern(
-                            active_skill.procedure_name, error_summary,
+                            active_skill.procedure_name,
+                            error_summary,
                         )
                     except Exception:
                         log.debug("procedure_failure_pattern_save_failed", exc_info=True)
@@ -1463,7 +1570,8 @@ class Gateway:
                             success_rate = skill_obj.success_count / skill_obj.total_uses
                             if success_rate < 0.4:
                                 self._skill_generator.gap_detector.report_low_success_rate(
-                                    skill_obj.slug, success_rate,
+                                    skill_obj.slug,
+                                    success_rate,
                                 )
                     except Exception:
                         log.debug("skill_gap_detection_failed", exc_info=True)
@@ -1538,7 +1646,9 @@ class Gateway:
         if hasattr(self, "_skill_generator") and self._skill_generator:
             try:
                 generated = await self._skill_generator.process_all_gaps(
-                    skill_registry=self._skill_registry if hasattr(self, "_skill_registry") else None,
+                    skill_registry=self._skill_registry
+                    if hasattr(self, "_skill_registry")
+                    else None,
                 )
                 newly_registered = False
                 for skill in generated:
@@ -1560,7 +1670,9 @@ class Gateway:
                 log.debug("skill_gap_processing_failed", exc_info=True)
 
     async def _persist_session(
-        self, session: "SessionContext", wm: "WorkingMemory",
+        self,
+        session: "SessionContext",
+        wm: "WorkingMemory",
     ) -> None:
         """Phase 5: Session persistieren."""
         if self._session_store:
@@ -1634,20 +1746,25 @@ class Gateway:
 
         # System-Prompt des Ziel-Agenten injizieren
         if target.system_prompt:
-            sub_wm.add_message(Message(
-                role=MessageRole.SYSTEM,
-                content=target.system_prompt,
-            ))
+            sub_wm.add_message(
+                Message(
+                    role=MessageRole.SYSTEM,
+                    content=target.system_prompt,
+                )
+            )
 
         # Aufgabe als User-Nachricht
-        sub_wm.add_message(Message(
-            role=MessageRole.USER,
-            content=task,
-        ))
+        sub_wm.add_message(
+            Message(
+                role=MessageRole.USER,
+                content=task,
+            )
+        )
 
         # Workspace des Ziel-Agenten auflösen
         target_workspace = self._agent_router.resolve_agent_workspace(
-            to_agent, self._config.workspace_dir,
+            to_agent,
+            self._config.workspace_dir,
         )
 
         # Tool-Schemas für Ziel-Agenten filtern
@@ -1682,10 +1799,7 @@ class Gateway:
         decisions = self._gatekeeper.evaluate_plan(plan.steps, session)
 
         # APPROVE/BLOCK-Entscheidungen in Delegationen blockieren (kein HITL moeglich)
-        blocked = [
-            d for d in decisions
-            if d.status in (GateStatus.APPROVE, GateStatus.BLOCK)
-        ]
+        blocked = [d for d in decisions if d.status in (GateStatus.APPROVE, GateStatus.BLOCK)]
         if blocked:
             reasons = "; ".join(d.reason for d in blocked[:3])
             delegation.result = f"Delegation blockiert: {reasons}"
@@ -1735,16 +1849,18 @@ class Gateway:
     # Tools deren Ergebnisse für Folge-Requests in der Chat-History bleiben sollen.
     # Ohne diese Persistierung geht der Kontext (z.B. extrahierter Text aus Bildern)
     # bei clear_for_new_request() verloren.
-    _CONTEXT_TOOLS: frozenset[str] = frozenset({
-        "media_analyze_image",
-        "media_extract_text",
-        "media_transcribe_audio",
-        "analyze_code",
-        "run_python",
-        "web_search",
-        "web_fetch",
-        "search_and_read",
-    })
+    _CONTEXT_TOOLS: frozenset[str] = frozenset(
+        {
+            "media_analyze_image",
+            "media_extract_text",
+            "media_transcribe_audio",
+            "analyze_code",
+            "run_python",
+            "web_search",
+            "web_fetch",
+            "search_and_read",
+        }
+    )
     # Maximale Zeichenzahl für persistierte Tool-Ergebnisse in Chat-History
     _CONTEXT_RESULT_LIMIT: int = 4000
 
@@ -1766,15 +1882,17 @@ class Gateway:
             if not result.content.strip():
                 continue
 
-            content = result.content[:self._CONTEXT_RESULT_LIMIT]
+            content = result.content[: self._CONTEXT_RESULT_LIMIT]
             if len(result.content) > self._CONTEXT_RESULT_LIMIT:
                 content += "\n[... gekürzt]"
 
-            wm.add_message(Message(
-                role=MessageRole.TOOL,
-                content=content,
-                name=result.tool_name,
-            ))
+            wm.add_message(
+                Message(
+                    role=MessageRole.TOOL,
+                    content=content,
+                    name=result.tool_name,
+                )
+            )
             log.debug(
                 "tool_result_persisted",
                 tool=result.tool_name,
@@ -1782,13 +1900,25 @@ class Gateway:
             )
 
     # Tools whose results are file paths that should be attached to the response
-    _ATTACHMENT_TOOLS: frozenset[str] = frozenset({
-        "document_export",
-    })
+    _ATTACHMENT_TOOLS: frozenset[str] = frozenset(
+        {
+            "document_export",
+        }
+    )
     # File extensions considered valid attachments
-    _ATTACHMENT_EXTENSIONS: frozenset[str] = frozenset({
-        ".pdf", ".docx", ".doc", ".xlsx", ".csv", ".png", ".jpg", ".jpeg", ".gif",
-    })
+    _ATTACHMENT_EXTENSIONS: frozenset[str] = frozenset(
+        {
+            ".pdf",
+            ".docx",
+            ".doc",
+            ".xlsx",
+            ".csv",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+        }
+    )
 
     # ── Prometheus Metric Recording ──────────────────────────────
 
@@ -1843,7 +1973,11 @@ class Gateway:
                 continue
             try:
                 path = Path(candidate)
-                if path.exists() and path.is_file() and path.suffix.lower() in self._ATTACHMENT_EXTENSIONS:
+                if (
+                    path.exists()
+                    and path.is_file()
+                    and path.suffix.lower() in self._ATTACHMENT_EXTENSIONS
+                ):
                     attachments.append(str(path))
                     log.info("attachment_detected", tool=result.tool_name, path=str(path))
             except (ValueError, OSError):
@@ -1870,9 +2004,14 @@ class Gateway:
 
     # Begriffe die KEINE Faktenfrage signalisieren (Smalltalk, Meinungen)
     _SKIP_PRESEARCH_PATTERNS: list[re.Pattern[str]] = [
-        re.compile(r"\b(meinst du|findest du|was denkst du|erkläre mir|was ist ein|definier)", re.IGNORECASE),
+        re.compile(
+            r"\b(meinst du|findest du|was denkst du|erkläre mir|was ist ein|definier)",
+            re.IGNORECASE,
+        ),
         # Trailing \b entfernt: "erstell" muss auch "erstelle/erstellst/erstellen" matchen
-        re.compile(r"\b(schreib|erstell|generier|mach|öffne|lösch|speicher|such im memory)", re.IGNORECASE),
+        re.compile(
+            r"\b(schreib|erstell|generier|mach|öffne|lösch|speicher|such im memory)", re.IGNORECASE
+        ),
     ]
 
     def _is_fact_question(self, text: str) -> bool:
@@ -1928,6 +2067,7 @@ class Gateway:
             text = response.get("message", {}).get("content", "")
             # JSON aus Antwort extrahieren
             import json as _json_mod
+
             # <think>...</think> Bloecke entfernen (qwen3)
             text = re.sub(r"<think>.*?</think>\s*", "", text, flags=re.DOTALL)
             data = _json_mod.loads(text)
@@ -1963,8 +2103,13 @@ class Gateway:
 
         # Wochentags-basierte Auflösung: "nächsten Montag", "am Freitag", etc.
         _WOCHENTAGE = {
-            "montag": 0, "dienstag": 1, "mittwoch": 2, "donnerstag": 3,
-            "freitag": 4, "samstag": 5, "sonntag": 6,
+            "montag": 0,
+            "dienstag": 1,
+            "mittwoch": 2,
+            "donnerstag": 3,
+            "freitag": 4,
+            "samstag": 5,
+            "sonntag": 6,
         }
         for tag_name, weekday_num in _WOCHENTAGE.items():
             days_ahead = (weekday_num - today.weekday()) % 7
@@ -1972,15 +2117,24 @@ class Gateway:
                 days_ahead = 7  # "am Montag" = nächster Montag
             target = today + timedelta(days=days_ahead)
             replacements.append(
-                (rf"\b(?:nächsten?\s+|am\s+|kommenden?\s+)?{tag_name}\b", target.strftime("%d.%m.%Y")),
+                (
+                    rf"\b(?:nächsten?\s+|am\s+|kommenden?\s+)?{tag_name}\b",
+                    target.strftime("%d.%m.%Y"),
+                ),
             )
 
         # "nächste Woche" / "diese Woche" / "dieses Wochenende"
         replacements.append(
-            (r"\bnächste(?:r|s|n)?\s+woche\b", f"Woche ab {(today + timedelta(days=7 - today.weekday())).strftime('%d.%m.%Y')}"),
+            (
+                r"\bnächste(?:r|s|n)?\s+woche\b",
+                f"Woche ab {(today + timedelta(days=7 - today.weekday())).strftime('%d.%m.%Y')}",
+            ),
         )
         replacements.append(
-            (r"\bdiese(?:s|r|n)?\s+wochenende\b", f"{(today + timedelta(days=5 - today.weekday())).strftime('%d.%m.%Y')}"),
+            (
+                r"\bdiese(?:s|r|n)?\s+wochenende\b",
+                f"{(today + timedelta(days=5 - today.weekday())).strftime('%d.%m.%Y')}",
+            ),
         )
 
         for pattern, replacement in replacements:
@@ -2016,21 +2170,41 @@ class Gateway:
         query = msg.text.strip()
         # Befehls-Suffixe abschneiden ("Recherchiere das online", etc.)
         # Längere Phrasen zuerst, damit "bitte such" vor "such" matcht
-        for splitter in ("recherchiere das", "recherchiere", "recherchier",
-                         "bitte such", "such das", "such online",
-                         "finde heraus", "schau nach", "google"):
+        for splitter in (
+            "recherchiere das",
+            "recherchiere",
+            "recherchier",
+            "bitte such",
+            "such das",
+            "such online",
+            "finde heraus",
+            "schau nach",
+            "google",
+        ):
             idx = query.lower().find(splitter)
             if idx > 10:  # Nur abschneiden wenn genug Fragetext davor steht
                 query = query[:idx].strip()
                 break
         query = query.rstrip("?!.").strip()
         # Frageworte entfernen für bessere Suchergebnisse
-        for prefix in ("wann hat", "wann haben", "wann wurde", "wann war",
-                        "wo hat", "wo haben", "wo wurde", "wo war",
-                        "wer hat", "wer ist", "was ist mit", "was hat",
-                        "stimmt es dass", "ist es wahr dass"):
+        for prefix in (
+            "wann hat",
+            "wann haben",
+            "wann wurde",
+            "wann war",
+            "wo hat",
+            "wo haben",
+            "wo wurde",
+            "wo war",
+            "wer hat",
+            "wer ist",
+            "was ist mit",
+            "was hat",
+            "stimmt es dass",
+            "ist es wahr dass",
+        ):
             if query.lower().startswith(prefix):
-                query = query[len(prefix):].strip()
+                query = query[len(prefix) :].strip()
                 break
 
         # Relative Zeitangaben zu konkreten Datumsangaben auflösen
@@ -2045,7 +2219,11 @@ class Gateway:
                 timelimit="m",
             )
 
-            if result_text and _PRESEARCH_NO_RESULTS not in result_text and _PRESEARCH_NO_ENGINE not in result_text:
+            if (
+                result_text
+                and _PRESEARCH_NO_RESULTS not in result_text
+                and _PRESEARCH_NO_ENGINE not in result_text
+            ):
                 log.info("presearch_found", chars=len(result_text))
                 return result_text[:8000]
             else:

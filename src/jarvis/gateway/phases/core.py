@@ -67,7 +67,7 @@ async def init_core(config: Any) -> PhaseResult:
                 "llm_not_available",
                 backend=llm.backend_type,
                 message=f"LLM-Backend '{llm.backend_type}' nicht erreichbar. "
-                        f"Jarvis startet trotzdem, aber LLM-Funktionen sind eingeschraenkt.",
+                f"Jarvis startet trotzdem, aber LLM-Funktionen sind eingeschraenkt.",
             )
     else:
         log.info("llm_backend_ready", backend=llm.backend_type)

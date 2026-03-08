@@ -154,7 +154,9 @@ class APIChannel(Channel):
 
         # TLS-Warning für externe Hosts
         if self._host not in ("127.0.0.1", "localhost", "::1") and not self._ssl_certfile:
-            log.warning("api_no_tls", host=self._host, message="WARNUNG: API auf externem Host ohne TLS!")
+            log.warning(
+                "api_no_tls", host=self._host, message="WARNUNG: API auf externem Host ohne TLS!"
+            )
 
         log.info("api_channel_starting", host=self._host, port=self._port)
 
@@ -211,6 +213,7 @@ class APIChannel(Channel):
             from fastapi import Depends, FastAPI, HTTPException, Request
             from fastapi.middleware.cors import CORSMiddleware
             from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
             # Request muss im Modul-Namespace verfügbar sein, damit FastAPI
             # die String-Annotation (PEP 563) via get_type_hints() auflösen kann
             globals()["Request"] = Request

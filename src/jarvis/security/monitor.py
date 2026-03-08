@@ -400,9 +400,7 @@ class RuntimeMonitor:
         # Required-Params
         for required in rule.required_params:
             if required not in params:
-                return (
-                    f"Regel '{rule.rule_id}': Pflicht-Parameter '{required}' fehlt"
-                )
+                return f"Regel '{rule.rule_id}': Pflicht-Parameter '{required}' fehlt"
 
         # Max-Param-Length
         if rule.max_param_length > 0:
@@ -439,8 +437,11 @@ class RuntimeMonitor:
         if event.severity in (Severity.CRITICAL, Severity.ALERT):
             logger.warning(
                 "SECURITY %s: %s (tool=%s, agent=%s, rule=%s)",
-                event.verdict.value, event.description,
-                event.tool_name, event.agent_name, event.rule_id,
+                event.verdict.value,
+                event.description,
+                event.tool_name,
+                event.agent_name,
+                event.rule_id,
             )
 
         return event
@@ -477,7 +478,6 @@ class RuntimeMonitor:
             "active_rules": len([r for r in self._rules if r.enabled]),
             "events_logged": len(self._events),
             "block_rate": (
-                self._total_blocks / self._total_checks
-                if self._total_checks > 0 else 0.0
+                self._total_blocks / self._total_checks if self._total_checks > 0 else 0.0
             ),
         }

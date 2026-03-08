@@ -32,6 +32,7 @@ from jarvis.core.workflow_schema import (
 # Test helpers
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MockToolOutput:
     """Mimics the object returned by ``mcp_client.call_tool()``."""
@@ -122,6 +123,7 @@ def _wf(name: str, nodes: list[WorkflowNode], **kwargs: Any) -> WorkflowDefiniti
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def mock_mcp() -> AsyncMock:
     mcp = AsyncMock()
@@ -145,7 +147,9 @@ def mock_approval_no() -> AsyncMock:
 
 
 @pytest.fixture()
-def engine(mock_mcp: AsyncMock, mock_llm: AsyncMock, mock_approval_yes: AsyncMock, tmp_path: Path) -> WorkflowEngine:
+def engine(
+    mock_mcp: AsyncMock, mock_llm: AsyncMock, mock_approval_yes: AsyncMock, tmp_path: Path
+) -> WorkflowEngine:
     return WorkflowEngine(
         mcp_client=mock_mcp,
         llm_func=mock_llm,
@@ -163,6 +167,7 @@ def bare_engine() -> WorkflowEngine:
 # ===========================================================================
 # 1. Schema Tests
 # ===========================================================================
+
 
 class TestWorkflowSchema:
     """Test the Pydantic models for workflow definitions."""
@@ -267,6 +272,7 @@ nodes:
 # 2. Validation Tests
 # ===========================================================================
 
+
 class TestValidation:
     """Test workflow validation (structural correctness)."""
 
@@ -320,7 +326,9 @@ class TestValidation:
 
     def test_template_self_reference_in_tool_params(self, engine: WorkflowEngine) -> None:
         node = WorkflowNode(
-            id="t", type=NodeType.TOOL, tool_name="do_thing",
+            id="t",
+            type=NodeType.TOOL,
+            tool_name="do_thing",
             tool_params={"data": "${t.output}"},
         )
         wf = _wf("bad", [node])
@@ -329,18 +337,23 @@ class TestValidation:
 
     def test_template_self_reference_in_condition(self, engine: WorkflowEngine) -> None:
         node = WorkflowNode(
-            id="c", type=NodeType.CONDITION,
-            condition='${c.status} == "success"', on_true="a",
+            id="c",
+            type=NodeType.CONDITION,
+            condition='${c.status} == "success"',
+            on_true="a",
         )
         wf = _wf("bad", [_tool("a"), node])
         errors = engine.validate(wf)
         assert any("references itself" in e for e in errors)
 
     def test_template_cross_reference_is_ok(self, engine: WorkflowEngine) -> None:
-        wf = _wf("ok", [
-            _tool("a"),
-            _llm("b", prompt="Use ${a.output}", depends_on=["a"]),
-        ])
+        wf = _wf(
+            "ok",
+            [
+                _tool("a"),
+                _llm("b", prompt="Use ${a.output}", depends_on=["a"]),
+            ],
+        )
         assert engine.validate(wf) == []
 
     async def test_execute_rejects_invalid_workflow(self, engine: WorkflowEngine) -> None:
@@ -353,6 +366,7 @@ class TestValidation:
 # 3. Cycle Detection
 # ===========================================================================
 
+
 class TestCycleDetection:
     """Test DAG cycle detection."""
 
@@ -361,19 +375,25 @@ class TestCycleDetection:
         assert engine.validate(wf) == []
 
     def test_simple_cycle(self, engine: WorkflowEngine) -> None:
-        wf = _wf("cycle", [
-            _tool("a", depends_on=["b"]),
-            _tool("b", depends_on=["a"]),
-        ])
+        wf = _wf(
+            "cycle",
+            [
+                _tool("a", depends_on=["b"]),
+                _tool("b", depends_on=["a"]),
+            ],
+        )
         errors = engine.validate(wf)
         assert any("Cycle" in e for e in errors)
 
     def test_three_node_cycle(self, engine: WorkflowEngine) -> None:
-        wf = _wf("cycle3", [
-            _tool("a", depends_on=["c"]),
-            _tool("b", depends_on=["a"]),
-            _tool("c", depends_on=["b"]),
-        ])
+        wf = _wf(
+            "cycle3",
+            [
+                _tool("a", depends_on=["c"]),
+                _tool("b", depends_on=["a"]),
+                _tool("c", depends_on=["b"]),
+            ],
+        )
         errors = engine.validate(wf)
         assert any("Cycle" in e for e in errors)
 
@@ -387,15 +407,19 @@ class TestCycleDetection:
 # 4. Topological Sort
 # ===========================================================================
 
+
 class TestTopologicalSort:
     """Test Kahn's algorithm for execution layer ordering."""
 
     def test_linear_chain(self, engine: WorkflowEngine) -> None:
-        wf = _wf("linear", [
-            _tool("a"),
-            _tool("b", depends_on=["a"]),
-            _tool("c", depends_on=["b"]),
-        ])
+        wf = _wf(
+            "linear",
+            [
+                _tool("a"),
+                _tool("b", depends_on=["a"]),
+                _tool("c", depends_on=["b"]),
+            ],
+        )
         layers = engine.topological_sort(wf)
         assert layers == [["a"], ["b"], ["c"]]
 
@@ -406,22 +430,28 @@ class TestTopologicalSort:
         assert set(layers[0]) == {"a", "b", "c"}
 
     def test_diamond(self, engine: WorkflowEngine) -> None:
-        wf = _wf("diamond", [
-            _tool("a"),
-            _tool("b", depends_on=["a"]),
-            _tool("c", depends_on=["a"]),
-            _tool("d", depends_on=["b", "c"]),
-        ])
+        wf = _wf(
+            "diamond",
+            [
+                _tool("a"),
+                _tool("b", depends_on=["a"]),
+                _tool("c", depends_on=["a"]),
+                _tool("d", depends_on=["b", "c"]),
+            ],
+        )
         layers = engine.topological_sort(wf)
         assert layers[0] == ["a"]
         assert set(layers[1]) == {"b", "c"}
         assert layers[2] == ["d"]
 
     def test_cycle_raises(self, engine: WorkflowEngine) -> None:
-        wf = _wf("cycle", [
-            _tool("a", depends_on=["b"]),
-            _tool("b", depends_on=["a"]),
-        ])
+        wf = _wf(
+            "cycle",
+            [
+                _tool("a", depends_on=["b"]),
+                _tool("b", depends_on=["a"]),
+            ],
+        )
         with pytest.raises(WorkflowValidationError, match="Cycle"):
             engine.topological_sort(wf)
 
@@ -430,20 +460,17 @@ class TestTopologicalSort:
 # 5. Template Resolution
 # ===========================================================================
 
+
 class TestTemplateResolution:
     """Test ${node_id.field} template substitution."""
 
     def test_resolve_output(self, engine: WorkflowEngine) -> None:
-        run = WorkflowRun(
-            node_results={"a": NodeResult(node_id="a", output="hello")}
-        )
+        run = WorkflowRun(node_results={"a": NodeResult(node_id="a", output="hello")})
         result = engine._resolve_template("Got: ${a.output}", run)
         assert result == "Got: hello"
 
     def test_resolve_status(self, engine: WorkflowEngine) -> None:
-        run = WorkflowRun(
-            node_results={"a": NodeResult(node_id="a", status=NodeStatus.SUCCESS)}
-        )
+        run = WorkflowRun(node_results={"a": NodeResult(node_id="a", status=NodeStatus.SUCCESS)})
         result = engine._resolve_template("${a.status}", run)
         assert result == "success"
 
@@ -463,9 +490,7 @@ class TestTemplateResolution:
         assert result == "${missing.output}"
 
     def test_unknown_field_empty(self, engine: WorkflowEngine) -> None:
-        run = WorkflowRun(
-            node_results={"a": NodeResult(node_id="a")}
-        )
+        run = WorkflowRun(node_results={"a": NodeResult(node_id="a")})
         result = engine._resolve_template("${a.nonexistent}", run)
         assert result == ""
 
@@ -475,9 +500,7 @@ class TestTemplateResolution:
         assert result == "plain text"
 
     def test_resolve_params(self, engine: WorkflowEngine) -> None:
-        run = WorkflowRun(
-            node_results={"s": NodeResult(node_id="s", output="Python asyncio")}
-        )
+        run = WorkflowRun(node_results={"s": NodeResult(node_id="s", output="Python asyncio")})
         params = {"query": "${s.output}", "limit": 5}
         resolved = engine._resolve_params(params, run)
         assert resolved == {"query": "Python asyncio", "limit": 5}
@@ -486,6 +509,7 @@ class TestTemplateResolution:
 # ===========================================================================
 # 6. Condition Evaluation
 # ===========================================================================
+
 
 class TestConditionEvaluation:
     """Test safe condition expression evaluation."""
@@ -523,9 +547,7 @@ class TestConditionEvaluation:
         assert engine._evaluate_condition('"hello" contains "xyz"', run) is False
 
     def test_template_in_condition(self, engine: WorkflowEngine) -> None:
-        run = WorkflowRun(
-            node_results={"a": NodeResult(node_id="a", status=NodeStatus.SUCCESS)}
-        )
+        run = WorkflowRun(node_results={"a": NodeResult(node_id="a", status=NodeStatus.SUCCESS)})
         assert engine._evaluate_condition('${a.status} == "success"', run) is True
 
     def test_unknown_expression_returns_false(self, engine: WorkflowEngine) -> None:
@@ -536,6 +558,7 @@ class TestConditionEvaluation:
 # ===========================================================================
 # 7. Tool Node Execution
 # ===========================================================================
+
 
 class TestToolNodeExecution:
     """Test tool node execution via MCP client."""
@@ -562,10 +585,13 @@ class TestToolNodeExecution:
 
     async def test_tool_template_params(self, engine: WorkflowEngine, mock_mcp: AsyncMock) -> None:
         mock_mcp.call_tool.return_value = MockToolOutput(content="data from search")
-        wf = _wf("t", [
-            _tool("a", tool_name="search", params={"query": "test"}),
-            _tool("b", tool_name="save", params={"content": "${a.output}"}, depends_on=["a"]),
-        ])
+        wf = _wf(
+            "t",
+            [
+                _tool("a", tool_name="search", params={"query": "test"}),
+                _tool("b", tool_name="save", params={"content": "${a.output}"}, depends_on=["a"]),
+            ],
+        )
         run = await engine.execute(wf)
         assert run.is_success
         # Second call should have resolved template
@@ -598,6 +624,7 @@ class TestToolNodeExecution:
 # 8. LLM Node Execution
 # ===========================================================================
 
+
 class TestLLMNodeExecution:
     """Test LLM node execution."""
 
@@ -613,12 +640,17 @@ class TestLLMNodeExecution:
         assert run.node_results["a"].status == NodeStatus.FAILURE
         assert "No LLM function" in (run.node_results["a"].error or "")
 
-    async def test_llm_template_prompt(self, engine: WorkflowEngine, mock_mcp: AsyncMock, mock_llm: AsyncMock) -> None:
+    async def test_llm_template_prompt(
+        self, engine: WorkflowEngine, mock_mcp: AsyncMock, mock_llm: AsyncMock
+    ) -> None:
         mock_mcp.call_tool.return_value = MockToolOutput(content="raw data")
-        wf = _wf("l", [
-            _tool("search", tool_name="web_search"),
-            _llm("summarize", prompt="Summarize: ${search.output}", depends_on=["search"]),
-        ])
+        wf = _wf(
+            "l",
+            [
+                _tool("search", tool_name="web_search"),
+                _llm("summarize", prompt="Summarize: ${search.output}", depends_on=["search"]),
+            ],
+        )
         run = await engine.execute(wf)
         assert run.is_success
         # LLM should have been called with resolved prompt
@@ -636,29 +668,50 @@ class TestLLMNodeExecution:
 # 9. Condition Node Execution
 # ===========================================================================
 
+
 class TestConditionNodeExecution:
     """Test conditional branching."""
 
     async def test_condition_true_branch(self, engine: WorkflowEngine, mock_mcp: AsyncMock) -> None:
-        wf = _wf("cond", [
-            _tool("a"),
-            _condition("check", condition='${a.status} == "success"', on_true="good", on_false="bad", depends_on=["a"]),
-            _tool("good", depends_on=["check"]),
-            _tool("bad", depends_on=["check"]),
-        ])
+        wf = _wf(
+            "cond",
+            [
+                _tool("a"),
+                _condition(
+                    "check",
+                    condition='${a.status} == "success"',
+                    on_true="good",
+                    on_false="bad",
+                    depends_on=["a"],
+                ),
+                _tool("good", depends_on=["check"]),
+                _tool("bad", depends_on=["check"]),
+            ],
+        )
         run = await engine.execute(wf)
         assert run.node_results["check"].output == "true"
         assert run.node_results["good"].status == NodeStatus.SUCCESS
         assert run.node_results["bad"].status == NodeStatus.SKIPPED
 
-    async def test_condition_false_branch(self, engine: WorkflowEngine, mock_mcp: AsyncMock) -> None:
+    async def test_condition_false_branch(
+        self, engine: WorkflowEngine, mock_mcp: AsyncMock
+    ) -> None:
         mock_mcp.call_tool.return_value = MockToolOutput(content="fail", is_error=True)
-        wf = _wf("cond", [
-            _tool("a"),
-            _condition("check", condition='${a.status} == "success"', on_true="good", on_false="bad", depends_on=["a"]),
-            _tool("good", depends_on=["check"]),
-            _tool("bad", depends_on=["check"]),
-        ])
+        wf = _wf(
+            "cond",
+            [
+                _tool("a"),
+                _condition(
+                    "check",
+                    condition='${a.status} == "success"',
+                    on_true="good",
+                    on_false="bad",
+                    depends_on=["a"],
+                ),
+                _tool("good", depends_on=["check"]),
+                _tool("bad", depends_on=["check"]),
+            ],
+        )
         # Node "a" fails → condition evaluates to false because a.status != "success"
         # But "a" failing means "check" depends on "a" which failed → "check" gets SKIPPED
         run = await engine.execute(wf)
@@ -666,14 +719,21 @@ class TestConditionNodeExecution:
         assert run.node_results["a"].status == NodeStatus.FAILURE
         assert run.node_results["check"].status == NodeStatus.SKIPPED
 
-    async def test_condition_skips_descendants(self, engine: WorkflowEngine, mock_mcp: AsyncMock) -> None:
-        wf = _wf("cond", [
-            _tool("a"),
-            _condition("check", condition="true", on_true="path_a", on_false="path_b", depends_on=["a"]),
-            _tool("path_a", depends_on=["check"]),
-            _tool("path_b", depends_on=["check"]),
-            _tool("after_b", depends_on=["path_b"]),  # descendant of skipped path
-        ])
+    async def test_condition_skips_descendants(
+        self, engine: WorkflowEngine, mock_mcp: AsyncMock
+    ) -> None:
+        wf = _wf(
+            "cond",
+            [
+                _tool("a"),
+                _condition(
+                    "check", condition="true", on_true="path_a", on_false="path_b", depends_on=["a"]
+                ),
+                _tool("path_a", depends_on=["check"]),
+                _tool("path_b", depends_on=["check"]),
+                _tool("after_b", depends_on=["path_b"]),  # descendant of skipped path
+            ],
+        )
         run = await engine.execute(wf)
         assert run.node_results["path_a"].status == NodeStatus.SUCCESS
         assert run.node_results["path_b"].status == NodeStatus.SKIPPED
@@ -684,6 +744,7 @@ class TestConditionNodeExecution:
 # 10. Human Approval Node
 # ===========================================================================
 
+
 class TestHumanApprovalNode:
     """Test human approval gates."""
 
@@ -693,7 +754,9 @@ class TestHumanApprovalNode:
         assert run.node_results["ask"].status == NodeStatus.SUCCESS
         assert run.node_results["ask"].output == "approved"
 
-    async def test_approval_denied(self, mock_mcp: AsyncMock, mock_llm: AsyncMock, mock_approval_no: AsyncMock) -> None:
+    async def test_approval_denied(
+        self, mock_mcp: AsyncMock, mock_llm: AsyncMock, mock_approval_no: AsyncMock
+    ) -> None:
         engine = WorkflowEngine(
             mcp_client=mock_mcp, llm_func=mock_llm, approval_func=mock_approval_no
         )
@@ -712,6 +775,7 @@ class TestHumanApprovalNode:
 # ===========================================================================
 # 11. Retry Strategies
 # ===========================================================================
+
 
 class TestRetryStrategies:
     """Test retry delay calculation and retry execution."""
@@ -773,22 +837,28 @@ class TestRetryStrategies:
 # 12. Parallel Execution
 # ===========================================================================
 
+
 class TestParallelExecution:
     """Test concurrent node execution."""
 
-    async def test_independent_nodes_run_parallel(self, engine: WorkflowEngine, mock_mcp: AsyncMock) -> None:
+    async def test_independent_nodes_run_parallel(
+        self, engine: WorkflowEngine, mock_mcp: AsyncMock
+    ) -> None:
         wf = _wf("par", [_tool("a"), _tool("b"), _tool("c")])
         run = await engine.execute(wf)
         assert run.is_success
         assert mock_mcp.call_tool.call_count == 3
 
     async def test_diamond_pattern(self, engine: WorkflowEngine, mock_mcp: AsyncMock) -> None:
-        wf = _wf("diamond", [
-            _tool("start"),
-            _tool("left", depends_on=["start"]),
-            _tool("right", depends_on=["start"]),
-            _tool("end", depends_on=["left", "right"]),
-        ])
+        wf = _wf(
+            "diamond",
+            [
+                _tool("start"),
+                _tool("left", depends_on=["start"]),
+                _tool("right", depends_on=["start"]),
+                _tool("end", depends_on=["left", "right"]),
+            ],
+        )
         run = await engine.execute(wf)
         assert run.is_success
         assert mock_mcp.call_tool.call_count == 4
@@ -800,16 +870,22 @@ class TestParallelExecution:
 # 13. Dependency Propagation
 # ===========================================================================
 
+
 class TestDependencyPropagation:
     """Test failure and skip propagation through the graph."""
 
-    async def test_failed_dependency_skips_downstream(self, engine: WorkflowEngine, mock_mcp: AsyncMock) -> None:
+    async def test_failed_dependency_skips_downstream(
+        self, engine: WorkflowEngine, mock_mcp: AsyncMock
+    ) -> None:
         mock_mcp.call_tool.return_value = MockToolOutput(content="error", is_error=True)
-        wf = _wf("prop", [
-            _tool("a"),
-            _tool("b", depends_on=["a"]),
-            _tool("c", depends_on=["b"]),
-        ])
+        wf = _wf(
+            "prop",
+            [
+                _tool("a"),
+                _tool("b", depends_on=["a"]),
+                _tool("c", depends_on=["b"]),
+            ],
+        )
         run = await engine.execute(wf)
         assert run.node_results["a"].status == NodeStatus.FAILURE
         assert run.node_results["b"].status == NodeStatus.SKIPPED
@@ -829,12 +905,15 @@ class TestDependencyPropagation:
         mcp.call_tool = selective_mcp
         engine = WorkflowEngine(mcp_client=mcp, llm_func=mock_llm)
 
-        wf = _wf("partial", [
-            _tool("start", tool_name="ok_tool"),
-            _tool("left", tool_name="ok_tool", depends_on=["start"]),
-            _tool("right", tool_name="fail_tool", depends_on=["start"]),
-            _tool("end", tool_name="ok_tool", depends_on=["left", "right"]),
-        ])
+        wf = _wf(
+            "partial",
+            [
+                _tool("start", tool_name="ok_tool"),
+                _tool("left", tool_name="ok_tool", depends_on=["start"]),
+                _tool("right", tool_name="fail_tool", depends_on=["start"]),
+                _tool("end", tool_name="ok_tool", depends_on=["left", "right"]),
+            ],
+        )
         run = await engine.execute(wf)
         assert run.node_results["start"].status == NodeStatus.SUCCESS
         assert run.node_results["left"].status == NodeStatus.SUCCESS
@@ -846,6 +925,7 @@ class TestDependencyPropagation:
 # ===========================================================================
 # 14. Checkpoint / Resume
 # ===========================================================================
+
 
 class TestCheckpointResume:
     """Test checkpoint persistence and workflow resumption."""
@@ -895,10 +975,14 @@ class TestCheckpointResume:
         cp_path = cp_dir / "resume_test.json"
         cp_path.write_text(run.model_dump_json(indent=2), "utf-8")
 
-        wf = _wf("test", [
-            _tool("a"),
-            _tool("b", depends_on=["a"]),
-        ], id="wf1")
+        wf = _wf(
+            "test",
+            [
+                _tool("a"),
+                _tool("b", depends_on=["a"]),
+            ],
+            id="wf1",
+        )
 
         engine = WorkflowEngine(
             mcp_client=mock_mcp,
@@ -917,6 +1001,7 @@ class TestCheckpointResume:
 # 15. Global Timeout
 # ===========================================================================
 
+
 class TestGlobalTimeout:
     """Test workflow-level timeout."""
 
@@ -929,10 +1014,14 @@ class TestGlobalTimeout:
         mcp.call_tool = slow_tool
         engine = WorkflowEngine(mcp_client=mcp, llm_func=mock_llm)
 
-        wf = _wf("slow", [
-            _tool("a"),
-            _tool("b", depends_on=["a"]),
-        ], global_timeout_seconds=1)
+        wf = _wf(
+            "slow",
+            [
+                _tool("a"),
+                _tool("b", depends_on=["a"]),
+            ],
+            global_timeout_seconds=1,
+        )
 
         run = await engine.execute(wf)
         # At least some nodes should be SKIPPED due to timeout
@@ -944,23 +1033,22 @@ class TestGlobalTimeout:
 # 16. Status Callback
 # ===========================================================================
 
+
 class TestStatusCallback:
     """Test fire-and-forget status callbacks."""
 
     async def test_status_callback_called(self, mock_mcp: AsyncMock, mock_llm: AsyncMock) -> None:
         callback = AsyncMock()
-        engine = WorkflowEngine(
-            mcp_client=mock_mcp, llm_func=mock_llm, status_callback=callback
-        )
+        engine = WorkflowEngine(mcp_client=mock_mcp, llm_func=mock_llm, status_callback=callback)
         wf = _wf("cb", [_tool("a")])
         await engine.execute(wf)
         callback.assert_called()
 
-    async def test_status_callback_failure_ignored(self, mock_mcp: AsyncMock, mock_llm: AsyncMock) -> None:
+    async def test_status_callback_failure_ignored(
+        self, mock_mcp: AsyncMock, mock_llm: AsyncMock
+    ) -> None:
         callback = AsyncMock(side_effect=RuntimeError("callback crashed"))
-        engine = WorkflowEngine(
-            mcp_client=mock_mcp, llm_func=mock_llm, status_callback=callback
-        )
+        engine = WorkflowEngine(mcp_client=mock_mcp, llm_func=mock_llm, status_callback=callback)
         wf = _wf("cb", [_tool("a")])
         run = await engine.execute(wf)
         # Workflow should still succeed despite callback failure
@@ -971,15 +1059,24 @@ class TestStatusCallback:
 # 17. Full Integration Workflows
 # ===========================================================================
 
+
 class TestWorkflowIntegration:
     """End-to-end workflow execution tests."""
 
     async def test_linear_three_step(self, engine: WorkflowEngine) -> None:
-        wf = _wf("linear", [
-            _tool("search", tool_name="web_search", params={"query": "test"}),
-            _llm("analyze", prompt="Analyze: ${search.output}", depends_on=["search"]),
-            _tool("save", tool_name="vault_save", params={"content": "${analyze.output}"}, depends_on=["analyze"]),
-        ])
+        wf = _wf(
+            "linear",
+            [
+                _tool("search", tool_name="web_search", params={"query": "test"}),
+                _llm("analyze", prompt="Analyze: ${search.output}", depends_on=["search"]),
+                _tool(
+                    "save",
+                    tool_name="vault_save",
+                    params={"content": "${analyze.output}"},
+                    depends_on=["analyze"],
+                ),
+            ],
+        )
         run = await engine.execute(wf)
         assert run.is_success
         assert run.status == NodeStatus.SUCCESS
@@ -998,25 +1095,26 @@ class TestWorkflowIntegration:
         run = await engine.execute(wf)
         assert run.is_success
         assert len(run.node_results) == 10
-        assert all(
-            nr.status == NodeStatus.SUCCESS for nr in run.node_results.values()
-        )
+        assert all(nr.status == NodeStatus.SUCCESS for nr in run.node_results.values())
 
     async def test_mixed_node_types(self, engine: WorkflowEngine) -> None:
-        wf = _wf("mixed", [
-            _tool("fetch", tool_name="web_fetch"),
-            _llm("analyze", prompt="Analyze: ${fetch.output}", depends_on=["fetch"]),
-            _condition(
-                "check",
-                condition='${analyze.status} == "success"',
-                on_true="save",
-                on_false="report_error",
-                depends_on=["analyze"],
-            ),
-            _tool("save", tool_name="vault_save", depends_on=["check"]),
-            _tool("report_error", tool_name="write_file", depends_on=["check"]),
-            _approval("review", message="Save ${analyze.output}?", depends_on=["save"]),
-        ])
+        wf = _wf(
+            "mixed",
+            [
+                _tool("fetch", tool_name="web_fetch"),
+                _llm("analyze", prompt="Analyze: ${fetch.output}", depends_on=["fetch"]),
+                _condition(
+                    "check",
+                    condition='${analyze.status} == "success"',
+                    on_true="save",
+                    on_false="report_error",
+                    depends_on=["analyze"],
+                ),
+                _tool("save", tool_name="vault_save", depends_on=["check"]),
+                _tool("report_error", tool_name="write_file", depends_on=["check"]),
+                _approval("review", message="Save ${analyze.output}?", depends_on=["save"]),
+            ],
+        )
         run = await engine.execute(wf)
         assert run.node_results["fetch"].status == NodeStatus.SUCCESS
         assert run.node_results["analyze"].status == NodeStatus.SUCCESS

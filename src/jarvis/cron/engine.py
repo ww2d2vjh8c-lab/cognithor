@@ -188,7 +188,12 @@ class CronEngine:
             from datetime import datetime
 
             class _DummyScheduledJob:
-                def __init__(self, job_id: str, func: Callable[[CronJob], Coroutine[Any, Any, Any]], args: list[Any] | None) -> None:
+                def __init__(
+                    self,
+                    job_id: str,
+                    func: Callable[[CronJob], Coroutine[Any, Any, Any]],
+                    args: list[Any] | None,
+                ) -> None:
                     self.id = job_id
                     self.func = func
                     self.args = args or []
@@ -218,7 +223,7 @@ class CronEngine:
                     name: str | None = None,
                     replace_existing: bool = False,
                 ) -> _DummyScheduledJob:
-                    job_id = id or name or f"job-{len(self._jobs)+1}"
+                    job_id = id or name or f"job-{len(self._jobs) + 1}"
                     if replace_existing and job_id in self._jobs:
                         self._jobs.pop(job_id, None)
                     job = _DummyScheduledJob(job_id, func, args)
@@ -280,7 +285,8 @@ class CronEngine:
                 self._heartbeat_job_id = getattr(scheduled, "id", job_id)
                 self._active_jobs["heartbeat"] = self._heartbeat_job_id
                 logger.info(
-                    "Heartbeat geplant: alle %d Minuten", getattr(self._heartbeat_config, "interval_minutes", 30)
+                    "Heartbeat geplant: alle %d Minuten",
+                    getattr(self._heartbeat_config, "interval_minutes", 30),
                 )
 
         logger.info(
@@ -424,7 +430,8 @@ class CronEngine:
                 processed = await self._heartbeat_scheduler.tick()
                 if processed:
                     logger.info(
-                        "HeartbeatScheduler: %d Tasks verarbeitet", len(processed),
+                        "HeartbeatScheduler: %d Tasks verarbeitet",
+                        len(processed),
                     )
             except Exception:
                 logger.exception("HeartbeatScheduler.tick() fehlgeschlagen")
@@ -442,7 +449,9 @@ class CronEngine:
             try:
                 text = self._heartbeat_file.read_text(encoding="utf-8").strip()
             except Exception:
-                logger.exception("Fehler beim Lesen der Heartbeat-Checkliste: %s", self._heartbeat_file)
+                logger.exception(
+                    "Fehler beim Lesen der Heartbeat-Checkliste: %s", self._heartbeat_file
+                )
         # Standardantwort, wenn keine Punkte definiert
         if not text:
             text = "HEARTBEAT_OK"
@@ -557,6 +566,7 @@ class CronEngine:
         trigger: Any = None
         try:
             from apscheduler.triggers.cron import CronTrigger  # type: ignore
+
             trigger = CronTrigger(**fields, timezone="Europe/Berlin")
         except Exception:
             pass

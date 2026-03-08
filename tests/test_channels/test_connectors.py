@@ -1,10 +1,10 @@
 """Tests: Enterprise-Konnektoren (Review-Punkt 7).
 
-  - TeamsConnector: Nachrichten senden, Channels
-  - JiraConnector: Issues CRUD, Transitions
-  - ServiceNowConnector: Incidents, Knowledge-Base
-  - ConnectorRegistry: Verwaltung
-  - ScopeGuard: Least-Privilege, Rate-Limiting
+- TeamsConnector: Nachrichten senden, Channels
+- JiraConnector: Issues CRUD, Transitions
+- ServiceNowConnector: Incidents, Knowledge-Base
+- ConnectorRegistry: Verwaltung
+- ScopeGuard: Least-Privilege, Rate-Limiting
 """
 
 from __future__ import annotations
@@ -142,31 +142,37 @@ class TestServiceNowConnector:
 class TestScopeGuard:
     def test_allowed_scope(self) -> None:
         guard = ScopeGuard()
-        guard.set_policy(ScopePolicy(
-            agent_id="coder",
-            connector_id="jira",
-            allowed_scopes={ConnectorScope.JIRA_READ_ISSUES},
-        ))
+        guard.set_policy(
+            ScopePolicy(
+                agent_id="coder",
+                connector_id="jira",
+                allowed_scopes={ConnectorScope.JIRA_READ_ISSUES},
+            )
+        )
         assert guard.check("coder", "jira", ConnectorScope.JIRA_READ_ISSUES) is True
 
     def test_denied_scope(self) -> None:
         guard = ScopeGuard()
-        guard.set_policy(ScopePolicy(
-            agent_id="coder",
-            connector_id="jira",
-            allowed_scopes={ConnectorScope.JIRA_READ_ISSUES},
-        ))
+        guard.set_policy(
+            ScopePolicy(
+                agent_id="coder",
+                connector_id="jira",
+                allowed_scopes={ConnectorScope.JIRA_READ_ISSUES},
+            )
+        )
         assert guard.check("coder", "jira", ConnectorScope.JIRA_CREATE_ISSUES) is False
         assert guard.violation_count == 1
 
     def test_explicit_deny(self) -> None:
         guard = ScopeGuard()
-        guard.set_policy(ScopePolicy(
-            agent_id="coder",
-            connector_id="jira",
-            allowed_scopes={ConnectorScope.JIRA_READ_ISSUES, ConnectorScope.JIRA_CREATE_ISSUES},
-            denied_scopes={ConnectorScope.JIRA_CREATE_ISSUES},
-        ))
+        guard.set_policy(
+            ScopePolicy(
+                agent_id="coder",
+                connector_id="jira",
+                allowed_scopes={ConnectorScope.JIRA_READ_ISSUES, ConnectorScope.JIRA_CREATE_ISSUES},
+                denied_scopes={ConnectorScope.JIRA_CREATE_ISSUES},
+            )
+        )
         assert guard.check("coder", "jira", ConnectorScope.JIRA_CREATE_ISSUES) is False
 
     def test_no_policy(self) -> None:
@@ -176,12 +182,14 @@ class TestScopeGuard:
 
     def test_rate_limiting(self) -> None:
         guard = ScopeGuard()
-        guard.set_policy(ScopePolicy(
-            agent_id="coder",
-            connector_id="jira",
-            allowed_scopes={ConnectorScope.JIRA_READ_ISSUES},
-            max_requests_per_minute=3,
-        ))
+        guard.set_policy(
+            ScopePolicy(
+                agent_id="coder",
+                connector_id="jira",
+                allowed_scopes={ConnectorScope.JIRA_READ_ISSUES},
+                max_requests_per_minute=3,
+            )
+        )
         assert guard.check("coder", "jira", ConnectorScope.JIRA_READ_ISSUES) is True
         assert guard.check("coder", "jira", ConnectorScope.JIRA_READ_ISSUES) is True
         assert guard.check("coder", "jira", ConnectorScope.JIRA_READ_ISSUES) is True
@@ -212,10 +220,13 @@ class TestConnectorRegistry:
     def test_scope_enforcement(self) -> None:
         reg = ConnectorRegistry()
         reg.register(JiraConnector())
-        reg.set_agent_policy(ScopePolicy(
-            agent_id="coder", connector_id="jira-default",
-            allowed_scopes={ConnectorScope.JIRA_READ_ISSUES},
-        ))
+        reg.set_agent_policy(
+            ScopePolicy(
+                agent_id="coder",
+                connector_id="jira-default",
+                allowed_scopes={ConnectorScope.JIRA_READ_ISSUES},
+            )
+        )
         assert reg.check_access("coder", "jira-default", ConnectorScope.JIRA_READ_ISSUES) is True
         assert reg.check_access("coder", "jira-default", ConnectorScope.JIRA_CREATE_ISSUES) is False
 

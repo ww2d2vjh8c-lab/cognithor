@@ -107,15 +107,13 @@ class BrowserTool:
         self._max_text_length: int = getattr(
             browser_cfg, "max_text_length", _DEFAULT_MAX_TEXT_LENGTH
         )
-        self._max_js_length: int = getattr(
-            browser_cfg, "max_js_length", _DEFAULT_MAX_JS_LENGTH
+        self._max_js_length: int = getattr(browser_cfg, "max_js_length", _DEFAULT_MAX_JS_LENGTH)
+        self._timeout_ms: int = (
+            timeout_ms
+            if timeout_ms is not None
+            else getattr(browser_cfg, "default_timeout_ms", _DEFAULT_TIMEOUT_MS)
         )
-        self._timeout_ms: int = timeout_ms if timeout_ms is not None else getattr(
-            browser_cfg, "default_timeout_ms", _DEFAULT_TIMEOUT_MS
-        )
-        vp_width: int = getattr(
-            browser_cfg, "default_viewport_width", _DEFAULT_VIEWPORT["width"]
-        )
+        vp_width: int = getattr(browser_cfg, "default_viewport_width", _DEFAULT_VIEWPORT["width"])
         vp_height: int = getattr(
             browser_cfg, "default_viewport_height", _DEFAULT_VIEWPORT["height"]
         )
@@ -192,8 +190,15 @@ class BrowserTool:
         hostname = (parsed.hostname or "").lower()
         if not hostname:
             return f"Keine gueltige Domain: {url}"
-        _blocked = {"localhost", "127.0.0.1", "0.0.0.0", "::", "::1",
-                     "metadata.google.internal", "169.254.169.254"}
+        _blocked = {
+            "localhost",
+            "127.0.0.1",
+            "0.0.0.0",
+            "::",
+            "::1",
+            "metadata.google.internal",
+            "169.254.169.254",
+        }
         if hostname in _blocked:
             return f"Zugriff auf {hostname} blockiert (Sicherheit)"
         # Private IPv4 ranges
@@ -241,7 +246,10 @@ class BrowserTool:
             if extract_text:
                 text = await self._page.inner_text("body")
                 if len(text) > self._max_text_length:
-                    text = text[:self._max_text_length] + f"\n\n[... gekürzt, {len(text)} Zeichen gesamt]"
+                    text = (
+                        text[: self._max_text_length]
+                        + f"\n\n[... gekürzt, {len(text)} Zeichen gesamt]"
+                    )
 
             status = response.status if response else 0
             log.info("browser_navigate", url=url, status=status, title=title)
@@ -254,9 +262,13 @@ class BrowserTool:
             )
         except Exception as exc:
             log.error("browser_navigate_failed", url=url, error=str(exc))
-            return BrowserResult(success=False, url=url, error=f"Navigation fehlgeschlagen: {type(exc).__name__}")
+            return BrowserResult(
+                success=False, url=url, error=f"Navigation fehlgeschlagen: {type(exc).__name__}"
+            )
 
-    async def screenshot(self, path: str | None = None, *, full_page: bool = False) -> BrowserResult:
+    async def screenshot(
+        self, path: str | None = None, *, full_page: bool = False
+    ) -> BrowserResult:
         """Erstellt einen Screenshot der aktuellen Seite.
 
         Args:
@@ -289,7 +301,9 @@ class BrowserTool:
             )
         except Exception as exc:
             log.error("browser_screenshot_failed", error=str(exc))
-            return BrowserResult(success=False, error=f"Screenshot fehlgeschlagen: {type(exc).__name__}")
+            return BrowserResult(
+                success=False, error=f"Screenshot fehlgeschlagen: {type(exc).__name__}"
+            )
 
     async def click(self, selector: str) -> BrowserResult:
         """Klickt auf ein Element.
@@ -343,7 +357,9 @@ class BrowserTool:
             )
         except Exception as exc:
             log.error("browser_fill_failed", selector=selector, error=str(exc))
-            return BrowserResult(success=False, error=f"Ausfuellen fehlgeschlagen: {type(exc).__name__}")
+            return BrowserResult(
+                success=False, error=f"Ausfuellen fehlgeschlagen: {type(exc).__name__}"
+            )
 
     async def execute_js(self, script: str) -> BrowserResult:
         """Führt JavaScript auf der aktuellen Seite aus.
@@ -368,7 +384,7 @@ class BrowserTool:
             result_str = str(result) if result is not None else ""
 
             if len(result_str) > self._max_text_length:
-                result_str = result_str[:self._max_text_length] + " [gekürzt]"
+                result_str = result_str[: self._max_text_length] + " [gekürzt]"
 
             log.info("browser_js_executed", script_length=len(script))
             return BrowserResult(
@@ -437,7 +453,9 @@ class BrowserTool:
             )
         except Exception as exc:
             log.error("browser_page_info_failed", error=str(exc))
-            return BrowserResult(success=False, error=f"Seiteninfo fehlgeschlagen: {type(exc).__name__}")
+            return BrowserResult(
+                success=False, error=f"Seiteninfo fehlgeschlagen: {type(exc).__name__}"
+            )
 
 
 # ============================================================================
@@ -554,7 +572,9 @@ def register_browser_tools(mcp_client: Any, config: Any = None) -> BrowserTool:
             parts.append(f"\n{result.text}")
         return "\n".join(parts)
 
-    async def _browse_screenshot(path: str | None = None, full_page: bool = False, **_: _Any) -> str:
+    async def _browse_screenshot(
+        path: str | None = None, full_page: bool = False, **_: _Any
+    ) -> str:
         if err := await _ensure_initialized():
             return err
         result = await tool.screenshot(path=path, full_page=full_page)

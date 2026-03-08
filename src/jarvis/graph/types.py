@@ -33,31 +33,35 @@ GRAPH_VERSION = "1.0"
 
 # ── Enums ────────────────────────────────────────────────────────
 
+
 class NodeType(str, Enum):
     """Typ eines Graph-Knotens."""
-    FUNCTION = "function"       # Sync/Async Python-Funktion
-    LLM = "llm"                 # LLM-Aufruf
-    TOOL = "tool"               # MCP-Tool-Aufruf
-    ROUTER = "router"           # Conditional Branching
-    HITL = "hitl"               # Human-in-the-Loop (Pause/Resume)
-    PARALLEL = "parallel"       # Parallele Ausführung
-    SUBGRAPH = "subgraph"       # Verschachtelter Graph
-    CHECKPOINT = "checkpoint"   # Expliziter Checkpoint
-    PASSTHROUGH = "passthrough" # State durchreichen (No-Op)
+
+    FUNCTION = "function"  # Sync/Async Python-Funktion
+    LLM = "llm"  # LLM-Aufruf
+    TOOL = "tool"  # MCP-Tool-Aufruf
+    ROUTER = "router"  # Conditional Branching
+    HITL = "hitl"  # Human-in-the-Loop (Pause/Resume)
+    PARALLEL = "parallel"  # Parallele Ausführung
+    SUBGRAPH = "subgraph"  # Verschachtelter Graph
+    CHECKPOINT = "checkpoint"  # Expliziter Checkpoint
+    PASSTHROUGH = "passthrough"  # State durchreichen (No-Op)
 
 
 class EdgeType(str, Enum):
     """Typ einer Graph-Kante."""
-    DIRECT = "direct"           # Immer folgen
-    CONDITIONAL = "conditional" # Basierend auf Router-Ergebnis
+
+    DIRECT = "direct"  # Immer folgen
+    CONDITIONAL = "conditional"  # Basierend auf Router-Ergebnis
 
 
 class ExecutionStatus(str, Enum):
     """Status einer Graph-Ausführung."""
+
     PENDING = "pending"
     RUNNING = "running"
-    PAUSED = "paused"          # HITL oder expliziter Pause
-    WAITING = "waiting"        # Wartet auf externe Eingabe
+    PAUSED = "paused"  # HITL oder expliziter Pause
+    WAITING = "waiting"  # Wartet auf externe Eingabe
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELED = "canceled"
@@ -66,6 +70,7 @@ class ExecutionStatus(str, Enum):
 
 class NodeStatus(str, Enum):
     """Status eines einzelnen Knotens."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -82,6 +87,7 @@ RouterHandler = Callable[["GraphState"], Awaitable[str]]
 
 
 # ── GraphState ───────────────────────────────────────────────────
+
 
 class GraphState:
     """Typisierter Zustand der durch den Graphen fließt.
@@ -166,9 +172,11 @@ class GraphState:
 
 # ── Node ─────────────────────────────────────────────────────────
 
+
 @dataclass
 class Node:
     """Ein Knoten im Execution-Graph."""
+
     name: str
     node_type: NodeType = NodeType.FUNCTION
     handler: NodeHandler | RouterHandler | None = None
@@ -195,19 +203,22 @@ class Node:
 
 # ── Edge ─────────────────────────────────────────────────────────
 
+
 @dataclass
 class Edge:
     """Eine Kante zwischen zwei Nodes."""
+
     source: str
     target: str
     edge_type: EdgeType = EdgeType.DIRECT
-    condition: str = ""     # Für CONDITIONAL: Wert der mit Router-Output verglichen wird
-    priority: int = 0       # Höhere Priorität wird zuerst geprüft
+    condition: str = ""  # Für CONDITIONAL: Wert der mit Router-Output verglichen wird
+    priority: int = 0  # Höhere Priorität wird zuerst geprüft
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
-            "source": self.source, "target": self.target,
+            "source": self.source,
+            "target": self.target,
             "type": self.edge_type.value,
         }
         if self.condition:
@@ -217,9 +228,11 @@ class Edge:
 
 # ── Node Execution Result ────────────────────────────────────────
 
+
 @dataclass
 class NodeResult:
     """Ergebnis der Ausführung eines einzelnen Knotens."""
+
     node_name: str
     status: NodeStatus
     state_after: GraphState | None = None
@@ -235,8 +248,10 @@ class NodeResult:
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
-            "node": self.node_name, "status": self.status.value,
-            "duration_ms": self.duration_ms, "timestamp": self.timestamp,
+            "node": self.node_name,
+            "status": self.status.value,
+            "duration_ms": self.duration_ms,
+            "timestamp": self.timestamp,
         }
         if self.error:
             d["error"] = self.error
@@ -249,9 +264,11 @@ class NodeResult:
 
 # ── Checkpoint ───────────────────────────────────────────────────
 
+
 @dataclass
 class Checkpoint:
     """Serialisierbarer Snapshot einer Graph-Ausführung."""
+
     checkpoint_id: str = ""
     execution_id: str = ""
     graph_name: str = ""
@@ -303,9 +320,11 @@ class Checkpoint:
 
 # ── Execution Record ────────────────────────────────────────────
 
+
 @dataclass
 class ExecutionRecord:
     """Vollständiger Record einer Graph-Ausführung."""
+
     execution_id: str = ""
     graph_name: str = ""
     status: ExecutionStatus = ExecutionStatus.PENDING
@@ -348,6 +367,7 @@ class ExecutionRecord:
 
 
 # ── Graph Definition ─────────────────────────────────────────────
+
 
 class GraphDefinition:
     """Container für Nodes und Edges mit Validierung.
@@ -420,8 +440,9 @@ class GraphDefinition:
         # Router-Nodes müssen conditional edges haben
         for name, node in self.nodes.items():
             if node.node_type == NodeType.ROUTER:
-                cond_edges = [e for e in self.get_outgoing_edges(name)
-                              if e.edge_type == EdgeType.CONDITIONAL]
+                cond_edges = [
+                    e for e in self.get_outgoing_edges(name) if e.edge_type == EdgeType.CONDITIONAL
+                ]
                 if not cond_edges:
                     errors.append(f"Router node '{name}' has no conditional edges")
 

@@ -195,10 +195,9 @@ class TTLDict(Generic[KT, VT]):
         if isinstance(other, TTLDict):
             self._purge_expired()
             other._purge_expired()
-            return (
-                {k: e.value for k, e in self._data.items()}
-                == {k: e.value for k, e in other._data.items()}
-            )
+            return {k: e.value for k, e in self._data.items()} == {
+                k: e.value for k, e in other._data.items()
+            }
         return NotImplemented
 
     def __iter__(self) -> Iterator[KT]:
@@ -206,7 +205,9 @@ class TTLDict(Generic[KT, VT]):
         return iter(list(self._data.keys()))
 
     def __repr__(self) -> str:
-        return f"TTLDict(size={len(self._data)}, max_size={self._max_size}, ttl={self._ttl_seconds}s)"
+        return (
+            f"TTLDict(size={len(self._data)}, max_size={self._max_size}, ttl={self._ttl_seconds}s)"
+        )
 
     # ------------------------------------------------------------------
     # Interne Hilfsmethoden

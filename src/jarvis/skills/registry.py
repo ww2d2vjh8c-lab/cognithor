@@ -145,6 +145,7 @@ class SkillRegistry:
 
     def __init__(self) -> None:
         import threading
+
         self._lock = threading.Lock()
         self._skills: dict[str, Skill] = {}  # slug → Skill
         self._keyword_index: dict[str, list[str]] = {}  # keyword_lower → [slug, ...]
@@ -292,9 +293,7 @@ class SkillRegistry:
                     manifest_path = sub_dir / "manifest.json"
                     if manifest_path.exists():
                         try:
-                            manifest_data = _json.loads(
-                                manifest_path.read_text(encoding="utf-8")
-                            )
+                            manifest_data = _json.loads(manifest_path.read_text(encoding="utf-8"))
                             skill.manifest = CommunitySkillManifest(
                                 name=manifest_data.get("name", skill.name),
                                 version=manifest_data.get("version", "1.0.0"),
@@ -452,7 +451,9 @@ class SkillRegistry:
 
             # 2. Wort-Überlappung mit Name und Description
             name_words = set(re.findall(r"\w+", skill.name.lower()))
-            desc_words = set(re.findall(r"\w+", skill.description.lower())) if skill.description else set()
+            desc_words = (
+                set(re.findall(r"\w+", skill.description.lower())) if skill.description else set()
+            )
             all_skill_words = name_words | desc_words
 
             overlap = query_words & all_skill_words
@@ -575,9 +576,7 @@ class SkillRegistry:
         return {
             "total": self.count,
             "enabled": self.enabled_count,
-            "categories": {
-                cat: len(slugs) for cat, slugs in self._categories.items()
-            },
+            "categories": {cat: len(slugs) for cat, slugs in self._categories.items()},
             "top_used": sorted(
                 [s for s in self._skills.values() if s.total_uses > 0],
                 key=lambda s: s.total_uses,
@@ -620,9 +619,11 @@ class SkillRegistry:
             if best.skill.source == "community":
                 try:
                     from jarvis.security.sanitizer import InputSanitizer
+
                     _sanitizer = InputSanitizer(strict=True)
                     result = _sanitizer.sanitize_external(
-                        body, source=f"community_skill:{best.skill.slug}",
+                        body,
+                        source=f"community_skill:{best.skill.slug}",
                     )
                     body = result.sanitized_text
                 except Exception as exc:

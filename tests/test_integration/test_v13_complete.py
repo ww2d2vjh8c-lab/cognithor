@@ -33,11 +33,15 @@ class TestDimensionScore:
         assert s.risk_score == 16  # 4 × 4
 
     def test_negligible_rare(self) -> None:
-        s = DimensionScore(ImpactDimension.ENVIRONMENT, ImpactSeverity.NEGLIGIBLE, ImpactLikelihood.RARE)
+        s = DimensionScore(
+            ImpactDimension.ENVIRONMENT, ImpactSeverity.NEGLIGIBLE, ImpactLikelihood.RARE
+        )
         assert s.risk_score == 1
 
     def test_critical_certain(self) -> None:
-        s = DimensionScore(ImpactDimension.SAFETY, ImpactSeverity.CRITICAL, ImpactLikelihood.ALMOST_CERTAIN)
+        s = DimensionScore(
+            ImpactDimension.SAFETY, ImpactSeverity.CRITICAL, ImpactLikelihood.ALMOST_CERTAIN
+        )
         assert s.risk_score == 25
 
 
@@ -49,13 +53,19 @@ class TestImpactAssessment:
 
     def test_risk_level(self) -> None:
         assessor = ImpactAssessor()
-        scores = [DimensionScore(ImpactDimension.PRIVACY, ImpactSeverity.HIGH, ImpactLikelihood.LIKELY)]
+        scores = [
+            DimensionScore(ImpactDimension.PRIVACY, ImpactSeverity.HIGH, ImpactLikelihood.LIKELY)
+        ]
         a = assessor.create_assessment("Jarvis", "Test", "admin", scores)
         assert a.risk_level == "high"
 
     def test_low_risk(self) -> None:
         assessor = ImpactAssessor()
-        scores = [DimensionScore(ImpactDimension.ENVIRONMENT, ImpactSeverity.LOW, ImpactLikelihood.UNLIKELY)]
+        scores = [
+            DimensionScore(
+                ImpactDimension.ENVIRONMENT, ImpactSeverity.LOW, ImpactLikelihood.UNLIKELY
+            )
+        ]
         a = assessor.create_assessment("Tool", "Internal", "admin", scores)
         assert a.risk_level == "low"
 
@@ -152,8 +162,13 @@ class TestEthicsBoard:
         board = EthicsBoard()
         d = board.create_decision("Conditional?")
         board.cast_vote(d.decision_id, "v1", "A", VoteOption.APPROVE)
-        board.cast_vote(d.decision_id, "v2", "B", VoteOption.CONDITIONAL,
-                        conditions=["Menschliche Aufsicht einbauen"])
+        board.cast_vote(
+            d.decision_id,
+            "v2",
+            "B",
+            VoteOption.CONDITIONAL,
+            conditions=["Menschliche Aufsicht einbauen"],
+        )
         board.cast_vote(d.decision_id, "v3", "C", VoteOption.APPROVE)
         result = board.finalize(d.decision_id)
         assert result.final_decision == "approved_conditional"
@@ -446,7 +461,9 @@ class TestDecisionViewBuilder:
     def test_build(self) -> None:
         builder = DecisionViewBuilder()
         view = builder.build(
-            "Welche BU passt?", "WWK BU Premium", 0.85,
+            "Welche BU passt?",
+            "WWK BU Premium",
+            0.85,
             why=["Hohe Leistungsquote"],
             alternatives=["R&V Classic"],
         )
@@ -567,7 +584,9 @@ class TestUserPortal:
         assert portal.consents.can_advise("user-1")
         # 3. Beratung
         portal.decisions.build(
-            "Welche BU?", "WWK Premium", 0.85,
+            "Welche BU?",
+            "WWK Premium",
+            0.85,
             why=["Hohe Leistungsquote"],
         )
         portal.activities.log("user-1", "bu_beratung", data_accessed=["Alter", "Beruf"])

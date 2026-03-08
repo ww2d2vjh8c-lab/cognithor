@@ -64,9 +64,7 @@ def validate_voice_name(voice: str) -> str:
         raise ValueError("Voice name must not be empty")
 
     if len(voice) > _MAX_VOICE_NAME_LENGTH:
-        raise ValueError(
-            f"Voice name too long ({len(voice)} chars, max {_MAX_VOICE_NAME_LENGTH})"
-        )
+        raise ValueError(f"Voice name too long ({len(voice)} chars, max {_MAX_VOICE_NAME_LENGTH})")
 
     # Null byte injection check (can bypass string checks in C-level path APIs)
     if "\x00" in voice:
@@ -76,16 +74,12 @@ def validate_voice_name(voice: str) -> str:
     # Path separator check (explicit, before regex, for clear error message)
     if "/" in voice or "\\" in voice:
         log.warning("voice_name_path_separator_blocked", voice=voice)
-        raise ValueError(
-            f"Voice name contains path separator: {voice!r}"
-        )
+        raise ValueError(f"Voice name contains path separator: {voice!r}")
 
     # Parent directory traversal check
     if ".." in voice:
         log.warning("voice_name_traversal_blocked", voice=voice)
-        raise ValueError(
-            f"Voice name contains directory traversal sequence: {voice!r}"
-        )
+        raise ValueError(f"Voice name contains directory traversal sequence: {voice!r}")
 
     # Whitelist regex: only safe characters
     if not _VOICE_NAME_PATTERN.match(voice):
@@ -119,6 +113,7 @@ def validate_model_path_containment(
         ValueError: If the resolved path escapes the allowed directory.
     """
     import os.path as _osp
+
     resolved_str = _osp.normpath(_osp.realpath(str(model_path)))
     allowed_str = _osp.normpath(_osp.realpath(str(allowed_dir)))
     if not resolved_str.startswith(allowed_str + _osp.sep) and resolved_str != allowed_str:
@@ -127,9 +122,7 @@ def validate_model_path_containment(
             model_path=str(model_path),
             allowed_dir=str(allowed_dir),
         )
-        raise ValueError(
-            f"Model path escapes allowed directory"
-        )
+        raise ValueError(f"Model path escapes allowed directory")
     return Path(resolved_str)
 
 
@@ -298,10 +291,16 @@ class InputSanitizer:
         # 0. Unicode normalization — prevents bypass via zero-width chars,
         #    homoglyphs, and NFKD decomposition tricks
         import unicodedata
+
         sanitized = unicodedata.normalize("NFKC", text)
         # Strip zero-width characters that could hide injection payloads
-        sanitized = sanitized.replace("\u200b", "").replace("\u200c", "").replace(
-            "\u200d", "").replace("\ufeff", "").replace("\u00ad", "")
+        sanitized = (
+            sanitized.replace("\u200b", "")
+            .replace("\u200c", "")
+            .replace("\u200d", "")
+            .replace("\ufeff", "")
+            .replace("\u00ad", "")
+        )
 
         # 1. Injection-Patterns prüfen
         for ip in self._patterns:

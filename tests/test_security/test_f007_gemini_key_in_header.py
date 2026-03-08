@@ -25,18 +25,14 @@ class TestGeminiBackendKeyInHeader:
         # Alle Zeilen mit URL-Konstruktion pruefen
         for i, line in enumerate(source.splitlines(), 1):
             if "?key=" in line and "url" in line.lower():
-                pytest.fail(
-                    f"GeminiBackend Zeile {i}: API-Key in URL gefunden: {line.strip()}"
-                )
+                pytest.fail(f"GeminiBackend Zeile {i}: API-Key in URL gefunden: {line.strip()}")
 
     def test_header_set_in_client(self) -> None:
         """_ensure_client() muss x-goog-api-key Header setzen."""
         from jarvis.core.llm_backend import GeminiBackend
 
         source = inspect.getsource(GeminiBackend._ensure_client)
-        assert "x-goog-api-key" in source, (
-            "_ensure_client() muss x-goog-api-key Header setzen"
-        )
+        assert "x-goog-api-key" in source, "_ensure_client() muss x-goog-api-key Header setzen"
 
     @pytest.mark.asyncio
     async def test_client_has_header(self) -> None:
@@ -98,18 +94,14 @@ class TestGeminiEmbeddingProviderKeyInHeader:
         source = inspect.getsource(GeminiEmbeddingProvider)
         for i, line in enumerate(source.splitlines(), 1):
             if "?key=" in line and "url" in line.lower():
-                pytest.fail(
-                    f"GeminiEmbeddingProvider Zeile {i}: API-Key in URL: {line.strip()}"
-                )
+                pytest.fail(f"GeminiEmbeddingProvider Zeile {i}: API-Key in URL: {line.strip()}")
 
     def test_header_set_in_client(self) -> None:
         """_get_client() muss x-goog-api-key Header setzen."""
         from jarvis.memory.embeddings import GeminiEmbeddingProvider
 
         source = inspect.getsource(GeminiEmbeddingProvider._get_client)
-        assert "x-goog-api-key" in source, (
-            "_get_client() muss x-goog-api-key Header setzen"
-        )
+        assert "x-goog-api-key" in source, "_get_client() muss x-goog-api-key Header setzen"
 
     @pytest.mark.asyncio
     async def test_client_has_header(self) -> None:

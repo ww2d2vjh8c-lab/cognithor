@@ -44,6 +44,7 @@ log = get_logger(__name__)
 _HAS_PLAYWRIGHT = False
 try:
     from playwright.async_api import async_playwright, Browser, BrowserContext, Page
+
     _HAS_PLAYWRIGHT = True
 except ImportError:
     pass
@@ -142,9 +143,10 @@ class BrowserAgent:
                 await self._session_mgr.restore_to_context(self._context, session_id)
 
             # Console-Messages sammeln
-            self._context.on("console", lambda msg: self._console_messages.append(
-                f"[{msg.type}] {msg.text}"[:200]
-            ))
+            self._context.on(
+                "console",
+                lambda msg: self._console_messages.append(f"[{msg.type}] {msg.text}"[:200]),
+            )
 
             # Erste Seite
             page = await self._context.new_page()
@@ -174,8 +176,7 @@ class BrowserAgent:
                 log.debug("session_save_error", error=str(exc))
 
         await self._cleanup()
-        log.info("browser_agent_stopped",
-                 actions=self._action_count, errors=self._error_count)
+        log.info("browser_agent_stopped", actions=self._action_count, errors=self._error_count)
 
     async def _cleanup(self) -> None:
         self._running = False
@@ -195,15 +196,17 @@ class BrowserAgent:
 
     # ── Core Actions ─────────────────────────────────────────────
 
-    async def navigate(self, url: str, *, wait_until: str = "domcontentloaded",
-                       auto_dismiss_cookies: bool = True) -> PageState:
+    async def navigate(
+        self, url: str, *, wait_until: str = "domcontentloaded", auto_dismiss_cookies: bool = True
+    ) -> PageState:
         """Navigiert zu URL und analysiert die Seite."""
         self._ensure_running()
         start = time.monotonic()
 
         try:
             response = await self.page.goto(
-                url, wait_until=wait_until,
+                url,
+                wait_until=wait_until,
                 timeout=self._config.timeout_ms,
             )
             status = response.status if response else 0
@@ -238,15 +241,19 @@ class BrowserAgent:
         except Exception as exc:
             self._error_count += 1
             return ActionResult(
-                action_id="", success=False, error=str(exc),
+                action_id="",
+                success=False,
+                error=str(exc),
                 duration_ms=int((time.monotonic() - start) * 1000),
             )
 
         new_url = self.page.url
         self._action_count += 1
         return ActionResult(
-            action_id="", success=True,
-            page_changed=new_url != old_url, new_url=new_url,
+            action_id="",
+            success=True,
+            page_changed=new_url != old_url,
+            new_url=new_url,
             duration_ms=int((time.monotonic() - start) * 1000),
         )
 
@@ -261,12 +268,17 @@ class BrowserAgent:
             await self.page.fill(selector, value, timeout=self._config.timeout_ms)
         except Exception as exc:
             self._error_count += 1
-            return ActionResult(action_id="", success=False, error=str(exc),
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="",
+                success=False,
+                error=str(exc),
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
 
         self._action_count += 1
-        return ActionResult(action_id="", success=True,
-                            duration_ms=int((time.monotonic() - start) * 1000))
+        return ActionResult(
+            action_id="", success=True, duration_ms=int((time.monotonic() - start) * 1000)
+        )
 
     async def select(self, selector: str, value: str) -> ActionResult:
         """Wählt eine Option in einem Select-Element."""
@@ -277,12 +289,17 @@ class BrowserAgent:
             await self.page.select_option(selector, value, timeout=self._config.timeout_ms)
         except Exception as exc:
             self._error_count += 1
-            return ActionResult(action_id="", success=False, error=str(exc),
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="",
+                success=False,
+                error=str(exc),
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
 
         self._action_count += 1
-        return ActionResult(action_id="", success=True,
-                            duration_ms=int((time.monotonic() - start) * 1000))
+        return ActionResult(
+            action_id="", success=True, duration_ms=int((time.monotonic() - start) * 1000)
+        )
 
     async def hover(self, selector: str) -> ActionResult:
         """Fährt mit der Maus über ein Element."""
@@ -291,12 +308,17 @@ class BrowserAgent:
         try:
             await self.page.hover(selector, timeout=self._config.timeout_ms)
             self._action_count += 1
-            return ActionResult(action_id="", success=True,
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="", success=True, duration_ms=int((time.monotonic() - start) * 1000)
+            )
         except Exception as exc:
             self._error_count += 1
-            return ActionResult(action_id="", success=False, error=str(exc),
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="",
+                success=False,
+                error=str(exc),
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
 
     async def press_key(self, key: str) -> ActionResult:
         """Drückt eine Taste (Enter, Tab, Escape, etc.)."""
@@ -305,12 +327,17 @@ class BrowserAgent:
         try:
             await self.page.keyboard.press(key)
             self._action_count += 1
-            return ActionResult(action_id="", success=True,
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="", success=True, duration_ms=int((time.monotonic() - start) * 1000)
+            )
         except Exception as exc:
             self._error_count += 1
-            return ActionResult(action_id="", success=False, error=str(exc),
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="",
+                success=False,
+                error=str(exc),
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
 
     async def scroll(self, direction: str = "down", amount: int = 500) -> ActionResult:
         """Scrollt die Seite."""
@@ -324,21 +351,28 @@ class BrowserAgent:
         except Exception as exc:
             return ActionResult(action_id="", success=False, error=str(exc))
 
-    async def wait_for(self, selector: str, *, timeout: int = 0,
-                       state: str = "visible") -> ActionResult:
+    async def wait_for(
+        self, selector: str, *, timeout: int = 0, state: str = "visible"
+    ) -> ActionResult:
         """Wartet auf ein Element."""
         self._ensure_running()
         start = time.monotonic()
         try:
             await self.page.wait_for_selector(
-                selector, state=state,
+                selector,
+                state=state,
                 timeout=timeout or self._config.timeout_ms,
             )
-            return ActionResult(action_id="", success=True,
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="", success=True, duration_ms=int((time.monotonic() - start) * 1000)
+            )
         except Exception as exc:
-            return ActionResult(action_id="", success=False, error=str(exc),
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="",
+                success=False,
+                error=str(exc),
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
 
     async def execute_js(self, script: str) -> ActionResult:
         """Führt JavaScript auf der Seite aus."""
@@ -347,17 +381,24 @@ class BrowserAgent:
         try:
             result = await self.page.evaluate(script)
             self._action_count += 1
-            return ActionResult(action_id="", success=True, data=result,
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="",
+                success=True,
+                data=result,
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
         except Exception as exc:
             self._error_count += 1
-            return ActionResult(action_id="", success=False, error=str(exc),
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="",
+                success=False,
+                error=str(exc),
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
 
     # ── Screenshots ──────────────────────────────────────────────
 
-    async def screenshot(self, *, full_page: bool = False,
-                         path: str = "") -> ActionResult:
+    async def screenshot(self, *, full_page: bool = False, path: str = "") -> ActionResult:
         """Erstellt Screenshot (gibt Base64 zurück)."""
         self._ensure_running()
         start = time.monotonic()
@@ -369,11 +410,19 @@ class BrowserAgent:
             raw = await self.page.screenshot(**opts)
             b64 = base64.b64encode(raw).decode("ascii")
             self._action_count += 1
-            return ActionResult(action_id="", success=True, screenshot_b64=b64,
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="",
+                success=True,
+                screenshot_b64=b64,
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
         except Exception as exc:
-            return ActionResult(action_id="", success=False, error=str(exc),
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id="",
+                success=False,
+                error=str(exc),
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
 
     # ── Tab Management ───────────────────────────────────────────
 
@@ -381,8 +430,9 @@ class BrowserAgent:
         """Öffnet neuen Tab."""
         self._ensure_running()
         if len(self._pages) >= self._config.max_pages:
-            return ActionResult(action_id="", success=False,
-                                error=f"Max tabs ({self._config.max_pages}) reached")
+            return ActionResult(
+                action_id="", success=False, error=f"Max tabs ({self._config.max_pages}) reached"
+            )
 
         try:
             page = await self._context.new_page()
@@ -391,7 +441,9 @@ class BrowserAgent:
             if url:
                 await page.goto(url, timeout=self._config.timeout_ms)
             self._action_count += 1
-            return ActionResult(action_id="", success=True, data={"tab_index": self._active_page_idx})
+            return ActionResult(
+                action_id="", success=True, data={"tab_index": self._active_page_idx}
+            )
         except Exception as exc:
             return ActionResult(action_id="", success=False, error=str(exc))
 
@@ -436,10 +488,13 @@ class BrowserAgent:
         self._ensure_running()
         try:
             # Use parameterized evaluate to prevent CSS selector injection
-            return await self.page.evaluate(
-                "(sel) => document.querySelector(sel)?.innerText || ''",
-                selector,
-            ) or ""
+            return (
+                await self.page.evaluate(
+                    "(sel) => document.querySelector(sel)?.innerText || ''",
+                    selector,
+                )
+                or ""
+            )
         except Exception:
             return ""
 
@@ -460,14 +515,14 @@ class BrowserAgent:
         self._ensure_running()
         element = await self._analyzer.find_element(self.page, description)
         if element is None:
-            return ActionResult(action_id="", success=False,
-                                error=f"Element not found: {description}")
+            return ActionResult(
+                action_id="", success=False, error=f"Element not found: {description}"
+            )
         return await self.click(element.selector)
 
     # ── Form Automation ──────────────────────────────────────────
 
-    async def fill_form(self, data: dict[str, str], *,
-                        submit: bool = False) -> list[ActionResult]:
+    async def fill_form(self, data: dict[str, str], *, submit: bool = False) -> list[ActionResult]:
         """Füllt ein Formular mit den gegebenen Daten aus.
 
         Args:
@@ -527,7 +582,11 @@ class BrowserAgent:
                     workflow.status = WorkflowStatus.FAILED
                     if self._config.screenshot_on_error:
                         import tempfile
-                        error_path = Path(tempfile.gettempdir()) / f"workflow_{workflow.workflow_id}_error.png"
+
+                        error_path = (
+                            Path(tempfile.gettempdir())
+                            / f"workflow_{workflow.workflow_id}_error.png"
+                        )
                         await self.screenshot(path=str(error_path))
                     break
 
@@ -545,9 +604,12 @@ class BrowserAgent:
             match action.action_type:
                 case ActionType.NAVIGATE:
                     state = await self.navigate(params.get("url", ""))
-                    return ActionResult(action_id=action.action_id, success=not state.errors,
-                                        data=state.to_dict(),
-                                        duration_ms=int((time.monotonic() - start) * 1000))
+                    return ActionResult(
+                        action_id=action.action_id,
+                        success=not state.errors,
+                        data=state.to_dict(),
+                        duration_ms=int((time.monotonic() - start) * 1000),
+                    )
                 case ActionType.CLICK:
                     return await self.click(params.get("selector", ""))
                 case ActionType.FILL:
@@ -555,7 +617,9 @@ class BrowserAgent:
                 case ActionType.SELECT:
                     return await self.select(params.get("selector", ""), params.get("value", ""))
                 case ActionType.SCROLL:
-                    return await self.scroll(params.get("direction", "down"), params.get("amount", 500))
+                    return await self.scroll(
+                        params.get("direction", "down"), params.get("amount", 500)
+                    )
                 case ActionType.SCREENSHOT:
                     return await self.screenshot(full_page=params.get("full_page", False))
                 case ActionType.WAIT:
@@ -594,12 +658,19 @@ class BrowserAgent:
                     links = await self.extract_links()
                     return ActionResult(action_id=action.action_id, success=True, data=links)
                 case _:
-                    return ActionResult(action_id=action.action_id, success=False,
-                                        error=f"Unknown action: {action.action_type}")
+                    return ActionResult(
+                        action_id=action.action_id,
+                        success=False,
+                        error=f"Unknown action: {action.action_type}",
+                    )
         except Exception as exc:
             self._error_count += 1
-            return ActionResult(action_id=action.action_id, success=False, error=str(exc),
-                                duration_ms=int((time.monotonic() - start) * 1000))
+            return ActionResult(
+                action_id=action.action_id,
+                success=False,
+                error=str(exc),
+                duration_ms=int((time.monotonic() - start) * 1000),
+            )
 
     # ── Cookie Banner ────────────────────────────────────────────
 

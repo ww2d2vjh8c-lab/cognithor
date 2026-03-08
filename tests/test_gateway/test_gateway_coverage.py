@@ -62,10 +62,13 @@ def _make_initialized_gateway(config: JarvisConfig) -> Gateway:
     """Erstellt einen Gateway mit minimalen Mocks fuer handle_message."""
     gw = Gateway(config)
     gw._planner = MagicMock()
-    gw._planner.plan = AsyncMock(return_value=ActionPlan(
-        goal="", direct_response="Antwort",
-        confidence=0.9,
-    ))
+    gw._planner.plan = AsyncMock(
+        return_value=ActionPlan(
+            goal="",
+            direct_response="Antwort",
+            confidence=0.9,
+        )
+    )
     gw._gatekeeper = MagicMock()
     gw._gatekeeper.evaluate = MagicMock(return_value=[])
     gw._executor = MagicMock()
@@ -241,10 +244,13 @@ class TestHandleMessageEdgeCases:
     async def test_handle_message_no_actions_fallback(self, config: JarvisConfig) -> None:
         """If planner returns no actions and no direct_response, get fallback text."""
         gw = _make_initialized_gateway(config)
-        gw._planner.plan = AsyncMock(return_value=ActionPlan(
-            goal="test", direct_response="",
-            confidence=0.5,
-        ))
+        gw._planner.plan = AsyncMock(
+            return_value=ActionPlan(
+                goal="test",
+                direct_response="",
+                confidence=0.5,
+            )
+        )
 
         msg = IncomingMessage(text="test", channel="cli", user_id="user1")
         response = await gw.handle_message(msg)
@@ -308,9 +314,9 @@ class TestCodingClassification:
     async def test_classify_coding_llm_returns_json(self, config: JarvisConfig) -> None:
         gw = Gateway(config)
         mock_llm = AsyncMock()
-        mock_llm.chat = AsyncMock(return_value={
-            "message": {"content": '{"coding": true, "complexity": "complex"}'}
-        })
+        mock_llm.chat = AsyncMock(
+            return_value={"message": {"content": '{"coding": true, "complexity": "complex"}'}}
+        )
         gw._llm = mock_llm
         gw._model_router = MagicMock()
         gw._model_router.select_model = MagicMock(return_value="qwen3:8b")
@@ -336,9 +342,13 @@ class TestCodingClassification:
     async def test_classify_coding_with_think_tags(self, config: JarvisConfig) -> None:
         gw = Gateway(config)
         mock_llm = AsyncMock()
-        mock_llm.chat = AsyncMock(return_value={
-            "message": {"content": '<think>hmm</think>\n{"coding": false, "complexity": "simple"}'}
-        })
+        mock_llm.chat = AsyncMock(
+            return_value={
+                "message": {
+                    "content": '<think>hmm</think>\n{"coding": false, "complexity": "simple"}'
+                }
+            }
+        )
         gw._llm = mock_llm
         gw._model_router = MagicMock()
         gw._model_router.select_model = MagicMock(return_value="qwen3:8b")

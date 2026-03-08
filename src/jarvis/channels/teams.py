@@ -175,6 +175,7 @@ class TeamsChannel(Channel):
         ssl_ctx = None
         if self._ssl_certfile and self._ssl_keyfile:
             from jarvis.security.token_store import create_ssl_context
+
             ssl_ctx = create_ssl_context(self._ssl_certfile, self._ssl_keyfile)
 
         if not ssl_ctx and self._webhook_host not in ("127.0.0.1", "localhost", "::1"):
@@ -194,6 +195,7 @@ class TeamsChannel(Channel):
     async def _handle_health(self, request: Any) -> Any:
         """GET /api/health -- Healthcheck."""
         from aiohttp import web
+
         return web.json_response({"status": "ok", "channel": "teams"})
 
     async def _handle_messages(self, request: Any) -> Any:
@@ -214,7 +216,9 @@ class TeamsChannel(Channel):
                 await self._on_turn(turn_context)
 
             await self._adapter.process_activity(
-                activity, auth_header, _turn_handler,
+                activity,
+                auth_header,
+                _turn_handler,
             )
             return web.Response(status=200)
 
@@ -287,10 +291,14 @@ class TeamsChannel(Channel):
         if session_for_conv in self._pending_approvals:
             normalized = text.lower()
             if normalized in ("ja", "yes", "ok", "genehmigen", "approve"):
-                await self._resolve_approval(session_for_conv, approved=True, turn_context=turn_context)
+                await self._resolve_approval(
+                    session_for_conv, approved=True, turn_context=turn_context
+                )
                 return
             elif normalized in ("nein", "no", "ablehnen", "reject"):
-                await self._resolve_approval(session_for_conv, approved=False, turn_context=turn_context)
+                await self._resolve_approval(
+                    session_for_conv, approved=False, turn_context=turn_context
+                )
                 return
 
         # Session-Mapping
@@ -312,9 +320,7 @@ class TeamsChannel(Channel):
         if self._handler:
             # Typing-Indicator senden
             try:
-                await turn_context.send_activity(
-                    _create_typing_activity()
-                )
+                await turn_context.send_activity(_create_typing_activity())
             except Exception:
                 pass
 
@@ -324,7 +330,9 @@ class TeamsChannel(Channel):
                     self._sessions[conversation_id] = response.session_id
                     if self._session_store:
                         self._session_store.save_channel_mapping(
-                            "teams_sessions", conversation_id, response.session_id,
+                            "teams_sessions",
+                            conversation_id,
+                            response.session_id,
                         )
 
                 # Antwort senden (mit Splitting)
@@ -336,6 +344,7 @@ class TeamsChannel(Channel):
                 logger.error("Teams: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
@@ -407,7 +416,9 @@ class TeamsChannel(Channel):
                     await turn_context.send_activity(chunk)
 
             await self._adapter.continue_conversation(
-                ref, _send_callback, self._app_id,
+                ref,
+                _send_callback,
+                self._app_id,
             )
         except Exception as exc:
             logger.error("Teams: Proaktives Senden fehlgeschlagen: %s", exc)
@@ -439,11 +450,13 @@ class TeamsChannel(Channel):
         card = _build_approval_card(action, reason, approval_id)
 
         try:
+
             async def _send_card(turn_context: Any) -> None:
                 from botbuilder.schema import (  # type: ignore[import-untyped]
                     Activity,
                     Attachment,
                 )
+
                 card_activity = Activity(
                     type="message",
                     attachments=[
@@ -456,7 +469,9 @@ class TeamsChannel(Channel):
                 await turn_context.send_activity(card_activity)
 
             await self._adapter.continue_conversation(
-                ref, _send_card, self._app_id,
+                ref,
+                _send_card,
+                self._app_id,
             )
         except Exception as exc:
             logger.error("Teams: Approval-Card senden fehlgeschlagen: %s", exc)
@@ -474,7 +489,11 @@ class TeamsChannel(Channel):
                 self._pending_approvals.pop(approval_id, None)
 
     async def _resolve_approval(
-        self, session_id: str, *, approved: bool, turn_context: Any = None,
+        self,
+        session_id: str,
+        *,
+        approved: bool,
+        turn_context: Any = None,
     ) -> None:
         """Loest ein Approval-Future auf."""
         async with self._approval_lock:

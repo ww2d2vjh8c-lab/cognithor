@@ -13,20 +13,42 @@ from pathlib import Path
 from typing import Any
 
 from jarvis.graph.types import (
-    START, END, GRAPH_VERSION,
-    NodeType, EdgeType, ExecutionStatus, NodeStatus,
-    GraphState, Node, Edge, NodeResult,
-    Checkpoint, ExecutionRecord, GraphDefinition,
+    START,
+    END,
+    GRAPH_VERSION,
+    NodeType,
+    EdgeType,
+    ExecutionStatus,
+    NodeStatus,
+    GraphState,
+    Node,
+    Edge,
+    NodeResult,
+    Checkpoint,
+    ExecutionRecord,
+    GraphDefinition,
 )
 from jarvis.graph.state import StateManager
 from jarvis.graph.engine import GraphEngine
 from jarvis.graph.builder import (
-    GraphBuilder, linear_graph, branch_graph, loop_graph,
+    GraphBuilder,
+    linear_graph,
+    branch_graph,
+    loop_graph,
 )
 from jarvis.graph.nodes import (
-    llm_node, tool_node, transform_node, condition_node,
-    threshold_router, key_router, delay_node, log_node,
-    accumulate_node, gate_node, counter_node, set_value_node,
+    llm_node,
+    tool_node,
+    transform_node,
+    condition_node,
+    threshold_router,
+    key_router,
+    delay_node,
+    log_node,
+    accumulate_node,
+    gate_node,
+    counter_node,
+    set_value_node,
     merge_node,
 )
 
@@ -35,13 +57,16 @@ from jarvis.graph.nodes import (
 # Helper Handlers
 # ============================================================================
 
+
 async def increment_handler(state: GraphState) -> GraphState:
     state["counter"] = state.get("counter", 0) + 1
     return state
 
+
 async def double_handler(state: GraphState) -> GraphState:
     state["value"] = state.get("value", 0) * 2
     return state
+
 
 async def append_handler(state: GraphState) -> GraphState:
     msgs = state.get("messages", [])
@@ -49,12 +74,15 @@ async def append_handler(state: GraphState) -> GraphState:
     state["messages"] = msgs
     return state
 
+
 async def failing_handler(state: GraphState) -> GraphState:
     raise ValueError("Intentional failure")
+
 
 async def simple_router(state: GraphState) -> str:
     value = state.get("route", "default")
     return str(value)
+
 
 async def loop_router(state: GraphState) -> str:
     if state.get("counter", 0) >= state.get("max_count", 3):
@@ -173,8 +201,9 @@ class TestEdge:
         assert d["source"] == "a"
 
     def test_conditional(self):
-        e = Edge(source="router", target="branch_a",
-                 edge_type=EdgeType.CONDITIONAL, condition="yes")
+        e = Edge(
+            source="router", target="branch_a", edge_type=EdgeType.CONDITIONAL, condition="yes"
+        )
         assert e.condition == "yes"
         d = e.to_dict()
         assert d["condition"] == "yes"
@@ -193,8 +222,7 @@ class TestNodeResult:
         assert d["error"] == "oops"
 
     def test_router_decision(self):
-        r = NodeResult(node_name="router", status=NodeStatus.COMPLETED,
-                       router_decision="branch_a")
+        r = NodeResult(node_name="router", status=NodeStatus.COMPLETED, router_decision="branch_a")
         d = r.to_dict()
         assert d["router_decision"] == "branch_a"
 
@@ -206,8 +234,9 @@ class TestNodeResult:
 
 class TestCheckpoint:
     def test_basic(self):
-        cp = Checkpoint(execution_id="exec-1", graph_name="test",
-                        current_node="step2", state={"x": 1})
+        cp = Checkpoint(
+            execution_id="exec-1", graph_name="test", current_node="step2", state={"x": 1}
+        )
         assert cp.checkpoint_id
         assert cp.created_at
 
@@ -219,9 +248,13 @@ class TestCheckpoint:
         assert restored.state["a"] == 1
 
     def test_roundtrip(self):
-        cp = Checkpoint(execution_id="e2", graph_name="g2",
-                        current_node="n1", state={"x": [1, 2, 3]},
-                        history=[{"node": "n0", "status": "completed"}])
+        cp = Checkpoint(
+            execution_id="e2",
+            graph_name="g2",
+            current_node="n1",
+            state={"x": [1, 2, 3]},
+            history=[{"node": "n0", "status": "completed"}],
+        )
         d = cp.to_dict()
         restored = Checkpoint.from_dict(d)
         assert restored.state["x"] == [1, 2, 3]
@@ -236,12 +269,15 @@ class TestExecutionRecord:
         assert r.success_rate == 0.0
 
     def test_success_rate(self):
-        r = ExecutionRecord(graph_name="test", node_results=[
-            NodeResult(node_name="a", status=NodeStatus.COMPLETED),
-            NodeResult(node_name="b", status=NodeStatus.COMPLETED),
-            NodeResult(node_name="c", status=NodeStatus.FAILED),
-        ])
-        assert r.success_rate == pytest.approx(2/3)
+        r = ExecutionRecord(
+            graph_name="test",
+            node_results=[
+                NodeResult(node_name="a", status=NodeStatus.COMPLETED),
+                NodeResult(node_name="b", status=NodeStatus.COMPLETED),
+                NodeResult(node_name="c", status=NodeStatus.FAILED),
+            ],
+        )
+        assert r.success_rate == pytest.approx(2 / 3)
 
     def test_to_dict(self):
         r = ExecutionRecord(graph_name="test", status=ExecutionStatus.COMPLETED)
@@ -484,10 +520,7 @@ class TestGraphBuilder:
 
     def test_auto_entry(self):
         graph = (
-            GraphBuilder("auto")
-            .add_node("first", increment_handler)
-            .add_edge("first", END)
-            .build()
+            GraphBuilder("auto").add_node("first", increment_handler).add_edge("first", END).build()
         )
         assert graph.entry_point == "first"
 
@@ -578,11 +611,14 @@ class TestGraphBuilder:
 
 class TestTemplateBuilders:
     def test_linear_graph(self):
-        graph = linear_graph("pipeline", [
-            ("fetch", increment_handler),
-            ("process", double_handler),
-            ("store", append_handler),
-        ])
+        graph = linear_graph(
+            "pipeline",
+            [
+                ("fetch", increment_handler),
+                ("process", double_handler),
+                ("store", append_handler),
+            ],
+        )
         assert len(graph.nodes) == 3
         assert graph.entry_point == "fetch"
 
@@ -632,10 +668,13 @@ class TestTemplateBuilders:
 class TestGraphEngine:
     @pytest.mark.asyncio
     async def test_simple_linear(self):
-        graph = linear_graph("simple", [
-            ("a", increment_handler),
-            ("b", increment_handler),
-        ])
+        graph = linear_graph(
+            "simple",
+            [
+                ("a", increment_handler),
+                ("b", increment_handler),
+            ],
+        )
         engine = GraphEngine()
         result = await engine.run(graph, GraphState(counter=0))
         assert result.status == ExecutionStatus.COMPLETED
@@ -680,12 +719,16 @@ class TestGraphEngine:
     @pytest.mark.asyncio
     async def test_loop_max_iterations(self):
         """Loop der nie terminiert → max_iterations."""
+
         async def always_continue(state: GraphState) -> str:
             return "continue"
 
         graph = loop_graph(
-            "infinite", body_name="body", body_handler=increment_handler,
-            condition_name="check", condition_handler=always_continue,
+            "infinite",
+            body_name="body",
+            body_handler=increment_handler,
+            condition_name="check",
+            condition_handler=always_continue,
         )
         engine = GraphEngine(max_iterations=5)
         result = await engine.run(graph, GraphState(counter=0))
@@ -694,10 +737,13 @@ class TestGraphEngine:
 
     @pytest.mark.asyncio
     async def test_node_failure(self):
-        graph = linear_graph("failing", [
-            ("ok_step", increment_handler),
-            ("bad_step", failing_handler),
-        ])
+        graph = linear_graph(
+            "failing",
+            [
+                ("ok_step", increment_handler),
+                ("bad_step", failing_handler),
+            ],
+        )
         engine = GraphEngine()
         result = await engine.run(graph, GraphState(counter=0))
         assert result.status == ExecutionStatus.FAILED
@@ -778,7 +824,8 @@ class TestGraphEngine:
 
         # Phase 2: Resume
         result2 = await engine.resume(
-            graph, checkpoint_id=cp_id,
+            graph,
+            checkpoint_id=cp_id,
             resume_input={"human_approved": True},
         )
         assert result2.status == ExecutionStatus.COMPLETED
@@ -821,10 +868,7 @@ class TestGraphEngine:
             return {"result": "from_dict"}
 
         graph = (
-            GraphBuilder("dict_return")
-            .add_node("step", dict_handler)
-            .add_edge("step", END)
-            .build()
+            GraphBuilder("dict_return").add_node("step", dict_handler).add_edge("step", END).build()
         )
         engine = GraphEngine()
         result = await engine.run(graph, GraphState())
@@ -842,8 +886,10 @@ class TestGraphEngine:
     async def test_max_nodes_limit(self):
         graph = loop_graph(
             "many_nodes",
-            body_name="body", body_handler=increment_handler,
-            condition_name="check", condition_handler=loop_router,
+            body_name="body",
+            body_handler=increment_handler,
+            condition_name="check",
+            condition_handler=loop_router,
         )
         engine = GraphEngine(max_nodes=5)
         result = await engine.run(graph, GraphState(counter=0, max_count=100))
@@ -864,10 +910,13 @@ class TestGraphEngine:
 
     @pytest.mark.asyncio
     async def test_stream_execution(self):
-        graph = linear_graph("stream_test", [
-            ("a", increment_handler),
-            ("b", increment_handler),
-        ])
+        graph = linear_graph(
+            "stream_test",
+            [
+                ("a", increment_handler),
+                ("b", increment_handler),
+            ],
+        )
         engine = GraphEngine()
         results = []
         async for node_result in engine.run_stream(graph, GraphState(counter=0)):
@@ -877,10 +926,13 @@ class TestGraphEngine:
 
     @pytest.mark.asyncio
     async def test_stream_with_failure(self):
-        graph = linear_graph("stream_fail", [
-            ("ok", increment_handler),
-            ("bad", failing_handler),
-        ])
+        graph = linear_graph(
+            "stream_fail",
+            [
+                ("ok", increment_handler),
+                ("bad", failing_handler),
+            ],
+        )
         engine = GraphEngine()
         results = []
         async for node_result in engine.run_stream(graph, GraphState(counter=0)):
@@ -1036,6 +1088,7 @@ class TestGraphIntegration:
     @pytest.mark.asyncio
     async def test_full_pipeline(self):
         """Realistischer Pipeline: Fetch → Process → Validate → Store."""
+
         async def fetch(state: GraphState) -> GraphState:
             state["data"] = {"items": [1, 2, 3]}
             return state
@@ -1067,10 +1120,13 @@ class TestGraphIntegration:
             .add_node("handle_error", handle_error)
             .add_edge("fetch", "process")
             .add_edge("process", "validate")
-            .add_conditional_edges("validate", {
-                "valid": "store",
-                "invalid": "handle_error",
-            })
+            .add_conditional_edges(
+                "validate",
+                {
+                    "valid": "store",
+                    "invalid": "handle_error",
+                },
+            )
             .add_edge("store", END)
             .add_edge("handle_error", END)
             .set_entry("fetch")
@@ -1086,6 +1142,7 @@ class TestGraphIntegration:
     @pytest.mark.asyncio
     async def test_customer_support_flow(self):
         """Simulate Customer-Support mit HITL."""
+
         async def classify(state: GraphState) -> str:
             text = state.get("message", "")
             if "refund" in text.lower():
@@ -1105,10 +1162,13 @@ class TestGraphIntegration:
             .add_router("classify", classify)
             .add_node("auto_reply", auto_reply)
             .add_hitl("human_review", refund_review)
-            .add_conditional_edges("classify", {
-                "general": "auto_reply",
-                "refund": "human_review",
-            })
+            .add_conditional_edges(
+                "classify",
+                {
+                    "general": "auto_reply",
+                    "refund": "human_review",
+                },
+            )
             .add_edge("auto_reply", END)
             .add_edge("human_review", END)
             .set_entry("classify")
@@ -1146,8 +1206,10 @@ class TestGraphIntegration:
 
         graph = loop_graph(
             "retry_pattern",
-            body_name="attempt", body_handler=attempt,
-            condition_name="check", condition_handler=check_success,
+            body_name="attempt",
+            body_handler=attempt,
+            condition_name="check",
+            condition_handler=check_success,
         )
         engine = GraphEngine()
         result = await engine.run(graph, GraphState())

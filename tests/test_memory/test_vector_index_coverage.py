@@ -142,6 +142,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=128, m=16, ef_construction=100, ef_search=32)
             assert idx.size == 0
 
@@ -149,6 +150,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             idx.add("a", [1.0, 0.0, 0.0])
             assert idx.size == 1
@@ -157,6 +159,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             with pytest.raises(ValueError, match="Dimension mismatch"):
                 idx.add("a", [1.0, 0.0])
@@ -165,6 +168,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             idx.add("a", [1.0, 0.0, 0.0])
             idx.add("a", [0.0, 1.0, 0.0])  # replace
@@ -175,6 +179,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             idx.add("a", [1.0, 0.0, 0.0])
             assert idx.remove("a") is True
@@ -185,6 +190,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             results = idx.search([1.0, 0.0, 0.0])
             assert results == []
@@ -206,6 +212,7 @@ class TestFAISSIndex:
 
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             # Manually set up internal state
             idx._key_to_pos = {"a": 0, "b": 1}
@@ -238,6 +245,7 @@ class TestFAISSIndex:
 
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             idx._key_to_pos = {"a": 0, "c": 2}
             idx._pos_to_key = {0: "a", 2: "c"}
@@ -260,6 +268,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             idx.rebuild()
             assert idx.size == 0
@@ -268,6 +277,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             idx._vectors = {
                 "a": np.array([1.0, 0.0, 0.0], dtype=np.float32),
@@ -286,6 +296,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             # Simulate many keys and tombstones
             for i in range(150):
@@ -307,6 +318,7 @@ class TestFAISSIndex:
         mock_faiss = self._make_mock_faiss()
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = FAISSIndex(dimension=3)
             # Simulate many keys and tombstones (>100 keys needed)
             for i in range(150):
@@ -339,6 +351,7 @@ class TestCreateVectorIndex:
 
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex
+
             idx = create_vector_index(backend="auto", dimension=128)
             assert isinstance(idx, FAISSIndex)
 
@@ -374,6 +387,7 @@ class TestCreateVectorIndex:
 class TestVectorIndexProtocol:
     def test_brute_force_is_vector_index(self) -> None:
         from jarvis.memory.vector_index import VectorIndex
+
         idx = BruteForceIndex()
         assert isinstance(idx, VectorIndex)
 
@@ -386,5 +400,6 @@ class TestVectorIndexProtocol:
 
         with patch.dict("sys.modules", {"faiss": mock_faiss}):
             from jarvis.memory.vector_index import FAISSIndex, VectorIndex
+
             idx = FAISSIndex(dimension=3)
             assert isinstance(idx, VectorIndex)

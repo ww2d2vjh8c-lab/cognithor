@@ -65,11 +65,11 @@ class SourceType(Enum):
 class TrustLevel(Enum):
     """Vertrauensstufe einer Antwort."""
 
-    VERY_HIGH = "very_high"    # 90-100%: Verifiziert, multi-source
-    HIGH = "high"              # 70-89%: Zuverlässige Quellen
-    MODERATE = "moderate"      # 50-69%: Einzelquelle oder ungeprüft
-    LOW = "low"                # 30-49%: Nur Modell-Wissen
-    VERY_LOW = "very_low"      # 0-29%: Spekulativ
+    VERY_HIGH = "very_high"  # 90-100%: Verifiziert, multi-source
+    HIGH = "high"  # 70-89%: Zuverlässige Quellen
+    MODERATE = "moderate"  # 50-69%: Einzelquelle oder ungeprüft
+    LOW = "low"  # 30-49%: Nur Modell-Wissen
+    VERY_LOW = "very_low"  # 0-29%: Spekulativ
 
 
 # ============================================================================
@@ -162,10 +162,7 @@ class DecisionTrail:
 
     @property
     def tools_used(self) -> list[str]:
-        return [
-            s.description for s in self.steps
-            if s.step_type == StepType.TOOL_CALLED
-        ]
+        return [s.description for s in self.steps if s.step_type == StepType.TOOL_CALLED]
 
     @property
     def agents_involved(self) -> list[str]:
@@ -289,10 +286,7 @@ class SourceAttribution:
             "claim_count": self.claim_count,
             "total_sources": self.total_sources,
             "diversity": self.source_diversity(),
-            "claims": {
-                k: [s.to_dict() for s in v]
-                for k, v in self._sources.items()
-            },
+            "claims": {k: [s.to_dict() for s in v] for k, v in self._sources.items()},
         }
 
 
@@ -346,8 +340,7 @@ class TrustScoreCalculator:
         # 1. Quellen-Score (0-0.4)
         if sources:
             source_scores = [
-                self._weights.get(s.source_type, 0.5) * s.relevance_score
-                for s in sources
+                self._weights.get(s.source_type, 0.5) * s.relevance_score for s in sources
             ]
             avg_source = sum(source_scores) / len(source_scores) if source_scores else 0
             diversity_bonus = min(len(set(s.source_type for s in sources)) * 0.05, 0.15)
@@ -371,15 +364,15 @@ class TrustScoreCalculator:
         # 5. Trail-Qualität (0-0.1)
         if trail:
             has_tools = bool(trail.tools_used)
-            has_memory = any(
-                s.step_type == StepType.MEMORY_RETRIEVED for s in trail.steps
-            )
+            has_memory = any(s.step_type == StepType.MEMORY_RETRIEVED for s in trail.steps)
             no_errors = not trail.had_errors
-            trail_score = sum([
-                0.03 if has_tools else 0,
-                0.03 if has_memory else 0,
-                0.04 if no_errors else 0,
-            ])
+            trail_score = sum(
+                [
+                    0.03 if has_tools else 0,
+                    0.03 if has_memory else 0,
+                    0.04 if no_errors else 0,
+                ]
+            )
             components["trail_quality"] = trail_score
         else:
             components["trail_quality"] = 0.0
@@ -431,9 +424,7 @@ class ExplainabilityEngine:
         agent_id: str = "",
     ) -> DecisionTrail:
         """Startet einen neuen Decision-Trail."""
-        trail_id = hashlib.sha256(
-            f"{request_id}-{time.time()}".encode()
-        ).hexdigest()[:16]
+        trail_id = hashlib.sha256(f"{request_id}-{time.time()}".encode()).hexdigest()[:16]
 
         trail = DecisionTrail(
             trail_id=trail_id,
@@ -490,19 +481,18 @@ class ExplainabilityEngine:
 
     def low_trust_trails(self, threshold: float = 0.5) -> list[DecisionTrail]:
         return [
-            t for t in self._trails.values()
-            if t.final_confidence < threshold and t.completed_at
+            t for t in self._trails.values() if t.final_confidence < threshold and t.completed_at
         ]
 
     def stats(self) -> dict[str, Any]:
         completed = [t for t in self._trails.values() if t.completed_at]
         avg_confidence = (
             round(sum(t.final_confidence for t in completed) / len(completed), 3)
-            if completed else 0.0
+            if completed
+            else 0.0
         )
         avg_steps = (
-            round(sum(t.step_count for t in completed) / len(completed), 1)
-            if completed else 0.0
+            round(sum(t.step_count for t in completed) / len(completed), 1) if completed else 0.0
         )
 
         return {

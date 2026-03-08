@@ -538,7 +538,9 @@ class TestMultiProviderAutoAdaptation:
         assert config.models.planner.name == "kimi-k2.5"
 
     def test_openrouter_model_defaults(self, tmp_path: Path) -> None:
-        config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="openrouter", openrouter_api_key="sk-or-test")
+        config = JarvisConfig(
+            jarvis_home=tmp_path, llm_backend_type="openrouter", openrouter_api_key="sk-or-test"
+        )
         assert config.models.planner.name == "anthropic/claude-opus-4.6"
         assert config.models.executor.name == "google/gemini-2.5-flash"
         assert config.vision_model == "anthropic/claude-sonnet-4.6"
@@ -550,22 +552,30 @@ class TestMultiProviderAutoAdaptation:
         assert config.vision_model == "grok-4-1-fast-reasoning"
 
     def test_cerebras_model_defaults(self, tmp_path: Path) -> None:
-        config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="cerebras", cerebras_api_key="csk-test")
+        config = JarvisConfig(
+            jarvis_home=tmp_path, llm_backend_type="cerebras", cerebras_api_key="csk-test"
+        )
         assert config.models.planner.name == "gpt-oss-120b"
         assert config.models.executor.name == "llama3.1-8b"
 
     def test_github_model_defaults(self, tmp_path: Path) -> None:
-        config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="github", github_api_key="ghp_test")
+        config = JarvisConfig(
+            jarvis_home=tmp_path, llm_backend_type="github", github_api_key="ghp_test"
+        )
         assert config.models.planner.name == "gpt-4.1"
         assert config.models.embedding.name == "text-embedding-3-large"
 
     def test_bedrock_model_defaults(self, tmp_path: Path) -> None:
-        config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="bedrock", bedrock_api_key="test-bedrock")
+        config = JarvisConfig(
+            jarvis_home=tmp_path, llm_backend_type="bedrock", bedrock_api_key="test-bedrock"
+        )
         assert config.models.planner.name == "us.anthropic.claude-opus-4-6-v1:0"
         assert config.models.embedding.name == "amazon.titan-embed-text-v2:0"
 
     def test_moonshot_model_defaults(self, tmp_path: Path) -> None:
-        config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="moonshot", moonshot_api_key="test-moon")
+        config = JarvisConfig(
+            jarvis_home=tmp_path, llm_backend_type="moonshot", moonshot_api_key="test-moon"
+        )
         assert config.models.planner.name == "kimi-k2.5"
         assert config.models.executor.name == "kimi-k2-turbo-preview"
 
@@ -580,6 +590,7 @@ class TestMultiProviderAutoAdaptation:
         """LM Studio ist lokal → operation_mode bleibt OFFLINE."""
         config = JarvisConfig(jarvis_home=tmp_path, llm_backend_type="lmstudio")
         from jarvis.models import OperationMode
+
         assert config.resolved_operation_mode == OperationMode.OFFLINE
 
 
@@ -604,6 +615,7 @@ class TestExecutorConfig:
 
     def test_max_parallel_tools_bounds(self, tmp_path: Path) -> None:
         import pydantic
+
         with __import__("pytest").raises(pydantic.ValidationError):
             JarvisConfig(jarvis_home=tmp_path, executor={"max_parallel_tools": 0})
         with __import__("pytest").raises(pydantic.ValidationError):
@@ -648,10 +660,12 @@ class TestEditableSections:
 
     def test_executor_is_editable(self) -> None:
         from jarvis.config_manager import _EDITABLE_SECTIONS
+
         assert "executor" in _EDITABLE_SECTIONS
 
     def test_web_is_editable(self) -> None:
         from jarvis.config_manager import _EDITABLE_SECTIONS
+
         assert "web" in _EDITABLE_SECTIONS
 
 

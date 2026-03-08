@@ -154,9 +154,11 @@ class TestOpenAIBackend:
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "choices": [{
-                "message": {"role": "assistant", "content": "Hello!", "tool_calls": None},
-            }],
+            "choices": [
+                {
+                    "message": {"role": "assistant", "content": "Hello!", "tool_calls": None},
+                }
+            ],
             "model": "gpt-4",
             "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         }
@@ -178,15 +180,17 @@ class TestOpenAIBackend:
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "choices": [{
-                "message": {
-                    "role": "assistant",
-                    "content": None,
-                    "tool_calls": [
-                        {"function": {"name": "web_search", "arguments": '{"q":"test"}'}},
-                    ],
-                },
-            }],
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {"function": {"name": "web_search", "arguments": '{"q":"test"}'}},
+                        ],
+                    },
+                }
+            ],
             "model": "gpt-4",
             "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         }
@@ -345,7 +349,13 @@ class TestAnthropicBackend:
 
     def test_convert_tools_to_anthropic(self) -> None:
         tools = [
-            {"function": {"name": "search", "description": "Search the web", "parameters": {"type": "object"}}},
+            {
+                "function": {
+                    "name": "search",
+                    "description": "Search the web",
+                    "parameters": {"type": "object"},
+                }
+            },
             {"name": "read", "description": "Read a file", "inputSchema": {"type": "object"}},
         ]
         converted = AnthropicBackend._convert_tools_to_anthropic(tools)
@@ -381,7 +391,13 @@ class TestGeminiBackend:
 
     def test_convert_tools_to_gemini(self) -> None:
         tools = [
-            {"function": {"name": "search", "description": "Search", "parameters": {"type": "object"}}},
+            {
+                "function": {
+                    "name": "search",
+                    "description": "Search",
+                    "parameters": {"type": "object"},
+                }
+            },
             {"name": "read", "description": "Read file", "inputSchema": {"type": "object"}},
         ]
         declarations = GeminiBackend._convert_tools_to_gemini(tools)
@@ -628,12 +644,14 @@ class TestGeminiBackendExtended:
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "candidates": [{
-                "content": {
-                    "parts": [{"text": "Hello from Gemini!"}],
-                    "role": "model",
-                },
-            }],
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [{"text": "Hello from Gemini!"}],
+                        "role": "model",
+                    },
+                }
+            ],
             "modelVersion": "gemini-pro",
             "usageMetadata": {
                 "promptTokenCount": 10,
@@ -665,17 +683,21 @@ class TestGeminiBackendExtended:
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "candidates": [{
-                "content": {
-                    "parts": [{
-                        "functionCall": {
-                            "name": "web_search",
-                            "args": {"query": "current weather"},
-                        },
-                    }],
-                    "role": "model",
-                },
-            }],
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "functionCall": {
+                                    "name": "web_search",
+                                    "args": {"query": "current weather"},
+                                },
+                            }
+                        ],
+                        "role": "model",
+                    },
+                }
+            ],
             "usageMetadata": {
                 "promptTokenCount": 8,
                 "candidatesTokenCount": 4,
@@ -688,7 +710,15 @@ class TestGeminiBackendExtended:
             result = await backend.chat(
                 model="gemini-pro",
                 messages=[{"role": "user", "content": "Weather?"}],
-                tools=[{"function": {"name": "web_search", "description": "Search", "parameters": {"type": "object"}}}],
+                tools=[
+                    {
+                        "function": {
+                            "name": "web_search",
+                            "description": "Search",
+                            "parameters": {"type": "object"},
+                        }
+                    }
+                ],
             )
         assert isinstance(result, ChatResponse)
         assert result.tool_calls is not None
@@ -881,7 +911,15 @@ class TestAnthropicBackendExtended:
             result = await backend.chat(
                 model="claude-sonnet-4-20250514",
                 messages=[{"role": "user", "content": "What is the weather?"}],
-                tools=[{"function": {"name": "web_search", "description": "Search", "parameters": {"type": "object"}}}],
+                tools=[
+                    {
+                        "function": {
+                            "name": "web_search",
+                            "description": "Search",
+                            "parameters": {"type": "object"},
+                        }
+                    }
+                ],
             )
         assert isinstance(result, ChatResponse)
         assert "search that" in result.content

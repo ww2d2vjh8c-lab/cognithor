@@ -421,7 +421,8 @@ class MemoryIndex:
         return {r["content_hash"]: _deserialize_vector(r["vector"]) for r in rows}
 
     def get_embeddings_by_hashes(
-        self, content_hashes: set[str],
+        self,
+        content_hashes: set[str],
     ) -> dict[str, list[float]]:
         """Lädt nur Embeddings für die angegebenen Hashes (statt alle).
 
@@ -679,8 +680,7 @@ class MemoryIndex:
 
         where_clause = " OR ".join(conditions)
         query = (
-            f"SELECT id, entities_json FROM chunks "
-            f"WHERE entities_json != '[]' AND ({where_clause})"
+            f"SELECT id, entities_json FROM chunks WHERE entities_json != '[]' AND ({where_clause})"
         )
         rows = self.conn.execute(query, params).fetchall()
 

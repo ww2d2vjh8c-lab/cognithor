@@ -252,9 +252,7 @@ class ConfigManager:
         if isinstance(agent, dict):
             return agent
         return {
-            f: getattr(agent, f, None)
-            for f in AgentProfileDTO.model_fields
-            if hasattr(agent, f)
+            f: getattr(agent, f, None) for f in AgentProfileDTO.model_fields if hasattr(agent, f)
         }
 
     # ------------------------------------------------------------------
@@ -271,9 +269,7 @@ class ConfigManager:
             heartbeat_interval=self.get_heartbeat().get("interval_minutes", 30),
             agent_count=len(self._agents),
             binding_count=len(self._bindings),
-            sandbox_enabled=getattr(
-                getattr(self._config, "sandbox", None), "enabled", True
-            ),
+            sandbox_enabled=getattr(getattr(self._config, "sandbox", None), "enabled", True),
             channels_active=self._get_active_channels(),
         )
 
@@ -282,8 +278,13 @@ class ConfigManager:
         channels = []
         ch_config = getattr(self._config, "channels", None)
         if ch_config:
-            for attr in ["cli_enabled", "telegram_enabled", "webui_enabled",
-                         "slack_enabled", "discord_enabled"]:
+            for attr in [
+                "cli_enabled",
+                "telegram_enabled",
+                "webui_enabled",
+                "slack_enabled",
+                "discord_enabled",
+            ]:
                 if getattr(ch_config, attr, False):
                     channels.append(attr.replace("_enabled", ""))
         return channels or ["cli"]
@@ -394,8 +395,15 @@ class ConfigManager:
         if not sb:
             return {"enabled": True, "network": "allow", "max_memory_mb": 512}
         result: dict[str, Any] = {}
-        for attr in ["enabled", "network", "max_memory_mb", "max_processes",
-                      "timeout_seconds", "allowed_paths", "blocked_paths"]:
+        for attr in [
+            "enabled",
+            "network",
+            "max_memory_mb",
+            "max_processes",
+            "timeout_seconds",
+            "allowed_paths",
+            "blocked_paths",
+        ]:
             if hasattr(sb, attr):
                 result[attr] = getattr(sb, attr)
         return result

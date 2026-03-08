@@ -37,7 +37,8 @@ class TestSkillScaffolderExtended:
     def test_scaffold_api_template(self, tmp_path: Path) -> None:
         scaffolder = SkillScaffolder()
         result = scaffolder.scaffold(
-            "API Tool", TemplateType.API_INTEGRATION,
+            "API Tool",
+            TemplateType.API_INTEGRATION,
             base_dir=str(tmp_path / "skills"),
         )
         assert result.template_used == "TPL-API"
@@ -46,7 +47,8 @@ class TestSkillScaffolderExtended:
     def test_scaffold_automation_template(self, tmp_path: Path) -> None:
         scaffolder = SkillScaffolder()
         result = scaffolder.scaffold(
-            "Auto Task", TemplateType.AUTOMATION,
+            "Auto Task",
+            TemplateType.AUTOMATION,
             base_dir=str(tmp_path / "skills"),
         )
         assert result.template_used == "TPL-AUTO"
@@ -61,8 +63,11 @@ class TestSkillScaffolderExtended:
     def test_add_custom_template(self, tmp_path: Path) -> None:
         scaffolder = SkillScaffolder()
         custom = SkillTemplate(
-            "TPL-CUSTOM", "Custom", TemplateType.TOOL_WRAPPER,
-            "Custom template", {"custom.py": "print('hello')"},
+            "TPL-CUSTOM",
+            "Custom",
+            TemplateType.TOOL_WRAPPER,
+            "Custom template",
+            {"custom.py": "print('hello')"},
         )
         scaffolder.add_template(custom)
         assert scaffolder.template_count >= 4  # 3 built-in + 1 custom
@@ -90,7 +95,8 @@ class TestSkillScaffolderExtended:
     def test_scaffold_with_description(self, tmp_path: Path) -> None:
         scaffolder = SkillScaffolder()
         result = scaffolder.scaffold(
-            "Desc Test", description="My description",
+            "Desc Test",
+            description="My description",
             base_dir=str(tmp_path / "skills"),
         )
         # Check files contain the description
@@ -116,63 +122,76 @@ class TestSkillLinterExtended:
 
     def test_lint_short_skill_md(self) -> None:
         linter = SkillLinter()
-        issues = linter.lint({
-            "SKILL.md": "short",
-            "skill.py": "class Foo(BaseSkill): pass",
-            "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
-        })
+        issues = linter.lint(
+            {
+                "SKILL.md": "short",
+                "skill.py": "class Foo(BaseSkill): pass",
+                "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
+            }
+        )
         warnings = [i for i in issues if i.rule == "short-docs"]
         assert len(warnings) == 1
 
     def test_lint_missing_description_heading(self) -> None:
         linter = SkillLinter()
-        issues = linter.lint({
-            "SKILL.md": "# My Skill\n\nSome content that is long enough to pass the length check " * 3,
-            "skill.py": "class Foo(BaseSkill): pass",
-            "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
-        })
+        issues = linter.lint(
+            {
+                "SKILL.md": "# My Skill\n\nSome content that is long enough to pass the length check "
+                * 3,
+                "skill.py": "class Foo(BaseSkill): pass",
+                "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
+            }
+        )
         desc_issues = [i for i in issues if i.rule == "missing-description"]
         assert len(desc_issues) == 1
 
     def test_lint_missing_manifest_fields(self) -> None:
         linter = SkillLinter()
-        issues = linter.lint({
-            "SKILL.md": "## Beschreibung\n" + "x" * 100,
-            "skill.py": "class Foo(BaseSkill): pass",
-            "manifest.json": '{}',
-        })
+        issues = linter.lint(
+            {
+                "SKILL.md": "## Beschreibung\n" + "x" * 100,
+                "skill.py": "class Foo(BaseSkill): pass",
+                "manifest.json": "{}",
+            }
+        )
         manifest_issues = [i for i in issues if i.rule == "missing-manifest-field"]
         assert len(manifest_issues) == 3
 
     def test_lint_no_tests(self) -> None:
         linter = SkillLinter()
-        issues = linter.lint({
-            "SKILL.md": "## Beschreibung\n" + "x" * 100,
-            "skill.py": "class Foo(BaseSkill): pass",
-            "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
-        })
+        issues = linter.lint(
+            {
+                "SKILL.md": "## Beschreibung\n" + "x" * 100,
+                "skill.py": "class Foo(BaseSkill): pass",
+                "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
+            }
+        )
         test_issues = [i for i in issues if i.rule == "no-tests"]
         assert len(test_issues) == 1
 
     def test_lint_no_base_class(self) -> None:
         linter = SkillLinter()
-        issues = linter.lint({
-            "SKILL.md": "## Beschreibung\n" + "x" * 100,
-            "skill.py": "class Foo: pass",
-            "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
-            "test_skill.py": "def test_x(): pass",
-        })
+        issues = linter.lint(
+            {
+                "SKILL.md": "## Beschreibung\n" + "x" * 100,
+                "skill.py": "class Foo: pass",
+                "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
+                "test_skill.py": "def test_x(): pass",
+            }
+        )
         base_issues = [i for i in issues if i.rule == "no-base-class"]
         assert len(base_issues) == 1
 
     def test_is_valid_true(self) -> None:
         linter = SkillLinter()
-        valid = linter.is_valid({
-            "SKILL.md": "## Beschreibung\n" + "x" * 100,
-            "skill.py": "class Foo(BaseSkill): pass",
-            "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
-            "test_skill.py": "def test_x(): pass",
-        })
+        valid = linter.is_valid(
+            {
+                "SKILL.md": "## Beschreibung\n" + "x" * 100,
+                "skill.py": "class Foo(BaseSkill): pass",
+                "manifest.json": '{"name": "x", "version": "1", "permissions": []}',
+                "test_skill.py": "def test_x(): pass",
+            }
+        )
         assert valid is True
 
     def test_is_valid_false(self) -> None:

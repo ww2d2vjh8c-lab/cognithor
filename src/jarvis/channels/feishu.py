@@ -68,6 +68,7 @@ class FeishuChannel(Channel):
 
         try:
             import httpx
+
             self._http_client = httpx.AsyncClient(timeout=30.0)
         except ImportError:
             logger.error("httpx nicht installiert")
@@ -145,9 +146,7 @@ class FeishuChannel(Channel):
         signature = body.get("header", {}).get("signature", "")
         body_str = str(body)
 
-        expected = hashlib.sha256(
-            f"{timestamp}{nonce}{encrypt_key}{body_str}".encode()
-        ).hexdigest()
+        expected = hashlib.sha256(f"{timestamp}{nonce}{encrypt_key}{body_str}".encode()).hexdigest()
         return signature == expected
 
     async def handle_event(self, payload: dict[str, Any]) -> dict[str, Any] | None:
@@ -216,6 +215,7 @@ class FeishuChannel(Channel):
                 logger.error("Feishu: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
@@ -263,7 +263,10 @@ class FeishuChannel(Channel):
 
         try:
             resp = await self._http_client.post(
-                url, headers=headers, json=body, params=params,
+                url,
+                headers=headers,
+                json=body,
+                params=params,
             )
             data = resp.json()
             if data.get("code") != 0:
@@ -282,7 +285,10 @@ class FeishuChannel(Channel):
         await self._send_text(chat_id, message.text, reply_to)
 
     async def request_approval(
-        self, session_id: str, action: PlannedAction, reason: str,
+        self,
+        session_id: str,
+        action: PlannedAction,
+        reason: str,
     ) -> bool:
         """Fragt den User per Interactive Card um Erlaubnis."""
         if not self._http_client:
@@ -313,7 +319,9 @@ class FeishuChannel(Channel):
             if text.strip():
                 await self.send(
                     OutgoingMessage(
-                        channel=self.name, text=text, session_id=session_id,
+                        channel=self.name,
+                        text=text,
+                        session_id=session_id,
                     )
                 )
 
@@ -322,6 +330,7 @@ def _parse_json_safe(s: str) -> dict[str, Any]:
     """Sicheres JSON-Parsing mit Fallback."""
     try:
         import json
+
         return json.loads(s)
     except Exception:
         return {}

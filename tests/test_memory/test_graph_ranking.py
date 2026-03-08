@@ -57,7 +57,10 @@ def populated_graph(index: MemoryIndex) -> MemoryIndex:
     e_wwk = Entity(id="e_wwk", type="company", name="WWK", confidence=0.9, updated_at=now)
     e_alex = Entity(id="e_alex", type="person", name="Alexander", confidence=1.0, updated_at=now)
     e_allianz = Entity(
-        id="e_allianz", type="company", name="Allianz", confidence=0.7,
+        id="e_allianz",
+        type="company",
+        name="Allianz",
+        confidence=0.7,
         updated_at=now - timedelta(days=60),
     )
     e_jarvis = Entity(id="e_jarvis", type="project", name="Jarvis", confidence=0.8, updated_at=now)
@@ -67,20 +70,32 @@ def populated_graph(index: MemoryIndex) -> MemoryIndex:
 
     # Relationen
     r1 = Relation(
-        id="r1", source_entity="e_alex", relation_type="arbeitet_bei",
-        target_entity="e_wwk", confidence=1.0,
+        id="r1",
+        source_entity="e_alex",
+        relation_type="arbeitet_bei",
+        target_entity="e_wwk",
+        confidence=1.0,
     )
     r2 = Relation(
-        id="r2", source_entity="e_alex", relation_type="vergleicht",
-        target_entity="e_allianz", confidence=0.8,
+        id="r2",
+        source_entity="e_alex",
+        relation_type="vergleicht",
+        target_entity="e_allianz",
+        confidence=0.8,
     )
     r3 = Relation(
-        id="r3", source_entity="e_alex", relation_type="entwickelt",
-        target_entity="e_jarvis", confidence=0.9,
+        id="r3",
+        source_entity="e_alex",
+        relation_type="entwickelt",
+        target_entity="e_jarvis",
+        confidence=0.9,
     )
     r4 = Relation(
-        id="r4", source_entity="e_wwk", relation_type="konkurriert_mit",
-        target_entity="e_allianz", confidence=0.7,
+        id="r4",
+        source_entity="e_wwk",
+        relation_type="konkurriert_mit",
+        target_entity="e_allianz",
+        confidence=0.7,
     )
 
     for r in [r1, r2, r3, r4]:
@@ -202,14 +217,20 @@ class TestStaleness:
 
     def test_is_stale_property(self) -> None:
         rank = EntityRank(
-            entity_id="x", entity_name="X",
-            pagerank=0.5, degree=2, staleness=0.8,
+            entity_id="x",
+            entity_name="X",
+            pagerank=0.5,
+            degree=2,
+            staleness=0.8,
         )
         assert rank.is_stale is True
 
         fresh = EntityRank(
-            entity_id="y", entity_name="Y",
-            pagerank=0.5, degree=2, staleness=0.2,
+            entity_id="y",
+            entity_name="Y",
+            pagerank=0.5,
+            degree=2,
+            staleness=0.2,
         )
         assert fresh.is_stale is False
 
@@ -253,7 +274,9 @@ class TestGraphScoreBoost:
         assert boosted[0].score == 0.5  # Unverändert
 
     def test_boost_with_entity_reference(
-        self, ranking: GraphRanking, populated_graph: MemoryIndex,
+        self,
+        ranking: GraphRanking,
+        populated_graph: MemoryIndex,
     ) -> None:
         """Chunks mit Entity-Referenzen erhalten Boost."""
         ranking.compute_pagerank()
@@ -261,7 +284,8 @@ class TestGraphScoreBoost:
         results = [
             MemorySearchResult(
                 chunk=Chunk(
-                    id="c_with_entity", text="Alexander bei WWK",
+                    id="c_with_entity",
+                    text="Alexander bei WWK",
                     source_path="t.md",
                     entities=["e_alex", "e_wwk"],  # Referenziert Entitäten
                 ),
@@ -269,7 +293,8 @@ class TestGraphScoreBoost:
             ),
             MemorySearchResult(
                 chunk=Chunk(
-                    id="c_no_entity", text="Random text",
+                    id="c_no_entity",
+                    text="Random text",
                     source_path="t.md",
                 ),
                 score=0.5,
@@ -289,13 +314,17 @@ class TestGraphScoreBoost:
         results = [
             MemorySearchResult(
                 chunk=Chunk(
-                    id="c1", text="Allgemein", source_path="t.md",
+                    id="c1",
+                    text="Allgemein",
+                    source_path="t.md",
                 ),
                 score=0.6,
             ),
             MemorySearchResult(
                 chunk=Chunk(
-                    id="c2", text="Entity-reich", source_path="t.md",
+                    id="c2",
+                    text="Entity-reich",
+                    source_path="t.md",
                     entities=["e_alex", "e_wwk", "e_jarvis"],
                 ),
                 score=0.55,
@@ -322,7 +351,9 @@ class TestPruning:
         assert len(result.pruned_entities) == 0
 
     def test_prune_stale_low_confidence(
-        self, ranking: GraphRanking, populated_graph: MemoryIndex,
+        self,
+        ranking: GraphRanking,
+        populated_graph: MemoryIndex,
     ) -> None:
         """Stale + niedrige Confidence + isoliert → wird gepruned."""
         # Neue isolierte, stale, low-confidence Entität hinzufügen
@@ -347,11 +378,15 @@ class TestPruning:
         assert result.total_after < result.total_before
 
     def test_prune_dry_run(
-        self, ranking: GraphRanking, populated_graph: MemoryIndex,
+        self,
+        ranking: GraphRanking,
+        populated_graph: MemoryIndex,
     ) -> None:
         """Dry-Run meldet was gepruned würde, ändert aber nichts."""
         old_entity = Entity(
-            id="e_dry", type="test", name="Dry",
+            id="e_dry",
+            type="test",
+            name="Dry",
             confidence=0.1,
             updated_at=datetime.now(timezone.utc) - timedelta(days=365),
         )
@@ -369,7 +404,9 @@ class TestPruning:
         assert populated_graph.get_entity_by_id("e_dry") is not None
 
     def test_well_connected_not_pruned(
-        self, ranking: GraphRanking, populated_graph: MemoryIndex,
+        self,
+        ranking: GraphRanking,
+        populated_graph: MemoryIndex,
     ) -> None:
         """Gut vernetzte Entitäten werden nicht gepruned (selbst wenn stale)."""
         ranking.compute_pagerank()
@@ -392,14 +429,18 @@ class TestEntityUpdates:
     """Confidence-Updates und Touch."""
 
     def test_update_confidence(
-        self, ranking: GraphRanking, populated_graph: MemoryIndex,
+        self,
+        ranking: GraphRanking,
+        populated_graph: MemoryIndex,
     ) -> None:
         new_conf = ranking.update_entity_confidence("e_wwk", -0.2)
         assert new_conf is not None
         assert new_conf == pytest.approx(0.7)  # 0.9 - 0.2
 
     def test_update_confidence_clamped(
-        self, ranking: GraphRanking, populated_graph: MemoryIndex,
+        self,
+        ranking: GraphRanking,
+        populated_graph: MemoryIndex,
     ) -> None:
         # Über 1.0 → clamped
         new_conf = ranking.update_entity_confidence("e_wwk", +0.5)
@@ -413,14 +454,20 @@ class TestEntityUpdates:
         assert ranking.update_entity_confidence("ghost", 0.1) is None
 
     def test_touch_entity(
-        self, ranking: GraphRanking, populated_graph: MemoryIndex,
+        self,
+        ranking: GraphRanking,
+        populated_graph: MemoryIndex,
     ) -> None:
         assert ranking.touch_entity("e_allianz") is True
         entity = populated_graph.get_entity_by_id("e_allianz")
         assert entity is not None
         # updated_at sollte jetzt frisch sein (DB gibt naive datetime zurück)
         now_naive = datetime.now()
-        updated = entity.updated_at.replace(tzinfo=None) if entity.updated_at.tzinfo else entity.updated_at
+        updated = (
+            entity.updated_at.replace(tzinfo=None)
+            if entity.updated_at.tzinfo
+            else entity.updated_at
+        )
         age = (now_naive - updated).total_seconds()
         assert age < 5  # Weniger als 5 Sekunden
 
@@ -439,7 +486,9 @@ class TestGraphAnalysis:
     def test_find_isolated(self, index: MemoryIndex) -> None:
         """Entitäten ohne Verbindungen."""
         e = Entity(
-            id="isolated", type="test", name="Lonely",
+            id="isolated",
+            type="test",
+            name="Lonely",
             updated_at=datetime.now(timezone.utc),
         )
         index.upsert_entity(e)

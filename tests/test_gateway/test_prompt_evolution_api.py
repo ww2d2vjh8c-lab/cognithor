@@ -96,6 +96,7 @@ class TestPromptEvolutionEvolve:
     def test_evolve_gate_blocked(self, app_and_gateway):
         app, gateway, engine = app_and_gateway
         from jarvis.governance.improvement_gate import GateVerdict
+
         gate = MagicMock()
         gate.check.return_value = GateVerdict.BLOCKED
         gateway._improvement_gate = gate

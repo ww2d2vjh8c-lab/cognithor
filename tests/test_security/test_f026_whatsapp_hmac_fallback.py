@@ -50,7 +50,9 @@ class TestWithoutAppSecret:
         payload = b'{"test": true}'
         # Erstelle gueltige Signatur mit API-Token (alter Fallback-Bug)
         sig = hmac_mod.new(
-            b"test-api-token-123", payload, hashlib.sha256,
+            b"test-api-token-123",
+            payload,
+            hashlib.sha256,
         ).hexdigest()
 
         result = ch._verify_signature(payload, f"sha256={sig}")
@@ -80,7 +82,9 @@ class TestWithAppSecret:
         ch = _make_channel(app_secret="my-secret-key")
         payload = b'{"entry": []}'
         sig = hmac_mod.new(
-            b"my-secret-key", payload, hashlib.sha256,
+            b"my-secret-key",
+            payload,
+            hashlib.sha256,
         ).hexdigest()
 
         result = ch._verify_signature(payload, f"sha256={sig}")
@@ -98,7 +102,9 @@ class TestWithAppSecret:
         ch = _make_channel(app_secret="my-secret-key")
         original = b'{"entry": []}'
         sig = hmac_mod.new(
-            b"my-secret-key", original, hashlib.sha256,
+            b"my-secret-key",
+            original,
+            hashlib.sha256,
         ).hexdigest()
 
         tampered = b'{"entry": [{"evil": true}]}'

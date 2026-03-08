@@ -64,79 +64,95 @@ class JarvisResourceProvider:
         count = 0
 
         # ── Memory Resources ────────────────────────────────────
-        server.register_resource(MCPResource(
-            uri="jarvis://memory/core",
-            name="Core Memory",
-            description="Langfristige Kern-Erinnerungen und Persönlichkeit von Jarvis",
-            mime_type="text/markdown",
-            handler=self._read_core_memory,
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://memory/core",
+                name="Core Memory",
+                description="Langfristige Kern-Erinnerungen und Persönlichkeit von Jarvis",
+                mime_type="text/markdown",
+                handler=self._read_core_memory,
+            )
+        )
         count += 1
 
-        server.register_resource(MCPResource(
-            uri="jarvis://memory/episodes",
-            name="Recent Episodes",
-            description="Die letzten episodischen Einträge (Tageslog)",
-            mime_type="application/json",
-            handler=self._read_episodes,
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://memory/episodes",
+                name="Recent Episodes",
+                description="Die letzten episodischen Einträge (Tageslog)",
+                mime_type="application/json",
+                handler=self._read_episodes,
+            )
+        )
         count += 1
 
-        server.register_resource(MCPResource(
-            uri="jarvis://memory/stats",
-            name="Memory Statistics",
-            description="Gesamtstatistiken des 5-Tier Memory-Systems",
-            mime_type="application/json",
-            handler=self._read_memory_stats,
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://memory/stats",
+                name="Memory Statistics",
+                description="Gesamtstatistiken des 5-Tier Memory-Systems",
+                mime_type="application/json",
+                handler=self._read_memory_stats,
+            )
+        )
         count += 1
 
         # Template für einzelne Entitäten
-        server.register_resource_template(MCPResourceTemplate(
-            uri_template="jarvis://memory/entity/{entity_id}",
-            name="Memory Entity",
-            description="Eine einzelne Entität aus dem Wissens-Graphen",
-            mime_type="application/json",
-            handler=self._read_entity,
-        ))
+        server.register_resource_template(
+            MCPResourceTemplate(
+                uri_template="jarvis://memory/entity/{entity_id}",
+                name="Memory Entity",
+                description="Eine einzelne Entität aus dem Wissens-Graphen",
+                mime_type="application/json",
+                handler=self._read_entity,
+            )
+        )
         count += 1
 
         # ── Config / Status Resources ───────────────────────────
-        server.register_resource(MCPResource(
-            uri="jarvis://config/status",
-            name="System Status",
-            description="Aktueller Systemstatus von Jarvis",
-            mime_type="application/json",
-            handler=self._read_status,
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://config/status",
+                name="System Status",
+                description="Aktueller Systemstatus von Jarvis",
+                mime_type="application/json",
+                handler=self._read_status,
+            )
+        )
         count += 1
 
-        server.register_resource(MCPResource(
-            uri="jarvis://config/tools",
-            name="Available Tools",
-            description="Liste aller verfügbaren MCP-Tools",
-            mime_type="application/json",
-            handler=lambda **_: self._read_tools(server),
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://config/tools",
+                name="Available Tools",
+                description="Liste aller verfügbaren MCP-Tools",
+                mime_type="application/json",
+                handler=lambda **_: self._read_tools(server),
+            )
+        )
         count += 1
 
-        server.register_resource(MCPResource(
-            uri="jarvis://config/capabilities",
-            name="Capabilities",
-            description="Fähigkeiten und Konfiguration dieser Jarvis-Instanz",
-            mime_type="application/json",
-            handler=self._read_capabilities,
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://config/capabilities",
+                name="Capabilities",
+                description="Fähigkeiten und Konfiguration dieser Jarvis-Instanz",
+                mime_type="application/json",
+                handler=self._read_capabilities,
+            )
+        )
         count += 1
 
         # ── Workspace Resources ─────────────────────────────────
-        server.register_resource(MCPResource(
-            uri="jarvis://workspace/files",
-            name="Workspace Files",
-            description="Verzeichnisbaum des Jarvis-Workspace",
-            mime_type="application/json",
-            handler=self._read_workspace_files,
-        ))
+        server.register_resource(
+            MCPResource(
+                uri="jarvis://workspace/files",
+                name="Workspace Files",
+                description="Verzeichnisbaum des Jarvis-Workspace",
+                mime_type="application/json",
+                handler=self._read_workspace_files,
+            )
+        )
         count += 1
 
         self._registered_count = count
@@ -231,11 +247,13 @@ class JarvisResourceProvider:
         """Liest die Tool-Liste vom Server."""
         tool_list = []
         for name, tool in server._tools.items():
-            tool_list.append({
-                "name": name,
-                "description": tool.description,
-                "annotations": tool.annotations,
-            })
+            tool_list.append(
+                {
+                    "name": name,
+                    "description": tool.description,
+                    "annotations": tool.annotations,
+                }
+            )
         return json.dumps({"tools": tool_list, "count": len(tool_list)}, ensure_ascii=False)
 
     def _read_capabilities(self, **kwargs: Any) -> str:
@@ -271,6 +289,7 @@ class JarvisResourceProvider:
             return json.dumps({"error": "Config nicht verfügbar"})
 
         import os
+
         workspace = self._config.jarvis_home / "workspace"
         if not workspace.exists():
             return json.dumps({"files": [], "workspace": str(workspace)})
@@ -291,11 +310,14 @@ class JarvisResourceProvider:
         except Exception:
             pass
 
-        return json.dumps({
-            "workspace": str(workspace),
-            "files": files[:200],
-            "count": len(files),
-        }, ensure_ascii=False)
+        return json.dumps(
+            {
+                "workspace": str(workspace),
+                "files": files[:200],
+                "count": len(files),
+            },
+            ensure_ascii=False,
+        )
 
     def stats(self) -> dict[str, Any]:
         """Statistiken des Resource-Providers."""

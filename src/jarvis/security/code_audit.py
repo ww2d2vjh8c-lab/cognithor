@@ -56,8 +56,8 @@ class CodePattern:
     category: PatternCategory
     severity: PatternSeverity
     description: str
-    detector: str = "regex"      # regex, ast, heuristic
-    pattern: str = ""            # Regex oder AST-Node-Type
+    detector: str = "regex"  # regex, ast, heuristic
+    pattern: str = ""  # Regex oder AST-Node-Type
     recommendation: str = ""
 
     def to_dict(self) -> dict[str, Any]:
@@ -78,7 +78,7 @@ class CodeFinding:
     file_path: str
     line_number: int
     code_snippet: str
-    confidence: float = 1.0   # 0-1
+    confidence: float = 1.0  # 0-1
     false_positive: bool = False
     timestamp: str = ""
 
@@ -103,54 +103,130 @@ class PatternScanner:
 
     BUILT_IN_PATTERNS = [
         # Kritisch: Code-Ausführung
-        CodePattern("CP-001", "eval() Aufruf", PatternCategory.CODE_EXECUTION,
-                    PatternSeverity.CRITICAL, "eval() erlaubt beliebige Code-Ausführung",
-                    "ast", "eval", "Ersetze eval() durch ast.literal_eval() oder sichere Alternative"),
-        CodePattern("CP-002", "exec() Aufruf", PatternCategory.CODE_EXECUTION,
-                    PatternSeverity.CRITICAL, "exec() erlaubt beliebige Code-Ausführung",
-                    "ast", "exec", "Entferne exec() und nutze sichere Alternativen"),
-        CodePattern("CP-003", "subprocess Shell=True", PatternCategory.CODE_EXECUTION,
-                    PatternSeverity.CRITICAL, "Shell-Injection möglich bei shell=True",
-                    "regex", r"subprocess\.\w+\(.*shell\s*=\s*True", "Verwende shell=False + Argument-Liste"),
-        CodePattern("CP-004", "os.system() Aufruf", PatternCategory.CODE_EXECUTION,
-                    PatternSeverity.HIGH, "Direkte Shell-Ausführung",
-                    "regex", r"os\.system\(", "Verwende subprocess.run() mit shell=False"),
-
+        CodePattern(
+            "CP-001",
+            "eval() Aufruf",
+            PatternCategory.CODE_EXECUTION,
+            PatternSeverity.CRITICAL,
+            "eval() erlaubt beliebige Code-Ausführung",
+            "ast",
+            "eval",
+            "Ersetze eval() durch ast.literal_eval() oder sichere Alternative",
+        ),
+        CodePattern(
+            "CP-002",
+            "exec() Aufruf",
+            PatternCategory.CODE_EXECUTION,
+            PatternSeverity.CRITICAL,
+            "exec() erlaubt beliebige Code-Ausführung",
+            "ast",
+            "exec",
+            "Entferne exec() und nutze sichere Alternativen",
+        ),
+        CodePattern(
+            "CP-003",
+            "subprocess Shell=True",
+            PatternCategory.CODE_EXECUTION,
+            PatternSeverity.CRITICAL,
+            "Shell-Injection möglich bei shell=True",
+            "regex",
+            r"subprocess\.\w+\(.*shell\s*=\s*True",
+            "Verwende shell=False + Argument-Liste",
+        ),
+        CodePattern(
+            "CP-004",
+            "os.system() Aufruf",
+            PatternCategory.CODE_EXECUTION,
+            PatternSeverity.HIGH,
+            "Direkte Shell-Ausführung",
+            "regex",
+            r"os\.system\(",
+            "Verwende subprocess.run() mit shell=False",
+        ),
         # Hoch: Netzwerk/Exfiltration
-        CodePattern("CP-005", "HTTP-Request an externe URL", PatternCategory.NETWORK_ACCESS,
-                    PatternSeverity.HIGH, "Skill macht HTTP-Requests nach außen",
-                    "regex", r"requests\.\w+\(|urllib\.request|httpx\.\w+\(", "Netzwerkzugriff muss genehmigt werden"),
-        CodePattern("CP-006", "Socket-Nutzung", PatternCategory.NETWORK_ACCESS,
-                    PatternSeverity.HIGH, "Direkter Socket-Zugriff",
-                    "regex", r"socket\.socket\(|socket\.connect", "Verwende genehmigte HTTP-Bibliotheken"),
-        CodePattern("CP-007", "DNS-Exfiltration", PatternCategory.DATA_EXFILTRATION,
-                    PatternSeverity.CRITICAL, "DNS-Anfragen können zur Datenexfiltration genutzt werden",
-                    "regex", r"dns\.resolver|socket\.getaddrinfo.*encode", "DNS-Zugriff einschränken"),
-
+        CodePattern(
+            "CP-005",
+            "HTTP-Request an externe URL",
+            PatternCategory.NETWORK_ACCESS,
+            PatternSeverity.HIGH,
+            "Skill macht HTTP-Requests nach außen",
+            "regex",
+            r"requests\.\w+\(|urllib\.request|httpx\.\w+\(",
+            "Netzwerkzugriff muss genehmigt werden",
+        ),
+        CodePattern(
+            "CP-006",
+            "Socket-Nutzung",
+            PatternCategory.NETWORK_ACCESS,
+            PatternSeverity.HIGH,
+            "Direkter Socket-Zugriff",
+            "regex",
+            r"socket\.socket\(|socket\.connect",
+            "Verwende genehmigte HTTP-Bibliotheken",
+        ),
+        CodePattern(
+            "CP-007",
+            "DNS-Exfiltration",
+            PatternCategory.DATA_EXFILTRATION,
+            PatternSeverity.CRITICAL,
+            "DNS-Anfragen können zur Datenexfiltration genutzt werden",
+            "regex",
+            r"dns\.resolver|socket\.getaddrinfo.*encode",
+            "DNS-Zugriff einschränken",
+        ),
         # Mittel: Dateisystem
-        CodePattern("CP-008", "Sensible Pfade lesen", PatternCategory.FILE_SYSTEM,
-                    PatternSeverity.MEDIUM, "Zugriff auf sensible Dateipfade",
-                    "regex", r"/etc/passwd|/etc/shadow|\.ssh/|\.env|\.aws/credentials",
-                    "Dateizugriff auf Sandbox beschränken"),
-        CodePattern("CP-009", "Temporäre Datei mit Secrets", PatternCategory.CREDENTIAL_ACCESS,
-                    PatternSeverity.MEDIUM, "Credentials in temporäre Dateien geschrieben",
-                    "regex", r"(tempfile|/tmp).*(?:key|secret|password|token)",
-                    "Secrets nur im Vault speichern"),
-
+        CodePattern(
+            "CP-008",
+            "Sensible Pfade lesen",
+            PatternCategory.FILE_SYSTEM,
+            PatternSeverity.MEDIUM,
+            "Zugriff auf sensible Dateipfade",
+            "regex",
+            r"/etc/passwd|/etc/shadow|\.ssh/|\.env|\.aws/credentials",
+            "Dateizugriff auf Sandbox beschränken",
+        ),
+        CodePattern(
+            "CP-009",
+            "Temporäre Datei mit Secrets",
+            PatternCategory.CREDENTIAL_ACCESS,
+            PatternSeverity.MEDIUM,
+            "Credentials in temporäre Dateien geschrieben",
+            "regex",
+            r"(tempfile|/tmp).*(?:key|secret|password|token)",
+            "Secrets nur im Vault speichern",
+        ),
         # Obfuskation
-        CodePattern("CP-010", "Base64-Kodierung", PatternCategory.OBFUSCATION,
-                    PatternSeverity.LOW, "Base64-Kodierung kann bösartigen Code verstecken",
-                    "regex", r"base64\.\w*decode\(", "Prüfe was dekodiert wird"),
-        CodePattern("CP-011", "Compile/Marshal", PatternCategory.OBFUSCATION,
-                    PatternSeverity.HIGH, "Dynamische Code-Kompilierung",
-                    "regex", r"compile\(|marshal\.loads\(|pickle\.loads\(",
-                    "Keine dynamische Code-Kompilierung erlaubt"),
-
+        CodePattern(
+            "CP-010",
+            "Base64-Kodierung",
+            PatternCategory.OBFUSCATION,
+            PatternSeverity.LOW,
+            "Base64-Kodierung kann bösartigen Code verstecken",
+            "regex",
+            r"base64\.\w*decode\(",
+            "Prüfe was dekodiert wird",
+        ),
+        CodePattern(
+            "CP-011",
+            "Compile/Marshal",
+            PatternCategory.OBFUSCATION,
+            PatternSeverity.HIGH,
+            "Dynamische Code-Kompilierung",
+            "regex",
+            r"compile\(|marshal\.loads\(|pickle\.loads\(",
+            "Keine dynamische Code-Kompilierung erlaubt",
+        ),
         # Injection
-        CodePattern("CP-012", "SQL-Injection-Risiko", PatternCategory.INJECTION_RISK,
-                    PatternSeverity.HIGH, "String-Formatierung in SQL-Queries",
-                    "regex", r"(execute|cursor)\(.*(%s|\.format\(|f['\"])",
-                    "Verwende parametrisierte Queries"),
+        CodePattern(
+            "CP-012",
+            "SQL-Injection-Risiko",
+            PatternCategory.INJECTION_RISK,
+            PatternSeverity.HIGH,
+            "String-Formatierung in SQL-Queries",
+            "regex",
+            r"(execute|cursor)\(.*(%s|\.format\(|f['\"])",
+            "Verwende parametrisierte Queries",
+        ),
     ]
 
     def __init__(self, load_defaults: bool = True) -> None:
@@ -181,14 +257,16 @@ class PatternScanner:
         for i, line in enumerate(code.split("\n"), 1):
             if re.search(pattern.pattern, line, re.IGNORECASE):
                 self._counter += 1
-                findings.append(CodeFinding(
-                    finding_id=f"CF-{self._counter:04d}",
-                    pattern=pattern,
-                    file_path=file_path,
-                    line_number=i,
-                    code_snippet=line.strip()[:120],
-                    timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                ))
+                findings.append(
+                    CodeFinding(
+                        finding_id=f"CF-{self._counter:04d}",
+                        pattern=pattern,
+                        file_path=file_path,
+                        line_number=i,
+                        code_snippet=line.strip()[:120],
+                        timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    )
+                )
         return findings
 
     def _scan_ast(self, code: str, pattern: CodePattern, file_path: str) -> list[CodeFinding]:
@@ -208,14 +286,16 @@ class PatternScanner:
 
                 if func_name == pattern.pattern:
                     self._counter += 1
-                    findings.append(CodeFinding(
-                        finding_id=f"CF-{self._counter:04d}",
-                        pattern=pattern,
-                        file_path=file_path,
-                        line_number=getattr(node, "lineno", 0),
-                        code_snippet=f"{func_name}(...)",
-                        timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                    ))
+                    findings.append(
+                        CodeFinding(
+                            finding_id=f"CF-{self._counter:04d}",
+                            pattern=pattern,
+                            file_path=file_path,
+                            line_number=getattr(node, "lineno", 0),
+                            code_snippet=f"{func_name}(...)",
+                            timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                        )
+                    )
         return findings
 
     @property
@@ -286,7 +366,11 @@ class PermissionAnalyzer:
 
     def risk_assessment(self, permissions: dict[RequiredPermission, list[str]]) -> dict[str, Any]:
         """Bewertet das Risiko basierend auf benötigten Berechtigungen."""
-        high_risk = {RequiredPermission.SHELL_EXEC, RequiredPermission.NETWORK, RequiredPermission.SECRETS}
+        high_risk = {
+            RequiredPermission.SHELL_EXEC,
+            RequiredPermission.NETWORK,
+            RequiredPermission.SECRETS,
+        }
         medium_risk = {RequiredPermission.DATABASE, RequiredPermission.EXTERNAL_API}
 
         risk_perms = set(permissions.keys())
@@ -338,7 +422,9 @@ class SkillSecurityReport:
             "skill": self.skill_name,
             "lines": self.code_lines,
             "findings": len(self.findings),
-            "critical": sum(1 for f in self.findings if f.pattern.severity == PatternSeverity.CRITICAL),
+            "critical": sum(
+                1 for f in self.findings if f.pattern.severity == PatternSeverity.CRITICAL
+            ),
             "high": sum(1 for f in self.findings if f.pattern.severity == PatternSeverity.HIGH),
             "permission_risk": self.permission_risk,
             "overall_risk": self.overall_risk,

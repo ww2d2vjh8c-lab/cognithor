@@ -25,6 +25,7 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 # WebSocket handler from __main__.py (auth + collision logic only).
 # ---------------------------------------------------------------------------
 
+
 def _make_app() -> tuple[FastAPI, dict[str, WebSocket]]:
     """Return (app, ws_connections) using the same auth logic as __main__.py."""
     app = FastAPI()
@@ -72,6 +73,7 @@ def _make_app() -> tuple[FastAPI, dict[str, WebSocket]]:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestWSAuth:
     """WebSocket authentication tests."""
@@ -144,7 +146,8 @@ class TestWSAuth:
 
                 # The old mock connection must have been closed with 4002
                 mock_old_ws.close.assert_awaited_once_with(
-                    code=4002, reason="Session replaced",
+                    code=4002,
+                    reason="Session replaced",
                 )
 
                 # The ws_connections dict should now point to the NEW

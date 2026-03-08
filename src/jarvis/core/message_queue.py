@@ -191,9 +191,7 @@ class DurableMessageQueue:
             RuntimeError: Wenn die Queue voll ist (max_size erreicht).
         """
         async with self._lock:
-            return await asyncio.to_thread(
-                self._enqueue_sync, message, priority
-            )
+            return await asyncio.to_thread(self._enqueue_sync, message, priority)
 
     def _enqueue_sync(self, message: Any, priority: int) -> str:
         """Synchrone Enqueue-Implementierung."""
@@ -203,9 +201,7 @@ class DurableMessageQueue:
         ).fetchone()
         current_size = row["cnt"] if row else 0
         if current_size >= self._max_size:
-            raise RuntimeError(
-                f"Message-Queue voll: {current_size}/{self._max_size}"
-            )
+            raise RuntimeError(f"Message-Queue voll: {current_size}/{self._max_size}")
 
         # Nachricht serialisieren
         if hasattr(message, "model_dump_json"):
@@ -387,9 +383,7 @@ class DurableMessageQueue:
         cutoff = _ts(_utc_now()) - (self._ttl_hours * 3600)
 
         # Abgeschlossene Nachrichten entfernen
-        cursor = self.conn.execute(
-            "DELETE FROM message_queue WHERE status = 'completed'"
-        )
+        cursor = self.conn.execute("DELETE FROM message_queue WHERE status = 'completed'")
         completed_count = cursor.rowcount
 
         # Abgelaufene Nachrichten entfernen (älter als TTL)

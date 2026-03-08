@@ -30,7 +30,9 @@ from jarvis.core.delegation import (
 
 def _cap(name: str, priority: int = 0, tools: list[str] | None = None) -> AgentCapability:
     return AgentCapability(
-        name=name, description=f"Can {name}", priority=priority,
+        name=name,
+        description=f"Can {name}",
+        priority=priority,
         tools_required=tools or [],
     )
 
@@ -152,12 +154,18 @@ class TestAgentRegistry:
 
     def test_find_best_agent_by_tools(self) -> None:
         reg = AgentRegistry()
-        reg.register_capabilities("coder", [
-            _cap("coding", priority=5, tools=["exec_command", "write_file"]),
-        ])
-        reg.register_capabilities("researcher", [
-            _cap("research", priority=5, tools=["web_search"]),
-        ])
+        reg.register_capabilities(
+            "coder",
+            [
+                _cap("coding", priority=5, tools=["exec_command", "write_file"]),
+            ],
+        )
+        reg.register_capabilities(
+            "researcher",
+            [
+                _cap("research", priority=5, tools=["web_search"]),
+            ],
+        )
         assert reg.find_best_agent(required_tools=["exec_command"]) == "coder"
 
     def test_find_best_agent_no_match(self) -> None:
@@ -301,7 +309,8 @@ class TestDelegation:
     async def test_delegation_no_backend(self) -> None:
         engine = DelegationEngine()
         result = await engine.delegate(
-            "task", to_agent="researcher",
+            "task",
+            to_agent="researcher",
         )
         assert result.status == DelegationStatus.SUCCESS
         assert result.raw_response == ""
@@ -310,7 +319,9 @@ class TestDelegation:
         router = _make_router(can_delegate=False)
         engine = DelegationEngine(agent_router=router)
         result = await engine.delegate(
-            "task", from_agent="a", to_agent="b",
+            "task",
+            from_agent="a",
+            to_agent="b",
         )
         assert result.status == DelegationStatus.REJECTED
         assert "cannot delegate" in result.validation_errors[0]
@@ -325,7 +336,9 @@ class TestDelegation:
         contract = TaskContract(timeout_seconds=0)  # Instant timeout
         engine = DelegationEngine(orchestrator=orch)
         result = await engine.delegate(
-            "task", to_agent="slow_agent", contract=contract,
+            "task",
+            to_agent="slow_agent",
+            contract=contract,
         )
         assert result.status == DelegationStatus.TIMEOUT
 
@@ -390,10 +403,12 @@ class TestDelegationChain:
     async def test_simple_chain(self) -> None:
         orch = _make_orchestrator('{"data": "gathered"}')
         engine = DelegationEngine(orchestrator=orch)
-        results = await engine.delegate_chain([
-            {"to_agent": "researcher", "task": "gather data"},
-            {"to_agent": "analyst", "task": "analyze ${data}"},
-        ])
+        results = await engine.delegate_chain(
+            [
+                {"to_agent": "researcher", "task": "gather data"},
+                {"to_agent": "analyst", "task": "analyze ${data}"},
+            ]
+        )
         assert len(results) == 2
         assert all(r.status == DelegationStatus.SUCCESS for r in results)
 
@@ -404,10 +419,12 @@ class TestDelegationChain:
         orch = MagicMock()
         orch._runner = fail_runner
         engine = DelegationEngine(orchestrator=orch)
-        results = await engine.delegate_chain([
-            {"to_agent": "a", "task": "step 1"},
-            {"to_agent": "b", "task": "step 2"},
-        ])
+        results = await engine.delegate_chain(
+            [
+                {"to_agent": "a", "task": "step 1"},
+                {"to_agent": "b", "task": "step 2"},
+            ]
+        )
         assert len(results) == 1
         assert results[0].status == DelegationStatus.FAILURE
 
@@ -427,9 +444,11 @@ class TestDelegationChain:
         orch = _make_orchestrator('{"name": "Alice"}')
         contract = TaskContract(output_schema={"name": "str"})
         engine = DelegationEngine(orchestrator=orch)
-        results = await engine.delegate_chain([
-            {"to_agent": "a", "task": "find name", "contract": contract},
-        ])
+        results = await engine.delegate_chain(
+            [
+                {"to_agent": "a", "task": "find name", "contract": contract},
+            ]
+        )
         assert len(results) == 1
         assert results[0].validated is True
 

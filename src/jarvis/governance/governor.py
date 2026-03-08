@@ -224,9 +224,7 @@ class GovernanceAgent:
                     evidence=evidence,
                     suggested_change=suggested_change,
                 )
-                row = self._conn.execute(
-                    "SELECT * FROM proposals WHERE id = ?", (pid,)
-                ).fetchone()
+                row = self._conn.execute("SELECT * FROM proposals WHERE id = ?", (pid,)).fetchone()
                 proposals.append(self._row_to_proposal(row))
         except Exception:
             logger.exception("Error checking budget")
@@ -284,9 +282,7 @@ class GovernanceAgent:
             return proposals
 
         try:
-            latency_stats = getattr(
-                self.task_profiler, "get_latency_stats", lambda: {}
-            )()
+            latency_stats = getattr(self.task_profiler, "get_latency_stats", lambda: {})()
             for tool_name, stats in latency_stats.items():
                 p95 = stats.get("p95", 0)
                 if p95 > 10.0:
@@ -357,9 +353,7 @@ class GovernanceAgent:
                     evidence=evidence,
                     suggested_change=suggested_change,
                 )
-                row = self._conn.execute(
-                    "SELECT * FROM proposals WHERE id = ?", (pid,)
-                ).fetchone()
+                row = self._conn.execute("SELECT * FROM proposals WHERE id = ?", (pid,)).fetchone()
                 proposals.append(self._row_to_proposal(row))
         except Exception:
             logger.exception("Error checking unused tools")
@@ -384,9 +378,7 @@ class GovernanceAgent:
         to an ImprovementDomain and checked. BLOCKED/COOLDOWN verdicts cause
         automatic rejection; NEEDS_APPROVAL passes through for human review.
         """
-        row = self._conn.execute(
-            "SELECT * FROM proposals WHERE id = ?", (proposal_id,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM proposals WHERE id = ?", (proposal_id,)).fetchone()
         if row is None:
             raise ValueError(f"Proposal {proposal_id} not found")
 
@@ -412,8 +404,7 @@ class GovernanceAgent:
                 logger.debug("improvement_gate_check_error", exc_info=True)
 
         self._conn.execute(
-            "UPDATE proposals SET status = 'approved', decision_reason = 'Approved' "
-            "WHERE id = ?",
+            "UPDATE proposals SET status = 'approved', decision_reason = 'Approved' WHERE id = ?",
             (proposal_id,),
         )
         self._conn.commit()
@@ -430,15 +421,12 @@ class GovernanceAgent:
 
     def reject_proposal(self, proposal_id: int, reason: str) -> None:
         """Reject a proposal with a given reason."""
-        row = self._conn.execute(
-            "SELECT * FROM proposals WHERE id = ?", (proposal_id,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM proposals WHERE id = ?", (proposal_id,)).fetchone()
         if row is None:
             raise ValueError(f"Proposal {proposal_id} not found")
 
         self._conn.execute(
-            "UPDATE proposals SET status = 'rejected', decision_reason = ? "
-            "WHERE id = ?",
+            "UPDATE proposals SET status = 'rejected', decision_reason = ? WHERE id = ?",
             (reason, proposal_id),
         )
         self._conn.commit()

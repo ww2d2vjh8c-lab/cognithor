@@ -69,8 +69,9 @@ class TestElementInfo:
         assert d["href"] == "https://x.com"
 
     def test_visibility(self):
-        e = ElementInfo(selector="#x", element_type=ElementType.BUTTON,
-                        is_visible=False, is_enabled=False)
+        e = ElementInfo(
+            selector="#x", element_type=ElementType.BUTTON, is_visible=False, is_enabled=False
+        )
         assert not e.is_visible
         assert not e.is_enabled
 
@@ -90,7 +91,8 @@ class TestFormField:
 class TestFormInfo:
     def test_basic(self):
         form = FormInfo(
-            action="/submit", method="POST",
+            action="/submit",
+            method="POST",
             fields=[FormField(name="email", field_type="email")],
             submit_selector="button[type=submit]",
         )
@@ -112,7 +114,8 @@ class TestPageState:
 
     def test_to_summary(self):
         state = PageState(
-            url="https://x.com", title="Test Page",
+            url="https://x.com",
+            title="Test Page",
             text_content="Hello World Content",
             links=[ElementInfo(selector="a", element_type=ElementType.LINK, text="Link1")],
             buttons=[ElementInfo(selector="button", element_type=ElementType.BUTTON, text="Click")],
@@ -156,8 +159,7 @@ class TestActionResult:
         assert "Element not found" in d["error"]
 
     def test_page_changed(self):
-        r = ActionResult(action_id="a3", success=True, page_changed=True,
-                         new_url="https://new.com")
+        r = ActionResult(action_id="a3", success=True, page_changed=True, new_url="https://new.com")
         d = r.to_dict()
         assert d["page_changed"]
         assert d["new_url"] == "https://new.com"
@@ -169,7 +171,9 @@ class TestBrowserWorkflow:
             name="Login Test",
             steps=[
                 BrowserAction(action_type=ActionType.NAVIGATE, params={"url": "https://x.com"}),
-                BrowserAction(action_type=ActionType.FILL, params={"selector": "#email", "value": "a@b.com"}),
+                BrowserAction(
+                    action_type=ActionType.FILL, params={"selector": "#email", "value": "a@b.com"}
+                ),
                 BrowserAction(action_type=ActionType.CLICK, params={"selector": "#submit"}),
             ],
         )
@@ -185,7 +189,7 @@ class TestBrowserWorkflow:
             ActionResult(action_id="2", success=True),
             ActionResult(action_id="3", success=False),
         ]
-        assert wf.success_rate == pytest.approx(2/3)
+        assert wf.success_rate == pytest.approx(2 / 3)
 
     def test_is_complete(self):
         wf = BrowserWorkflow(status=WorkflowStatus.COMPLETED)
@@ -196,9 +200,12 @@ class TestBrowserWorkflow:
         assert not wf3.is_complete
 
     def test_to_dict(self):
-        wf = BrowserWorkflow(name="Test", steps=[
-            BrowserAction(action_type=ActionType.CLICK, params={}),
-        ])
+        wf = BrowserWorkflow(
+            name="Test",
+            steps=[
+                BrowserAction(action_type=ActionType.CLICK, params={}),
+            ],
+        )
         d = wf.to_dict()
         assert d["name"] == "Test"
         assert d["steps"] == 1
@@ -232,24 +239,63 @@ def _mock_page(evaluate_results: dict[str, Any] | None = None):
 
     default_results = {
         "links": [],
-        "buttons": [{"selector": "#submit", "text": "Submit", "visible": True,
-                      "enabled": True, "ariaLabel": "", "type": "submit"}],
-        "inputs": [{"selector": "#email", "name": "email", "type": "email",
-                     "value": "", "placeholder": "Enter email", "label": "E-Mail",
-                     "required": True, "visible": True, "enabled": True,
-                     "ariaLabel": "", "options": []}],
-        "forms": [{"action": "/login", "method": "POST", "name": "loginForm",
-                    "fields": [
-                        {"name": "email", "type": "email", "label": "E-Mail",
-                         "value": "", "placeholder": "Enter email",
-                         "required": True, "options": [], "selector": "#email"}
-                    ],
-                    "submitSelector": "#submit", "selector": "form"}],
-        "tables": [{"headers": ["Name", "Value"], "rows": [["A", "1"]], "rowCount": 1, "colCount": 2}],
+        "buttons": [
+            {
+                "selector": "#submit",
+                "text": "Submit",
+                "visible": True,
+                "enabled": True,
+                "ariaLabel": "",
+                "type": "submit",
+            }
+        ],
+        "inputs": [
+            {
+                "selector": "#email",
+                "name": "email",
+                "type": "email",
+                "value": "",
+                "placeholder": "Enter email",
+                "label": "E-Mail",
+                "required": True,
+                "visible": True,
+                "enabled": True,
+                "ariaLabel": "",
+                "options": [],
+            }
+        ],
+        "forms": [
+            {
+                "action": "/login",
+                "method": "POST",
+                "name": "loginForm",
+                "fields": [
+                    {
+                        "name": "email",
+                        "type": "email",
+                        "label": "E-Mail",
+                        "value": "",
+                        "placeholder": "Enter email",
+                        "required": True,
+                        "options": [],
+                        "selector": "#email",
+                    }
+                ],
+                "submitSelector": "#submit",
+                "selector": "form",
+            }
+        ],
+        "tables": [
+            {"headers": ["Name", "Value"], "rows": [["A", "1"]], "rowCount": 1, "colCount": 2}
+        ],
         "text": "Example Page Content",
         "html_length": 5000,
-        "cookie_banner": {"found": True, "selector": ".cookie-banner",
-                           "acceptSelector": ".cookie-banner button", "text": "We use cookies"},
+        "cookie_banner": {
+            "found": True,
+            "selector": ".cookie-banner",
+            "acceptSelector": ".cookie-banner button",
+            "text": "We use cookies",
+        },
     }
     if evaluate_results:
         default_results.update(evaluate_results)
@@ -374,7 +420,8 @@ class TestSessionSnapshot:
 
     def test_with_cookies(self):
         snap = SessionSnapshot(
-            session_id="s1", domain="x.com",
+            session_id="s1",
+            domain="x.com",
             cookies=[{"name": "sid", "value": "abc123", "domain": "x.com"}],
         )
         assert len(snap.cookies) == 1
@@ -389,7 +436,8 @@ class TestSessionManager:
     def test_save_and_load(self, tmpdir):
         mgr = SessionManager(storage_dir=tmpdir)
         snap = SessionSnapshot(
-            session_id="test-1", domain="example.com",
+            session_id="test-1",
+            domain="example.com",
             cookies=[{"name": "c", "value": "v"}],
             local_storage={"key": "val"},
             last_url="https://example.com",
@@ -427,10 +475,20 @@ class TestSessionManager:
         mgr = SessionManager(storage_dir=tmpdir)
         page = _mock_page()
         page.context = AsyncMock()
-        page.context.cookies = AsyncMock(return_value=[
-            {"name": "sid", "value": "xyz", "domain": "example.com",
-             "path": "/", "expires": -1, "httpOnly": True, "secure": False, "sameSite": "Lax"},
-        ])
+        page.context.cookies = AsyncMock(
+            return_value=[
+                {
+                    "name": "sid",
+                    "value": "xyz",
+                    "domain": "example.com",
+                    "path": "/",
+                    "expires": -1,
+                    "httpOnly": True,
+                    "secure": False,
+                    "sameSite": "Lax",
+                },
+            ]
+        )
 
         snap = await mgr.save_from_page(page, "page-session")
         assert snap.domain == "example.com"
@@ -441,7 +499,8 @@ class TestSessionManager:
     async def test_restore_to_context(self, tmpdir):
         mgr = SessionManager(storage_dir=tmpdir)
         snap = SessionSnapshot(
-            session_id="restore-1", domain="x.com",
+            session_id="restore-1",
+            domain="x.com",
             cookies=[{"name": "c", "value": "v"}],
         )
         mgr.save_session(snap)
@@ -495,6 +554,7 @@ class TestBrowserAgentNoPlaywright:
 
     def test_stats_not_running(self):
         from jarvis.browser.agent import BrowserAgent
+
         agent = BrowserAgent()
         stats = agent.stats()
         assert not stats["running"]
@@ -776,6 +836,7 @@ class TestBrowserAgentMocked:
 
     def test_not_started_error(self):
         from jarvis.browser.agent import BrowserAgent
+
         agent = BrowserAgent()
         with pytest.raises(RuntimeError, match="not started"):
             asyncio.get_event_loop().run_until_complete(agent.click("#x"))
@@ -824,9 +885,15 @@ class TestBrowserUseTools:
         assert len(registered_tools) >= 9
 
         expected = [
-            "browser_navigate", "browser_click", "browser_fill",
-            "browser_fill_form", "browser_screenshot", "browser_extract",
-            "browser_analyze", "browser_execute_js", "browser_tab",
+            "browser_navigate",
+            "browser_click",
+            "browser_fill",
+            "browser_fill_form",
+            "browser_screenshot",
+            "browser_extract",
+            "browser_analyze",
+            "browser_execute_js",
+            "browser_tab",
         ]
         for tool_name in expected:
             assert tool_name in registered_tools, f"Missing tool: {tool_name}"
@@ -843,12 +910,14 @@ class TestBrowserAgentVision:
     def test_init_without_vision(self) -> None:
         """Bestehender Code funktioniert ohne vision_analyzer."""
         from jarvis.browser.agent import BrowserAgent
+
         agent = BrowserAgent()
         assert agent._vision is None
 
     def test_init_with_vision(self) -> None:
         """vision_analyzer wird korrekt gespeichert."""
         from jarvis.browser.agent import BrowserAgent
+
         mock_vision = MagicMock()
         agent = BrowserAgent(vision_analyzer=mock_vision)
         assert agent._vision is mock_vision
@@ -856,6 +925,7 @@ class TestBrowserAgentVision:
     def test_stats_without_vision(self) -> None:
         """Stats ohne Vision enthalten kein 'vision' Feld."""
         from jarvis.browser.agent import BrowserAgent
+
         agent = BrowserAgent()
         s = agent.stats()
         assert "vision" not in s
@@ -863,6 +933,7 @@ class TestBrowserAgentVision:
     def test_stats_with_vision(self) -> None:
         """Stats mit Vision enthalten Vision-Stats."""
         from jarvis.browser.agent import BrowserAgent
+
         mock_vision = MagicMock()
         mock_vision.stats.return_value = {"enabled": True, "calls": 5}
         agent = BrowserAgent(vision_analyzer=mock_vision)
@@ -903,9 +974,9 @@ class TestBrowserAgentVision:
 
         mock_vision = AsyncMock()
         mock_vision.is_enabled = True
-        mock_vision.analyze_screenshot = AsyncMock(return_value=VisionAnalysisResult(
-            success=True, description="Login-Formular sichtbar"
-        ))
+        mock_vision.analyze_screenshot = AsyncMock(
+            return_value=VisionAnalysisResult(success=True, description="Login-Formular sichtbar")
+        )
 
         agent = BrowserAgent(vision_analyzer=mock_vision)
         agent._running = True
@@ -967,9 +1038,9 @@ class TestBrowserAgentVision:
 
         mock_vision = AsyncMock()
         mock_vision.is_enabled = True
-        mock_vision.find_element_by_vision = AsyncMock(return_value=VisionAnalysisResult(
-            success=True, description="Button oben rechts, blau"
-        ))
+        mock_vision.find_element_by_vision = AsyncMock(
+            return_value=VisionAnalysisResult(success=True, description="Button oben rechts, blau")
+        )
 
         agent = BrowserAgent(vision_analyzer=mock_vision)
         agent._running = True

@@ -36,6 +36,7 @@ class FakeApp:
         def decorator(fn):
             self.routes[f"{method} {path}"] = fn
             return fn
+
         return decorator
 
     def get(self, path: str, **kwargs: Any):
@@ -91,6 +92,7 @@ def _setup_dag_app(
     gw._dag_workflow_engine = dag_engine
 
     from jarvis.channels.config_routes import create_config_routes
+
     create_config_routes(app, config_manager, gateway=gw)
 
     return app.routes["GET /api/v1/workflows/dag/runs/{run_id}"]
@@ -106,7 +108,9 @@ class TestPathTraversalRejection:
 
     @pytest.mark.asyncio
     async def test_dotdot_rejected(
-        self, tmp_path: Path, config_manager: ConfigManager,
+        self,
+        tmp_path: Path,
+        config_manager: ConfigManager,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
@@ -118,7 +122,9 @@ class TestPathTraversalRejection:
 
     @pytest.mark.asyncio
     async def test_single_dotdot_rejected(
-        self, tmp_path: Path, config_manager: ConfigManager,
+        self,
+        tmp_path: Path,
+        config_manager: ConfigManager,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
@@ -129,7 +135,9 @@ class TestPathTraversalRejection:
 
     @pytest.mark.asyncio
     async def test_nested_traversal_rejected(
-        self, tmp_path: Path, config_manager: ConfigManager,
+        self,
+        tmp_path: Path,
+        config_manager: ConfigManager,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
@@ -140,7 +148,9 @@ class TestPathTraversalRejection:
 
     @pytest.mark.asyncio
     async def test_dotdot_slash_prefix_rejected(
-        self, tmp_path: Path, config_manager: ConfigManager,
+        self,
+        tmp_path: Path,
+        config_manager: ConfigManager,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
@@ -155,7 +165,9 @@ class TestPathTraversalNoFileLeak:
 
     @pytest.mark.asyncio
     async def test_traversal_does_not_read_outside(
-        self, tmp_path: Path, config_manager: ConfigManager,
+        self,
+        tmp_path: Path,
+        config_manager: ConfigManager,
     ) -> None:
         """Sensitive Datei ausserhalb von checkpoint_dir wird nicht gelesen."""
         cp_dir = tmp_path / "checkpoints"
@@ -184,7 +196,9 @@ class TestNormalRunIdWorks:
 
     @pytest.mark.asyncio
     async def test_valid_run_id_returns_data(
-        self, tmp_path: Path, config_manager: ConfigManager,
+        self,
+        tmp_path: Path,
+        config_manager: ConfigManager,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
@@ -195,7 +209,8 @@ class TestNormalRunIdWorks:
             "node_results": {},
         }
         (cp_dir / "abc123.json").write_text(
-            json.dumps(run_data), encoding="utf-8",
+            json.dumps(run_data),
+            encoding="utf-8",
         )
 
         handler = _setup_dag_app(FakeApp(), config_manager, cp_dir)
@@ -205,7 +220,9 @@ class TestNormalRunIdWorks:
 
     @pytest.mark.asyncio
     async def test_nonexistent_run_returns_404(
-        self, tmp_path: Path, config_manager: ConfigManager,
+        self,
+        tmp_path: Path,
+        config_manager: ConfigManager,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
@@ -216,14 +233,17 @@ class TestNormalRunIdWorks:
 
     @pytest.mark.asyncio
     async def test_uuid_style_run_id(
-        self, tmp_path: Path, config_manager: ConfigManager,
+        self,
+        tmp_path: Path,
+        config_manager: ConfigManager,
     ) -> None:
         cp_dir = tmp_path / "checkpoints"
         cp_dir.mkdir()
         run_id = "550e8400-e29b-41d4-a716-446655440000"
         run_data = {"id": run_id, "status": "ok"}
         (cp_dir / f"{run_id}.json").write_text(
-            json.dumps(run_data), encoding="utf-8",
+            json.dumps(run_data),
+            encoding="utf-8",
         )
 
         handler = _setup_dag_app(FakeApp(), config_manager, cp_dir)
@@ -241,6 +261,7 @@ class TestSourceLevelChecks:
 
     def _get_source(self) -> str:
         from jarvis.channels import config_routes
+
         return inspect.getsource(config_routes._register_workflow_graph_routes)
 
     def test_uses_resolve(self) -> None:

@@ -33,8 +33,8 @@ _DEFAULT_MAX_EXTRACT_LENGTH = 15_000
 _DEFAULT_MAX_IMAGE_FILE_SIZE = 10_485_760
 
 # Maximale Dateigroessen fuer Security-Limits
-_DEFAULT_MAX_EXTRACT_FILE_SIZE = 52_428_800   # 50 MB für Dokument-Extraktion
-_DEFAULT_MAX_AUDIO_FILE_SIZE = 104_857_600    # 100 MB für Audio-Transkription
+_DEFAULT_MAX_EXTRACT_FILE_SIZE = 52_428_800  # 50 MB für Dokument-Extraktion
+_DEFAULT_MAX_AUDIO_FILE_SIZE = 104_857_600  # 100 MB für Audio-Transkription
 
 # Maximale Bilddimensionen und Standard-Resize-Werte
 _DEFAULT_MAX_IMAGE_DIMENSION = 8192
@@ -90,11 +90,21 @@ class MediaPipeline:
 
         # Konfigurierbare Limits (aus config.media.* mit Fallback auf Defaults)
         _media = getattr(config, "media", None)
-        self._max_extract_length: int = getattr(_media, "max_extract_length", _DEFAULT_MAX_EXTRACT_LENGTH)
-        self._max_image_file_size: int = getattr(_media, "max_image_file_size", _DEFAULT_MAX_IMAGE_FILE_SIZE)
-        self._max_extract_file_size: int = getattr(_media, "max_extract_file_size", _DEFAULT_MAX_EXTRACT_FILE_SIZE)
-        self._max_audio_file_size: int = getattr(_media, "max_audio_file_size", _DEFAULT_MAX_AUDIO_FILE_SIZE)
-        self._max_image_dimension: int = getattr(_media, "max_image_dimension", _DEFAULT_MAX_IMAGE_DIMENSION)
+        self._max_extract_length: int = getattr(
+            _media, "max_extract_length", _DEFAULT_MAX_EXTRACT_LENGTH
+        )
+        self._max_image_file_size: int = getattr(
+            _media, "max_image_file_size", _DEFAULT_MAX_IMAGE_FILE_SIZE
+        )
+        self._max_extract_file_size: int = getattr(
+            _media, "max_extract_file_size", _DEFAULT_MAX_EXTRACT_FILE_SIZE
+        )
+        self._max_audio_file_size: int = getattr(
+            _media, "max_audio_file_size", _DEFAULT_MAX_AUDIO_FILE_SIZE
+        )
+        self._max_image_dimension: int = getattr(
+            _media, "max_image_dimension", _DEFAULT_MAX_IMAGE_DIMENSION
+        )
         self._default_max_width: int = getattr(_media, "default_max_width", _DEFAULT_MAX_WIDTH)
         self._default_max_height: int = getattr(_media, "default_max_height", _DEFAULT_MAX_HEIGHT)
 
@@ -154,7 +164,9 @@ class MediaPipeline:
         """
         path = self._validate_input_path(audio_path)
         if path is None:
-            return MediaResult(success=False, error=f"Datei nicht gefunden oder ungueltig: {audio_path}")
+            return MediaResult(
+                success=False, error=f"Datei nicht gefunden oder ungueltig: {audio_path}"
+            )
 
         file_size = path.stat().st_size
         if file_size > self._max_audio_file_size:
@@ -226,7 +238,9 @@ class MediaPipeline:
 
         path = self._validate_input_path(image_path)
         if path is None:
-            return MediaResult(success=False, error=f"Bild nicht gefunden oder ungueltig: {image_path}")
+            return MediaResult(
+                success=False, error=f"Bild nicht gefunden oder ungueltig: {image_path}"
+            )
 
         suffix = path.suffix.lower()
         if suffix not in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"):
@@ -248,14 +262,24 @@ class MediaPipeline:
 
             # Backend-Erkennung: gpt-* und o*-Modelle → OpenAI, sonst Ollama
             _is_openai = openai_api_key and (
-                model.startswith("gpt-") or model.startswith("o1") or model.startswith("o3") or model.startswith("o4")
+                model.startswith("gpt-")
+                or model.startswith("o1")
+                or model.startswith("o3")
+                or model.startswith("o4")
             )
 
             async with httpx.AsyncClient(timeout=180.0, trust_env=False) as client:
                 if _is_openai:
                     # OpenAI Chat Completions mit Vision
                     suffix = path.suffix.lower().lstrip(".")
-                    mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "gif": "gif", "webp": "webp", "bmp": "bmp"}.get(suffix, "jpeg")
+                    mime = {
+                        "jpg": "jpeg",
+                        "jpeg": "jpeg",
+                        "png": "png",
+                        "gif": "gif",
+                        "webp": "webp",
+                        "bmp": "bmp",
+                    }.get(suffix, "jpeg")
                     resp = await client.post(
                         f"{openai_base_url}/chat/completions",
                         headers={"Authorization": f"Bearer {openai_api_key}"},
@@ -266,7 +290,12 @@ class MediaPipeline:
                                     "role": "user",
                                     "content": [
                                         {"type": "text", "text": prompt},
-                                        {"type": "image_url", "image_url": {"url": f"data:image/{mime};base64,{image_data}"}},
+                                        {
+                                            "type": "image_url",
+                                            "image_url": {
+                                                "url": f"data:image/{mime};base64,{image_data}"
+                                            },
+                                        },
                                     ],
                                 }
                             ],
@@ -335,7 +364,9 @@ class MediaPipeline:
         """
         path = self._validate_input_path(file_path)
         if path is None:
-            return MediaResult(success=False, error=f"Datei nicht gefunden oder ungueltig: {file_path}")
+            return MediaResult(
+                success=False, error=f"Datei nicht gefunden oder ungueltig: {file_path}"
+            )
 
         file_size = path.stat().st_size
         if file_size > self._max_extract_file_size:
@@ -364,7 +395,10 @@ class MediaPipeline:
                 )
 
             if len(text) > self._max_extract_length:
-                text = text[:self._max_extract_length] + f"\n\n[... gekürzt, {len(text)} Zeichen gesamt]"
+                text = (
+                    text[: self._max_extract_length]
+                    + f"\n\n[... gekürzt, {len(text)} Zeichen gesamt]"
+                )
 
             log.info("text_extracted", path=file_path, length=len(text), format=suffix)
             return MediaResult(
@@ -415,9 +449,7 @@ class MediaPipeline:
             paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
             return "\n\n".join(paragraphs)
         except ImportError:
-            raise ImportError(
-                "python-docx nicht installiert. pip install python-docx"
-            ) from None
+            raise ImportError("python-docx nicht installiert. pip install python-docx") from None
 
     def _extract_html(self, path: Path) -> str:
         """HTML-Textextraktion (einfach, ohne BeautifulSoup-Pflicht)."""
@@ -550,16 +582,21 @@ class MediaPipeline:
 
         path = self._validate_input_path(input_path)
         if path is None:
-            return MediaResult(success=False, error=f"Datei nicht gefunden oder ungueltig: {input_path}")
+            return MediaResult(
+                success=False, error=f"Datei nicht gefunden oder ungueltig: {input_path}"
+            )
 
         output_path = self._workspace / f"{path.stem}_converted.{output_format}"
 
         try:
             proc = await asyncio.create_subprocess_exec(
                 "ffmpeg",
-                "-i", str(path),
-                "-ar", str(sample_rate),
-                "-ac", "1",  # Mono
+                "-i",
+                str(path),
+                "-ar",
+                str(sample_rate),
+                "-ac",
+                "1",  # Mono
                 "-y",  # Überschreiben
                 str(output_path),
                 stdout=asyncio.subprocess.PIPE,
@@ -617,7 +654,9 @@ class MediaPipeline:
 
         path = self._validate_input_path(image_path)
         if path is None:
-            return MediaResult(success=False, error=f"Bild nicht gefunden oder ungueltig: {image_path}")
+            return MediaResult(
+                success=False, error=f"Bild nicht gefunden oder ungueltig: {image_path}"
+            )
 
         try:
             from PIL import Image
@@ -679,7 +718,9 @@ class MediaPipeline:
         """
         fmt = fmt.lower().strip()
         if fmt not in ("pdf", "docx"):
-            return MediaResult(success=False, error=f"Nicht unterstütztes Format: {fmt}. Erlaubt: pdf, docx")
+            return MediaResult(
+                success=False, error=f"Nicht unterstütztes Format: {fmt}. Erlaubt: pdf, docx"
+            )
 
         if not content.strip():
             return MediaResult(success=False, error="Leerer Inhalt")
@@ -696,9 +737,13 @@ class MediaPipeline:
 
         try:
             if fmt == "pdf":
-                await loop.run_in_executor(None, self._generate_pdf, output_path, content, title, author)
+                await loop.run_in_executor(
+                    None, self._generate_pdf, output_path, content, title, author
+                )
             else:
-                await loop.run_in_executor(None, self._generate_docx, output_path, content, title, author)
+                await loop.run_in_executor(
+                    None, self._generate_docx, output_path, content, title, author
+                )
 
             log.info("document_exported", path=str(output_path), format=fmt)
             return MediaResult(
@@ -731,21 +776,29 @@ class MediaPipeline:
             # Suche einen Unicode-fähigen TrueType-Font
             font_candidates = [
                 # DejaVu Sans (Regular + Bold)
-                ("DejaVu", [
-                    Path("C:/Windows/Fonts/DejaVuSans.ttf"),
-                    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
-                    Path.home() / ".fonts" / "DejaVuSans.ttf",
-                ], [
-                    Path("C:/Windows/Fonts/DejaVuSans-Bold.ttf"),
-                    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
-                    Path.home() / ".fonts" / "DejaVuSans-Bold.ttf",
-                ]),
+                (
+                    "DejaVu",
+                    [
+                        Path("C:/Windows/Fonts/DejaVuSans.ttf"),
+                        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+                        Path.home() / ".fonts" / "DejaVuSans.ttf",
+                    ],
+                    [
+                        Path("C:/Windows/Fonts/DejaVuSans-Bold.ttf"),
+                        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+                        Path.home() / ".fonts" / "DejaVuSans-Bold.ttf",
+                    ],
+                ),
                 # Arial als Fallback (Windows)
-                ("ArialUni", [
-                    Path("C:/Windows/Fonts/arial.ttf"),
-                ], [
-                    Path("C:/Windows/Fonts/arialbd.ttf"),
-                ]),
+                (
+                    "ArialUni",
+                    [
+                        Path("C:/Windows/Fonts/arial.ttf"),
+                    ],
+                    [
+                        Path("C:/Windows/Fonts/arialbd.ttf"),
+                    ],
+                ),
             ]
             for fname, regular_paths, bold_paths in font_candidates:
                 regular = next((p for p in regular_paths if p.exists()), None)
@@ -840,6 +893,7 @@ class MediaPipeline:
 
         # CWE-22: Validate voice name against path traversal
         from jarvis.security.sanitizer import validate_voice_name
+
         try:
             validate_voice_name(voice)
         except ValueError as exc:
@@ -851,8 +905,10 @@ class MediaPipeline:
         try:
             proc = await asyncio.create_subprocess_exec(
                 "piper",
-                "--model", voice,
-                "--output_file", str(out),
+                "--model",
+                voice,
+                "--output_file",
+                str(out),
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -874,9 +930,12 @@ class MediaPipeline:
         try:
             proc = await asyncio.create_subprocess_exec(
                 "espeak-ng",
-                "-v", "de",
-                "-w", str(out),
-                "--", text,
+                "-v",
+                "de",
+                "-w",
+                str(out),
+                "--",
+                text,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -1070,10 +1129,7 @@ MEDIA_TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
         },
     },
     "media_tts": {
-        "description": (
-            "Konvertiert Text zu Sprache (WAV). "
-            "Lokal via Piper TTS oder eSpeak-NG."
-        ),
+        "description": ("Konvertiert Text zu Sprache (WAV). Lokal via Piper TTS oder eSpeak-NG."),
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -1157,23 +1213,42 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         MediaPipeline-Instanz.
     """
     # Vision-Modelle aus Config oder Fallback-Defaults
-    vision_model = getattr(config, "vision_model", _DEFAULT_VISION_MODEL) if config else _DEFAULT_VISION_MODEL
-    vision_model_detail = getattr(config, "vision_model_detail", _DEFAULT_VISION_MODEL_DETAIL) if config else _DEFAULT_VISION_MODEL_DETAIL
-    ollama_url = getattr(getattr(config, "ollama", None), "base_url", "http://localhost:11434") if config else "http://localhost:11434"
+    vision_model = (
+        getattr(config, "vision_model", _DEFAULT_VISION_MODEL) if config else _DEFAULT_VISION_MODEL
+    )
+    vision_model_detail = (
+        getattr(config, "vision_model_detail", _DEFAULT_VISION_MODEL_DETAIL)
+        if config
+        else _DEFAULT_VISION_MODEL_DETAIL
+    )
+    ollama_url = (
+        getattr(getattr(config, "ollama", None), "base_url", "http://localhost:11434")
+        if config
+        else "http://localhost:11434"
+    )
 
     pipeline = MediaPipeline(config=config)
 
-    async def _transcribe(audio_path: str, language: str = "de", model: str = "base", **_: Any) -> str:
+    async def _transcribe(
+        audio_path: str, language: str = "de", model: str = "base", **_: Any
+    ) -> str:
         result = await pipeline.transcribe_audio(
-            audio_path, language=language, model=model,
+            audio_path,
+            language=language,
+            model=model,
         )
         return result.text if result.success else f"Fehler: {result.error}"
 
-    async def _analyze_image(image_path: str, prompt: str = DEFAULT_IMAGE_PROMPT, detail: bool = False, **_: Any) -> str:
+    async def _analyze_image(
+        image_path: str, prompt: str = DEFAULT_IMAGE_PROMPT, detail: bool = False, **_: Any
+    ) -> str:
         model = vision_model_detail if detail else vision_model
         log.info("vision_model_selected", model=model, detail=detail)
         result = await pipeline.analyze_image(
-            image_path, prompt=prompt, model=model, ollama_url=ollama_url,
+            image_path,
+            prompt=prompt,
+            model=model,
+            ollama_url=ollama_url,
         )
         return result.text if result.success else f"Fehler: {result.error}"
 
@@ -1181,15 +1256,23 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         result = await pipeline.extract_text(file_path)
         return result.text if result.success else f"Fehler: {result.error}"
 
-    async def _convert_audio(input_path: str, output_format: str = "wav", sample_rate: int = 16000, **_: Any) -> str:
+    async def _convert_audio(
+        input_path: str, output_format: str = "wav", sample_rate: int = 16000, **_: Any
+    ) -> str:
         result = await pipeline.convert_audio(
-            input_path, output_format=output_format, sample_rate=sample_rate,
+            input_path,
+            output_format=output_format,
+            sample_rate=sample_rate,
         )
         return result.text if result.success else f"Fehler: {result.error}"
 
-    async def _resize_image(image_path: str, max_width: int | None = None, max_height: int | None = None, **_: Any) -> str:
+    async def _resize_image(
+        image_path: str, max_width: int | None = None, max_height: int | None = None, **_: Any
+    ) -> str:
         result = await pipeline.resize_image(
-            image_path, max_width=max_width, max_height=max_height,
+            image_path,
+            max_width=max_width,
+            max_height=max_height,
         )
         return result.text if result.success else f"Fehler: {result.error}"
 
@@ -1205,7 +1288,9 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         **_: Any,
     ) -> str:
         result = await pipeline.analyze_document(
-            path, analysis_type=analysis_type, language=language,
+            path,
+            analysis_type=analysis_type,
+            language=language,
             save_to_vault=save_to_vault,
         )
         return result
@@ -1219,7 +1304,11 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         **_: Any,
     ) -> str:
         result = await pipeline.export_document(
-            content, fmt=format, title=title, author=author, filename=filename,
+            content,
+            fmt=format,
+            title=title,
+            author=author,
+            filename=filename,
         )
         if result.success:
             return result.output_path or result.text

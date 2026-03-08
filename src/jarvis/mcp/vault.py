@@ -226,7 +226,9 @@ class VaultTools:
 
         tag_list = _parse_tags(tags)
         source_list = [s.strip() for s in sources.split(",") if s.strip()] if sources else []
-        link_list = [n.strip() for n in linked_notes.split(",") if n.strip()] if linked_notes else []
+        link_list = (
+            [n.strip() for n in linked_notes.split(",") if n.strip()] if linked_notes else []
+        )
 
         folder_name = self._resolve_folder(folder)
         slug = _slugify(title)
@@ -322,11 +324,13 @@ class VaultTools:
                 rel_path = str(md_file.relative_to(self._vault_root))
                 # Kontext-Snippet extrahieren
                 snippet = self._extract_snippet(content, query_lower)
-                results.append({
-                    "title": fm_title,
-                    "path": rel_path,
-                    "snippet": snippet,
-                })
+                results.append(
+                    {
+                        "title": fm_title,
+                        "path": rel_path,
+                        "snippet": snippet,
+                    }
+                )
 
             if len(results) >= limit:
                 break
@@ -460,13 +464,19 @@ class VaultTools:
         if add_tags.strip():
             new_tags = _parse_tags(add_tags)
             existing_tags = self._extract_frontmatter_tags(content)
-            all_tags = list(dict.fromkeys(existing_tags + new_tags))  # dedupliziert, Reihenfolge erhalten
+            all_tags = list(
+                dict.fromkeys(existing_tags + new_tags)
+            )  # dedupliziert, Reihenfolge erhalten
             content = self._replace_frontmatter_field(content, "tags", f"[{', '.join(all_tags)}]")
 
             # Index aktualisieren
             title = self._extract_frontmatter_field(content, "title") or note_path.stem
             rel_path = str(note_path.relative_to(self._vault_root))
-            folder = note_path.relative_to(self._vault_root).parts[0] if len(note_path.relative_to(self._vault_root).parts) > 1 else ""
+            folder = (
+                note_path.relative_to(self._vault_root).parts[0]
+                if len(note_path.relative_to(self._vault_root).parts) > 1
+                else ""
+            )
             self._update_index(title, rel_path, all_tags, folder)
 
         # Updated-Timestamp aktualisieren
@@ -502,12 +512,20 @@ class VaultTools:
         if target_path is None:
             return f"Ziel-Notiz nicht gefunden: {target_note}"
 
-        source_title = self._extract_frontmatter_field(
-            source_path.read_text(encoding="utf-8"), "title",
-        ) or source_path.stem
-        target_title = self._extract_frontmatter_field(
-            target_path.read_text(encoding="utf-8"), "title",
-        ) or target_path.stem
+        source_title = (
+            self._extract_frontmatter_field(
+                source_path.read_text(encoding="utf-8"),
+                "title",
+            )
+            or source_path.stem
+        )
+        target_title = (
+            self._extract_frontmatter_field(
+                target_path.read_text(encoding="utf-8"),
+                "title",
+            )
+            or target_path.stem
+        )
 
         # [[Backlink]] in Quell-Notiz einfügen
         source_content = source_path.read_text(encoding="utf-8")
@@ -816,8 +834,7 @@ def register_vault_tools(
         "vault_read",
         vault.vault_read,
         description=(
-            "Liest eine einzelne Notiz aus dem Vault. "
-            "Akzeptiert Titel, relativen Pfad oder Slug."
+            "Liest eine einzelne Notiz aus dem Vault. Akzeptiert Titel, relativen Pfad oder Slug."
         ),
         input_schema={
             "type": "object",
@@ -864,8 +881,7 @@ def register_vault_tools(
         "vault_link",
         vault.vault_link,
         description=(
-            "Erstellt eine bidirektionale [[Backlink]]-Verknüpfung "
-            "zwischen zwei Notizen im Vault."
+            "Erstellt eine bidirektionale [[Backlink]]-Verknüpfung zwischen zwei Notizen im Vault."
         ),
         input_schema={
             "type": "object",
@@ -885,6 +901,13 @@ def register_vault_tools(
 
     log.info(
         "vault_tools_registered",
-        tools=["vault_save", "vault_search", "vault_list", "vault_read", "vault_update", "vault_link"],
+        tools=[
+            "vault_save",
+            "vault_search",
+            "vault_list",
+            "vault_read",
+            "vault_update",
+            "vault_link",
+        ],
     )
     return vault

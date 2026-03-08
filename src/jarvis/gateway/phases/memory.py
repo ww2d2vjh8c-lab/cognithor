@@ -29,6 +29,7 @@ def declare_memory_attrs(config: Any) -> PhaseResult:
     # Phase 12: Memory-Hygiene-Engine
     try:
         from jarvis.memory.hygiene import MemoryHygieneEngine
+
         result["memory_hygiene"] = MemoryHygieneEngine()
     except Exception:
         log.debug("memory_hygiene_init_skipped", exc_info=True)
@@ -36,6 +37,7 @@ def declare_memory_attrs(config: Any) -> PhaseResult:
     # Phase 26: Memory-Integrity
     try:
         from jarvis.memory.integrity import IntegrityChecker, DecisionExplainer
+
         result["integrity_checker"] = IntegrityChecker()
         result["decision_explainer"] = DecisionExplainer()
     except Exception:

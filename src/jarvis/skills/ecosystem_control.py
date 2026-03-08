@@ -103,7 +103,11 @@ class SkillCurator:
         """Automatische Prüfung aller Kriterien."""
         self._counter += 1
         all_passed = all(criteria_results.values())
-        status = CurationStatus.APPROVED if all_passed and not self._require_manual else CurationStatus.UNDER_REVIEW
+        status = (
+            CurationStatus.APPROVED
+            if all_passed and not self._require_manual
+            else CurationStatus.UNDER_REVIEW
+        )
         if not all_passed:
             status = CurationStatus.REJECTED
 
@@ -118,7 +122,9 @@ class SkillCurator:
         self._reviews[skill_id] = review
         return review
 
-    def manual_approve(self, skill_id: str, reviewer: str, comments: str = "") -> CurationReview | None:
+    def manual_approve(
+        self, skill_id: str, reviewer: str, comments: str = ""
+    ) -> CurationReview | None:
         review = self._reviews.get(skill_id)
         if review:
             review.status = CurationStatus.APPROVED
@@ -127,7 +133,9 @@ class SkillCurator:
             review.reviewed_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         return review
 
-    def manual_reject(self, skill_id: str, reviewer: str, reason: str = "") -> CurationReview | None:
+    def manual_reject(
+        self, skill_id: str, reviewer: str, reason: str = ""
+    ) -> CurationReview | None:
         review = self._reviews.get(skill_id)
         if review:
             review.status = CurationStatus.REJECTED
@@ -152,7 +160,11 @@ class SkillCurator:
         return review.status == CurationStatus.APPROVED if review else False
 
     def pending_reviews(self) -> list[CurationReview]:
-        return [r for r in self._reviews.values() if r.status in (CurationStatus.PENDING, CurationStatus.UNDER_REVIEW)]
+        return [
+            r
+            for r in self._reviews.values()
+            if r.status in (CurationStatus.PENDING, CurationStatus.UNDER_REVIEW)
+        ]
 
     @property
     def review_count(self) -> int:
@@ -162,7 +174,11 @@ class SkillCurator:
         reviews = list(self._reviews.values())
         return {
             "total_reviews": len(reviews),
-            "pending": sum(1 for r in reviews if r.status in (CurationStatus.PENDING, CurationStatus.UNDER_REVIEW)),
+            "pending": sum(
+                1
+                for r in reviews
+                if r.status in (CurationStatus.PENDING, CurationStatus.UNDER_REVIEW)
+            ),
             "approved": sum(1 for r in reviews if r.status == CurationStatus.APPROVED),
             "rejected": sum(1 for r in reviews if r.status == CurationStatus.REJECTED),
             "suspended": sum(1 for r in reviews if r.status == CurationStatus.SUSPENDED),
@@ -277,7 +293,9 @@ class FraudSignal:
 
     signal_id: str
     skill_id: str
-    signal_type: str  # "name_squatting", "crypto_mining", "data_theft", "malware", "reputation_gaming"
+    signal_type: (
+        str  # "name_squatting", "crypto_mining", "data_theft", "malware", "reputation_gaming"
+    )
     confidence: float
     evidence: str = ""
     detected_at: str = ""
@@ -303,29 +321,46 @@ class FraudDetector:
     """
 
     CRYPTO_PATTERNS = [
-        r"crypto\s*min", r"bitcoin\s*min", r"ethereum\s*min",
-        r"monero", r"coinhive", r"wasm.*min",
+        r"crypto\s*min",
+        r"bitcoin\s*min",
+        r"ethereum\s*min",
+        r"monero",
+        r"coinhive",
+        r"wasm.*min",
     ]
 
     DATA_THEFT_PATTERNS = [
-        r"exfiltrat", r"phone\s*home", r"send.*secret",
-        r"upload.*credential", r"steal.*data",
+        r"exfiltrat",
+        r"phone\s*home",
+        r"send.*secret",
+        r"upload.*credential",
+        r"steal.*data",
     ]
 
     MALWARE_PATTERNS = [
-        r"eval\s*\(", r"exec\s*\(", r"__import__\s*\(",
-        r"subprocess\s*\.", r"os\.system", r"shutil\.rmtree",
+        r"eval\s*\(",
+        r"exec\s*\(",
+        r"__import__\s*\(",
+        r"subprocess\s*\.",
+        r"os\.system",
+        r"shutil\.rmtree",
     ]
 
     def __init__(self) -> None:
         self._signals: list[FraudSignal] = []
         self._counter = 0
         self._known_popular: set[str] = {
-            "code-formatter", "text-analyzer", "web-scraper",
-            "data-processor", "file-converter", "task-manager",
+            "code-formatter",
+            "text-analyzer",
+            "web-scraper",
+            "data-processor",
+            "file-converter",
+            "task-manager",
         }
 
-    def scan(self, skill_id: str, code: str, metadata: dict[str, Any] | None = None) -> list[FraudSignal]:
+    def scan(
+        self, skill_id: str, code: str, metadata: dict[str, Any] | None = None
+    ) -> list[FraudSignal]:
         findings: list[FraudSignal] = []
         meta = metadata or {}
 
@@ -333,14 +368,16 @@ class FraudDetector:
         for popular in self._known_popular:
             if skill_id != popular and self._similar_name(skill_id, popular):
                 self._counter += 1
-                findings.append(FraudSignal(
-                    signal_id=f"FS-{self._counter:04d}",
-                    skill_id=skill_id,
-                    signal_type="name_squatting",
-                    confidence=0.7,
-                    evidence=f"Ähnlich zu '{popular}'",
-                    detected_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                ))
+                findings.append(
+                    FraudSignal(
+                        signal_id=f"FS-{self._counter:04d}",
+                        skill_id=skill_id,
+                        signal_type="name_squatting",
+                        confidence=0.7,
+                        evidence=f"Ähnlich zu '{popular}'",
+                        detected_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    )
+                )
 
         # Pattern-Scans
         for pattern_set, signal_type in [
@@ -351,14 +388,16 @@ class FraudDetector:
             for pattern in pattern_set:
                 if re.search(pattern, code, re.IGNORECASE):
                     self._counter += 1
-                    findings.append(FraudSignal(
-                        signal_id=f"FS-{self._counter:04d}",
-                        skill_id=skill_id,
-                        signal_type=signal_type,
-                        confidence=0.8,
-                        evidence=f"Pattern: {pattern}",
-                        detected_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                    ))
+                    findings.append(
+                        FraudSignal(
+                            signal_id=f"FS-{self._counter:04d}",
+                            skill_id=skill_id,
+                            signal_type=signal_type,
+                            confidence=0.8,
+                            evidence=f"Pattern: {pattern}",
+                            detected_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                        )
+                    )
                     break  # Eine pro Kategorie reicht
 
         # Reputation-Gaming
@@ -367,14 +406,16 @@ class FraudDetector:
         age_days = meta.get("age_days", 365)
         if reviews > 100 and stars > 4.9 and age_days < 7:
             self._counter += 1
-            findings.append(FraudSignal(
-                signal_id=f"FS-{self._counter:04d}",
-                skill_id=skill_id,
-                signal_type="reputation_gaming",
-                confidence=0.9,
-                evidence=f"{reviews} Reviews mit {stars}★ in {age_days} Tagen",
-                detected_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            ))
+            findings.append(
+                FraudSignal(
+                    signal_id=f"FS-{self._counter:04d}",
+                    skill_id=skill_id,
+                    signal_type="reputation_gaming",
+                    confidence=0.9,
+                    evidence=f"{reviews} Reviews mit {stars}★ in {age_days} Tagen",
+                    detected_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                )
+            )
 
         self._signals.extend(findings)
         return findings
@@ -416,7 +457,13 @@ class FraudDetector:
             "total_signals": len(signals),
             "by_type": {
                 t: sum(1 for s in signals if s.signal_type == t)
-                for t in ("name_squatting", "crypto_mining", "data_theft", "malware", "reputation_gaming")
+                for t in (
+                    "name_squatting",
+                    "crypto_mining",
+                    "data_theft",
+                    "malware",
+                    "reputation_gaming",
+                )
                 if any(s.signal_type == t for s in signals)
             },
         }
@@ -476,16 +523,51 @@ class SecurityTrainer:
     """Trainingsmaterialien für Agent-spezifische Security-Risiken."""
 
     DEFAULT_MODULES = [
-        TrainingModule("SM-001", "Prompt-Injection Grundlagen", "prompt_injection", "beginner", 30,
-                       ["Was ist Prompt-Injection?", "Beispiele", "Erkennung", "Abwehr"], 10),
-        TrainingModule("SM-002", "Tool-Missbrauch erkennen", "tool_abuse", "intermediate", 45,
-                       ["Tool-Chaining-Angriffe", "Privilege-Escalation via Tools", "Monitoring"], 15),
-        TrainingModule("SM-003", "Memory-Poisoning", "memory_poisoning", "advanced", 60,
-                       ["Angriffsvektoren", "Integritäts-Checks", "Versionskontrolle", "Incident-Response"], 20),
-        TrainingModule("SM-004", "Agent-zu-Agent Sicherheit", "cross_agent", "advanced", 45,
-                       ["Vertrauensgrenzen", "Message-Validierung", "Federation-Security"], 15),
-        TrainingModule("SM-005", "EU AI Act für Betreiber", "compliance", "beginner", 30,
-                       ["Risikoklassen", "Transparenzpflichten", "Dokumentation", "Audit-Trails"], 10),
+        TrainingModule(
+            "SM-001",
+            "Prompt-Injection Grundlagen",
+            "prompt_injection",
+            "beginner",
+            30,
+            ["Was ist Prompt-Injection?", "Beispiele", "Erkennung", "Abwehr"],
+            10,
+        ),
+        TrainingModule(
+            "SM-002",
+            "Tool-Missbrauch erkennen",
+            "tool_abuse",
+            "intermediate",
+            45,
+            ["Tool-Chaining-Angriffe", "Privilege-Escalation via Tools", "Monitoring"],
+            15,
+        ),
+        TrainingModule(
+            "SM-003",
+            "Memory-Poisoning",
+            "memory_poisoning",
+            "advanced",
+            60,
+            ["Angriffsvektoren", "Integritäts-Checks", "Versionskontrolle", "Incident-Response"],
+            20,
+        ),
+        TrainingModule(
+            "SM-004",
+            "Agent-zu-Agent Sicherheit",
+            "cross_agent",
+            "advanced",
+            45,
+            ["Vertrauensgrenzen", "Message-Validierung", "Federation-Security"],
+            15,
+        ),
+        TrainingModule(
+            "SM-005",
+            "EU AI Act für Betreiber",
+            "compliance",
+            "beginner",
+            30,
+            ["Risikoklassen", "Transparenzpflichten", "Dokumentation", "Audit-Trails"],
+            10,
+        ),
     ]
 
     def __init__(self) -> None:
@@ -599,7 +681,9 @@ class TrustBoundaryManager:
         self._boundaries[boundary_id] = boundary
         return boundary
 
-    def check_operation(self, local_agent: str, remote_agent: str, operation: str) -> dict[str, Any]:
+    def check_operation(
+        self, local_agent: str, remote_agent: str, operation: str
+    ) -> dict[str, Any]:
         boundary_id = f"{local_agent}↔{remote_agent}"
         boundary = self._boundaries.get(boundary_id)
 
@@ -672,7 +756,9 @@ class EcosystemController:
     def trust(self) -> TrustBoundaryManager:
         return self._trust
 
-    def full_skill_review(self, skill_id: str, code: str, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+    def full_skill_review(
+        self, skill_id: str, code: str, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Vollständige Prüfung eines Skills: Kuration + Fraud-Scan."""
         fraud_signals = self._fraud.scan(skill_id, code, metadata)
         has_fraud = len(fraud_signals) > 0

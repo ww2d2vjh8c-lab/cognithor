@@ -95,33 +95,74 @@ class TestDecisionTrail:
 class TestSourceAttribution:
     def test_add_source(self) -> None:
         attr = SourceAttribution()
-        attr.add_source("claim1", SourceReference(
-            source_id="s1", source_type=SourceType.MEMORY_SEMANTIC,
-            title="User-Profil", relevance_score=0.9,
-        ))
+        attr.add_source(
+            "claim1",
+            SourceReference(
+                source_id="s1",
+                source_type=SourceType.MEMORY_SEMANTIC,
+                title="User-Profil",
+                relevance_score=0.9,
+            ),
+        )
         assert attr.claim_count == 1
         assert attr.total_sources == 1
 
     def test_multiple_sources_per_claim(self) -> None:
         attr = SourceAttribution()
-        attr.add_source("claim1", SourceReference(source_id="s1", source_type=SourceType.MEMORY_SEMANTIC, title="A", relevance_score=0.8))
-        attr.add_source("claim1", SourceReference(source_id="s2", source_type=SourceType.WEB_SEARCH, title="B", relevance_score=0.7))
+        attr.add_source(
+            "claim1",
+            SourceReference(
+                source_id="s1",
+                source_type=SourceType.MEMORY_SEMANTIC,
+                title="A",
+                relevance_score=0.8,
+            ),
+        )
+        attr.add_source(
+            "claim1",
+            SourceReference(
+                source_id="s2", source_type=SourceType.WEB_SEARCH, title="B", relevance_score=0.7
+            ),
+        )
         assert attr.claim_count == 1
         assert attr.total_sources == 2
         assert len(attr.get_sources("claim1")) == 2
 
     def test_source_diversity(self) -> None:
         attr = SourceAttribution()
-        attr.add_source("c1", SourceReference(source_id="s1", source_type=SourceType.MEMORY_SEMANTIC, title="A", relevance_score=0.8))
-        attr.add_source("c2", SourceReference(source_id="s2", source_type=SourceType.WEB_SEARCH, title="B", relevance_score=0.7))
-        attr.add_source("c3", SourceReference(source_id="s3", source_type=SourceType.WEB_SEARCH, title="C", relevance_score=0.6))
+        attr.add_source(
+            "c1",
+            SourceReference(
+                source_id="s1",
+                source_type=SourceType.MEMORY_SEMANTIC,
+                title="A",
+                relevance_score=0.8,
+            ),
+        )
+        attr.add_source(
+            "c2",
+            SourceReference(
+                source_id="s2", source_type=SourceType.WEB_SEARCH, title="B", relevance_score=0.7
+            ),
+        )
+        attr.add_source(
+            "c3",
+            SourceReference(
+                source_id="s3", source_type=SourceType.WEB_SEARCH, title="C", relevance_score=0.6
+            ),
+        )
         div = attr.source_diversity()
         assert div["memory_semantic"] == 1
         assert div["web_search"] == 2
 
     def test_to_dict(self) -> None:
         attr = SourceAttribution()
-        attr.add_source("c1", SourceReference(source_id="s1", source_type=SourceType.USER_INPUT, title="A", relevance_score=1.0))
+        attr.add_source(
+            "c1",
+            SourceReference(
+                source_id="s1", source_type=SourceType.USER_INPUT, title="A", relevance_score=1.0
+            ),
+        )
         d = attr.to_dict()
         assert d["claim_count"] == 1
 
@@ -145,9 +186,18 @@ class TestTrustScoreCalculator:
     def test_high_trust_multi_source(self) -> None:
         calc = TrustScoreCalculator()
         sources = [
-            SourceReference(source_id="s1", source_type=SourceType.USER_INPUT, title="A", relevance_score=0.95),
-            SourceReference(source_id="s2", source_type=SourceType.TOOL_OUTPUT, title="B", relevance_score=0.9),
-            SourceReference(source_id="s3", source_type=SourceType.MEMORY_SEMANTIC, title="C", relevance_score=0.85),
+            SourceReference(
+                source_id="s1", source_type=SourceType.USER_INPUT, title="A", relevance_score=0.95
+            ),
+            SourceReference(
+                source_id="s2", source_type=SourceType.TOOL_OUTPUT, title="B", relevance_score=0.9
+            ),
+            SourceReference(
+                source_id="s3",
+                source_type=SourceType.MEMORY_SEMANTIC,
+                title="C",
+                relevance_score=0.85,
+            ),
         ]
         score, level, breakdown = calc.calculate(
             sources=sources,
@@ -160,7 +210,10 @@ class TestTrustScoreCalculator:
         calc = TrustScoreCalculator()
         _, _, breakdown_clean = calc.calculate(contradictions_found=0)
         _, _, breakdown_dirty = calc.calculate(contradictions_found=3)
-        assert breakdown_clean["components"]["consistency"] > breakdown_dirty["components"]["consistency"]
+        assert (
+            breakdown_clean["components"]["consistency"]
+            > breakdown_dirty["components"]["consistency"]
+        )
 
     def test_human_approval_bonus(self) -> None:
         calc = TrustScoreCalculator()
@@ -179,7 +232,12 @@ class TestTrustScoreCalculator:
     def test_score_clamped(self) -> None:
         calc = TrustScoreCalculator()
         score, _, _ = calc.calculate(
-            sources=[SourceReference(source_id="s", source_type=SourceType.USER_INPUT, title="A", relevance_score=1.0)] * 20,
+            sources=[
+                SourceReference(
+                    source_id="s", source_type=SourceType.USER_INPUT, title="A", relevance_score=1.0
+                )
+            ]
+            * 20,
             human_approved=True,
         )
         assert 0 <= score <= 1.0
@@ -212,7 +270,14 @@ class TestExplainabilityEngine:
 
         completed, breakdown = engine.complete_trail(
             trail.trail_id,
-            sources=[SourceReference(source_id="s1", source_type=SourceType.TOOL_OUTPUT, title="A", relevance_score=0.8)],
+            sources=[
+                SourceReference(
+                    source_id="s1",
+                    source_type=SourceType.TOOL_OUTPUT,
+                    title="A",
+                    relevance_score=0.8,
+                )
+            ],
             human_approved=True,
         )
         assert completed is not None

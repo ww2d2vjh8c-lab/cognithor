@@ -742,7 +742,9 @@ class TestReflectionResultProperties:
 class TestExtractKeywords:
     def test_german_sentence(self) -> None:
         """Deutsche Stopwörter werden gefiltert."""
-        keywords = Reflector.extract_keywords("Bitte erstelle mir ein Recherche-Bericht für Herrn Müller")
+        keywords = Reflector.extract_keywords(
+            "Bitte erstelle mir ein Recherche-Bericht für Herrn Müller"
+        )
         assert "bitte" not in keywords
         assert "mir" not in keywords
         assert "ein" not in keywords

@@ -95,9 +95,7 @@ class SlackChannel(Channel):
         try:
             from slack_sdk.web.async_client import AsyncWebClient  # type: ignore[import-untyped]
         except ImportError:
-            logger.error(
-                "slack_sdk nicht installiert. pip install slack_sdk slack_bolt"
-            )
+            logger.error("slack_sdk nicht installiert. pip install slack_sdk slack_bolt")
             return
 
         self._client = AsyncWebClient(token=self.token)
@@ -121,7 +119,8 @@ class SlackChannel(Channel):
 
         self._running = True
         logger.info(
-            "SlackChannel gestartet (bidirektional=%s)", self._bidirectional,
+            "SlackChannel gestartet (bidirektional=%s)",
+            self._bidirectional,
         )
 
     async def _start_socket_mode(self) -> None:
@@ -207,12 +206,15 @@ class SlackChannel(Channel):
                 logger.error("Slack: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
                 try:
                     await self._client.chat_postMessage(
-                        channel=channel_id, text=friendly, thread_ts=thread_ts,
+                        channel=channel_id,
+                        text=friendly,
+                        thread_ts=thread_ts,
                     )
                 except Exception:
                     pass
@@ -239,7 +241,8 @@ class SlackChannel(Channel):
             ts = body.get("message", {}).get("ts", "")
             if ch and ts:
                 await self._client.chat_update(
-                    channel=ch, ts=ts,
+                    channel=ch,
+                    ts=ts,
                     text=f"{status} von {user_name}",
                     blocks=[],
                 )
@@ -349,7 +352,10 @@ class SlackChannel(Channel):
             logger.exception("Fehler beim Progress-Senden über Slack")
 
     async def request_approval(
-        self, session_id: str, action: PlannedAction, reason: str,
+        self,
+        session_id: str,
+        action: PlannedAction,
+        reason: str,
     ) -> bool:
         """Fragt den User per Block Kit Buttons um Erlaubnis.
 
@@ -435,6 +441,8 @@ class SlackChannel(Channel):
             if text.strip():
                 await self.send(
                     OutgoingMessage(
-                        channel=self.name, text=text, session_id=session_id,
+                        channel=self.name,
+                        text=text,
+                        session_id=session_id,
                     )
                 )

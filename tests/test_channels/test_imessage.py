@@ -94,7 +94,9 @@ class TestIMessageProperties:
 
 class TestIMessageLifecycle:
     @pytest.mark.asyncio
-    async def test_start_native_not_darwin(self, native_ch: IMessageChannel, handler: AsyncMock) -> None:
+    async def test_start_native_not_darwin(
+        self, native_ch: IMessageChannel, handler: AsyncMock
+    ) -> None:
         """Native-Modus auf nicht-Darwin gibt Fehler und startet nicht (sofern nicht macOS)."""
         if sys.platform == "darwin":
             pytest.skip("Test nur fuer nicht-macOS")
@@ -110,7 +112,9 @@ class TestIMessageLifecycle:
         assert ch._running is False
 
     @pytest.mark.asyncio
-    async def test_start_bb_with_mock_httpx(self, bb_ch: IMessageChannel, handler: AsyncMock) -> None:
+    async def test_start_bb_with_mock_httpx(
+        self, bb_ch: IMessageChannel, handler: AsyncMock
+    ) -> None:
         """BlueBubbles-Start mit gemocktem httpx."""
         mock_client = AsyncMock()
         mock_resp = MagicMock()
@@ -122,10 +126,15 @@ class TestIMessageLifecycle:
             mock_httpx.AsyncClient.return_value = mock_client
             # Patch httpx import inside start()
             import jarvis.channels.imessage as imsg_mod
-            original_import = __builtins__.__import__ if hasattr(__builtins__, '__import__') else __import__
+
+            original_import = (
+                __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
+            )
 
             # Mock import httpx
-            with patch.dict("sys.modules", {"httpx": MagicMock(AsyncClient=MagicMock(return_value=mock_client))}):
+            with patch.dict(
+                "sys.modules", {"httpx": MagicMock(AsyncClient=MagicMock(return_value=mock_client))}
+            ):
                 await bb_ch.start(handler)
 
         assert bb_ch._running is True
@@ -215,25 +224,39 @@ class TestIMessagePolling:
 
 class TestNativeMessages:
     @pytest.mark.asyncio
-    async def test_process_native_empty_handle(self, native_ch: IMessageChannel, handler: AsyncMock) -> None:
+    async def test_process_native_empty_handle(
+        self, native_ch: IMessageChannel, handler: AsyncMock
+    ) -> None:
         native_ch._handler = handler
-        await native_ch._process_native_message({"handle": "", "text": "hi", "rowid": 1, "has_attachments": False})
+        await native_ch._process_native_message(
+            {"handle": "", "text": "hi", "rowid": 1, "has_attachments": False}
+        )
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_native_empty_text(self, native_ch: IMessageChannel, handler: AsyncMock) -> None:
+    async def test_process_native_empty_text(
+        self, native_ch: IMessageChannel, handler: AsyncMock
+    ) -> None:
         native_ch._handler = handler
-        await native_ch._process_native_message({"handle": "+491234567", "text": "", "rowid": 1, "has_attachments": False})
+        await native_ch._process_native_message(
+            {"handle": "+491234567", "text": "", "rowid": 1, "has_attachments": False}
+        )
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_native_blocked_handle(self, native_ch: IMessageChannel, handler: AsyncMock) -> None:
+    async def test_process_native_blocked_handle(
+        self, native_ch: IMessageChannel, handler: AsyncMock
+    ) -> None:
         native_ch._handler = handler
-        await native_ch._process_native_message({"handle": "+490000000", "text": "hi", "rowid": 1, "has_attachments": False})
+        await native_ch._process_native_message(
+            {"handle": "+490000000", "text": "hi", "rowid": 1, "has_attachments": False}
+        )
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_native_allowed_handle(self, native_ch: IMessageChannel, handler: AsyncMock) -> None:
+    async def test_process_native_allowed_handle(
+        self, native_ch: IMessageChannel, handler: AsyncMock
+    ) -> None:
         native_ch._handler = handler
         with patch.object(native_ch, "_send_native", new_callable=AsyncMock):
             await native_ch._process_native_message(
@@ -317,39 +340,51 @@ class TestBBMessages:
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_bb_allowed_handle(self, bb_ch: IMessageChannel, handler: AsyncMock) -> None:
+    async def test_process_bb_allowed_handle(
+        self, bb_ch: IMessageChannel, handler: AsyncMock
+    ) -> None:
         bb_ch._handler = handler
         with patch.object(bb_ch, "_send_bb", new_callable=AsyncMock):
-            await bb_ch._process_bb_message({
-                "isFromMe": False,
-                "text": "Hallo BB",
-                "handle": {"address": "+491234567"},
-                "dateCreated": 200,
-                "guid": "guid-1",
-            })
+            await bb_ch._process_bb_message(
+                {
+                    "isFromMe": False,
+                    "text": "Hallo BB",
+                    "handle": {"address": "+491234567"},
+                    "dateCreated": 200,
+                    "guid": "guid-1",
+                }
+            )
         handler.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_process_bb_blocked_handle(self, bb_ch: IMessageChannel, handler: AsyncMock) -> None:
+    async def test_process_bb_blocked_handle(
+        self, bb_ch: IMessageChannel, handler: AsyncMock
+    ) -> None:
         bb_ch._handler = handler
-        await bb_ch._process_bb_message({
-            "isFromMe": False,
-            "text": "hi",
-            "handle": {"address": "+490000000"},
-            "dateCreated": 300,
-        })
+        await bb_ch._process_bb_message(
+            {
+                "isFromMe": False,
+                "text": "hi",
+                "handle": {"address": "+490000000"},
+                "dateCreated": 300,
+            }
+        )
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_bb_updates_timestamp(self, bb_ch: IMessageChannel, handler: AsyncMock) -> None:
+    async def test_process_bb_updates_timestamp(
+        self, bb_ch: IMessageChannel, handler: AsyncMock
+    ) -> None:
         bb_ch._handler = handler
         with patch.object(bb_ch, "_send_bb", new_callable=AsyncMock):
-            await bb_ch._process_bb_message({
-                "isFromMe": False,
-                "text": "timestamp test",
-                "handle": {"address": "+491234567"},
-                "dateCreated": 999,
-            })
+            await bb_ch._process_bb_message(
+                {
+                    "isFromMe": False,
+                    "text": "timestamp test",
+                    "handle": {"address": "+491234567"},
+                    "dateCreated": 999,
+                }
+            )
         assert bb_ch._last_bb_timestamp == 999
 
     @pytest.mark.asyncio
@@ -360,12 +395,14 @@ class TestBBMessages:
         bb_ch._pending_approvals["sess-bb"] = future
 
         with patch.object(bb_ch, "_send_bb", new_callable=AsyncMock):
-            await bb_ch._process_bb_message({
-                "isFromMe": False,
-                "text": "ok",
-                "handle": {"address": "+491234567"},
-                "dateCreated": 400,
-            })
+            await bb_ch._process_bb_message(
+                {
+                    "isFromMe": False,
+                    "text": "ok",
+                    "handle": {"address": "+491234567"},
+                    "dateCreated": 400,
+                }
+            )
         assert future.done()
         assert future.result() is True
 
@@ -377,12 +414,14 @@ class TestBBMessages:
         bb_ch._pending_approvals["sess-bb2"] = future
 
         with patch.object(bb_ch, "_send_bb", new_callable=AsyncMock):
-            await bb_ch._process_bb_message({
-                "isFromMe": False,
-                "text": "reject",
-                "handle": {"address": "+491234567"},
-                "dateCreated": 500,
-            })
+            await bb_ch._process_bb_message(
+                {
+                    "isFromMe": False,
+                    "text": "reject",
+                    "handle": {"address": "+491234567"},
+                    "dateCreated": 500,
+                }
+            )
         assert future.done()
         assert future.result() is False
 
@@ -441,7 +480,8 @@ class TestIMessageSend:
         bb_ch._mode = "bluebubbles"
         with patch.object(bb_ch, "_send_bb", new_callable=AsyncMock) as send_bb:
             msg = OutgoingMessage(
-                channel="imessage", text="Hi",
+                channel="imessage",
+                text="Hi",
                 session_id="unknown",
                 metadata={"handle": "+491234567"},
             )

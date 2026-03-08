@@ -345,11 +345,13 @@ class SkillIndex:
         """
         pids = self._by_name.get(name, [])
         entries = [self._entries[pid] for pid in pids if pid in self._entries]
+
         def _semver_key(e: IndexEntry) -> tuple[int, ...]:
             try:
                 return tuple(int(x) for x in e.manifest.version.split("."))
             except (ValueError, AttributeError):
                 return (0,)
+
         entries.sort(key=_semver_key, reverse=True)
         return entries
 
@@ -467,7 +469,8 @@ class ReputationTracker:
             Neuer Score.
         """
         profile = self._profiles.setdefault(
-            entity_id, ReputationProfile(entity_id=entity_id),
+            entity_id,
+            ReputationProfile(entity_id=entity_id),
         )
 
         delta = _REPUTATION_SCORES[event]
@@ -509,7 +512,8 @@ class ReputationTracker:
     def quarantine(self, entity_id: str) -> None:
         """Manuelles Quarantinieren."""
         profile = self._profiles.setdefault(
-            entity_id, ReputationProfile(entity_id=entity_id),
+            entity_id,
+            ReputationProfile(entity_id=entity_id),
         )
         profile.quarantined = True
 
@@ -593,9 +597,7 @@ class SubscriptionFeed:
     def unsubscribe_all(self, subscriber_id: str) -> int:
         """Entfernt alle Abonnements eines Subscribers."""
         before = len(self._subscriptions)
-        self._subscriptions = [
-            s for s in self._subscriptions if s.subscriber_id != subscriber_id
-        ]
+        self._subscriptions = [s for s in self._subscriptions if s.subscriber_id != subscriber_id]
         return before - len(self._subscriptions)
 
     def check_new_entry(self, entry: IndexEntry) -> list[str]:
@@ -770,7 +772,10 @@ class SkillExchange:
         """
         try:
             package = self._builder.build(
-                manifest, code, test_code, documentation,
+                manifest,
+                code,
+                test_code,
+                documentation,
             )
         except ValueError as exc:
             logger.error("Publish fehlgeschlagen: %s", exc)
@@ -797,7 +802,8 @@ class SkillExchange:
         if notified:
             logger.info(
                 "Skill publiziert + %d Subscriber benachrichtigt: %s",
-                len(notified), package.package_id,
+                len(notified),
+                package.package_id,
             )
 
         return package
@@ -903,8 +909,7 @@ class SkillExchange:
 
         # Reputation aktualisieren
         event = (
-            ReputationEvent.INSTALL_SUCCESS if result.success
-            else ReputationEvent.INSTALL_FAILURE
+            ReputationEvent.INSTALL_SUCCESS if result.success else ReputationEvent.INSTALL_FAILURE
         )
         self._reputation.record(package_id, event)
 
@@ -928,10 +933,7 @@ class SkillExchange:
         Returns:
             Neuer Reputation-Score.
         """
-        event = (
-            ReputationEvent.POSITIVE_FEEDBACK if positive
-            else ReputationEvent.NEGATIVE_FEEDBACK
-        )
+        event = ReputationEvent.POSITIVE_FEEDBACK if positive else ReputationEvent.NEGATIVE_FEEDBACK
         return self._reputation.record(package_id, event)
 
     def report_malware(self, package_id: str) -> None:

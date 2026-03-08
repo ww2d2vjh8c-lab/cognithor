@@ -135,6 +135,7 @@ class IMessageChannel(Channel):
 
             try:
                 import httpx
+
                 self._http = httpx.AsyncClient(
                     base_url=self._bb_url,
                     params={"password": self._bb_password},
@@ -150,7 +151,9 @@ class IMessageChannel(Channel):
                         info.get("data", {}).get("server_version", "?"),
                     )
                 else:
-                    logger.warning("iMessage: BlueBubbles nicht erreichbar (HTTP %d)", resp.status_code)
+                    logger.warning(
+                        "iMessage: BlueBubbles nicht erreichbar (HTTP %d)", resp.status_code
+                    )
             except ImportError:
                 logger.error("iMessage: httpx nicht installiert fuer BlueBubbles-Modus")
                 return
@@ -249,13 +252,15 @@ class IMessageChannel(Channel):
                 rowid = row["ROWID"]
                 if rowid > self._last_message_rowid:
                     self._last_message_rowid = rowid
-                results.append({
-                    "rowid": rowid,
-                    "text": row["text"] or "",
-                    "date": row["date"],
-                    "handle": row["handle_id"] or "",
-                    "has_attachments": bool(row["cache_has_attachments"]),
-                })
+                results.append(
+                    {
+                        "rowid": rowid,
+                        "text": row["text"] or "",
+                        "date": row["date"],
+                        "handle": row["handle_id"] or "",
+                        "has_attachments": bool(row["cache_has_attachments"]),
+                    }
+                )
 
             conn.close()
             return results
@@ -329,6 +334,7 @@ class IMessageChannel(Channel):
                 logger.error("iMessage: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
@@ -417,6 +423,7 @@ class IMessageChannel(Channel):
                 logger.error("iMessage: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
@@ -433,10 +440,10 @@ class IMessageChannel(Channel):
             # AppleScript fuer iMessage
             script = (
                 f'tell application "Messages"\n'
-                f'  set targetService to 1st account whose service type = iMessage\n'
+                f"  set targetService to 1st account whose service type = iMessage\n"
                 f'  set targetBuddy to participant "{_escape_applescript(handle)}" of targetService\n'
                 f'  send "{_escape_applescript(chunk)}" to targetBuddy\n'
-                f'end tell'
+                f"end tell"
             )
             try:
                 await loop.run_in_executor(
@@ -536,7 +543,11 @@ class IMessageChannel(Channel):
                 self._pending_approvals.pop(session_id, None)
 
     async def _resolve_approval(
-        self, session_id: str, *, approved: bool, handle: str,
+        self,
+        session_id: str,
+        *,
+        approved: bool,
+        handle: str,
     ) -> None:
         """Loest ein Approval-Future auf."""
         async with self._approval_lock:

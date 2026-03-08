@@ -296,6 +296,7 @@ class TestDiscordSend:
     @pytest.mark.asyncio
     async def test_send_circuit_breaker_open(self, ch: DiscordChannel) -> None:
         from jarvis.utils.circuit_breaker import CircuitBreakerOpen
+
         ch._running = True
         ch._client = MagicMock()
         ch._client.is_ready.return_value = True
@@ -322,12 +323,14 @@ class TestDiscordSend:
     async def test_send_rich_not_running(self, ch: DiscordChannel) -> None:
         ch._running = False
         from jarvis.channels.interactive import DiscordMessageBuilder
+
         builder = MagicMock(spec=DiscordMessageBuilder)
         await ch.send_rich(builder)  # no crash
 
     @pytest.mark.asyncio
     async def test_send_rich_success(self, ch: DiscordChannel) -> None:
         from jarvis.channels.interactive import DiscordMessageBuilder
+
         ch._running = True
         ch._client = MagicMock()
         ch._client.is_ready.return_value = True
@@ -343,6 +346,7 @@ class TestDiscordSend:
     @pytest.mark.asyncio
     async def test_send_rich_channel_not_found(self, ch: DiscordChannel) -> None:
         from jarvis.channels.interactive import DiscordMessageBuilder
+
         ch._running = True
         ch._client = MagicMock()
         ch._client.is_ready.return_value = True
@@ -354,6 +358,7 @@ class TestDiscordSend:
     @pytest.mark.asyncio
     async def test_send_rich_exception(self, ch: DiscordChannel) -> None:
         from jarvis.channels.interactive import DiscordMessageBuilder
+
         ch._running = True
         ch._client = MagicMock()
         ch._client.is_ready.return_value = True
@@ -369,6 +374,7 @@ class TestDiscordSend:
     async def test_send_card_not_running(self, ch: DiscordChannel) -> None:
         ch._running = False
         from jarvis.channels.interactive import AdaptiveCard
+
         card = MagicMock(spec=AdaptiveCard)
         await ch.send_card(card)  # no crash
 
@@ -390,12 +396,14 @@ class TestDiscordSend:
     async def test_send_progress_not_running(self, ch: DiscordChannel) -> None:
         ch._running = False
         from jarvis.channels.interactive import ProgressTracker
+
         tracker = MagicMock(spec=ProgressTracker)
         await ch.send_progress(tracker)  # no crash
 
     @pytest.mark.asyncio
     async def test_send_progress_success(self, ch: DiscordChannel) -> None:
         from jarvis.channels.interactive import ProgressTracker
+
         ch._running = True
         ch._client = MagicMock()
         ch._client.is_ready.return_value = True
@@ -411,6 +419,7 @@ class TestDiscordSend:
     @pytest.mark.asyncio
     async def test_send_progress_channel_not_found(self, ch: DiscordChannel) -> None:
         from jarvis.channels.interactive import ProgressTracker
+
         ch._running = True
         ch._client = MagicMock()
         ch._client.is_ready.return_value = True
@@ -423,6 +432,7 @@ class TestDiscordSend:
     @pytest.mark.asyncio
     async def test_send_progress_exception(self, ch: DiscordChannel) -> None:
         from jarvis.channels.interactive import ProgressTracker
+
         ch._running = True
         ch._client = MagicMock()
         ch._client.is_ready.return_value = True

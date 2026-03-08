@@ -83,9 +83,7 @@ class TestWebhookHandlerVerification:
         if secret_token is not None:
             headers.get = MagicMock(
                 side_effect=lambda key, default="": (
-                    secret_token
-                    if key == "X-Telegram-Bot-Api-Secret-Token"
-                    else default
+                    secret_token if key == "X-Telegram-Bot-Api-Secret-Token" else default
                 ),
             )
         else:

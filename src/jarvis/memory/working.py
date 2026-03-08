@@ -84,14 +84,28 @@ class WorkingMemoryManager:
         self._memory = WorkingMemory(max_tokens=max_tokens)
         # Budget-Werte aus Config lesen (mit Module-Defaults als Fallback)
         self._budget_core = getattr(self._config, "budget_core_memory", _DEFAULT_BUDGET_CORE_MEMORY)
-        self._budget_system = getattr(self._config, "budget_system_prompt", _DEFAULT_BUDGET_SYSTEM_PROMPT)
-        self._budget_procedures = getattr(self._config, "budget_procedures", _DEFAULT_BUDGET_PROCEDURES)
-        self._budget_memories = getattr(self._config, "budget_injected_memories", _DEFAULT_BUDGET_INJECTED_MEMORIES)
-        self._budget_tools = getattr(self._config, "budget_tool_descriptions", _DEFAULT_BUDGET_TOOL_DESCRIPTIONS)
-        self._budget_response = getattr(self._config, "budget_response_reserve", _DEFAULT_BUDGET_RESPONSE_RESERVE)
+        self._budget_system = getattr(
+            self._config, "budget_system_prompt", _DEFAULT_BUDGET_SYSTEM_PROMPT
+        )
+        self._budget_procedures = getattr(
+            self._config, "budget_procedures", _DEFAULT_BUDGET_PROCEDURES
+        )
+        self._budget_memories = getattr(
+            self._config, "budget_injected_memories", _DEFAULT_BUDGET_INJECTED_MEMORIES
+        )
+        self._budget_tools = getattr(
+            self._config, "budget_tool_descriptions", _DEFAULT_BUDGET_TOOL_DESCRIPTIONS
+        )
+        self._budget_response = getattr(
+            self._config, "budget_response_reserve", _DEFAULT_BUDGET_RESPONSE_RESERVE
+        )
         self._static_budget = (
-            self._budget_core + self._budget_system + self._budget_procedures
-            + self._budget_memories + self._budget_tools + self._budget_response
+            self._budget_core
+            + self._budget_system
+            + self._budget_procedures
+            + self._budget_memories
+            + self._budget_tools
+            + self._budget_response
         )
 
     @property

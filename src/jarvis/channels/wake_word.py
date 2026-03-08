@@ -66,6 +66,7 @@ class WakeWordDetector:
         """Lädt Porcupine für Wake-Word-Detection."""
         try:
             import pvporcupine
+
             self._model = pvporcupine.create(
                 keywords=self._keywords,
                 sensitivities=[self._sensitivity] * len(self._keywords),
@@ -123,6 +124,7 @@ class WakeWordDetector:
         if self._model is None:
             return False
         import json as _json
+
         if self._model.AcceptWaveform(chunk):
             result = _json.loads(self._model.Result())
             text = result.get("text", "").lower()
@@ -139,7 +141,7 @@ class WakeWordDetector:
             pcm = struct.unpack(f"<{len(chunk) // 2}h", chunk)
             frame_length = self._model.frame_length
             for i in range(0, len(pcm) - frame_length + 1, frame_length):
-                frame = pcm[i:i + frame_length]
+                frame = pcm[i : i + frame_length]
                 keyword_index = self._model.process(frame)
                 if keyword_index >= 0:
                     return True

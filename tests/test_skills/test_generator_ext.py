@@ -98,14 +98,18 @@ class TestExtractCodeBlock:
 class TestSkillGeneratorLLM:
     @pytest.mark.asyncio
     async def test_generate_with_llm(self, tmp_path: Path) -> None:
-        llm_fn = AsyncMock(side_effect=[
-            "```python\ndef handler(): pass\n```",  # code
-            "```python\ndef test_handler(): assert True\n```",  # test
-        ])
+        llm_fn = AsyncMock(
+            side_effect=[
+                "```python\ndef handler(): pass\n```",  # code
+                "```python\ndef test_handler(): assert True\n```",  # test
+            ]
+        )
         gen = SkillGenerator(skills_dir=tmp_path / "skills", llm_fn=llm_fn)
         gap = SkillGap(
-            id="g1", gap_type=SkillGapType.USER_REQUEST,
-            description="Create a calculator", context="math operations",
+            id="g1",
+            gap_type=SkillGapType.USER_REQUEST,
+            description="Create a calculator",
+            context="math operations",
         )
         skill = await gen.generate(gap)
         assert skill.code == "def handler(): pass"
@@ -117,7 +121,8 @@ class TestSkillGeneratorLLM:
         llm_fn = AsyncMock(side_effect=RuntimeError("LLM unavailable"))
         gen = SkillGenerator(skills_dir=tmp_path / "skills", llm_fn=llm_fn)
         gap = SkillGap(
-            id="g1", gap_type=SkillGapType.USER_REQUEST,
+            id="g1",
+            gap_type=SkillGapType.USER_REQUEST,
             description="Broken gen",
         )
         skill = await gen.generate(gap)
@@ -165,8 +170,10 @@ class TestSkillGeneratorTestAndRegister:
     def test_register_success(self, tmp_path: Path) -> None:
         gen = SkillGenerator(skills_dir=tmp_path / "skills")
         skill = GeneratedSkill(
-            name="good_skill", test_passed=True,
-            code="x = 1", test_code="assert True",
+            name="good_skill",
+            test_passed=True,
+            code="x = 1",
+            test_code="assert True",
             skill_markdown="# Test",
         )
         gen._generated["good_skill"] = skill
@@ -183,8 +190,10 @@ class TestSkillGeneratorTestAndRegister:
             audit_logger=audit,
         )
         skill = GeneratedSkill(
-            name="audited", test_passed=True,
-            code="x = 1", test_code="assert True",
+            name="audited",
+            test_passed=True,
+            code="x = 1",
+            test_code="assert True",
         )
         gen.register(skill)
         audit.log_skill_install.assert_called_once()
@@ -202,8 +211,10 @@ class TestSkillGeneratorTestAndRegister:
         )
         gap = SkillGap(id="g1", gap_type=SkillGapType.USER_REQUEST, description="test")
         skill = GeneratedSkill(
-            name="packaged", test_passed=True,
-            code="x = 1", test_code="assert True",
+            name="packaged",
+            test_passed=True,
+            code="x = 1",
+            test_code="assert True",
             gap=gap,
         )
         gen.register(skill)
@@ -213,8 +224,10 @@ class TestSkillGeneratorTestAndRegister:
         registry = MagicMock()
         gen = SkillGenerator(skills_dir=tmp_path / "skills")
         skill = GeneratedSkill(
-            name="reg_skill", test_passed=True,
-            code="x = 1", test_code="assert True",
+            name="reg_skill",
+            test_passed=True,
+            code="x = 1",
+            test_code="assert True",
         )
         gen.register(skill, skill_registry=registry)
         registry.load_from_directories.assert_called_once()
@@ -289,7 +302,8 @@ class TestProcessGap:
     async def test_process_gap_success(self, tmp_path: Path) -> None:
         gen = SkillGenerator(skills_dir=tmp_path / "skills")
         gap = SkillGap(
-            id="g1", gap_type=SkillGapType.USER_REQUEST,
+            id="g1",
+            gap_type=SkillGapType.USER_REQUEST,
             description="calc tool",
             tool_name="calculator",
         )
@@ -301,7 +315,8 @@ class TestProcessGap:
         llm_fn = AsyncMock(side_effect=RuntimeError("LLM down"))
         gen = SkillGenerator(skills_dir=tmp_path / "skills", llm_fn=llm_fn)
         gap = SkillGap(
-            id="g1", gap_type=SkillGapType.USER_REQUEST,
+            id="g1",
+            gap_type=SkillGapType.USER_REQUEST,
             description="fail tool",
         )
         skill = await gen.process_gap(gap)

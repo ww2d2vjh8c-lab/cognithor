@@ -55,8 +55,8 @@ class SearchResult:
     """Suchergebnis aus dem Vector-Store."""
 
     entry: VectorEntry
-    score: float          # 0-1 (Cosine Similarity)
-    distance: float = 0   # Euklidischer Abstand
+    score: float  # 0-1 (Cosine Similarity)
+    distance: float = 0  # Euklidischer Abstand
 
 
 class VectorStore:
@@ -66,19 +66,23 @@ class VectorStore:
     In Produktion: Wrapper um ChromaDB/FAISS/Qdrant.
     """
 
-    def __init__(self, backend: VectorBackend = VectorBackend.IN_MEMORY, dimension: int = 384) -> None:
+    def __init__(
+        self, backend: VectorBackend = VectorBackend.IN_MEMORY, dimension: int = 384
+    ) -> None:
         self._backend = backend
         self._dimension = dimension
         self._entries: dict[str, VectorEntry] = {}
         self._counter = 0
 
-    def add(self, text: str, embedding: list[float], metadata: dict[str, Any] | None = None) -> VectorEntry:
+    def add(
+        self, text: str, embedding: list[float], metadata: dict[str, Any] | None = None
+    ) -> VectorEntry:
         """Fügt einen Eintrag hinzu."""
         self._counter += 1
         entry = VectorEntry(
             entry_id=f"VEC-{self._counter:06d}",
             text=text,
-            embedding=embedding[:self._dimension],
+            embedding=embedding[: self._dimension],
             metadata=metadata or {},
             created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         )
@@ -87,7 +91,7 @@ class VectorStore:
 
     def search(self, query_embedding: list[float], top_k: int = 5) -> list[SearchResult]:
         """Sucht die ähnlichsten Einträge."""
-        query = query_embedding[:self._dimension]
+        query = query_embedding[: self._dimension]
         results = []
         for entry in self._entries.values():
             score = self._cosine_similarity(query, entry.embedding)
@@ -139,18 +143,32 @@ class SubQuery:
 
     query_id: str
     text: str
-    query_type: str = "factual"    # factual, analytical, comparison
+    query_type: str = "factual"  # factual, analytical, comparison
     priority: int = 1
 
     def to_dict(self) -> dict[str, Any]:
-        return {"id": self.query_id, "text": self.text, "type": self.query_type, "priority": self.priority}
+        return {
+            "id": self.query_id,
+            "text": self.text,
+            "type": self.query_type,
+            "priority": self.priority,
+        }
 
 
 class QueryDecomposer:
     """Zerlegt komplexe Anfragen in Sub-Queries für paralleles RAG."""
 
-    SPLIT_MARKERS = [" und ", " sowie ", " außerdem ", " darüber hinaus ", " zusätzlich ",
-                     " and ", " also ", " furthermore ", " additionally "]
+    SPLIT_MARKERS = [
+        " und ",
+        " sowie ",
+        " außerdem ",
+        " darüber hinaus ",
+        " zusätzlich ",
+        " and ",
+        " also ",
+        " furthermore ",
+        " additionally ",
+    ]
 
     def decompose(self, query: str) -> list[SubQuery]:
         """Zerlegt eine Anfrage in Teilanfragen."""
@@ -168,12 +186,14 @@ class QueryDecomposer:
 
         sub_queries = []
         for i, part in enumerate(parts):
-            sub_queries.append(SubQuery(
-                query_id=f"SQ-{i+1:03d}",
-                text=part,
-                query_type=self._classify(part),
-                priority=1 if i == 0 else 2,
-            ))
+            sub_queries.append(
+                SubQuery(
+                    query_id=f"SQ-{i + 1:03d}",
+                    text=part,
+                    query_type=self._classify(part),
+                    priority=1 if i == 0 else 2,
+                )
+            )
         return sub_queries
 
     def _classify(self, text: str) -> str:
@@ -271,7 +291,9 @@ class LoadBalancer:
             return min(healthy, key=lambda b: b.current_load)
 
         elif self._strategy == BalancingStrategy.LATENCY_BASED:
-            return min(healthy, key=lambda b: b.avg_latency_ms if b.avg_latency_ms > 0 else float("inf"))
+            return min(
+                healthy, key=lambda b: b.avg_latency_ms if b.avg_latency_ms > 0 else float("inf")
+            )
 
         elif self._strategy == BalancingStrategy.WEIGHTED:
             total_weight = sum(b.weight for b in healthy)
@@ -332,7 +354,7 @@ class CloudProvider(Enum):
     OPENAI = "openai"
     GROQ = "groq"
     TOGETHER = "together"
-    NONE = "none"              # Nur lokal
+    NONE = "none"  # Nur lokal
 
 
 @dataclass
@@ -344,7 +366,7 @@ class FallbackConfig:
     model: str = ""
     max_daily_requests: int = 100
     max_cost_eur_day: float = 5.0
-    trigger_latency_ms: int = 5000   # Fallback bei > 5s Latenz
+    trigger_latency_ms: int = 5000  # Fallback bei > 5s Latenz
     trigger_load_percent: float = 90  # Fallback bei > 90% Last
 
     def to_dict(self) -> dict[str, Any]:
@@ -388,11 +410,13 @@ class CloudFallback:
     def record_fallback(self, cost_eur: float = 0.01) -> None:
         self._daily_requests += 1
         self._daily_cost += cost_eur
-        self._fallback_log.append({
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "cost": cost_eur,
-            "provider": self._config.provider.value,
-        })
+        self._fallback_log.append(
+            {
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "cost": cost_eur,
+                "provider": self._config.provider.value,
+            }
+        )
 
     def _reset_daily_if_needed(self) -> None:
         today = time.strftime("%Y-%m-%d", time.gmtime())
@@ -458,8 +482,13 @@ class ResourceOptimizer:
 
     def snapshot(
         self,
-        cpu: float = 0, ram_used: float = 0, ram_total: float = 16,
-        gpu: float = 0, vram_used: float = 0, agents: int = 0, pending: int = 0,
+        cpu: float = 0,
+        ram_used: float = 0,
+        ram_total: float = 16,
+        gpu: float = 0,
+        vram_used: float = 0,
+        agents: int = 0,
+        pending: int = 0,
     ) -> ResourceSnapshot:
         """Erfasst aktuelle Ressourcen."""
         snap = ResourceSnapshot(
@@ -509,7 +538,7 @@ class ResourceOptimizer:
         """Durchschnittswerte über die letzten N Minuten."""
         if not self._history:
             return {"cpu": 0, "ram": 0, "gpu": 0}
-        recent = list(self._history)[-minutes * 12:]  # ~5s Intervall
+        recent = list(self._history)[-minutes * 12 :]  # ~5s Intervall
         return {
             "cpu": round(sum(s.cpu_percent for s in recent) / len(recent), 1),
             "ram": round(sum(s.ram_percent for s in recent) / len(recent), 1),
@@ -630,7 +659,9 @@ class PerformanceManager:
     def latency(self) -> LatencyTracker:
         return self._latency
 
-    def process_query(self, query: str, query_embedding: list[float] | None = None) -> dict[str, Any]:
+    def process_query(
+        self, query: str, query_embedding: list[float] | None = None
+    ) -> dict[str, Any]:
         """Verarbeitet eine Anfrage mit allen Performance-Optimierungen."""
         start = time.time()
 

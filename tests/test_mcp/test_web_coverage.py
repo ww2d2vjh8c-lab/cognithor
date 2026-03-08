@@ -182,25 +182,34 @@ class TestValidateUrlDns:
 
     def test_dns_cache_hit_with_blocked_ip_invalidates(self, web: WebTools) -> None:
         import socket
+
         web._dns_cache.set("tricky.com", ["127.0.0.1"])
         # After cache invalidation, it re-resolves via DNS -> also returns blocked
-        with patch("socket.getaddrinfo", return_value=[
-            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("127.0.0.1", 0)),
-        ]):
+        with patch(
+            "socket.getaddrinfo",
+            return_value=[
+                (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("127.0.0.1", 0)),
+            ],
+        ):
             with pytest.raises(WebError, match="blockierte Adresse"):
                 web._validate_url("https://tricky.com/page")
 
     def test_dns_resolution_failure(self, web: WebTools) -> None:
         import socket
+
         with patch("socket.getaddrinfo", side_effect=socket.gaierror("No such host")):
             with pytest.raises(WebError, match="DNS-Aufloesung fehlgeschlagen"):
                 web._validate_url("https://nonexistent.example.invalid/page")
 
     def test_dns_resolves_to_private_ip(self, web: WebTools) -> None:
         import socket
-        with patch("socket.getaddrinfo", return_value=[
-            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("10.0.0.1", 0)),
-        ]):
+
+        with patch(
+            "socket.getaddrinfo",
+            return_value=[
+                (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("10.0.0.1", 0)),
+            ],
+        ):
             with pytest.raises(WebError, match="blockierte Adresse"):
                 web._validate_url("https://sneaky.com/page")
 
@@ -367,9 +376,15 @@ class TestDDGSearchWithFallback:
 class TestSearchDuckDuckGoAsync:
     @pytest.mark.asyncio
     async def test_search_duckduckgo_cache_hit(self, web_with_cache: WebTools) -> None:
-        web_with_cache._ddg_cache_put("cached query", "de-de", None, 5, [
-            {"title": "Cached", "url": "https://c.com", "content": "Cached snippet"},
-        ])
+        web_with_cache._ddg_cache_put(
+            "cached query",
+            "de-de",
+            None,
+            5,
+            [
+                {"title": "Cached", "url": "https://c.com", "content": "Cached snippet"},
+            ],
+        )
         result = await web_with_cache._search_duckduckgo("cached query", 5, "de", "")
         assert "Cached" in result
 
@@ -378,9 +393,13 @@ class TestSearchDuckDuckGoAsync:
         web._ddg_last_search = time.monotonic()  # just searched
         web._ddg_min_delay = 0.01  # very small delay for test
 
-        with patch.object(web, "_ddg_search_with_fallback", return_value=[
-            {"title": "R", "url": "https://r.com", "content": "S"},
-        ]):
+        with patch.object(
+            web,
+            "_ddg_search_with_fallback",
+            return_value=[
+                {"title": "R", "url": "https://r.com", "content": "S"},
+            ],
+        ):
             result = await web._search_duckduckgo("test", 5, "de", "")
             assert "R" in result
 
@@ -392,9 +411,13 @@ class TestSearchDuckDuckGoAsync:
 
     @pytest.mark.asyncio
     async def test_search_duckduckgo_with_timelimit(self, web: WebTools) -> None:
-        with patch.object(web, "_ddg_search_with_fallback", return_value=[
-            {"title": "T", "url": "https://t.com", "content": "S"},
-        ]) as mock:
+        with patch.object(
+            web,
+            "_ddg_search_with_fallback",
+            return_value=[
+                {"title": "T", "url": "https://t.com", "content": "S"},
+            ],
+        ) as mock:
             result = await web._search_duckduckgo("test", 5, "en", "w")
             assert "T" in result
 
@@ -493,7 +516,13 @@ class TestWebNewsSearch:
         mock_ddgs_cls = MagicMock()
         mock_instance = MagicMock()
         mock_instance.news.return_value = [
-            {"title": "News 1", "url": "https://n1.com", "body": "Body 1", "source": "CNN", "date": "2026-03-01"},
+            {
+                "title": "News 1",
+                "url": "https://n1.com",
+                "body": "Body 1",
+                "source": "CNN",
+                "date": "2026-03-01",
+            },
         ]
         mock_ddgs_cls.return_value = mock_instance
 
@@ -531,10 +560,20 @@ class TestWebNewsSearch:
 class TestFormatNewsResults:
     def test_full_news_format(self) -> None:
         results = [
-            {"title": "News A", "url": "https://a.com", "content": "Snippet A",
-             "source": "Reuters", "date": "2026-03-01"},
-            {"title": "News B", "url": "https://b.com", "content": "Snippet B",
-             "source": "", "date": ""},
+            {
+                "title": "News A",
+                "url": "https://a.com",
+                "content": "Snippet A",
+                "source": "Reuters",
+                "date": "2026-03-01",
+            },
+            {
+                "title": "News B",
+                "url": "https://b.com",
+                "content": "Snippet B",
+                "source": "",
+                "date": "",
+            },
         ]
         text = _format_news_results(results, "test query")
         assert "Nachrichtenergebnisse" in text
@@ -613,7 +652,9 @@ class TestFetchViaJina:
         mock_response = MagicMock()
         mock_response.status_code = 500
         mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "Server Error", request=MagicMock(), response=mock_response,
+            "Server Error",
+            request=MagicMock(),
+            response=mock_response,
         )
 
         with patch("httpx.AsyncClient") as mock_client:
@@ -727,7 +768,11 @@ class TestWebFetchAdditional:
                 mock_client.return_value = mock_instance
 
                 with patch("jarvis.mcp.web._extract_text_from_html", return_value="Short"):
-                    with patch.object(web, "_fetch_via_jina", return_value="Much longer Jina content that is better"):
+                    with patch.object(
+                        web,
+                        "_fetch_via_jina",
+                        return_value="Much longer Jina content that is better",
+                    ):
                         result = await web.web_fetch("https://example.com", reader_mode="auto")
                         assert "Jina content" in result
 

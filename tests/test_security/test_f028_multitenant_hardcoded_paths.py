@@ -153,5 +153,6 @@ class TestSourceLevelChecks:
     def test_path_imported(self) -> None:
         """Path wird importiert."""
         import jarvis.core.multitenant as mod
+
         source = inspect.getsource(mod)
         assert "from pathlib import Path" in source

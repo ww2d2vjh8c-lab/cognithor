@@ -107,28 +107,32 @@ class TestAutoLearning:
         assert abs(pref.avg_message_length - 110.0) < 1.0
 
     def test_verbosity_stays_normal_before_5_interactions(
-        self, store: UserPreferenceStore,
+        self,
+        store: UserPreferenceStore,
     ) -> None:
         for _ in range(4):
             pref = store.record_interaction("user-z", 10)
         assert pref.verbosity == "normal"  # Not enough interactions
 
     def test_terse_verbosity_after_5_short_messages(
-        self, store: UserPreferenceStore,
+        self,
+        store: UserPreferenceStore,
     ) -> None:
         for _ in range(6):
             pref = store.record_interaction("user-short", 15)
         assert pref.verbosity == "terse"
 
     def test_verbose_verbosity_after_5_long_messages(
-        self, store: UserPreferenceStore,
+        self,
+        store: UserPreferenceStore,
     ) -> None:
         for _ in range(6):
             pref = store.record_interaction("user-long", 500)
         assert pref.verbosity == "verbose"
 
     def test_normal_verbosity_for_medium_messages(
-        self, store: UserPreferenceStore,
+        self,
+        store: UserPreferenceStore,
     ) -> None:
         for _ in range(6):
             pref = store.record_interaction("user-med", 100)

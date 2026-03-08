@@ -576,8 +576,10 @@ class TestHttpRequest:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
-        with patch.object(web, "_validate_url", return_value="https://api.example.com/data"), \
-             patch("jarvis.mcp.web.httpx.AsyncClient", return_value=mock_client):
+        with (
+            patch.object(web, "_validate_url", return_value="https://api.example.com/data"),
+            patch("jarvis.mcp.web.httpx.AsyncClient", return_value=mock_client),
+        ):
             result = await web.http_request("https://api.example.com/data")
 
         assert "HTTP 200" in result
@@ -596,8 +598,10 @@ class TestHttpRequest:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
-        with patch.object(web, "_validate_url", return_value="https://api.example.com/items"), \
-             patch("jarvis.mcp.web.httpx.AsyncClient", return_value=mock_client):
+        with (
+            patch.object(web, "_validate_url", return_value="https://api.example.com/items"),
+            patch("jarvis.mcp.web.httpx.AsyncClient", return_value=mock_client),
+        ):
             result = await web.http_request(
                 "https://api.example.com/items",
                 method="POST",
@@ -631,8 +635,10 @@ class TestHttpRequest:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
-        with patch.object(web, "_validate_url", return_value="https://slow.example.com"), \
-             patch("jarvis.mcp.web.httpx.AsyncClient", return_value=mock_client):
+        with (
+            patch.object(web, "_validate_url", return_value="https://slow.example.com"),
+            patch("jarvis.mcp.web.httpx.AsyncClient", return_value=mock_client),
+        ):
             with pytest.raises(WebError, match="Timeout"):
                 await web.http_request("https://slow.example.com", timeout_seconds=1)
 

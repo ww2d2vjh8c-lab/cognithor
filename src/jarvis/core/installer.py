@@ -102,6 +102,7 @@ class HardwareDetector:
         # Disk erkennen
         try:
             import shutil
+
             total, used, free = shutil.disk_usage(".")
             profile.disk_free_gb = round(free / (1024**3), 1)
         except Exception:
@@ -111,15 +112,19 @@ class HardwareDetector:
         try:
             if sys.platform == "win32":
                 import ctypes
+
                 kernel32 = ctypes.windll.kernel32
                 mem = ctypes.c_ulonglong(0)
                 kernel32.GetPhysicallyInstalledSystemMemory(ctypes.byref(mem))
                 profile.ram_gb = round(mem.value / (1024 * 1024), 1)
             elif sys.platform == "darwin":
                 import subprocess
+
                 result = subprocess.run(
                     ["sysctl", "-n", "hw.memsize"],
-                    capture_output=True, text=True, timeout=5,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 if result.returncode == 0 and result.stdout.strip():
                     profile.ram_gb = round(int(result.stdout.strip()) / (1024**3), 1)
@@ -144,9 +149,16 @@ class HardwareDetector:
         try:
             # Versuche nvidia-smi
             import subprocess
+
             result = subprocess.run(
-                ["nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv,noheader,nounits"],
-                capture_output=True, text=True, timeout=5,
+                [
+                    "nvidia-smi",
+                    "--query-gpu=name,memory.total,driver_version",
+                    "--format=csv,noheader,nounits",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode == 0 and result.stdout.strip():
                 parts = result.stdout.strip().split(",")
@@ -163,8 +175,12 @@ class HardwareDetector:
 
     @staticmethod
     def from_specs(
-        cpu: str = "", cores: int = 4, ram_gb: float = 16,
-        gpu_name: str = "", vram_gb: float = 0, disk_gb: float = 100,
+        cpu: str = "",
+        cores: int = 4,
+        ram_gb: float = 16,
+        gpu_name: str = "",
+        vram_gb: float = 0,
+        disk_gb: float = 100,
     ) -> HardwareProfile:
         """Erstellt Profil aus manuellen Angaben."""
         return HardwareProfile(
@@ -187,12 +203,12 @@ class ModelRecommendation:
     """Eine LLM-Modellempfehlung."""
 
     model_name: str
-    model_size: str           # "7B", "13B", "70B"
-    quantization: str         # "Q4_K_M", "Q8_0", "FP16"
+    model_size: str  # "7B", "13B", "70B"
+    quantization: str  # "Q4_K_M", "Q8_0", "FP16"
     vram_required_gb: float
     ram_required_gb: float
-    quality_score: int        # 1-10
-    speed_score: int          # 1-10
+    quality_score: int  # 1-10
+    speed_score: int  # 1-10
     use_case: str
     provider: str = "ollama"  # ollama, llama.cpp, vllm
 
@@ -216,26 +232,32 @@ class ModelRecommender:
         ModelRecommendation("gemma2:2b", "2B", "Q4_K_M", 2.0, 4.0, 5, 9, "Chat, einfache Aufgaben"),
         ModelRecommendation("phi3:mini", "3.8B", "Q4_K_M", 3.0, 6.0, 6, 8, "Reasoning, Code"),
         ModelRecommendation("llama3.2:3b", "3B", "Q4_K_M", 2.5, 5.0, 6, 9, "Allgemein, schnell"),
-
         # Mittlere Modelle (4-8GB VRAM)
         ModelRecommendation("llama3.1:8b", "8B", "Q4_K_M", 5.0, 8.0, 7, 7, "Allgemein, gut"),
         ModelRecommendation("mistral:7b", "7B", "Q4_K_M", 4.5, 8.0, 7, 7, "Chat, Reasoning"),
-        ModelRecommendation("deepseek-coder:6.7b", "6.7B", "Q4_K_M", 4.0, 8.0, 8, 7, "Code-Spezialist"),
+        ModelRecommendation(
+            "deepseek-coder:6.7b", "6.7B", "Q4_K_M", 4.0, 8.0, 8, 7, "Code-Spezialist"
+        ),
         ModelRecommendation("command-r:7b", "7B", "Q4_K_M", 5.0, 8.0, 7, 7, "Tool-Use, RAG"),
-
         # Große Modelle (8-16GB VRAM)
         ModelRecommendation("llama3.1:8b", "8B", "Q8_0", 8.0, 12.0, 8, 6, "Höchste 8B-Qualität"),
         ModelRecommendation("mixtral:8x7b", "47B", "Q4_K_M", 14.0, 24.0, 8, 5, "MoE, vielseitig"),
-        ModelRecommendation("qwen2.5:14b", "14B", "Q4_K_M", 9.0, 14.0, 8, 6, "Mehrsprachig, Deutsch"),
-
+        ModelRecommendation(
+            "qwen2.5:14b", "14B", "Q4_K_M", 9.0, 14.0, 8, 6, "Mehrsprachig, Deutsch"
+        ),
         # Power-Modelle (16-24GB+ VRAM)
         ModelRecommendation("llama3.1:70b", "70B", "Q4_K_M", 20.0, 48.0, 9, 4, "Frontier-Qualität"),
         ModelRecommendation("qwen2.5:32b", "32B", "Q4_K_M", 18.0, 32.0, 9, 5, "Deutsch exzellent"),
-        ModelRecommendation("deepseek-r1:32b", "32B", "Q4_K_M", 18.0, 32.0, 9, 4, "Reasoning-Champion"),
-
+        ModelRecommendation(
+            "deepseek-r1:32b", "32B", "Q4_K_M", 18.0, 32.0, 9, 4, "Reasoning-Champion"
+        ),
         # CPU-only
-        ModelRecommendation("gemma2:2b", "2B", "Q4_K_M", 0, 4.0, 5, 6, "CPU-only, kompakt", "llama.cpp"),
-        ModelRecommendation("phi3:mini", "3.8B", "Q4_K_M", 0, 6.0, 6, 5, "CPU-only, Reasoning", "llama.cpp"),
+        ModelRecommendation(
+            "gemma2:2b", "2B", "Q4_K_M", 0, 4.0, 5, 6, "CPU-only, kompakt", "llama.cpp"
+        ),
+        ModelRecommendation(
+            "phi3:mini", "3.8B", "Q4_K_M", 0, 6.0, 6, 5, "CPU-only, Reasoning", "llama.cpp"
+        ),
     ]
 
     def recommend(self, hardware: HardwareProfile, top_n: int = 3) -> list[ModelRecommendation]:
@@ -263,7 +285,9 @@ class ModelRecommender:
 
         return unique[:top_n]
 
-    def recommend_for_use_case(self, hardware: HardwareProfile, use_case: str) -> ModelRecommendation | None:
+    def recommend_for_use_case(
+        self, hardware: HardwareProfile, use_case: str
+    ) -> ModelRecommendation | None:
         """Empfiehlt das beste Modell für einen bestimmten Anwendungsfall."""
         recs = self.recommend(hardware, top_n=20)
         uc_lower = use_case.lower()
@@ -279,10 +303,10 @@ class ModelRecommender:
 
 
 class PresetLevel(Enum):
-    MINIMAL = "minimal"         # Raspberry Pi, alte Laptops
-    STANDARD = "standard"       # Gaming-PC mit GPU
-    POWER = "power"            # Workstation (RTX 4090/5090)
-    ENTERPRISE = "enterprise"   # Server, Multi-GPU
+    MINIMAL = "minimal"  # Raspberry Pi, alte Laptops
+    STANDARD = "standard"  # Gaming-PC mit GPU
+    POWER = "power"  # Workstation (RTX 4090/5090)
+    ENTERPRISE = "enterprise"  # Server, Multi-GPU
 
 
 @dataclass
@@ -317,35 +341,63 @@ class PresetConfig:
 
 PRESETS = {
     PresetLevel.MINIMAL: PresetConfig(
-        "PRESET-MIN", PresetLevel.MINIMAL,
-        "Minimal", "Für ältere Hardware (4-8 GB RAM, keine GPU)",
-        "gemma2:2b", max_agents=1, max_concurrent=1,
-        memory_limit_mb=2048, enable_rag=False, enable_federation=False,
-        enable_cron=False, channels=["telegram"],
+        "PRESET-MIN",
+        PresetLevel.MINIMAL,
+        "Minimal",
+        "Für ältere Hardware (4-8 GB RAM, keine GPU)",
+        "gemma2:2b",
+        max_agents=1,
+        max_concurrent=1,
+        memory_limit_mb=2048,
+        enable_rag=False,
+        enable_federation=False,
+        enable_cron=False,
+        channels=["telegram"],
         estimated_latency_ms=3000,
     ),
     PresetLevel.STANDARD: PresetConfig(
-        "PRESET-STD", PresetLevel.STANDARD,
-        "Standard", "Für Gaming-PCs (16 GB RAM, 8 GB VRAM)",
-        "llama3.1:8b", max_agents=3, max_concurrent=2,
-        memory_limit_mb=8192, enable_rag=True, enable_federation=False,
-        enable_cron=True, channels=["telegram", "slack", "web"],
+        "PRESET-STD",
+        PresetLevel.STANDARD,
+        "Standard",
+        "Für Gaming-PCs (16 GB RAM, 8 GB VRAM)",
+        "llama3.1:8b",
+        max_agents=3,
+        max_concurrent=2,
+        memory_limit_mb=8192,
+        enable_rag=True,
+        enable_federation=False,
+        enable_cron=True,
+        channels=["telegram", "slack", "web"],
         estimated_latency_ms=800,
     ),
     PresetLevel.POWER: PresetConfig(
-        "PRESET-PWR", PresetLevel.POWER,
-        "Power", "Für Workstations (32+ GB RAM, 16+ GB VRAM)",
-        "qwen2.5:32b", max_agents=10, max_concurrent=4,
-        memory_limit_mb=32768, enable_rag=True, enable_federation=True,
-        enable_cron=True, channels=["telegram", "slack", "web", "matrix", "teams"],
+        "PRESET-PWR",
+        PresetLevel.POWER,
+        "Power",
+        "Für Workstations (32+ GB RAM, 16+ GB VRAM)",
+        "qwen2.5:32b",
+        max_agents=10,
+        max_concurrent=4,
+        memory_limit_mb=32768,
+        enable_rag=True,
+        enable_federation=True,
+        enable_cron=True,
+        channels=["telegram", "slack", "web", "matrix", "teams"],
         estimated_latency_ms=400,
     ),
     PresetLevel.ENTERPRISE: PresetConfig(
-        "PRESET-ENT", PresetLevel.ENTERPRISE,
-        "Enterprise", "Für Server (64+ GB RAM, Multi-GPU)",
-        "llama3.1:70b", max_agents=50, max_concurrent=10,
-        memory_limit_mb=65536, enable_rag=True, enable_federation=True,
-        enable_cron=True, channels=["telegram", "slack", "web", "matrix", "teams", "email", "api"],
+        "PRESET-ENT",
+        PresetLevel.ENTERPRISE,
+        "Enterprise",
+        "Für Server (64+ GB RAM, Multi-GPU)",
+        "llama3.1:70b",
+        max_agents=50,
+        max_concurrent=10,
+        memory_limit_mb=65536,
+        enable_rag=True,
+        enable_federation=True,
+        enable_cron=True,
+        channels=["telegram", "slack", "web", "matrix", "teams", "email", "api"],
         estimated_latency_ms=200,
     ),
 }
@@ -375,7 +427,7 @@ class ChannelConfig:
     channel_type: ChannelType
     enabled: bool = False
     config: dict[str, Any] = field(default_factory=dict)
-    status: str = "unconfigured"     # unconfigured, configured, connected, error
+    status: str = "unconfigured"  # unconfigured, configured, connected, error
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -546,7 +598,9 @@ class SetupWizard:
         """Schritt 4: Kanäle konfigurieren."""
         if channel_types is None and self._state.selected_preset:
             preset = PRESETS[self._state.selected_preset]
-            channel_types = [ChannelType(c) for c in preset.channels if c in [ct.value for ct in ChannelType]]
+            channel_types = [
+                ChannelType(c) for c in preset.channels if c in [ct.value for ct in ChannelType]
+            ]
         channel_types = channel_types or [ChannelType.WEB]
 
         configs = []

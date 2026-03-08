@@ -40,7 +40,9 @@ def _slugify(name: str) -> str:
     return slug
 
 
-def create_skill(skills_dir: Path, name: str, trigger_keywords: Optional[Iterable[str]] = None) -> Path:
+def create_skill(
+    skills_dir: Path, name: str, trigger_keywords: Optional[Iterable[str]] = None
+) -> Path:
     """Erstellt eine neue Skill-Datei mit einer minimalen Vorlage.
 
     Args:

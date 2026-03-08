@@ -26,6 +26,7 @@ BOOTSTRAP = REPO / "scripts" / "bootstrap_windows.py"
 # bootstrap_windows.py: --skip-models flag
 # =========================================================================
 
+
 class TestBootstrapSkipModels:
     """--skip-models must prevent any Ollama model download."""
 
@@ -35,6 +36,7 @@ class TestBootstrapSkipModels:
         sys.path.insert(0, str(REPO / "scripts"))
         try:
             import importlib
+
             mod = importlib.import_module("bootstrap_windows")
             importlib.reload(mod)  # fresh copy
 
@@ -87,6 +89,7 @@ class TestBootstrapSkipModels:
         sys.path.insert(0, str(REPO / "scripts"))
         try:
             import importlib
+
             mod = importlib.import_module("bootstrap_windows")
             importlib.reload(mod)
 
@@ -107,6 +110,7 @@ class TestBootstrapSkipModels:
 # =========================================================================
 # config.py: _safe_mkdir — PermissionError handling
 # =========================================================================
+
 
 class TestSafeMkdirPermission:
     """_safe_mkdir must raise PermissionError with user-friendly fix command."""
@@ -151,6 +155,7 @@ class TestSafeMkdirPermission:
 # config.py: _safe_mkdir — disk full (OSError errno 28)
 # =========================================================================
 
+
 class TestSafeMkdirDiskFull:
     """_safe_mkdir must handle ENOSPC (disk full) with user-friendly message."""
 
@@ -189,6 +194,7 @@ class TestSafeMkdirDiskFull:
 # config.py: _safe_write — PermissionError and disk-full
 # =========================================================================
 
+
 class TestSafeWrite:
     """_safe_write must handle PermissionError and disk-full."""
 
@@ -224,6 +230,7 @@ class TestSafeWrite:
 # config.py: ensure_directory_structure integration
 # =========================================================================
 
+
 class TestEnsureDirectoryStructureErrors:
     """ensure_directory_structure must propagate the user-friendly errors."""
 
@@ -256,6 +263,7 @@ class TestEnsureDirectoryStructureErrors:
 # =========================================================================
 # Bug report template
 # =========================================================================
+
 
 class TestBugReportTemplate:
     """Bug report template must exist and contain required sections."""
@@ -296,6 +304,7 @@ class TestBugReportTemplate:
 # =========================================================================
 # README.md: TomiWebPro credit
 # =========================================================================
+
 
 class TestReadmeCredits:
     """README must credit TomiWebPro."""

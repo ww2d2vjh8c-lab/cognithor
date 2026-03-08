@@ -20,15 +20,17 @@ from jarvis.security.cicd_gate import GateVerdict, SecurityGate
 def _make_gate_with_fail() -> tuple[SecurityGate, str]:
     """Erstellt ein Gate mit einem FAIL-Ergebnis und gibt (gate, gate_id) zurueck."""
     gate = SecurityGate()
-    result = gate.evaluate({
-        "stages": [
-            {
-                "stage": "sast",
-                "result": "failed",
-                "findings": [{"severity": "critical", "title": "test"}],
-            }
-        ]
-    })
+    result = gate.evaluate(
+        {
+            "stages": [
+                {
+                    "stage": "sast",
+                    "result": "failed",
+                    "findings": [{"severity": "critical", "title": "test"}],
+                }
+            ]
+        }
+    )
     assert result.verdict == GateVerdict.FAIL
     return gate, result.gate_id
 
@@ -72,13 +74,17 @@ class TestOverrideRoleCheck:
 
     def test_security_lead_role_allowed(self) -> None:
         gate, gate_id = _make_gate_with_fail()
-        result = gate.override(gate_id, by="security-lead", reason="False positive, manuell verifiziert")
+        result = gate.override(
+            gate_id, by="security-lead", reason="False positive, manuell verifiziert"
+        )
         assert result is not None
         assert result.verdict == GateVerdict.OVERRIDE
 
     def test_release_manager_role_allowed(self) -> None:
         gate, gate_id = _make_gate_with_fail()
-        result = gate.override(gate_id, by="release-manager", reason="Kritischer Hotfix, Rollback geplant")
+        result = gate.override(
+            gate_id, by="release-manager", reason="Kritischer Hotfix, Rollback geplant"
+        )
         assert result is not None
         assert result.verdict == GateVerdict.OVERRIDE
 
@@ -109,7 +115,9 @@ class TestOverrideReasonValidation:
 
     def test_valid_reason_accepted(self) -> None:
         gate, gate_id = _make_gate_with_fail()
-        result = gate.override(gate_id, by="admin", reason="Hotfix fuer kritischen Bug in Produktion")
+        result = gate.override(
+            gate_id, by="admin", reason="Hotfix fuer kritischen Bug in Produktion"
+        )
         assert result is not None
 
 
@@ -180,16 +188,25 @@ class TestFunctionalCorrectness:
 
     def test_unknown_gate_id_returns_none(self) -> None:
         gate, _ = _make_gate_with_fail()
-        result = gate.override("nonexistent-id", by="admin", reason="Existiert nicht, aber gueltige Begruendung")
+        result = gate.override(
+            "nonexistent-id", by="admin", reason="Existiert nicht, aber gueltige Begruendung"
+        )
         assert result is None
 
     def test_override_does_not_affect_other_results(self) -> None:
         gate = SecurityGate()
         r1 = gate.evaluate({"stages": [{"stage": "a", "result": "pass", "findings": []}]})
-        r2 = gate.evaluate({
-            "stages": [{"stage": "b", "result": "fail",
-                        "findings": [{"severity": "critical", "title": "x"}]}]
-        })
+        r2 = gate.evaluate(
+            {
+                "stages": [
+                    {
+                        "stage": "b",
+                        "result": "fail",
+                        "findings": [{"severity": "critical", "title": "x"}],
+                    }
+                ]
+            }
+        )
         gate.override(r2.gate_id, by="admin", reason="Nur r2 overriden, nicht r1")
         assert r1.verdict == GateVerdict.PASS
         assert r2.verdict == GateVerdict.OVERRIDE

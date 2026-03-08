@@ -136,9 +136,7 @@ class TestSendCircuitBreaker:
         ch._circuit_breaker = MagicMock()
         ch._circuit_breaker.call = AsyncMock(side_effect=CircuitBreakerOpen("telegram_api", 60.0))
 
-        msg = OutgoingMessage(
-            channel="telegram", text="hello", metadata={"chat_id": "42"}
-        )
+        msg = OutgoingMessage(channel="telegram", text="hello", metadata={"chat_id": "42"})
         await ch.send(msg)  # should not raise
 
     @pytest.mark.asyncio
@@ -146,9 +144,7 @@ class TestSendCircuitBreaker:
         ch._app = MagicMock()
         ch._app.bot.send_message = AsyncMock(side_effect=Exception("always fails"))
 
-        msg = OutgoingMessage(
-            channel="telegram", text="test", metadata={"chat_id": "42"}
-        )
+        msg = OutgoingMessage(channel="telegram", text="test", metadata={"chat_id": "42"})
         await ch.send(msg)  # should not raise (logs exception)
 
 

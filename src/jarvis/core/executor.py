@@ -35,8 +35,12 @@ if TYPE_CHECKING:
     from jarvis.skills.generator import GapDetector
 
 # Thread-/Task-safe agent context via contextvars
-_agent_workspace_var: contextvars.ContextVar[str | None] = contextvars.ContextVar("agent_workspace", default=None)
-_agent_sandbox_var: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar("agent_sandbox", default=None)
+_agent_workspace_var: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "agent_workspace", default=None
+)
+_agent_sandbox_var: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar(
+    "agent_sandbox", default=None
+)
 _agent_name_var: contextvars.ContextVar[str] = contextvars.ContextVar("agent_name", default="")
 _session_id_var: contextvars.ContextVar[str] = contextvars.ContextVar("session_id", default="")
 
@@ -284,14 +288,15 @@ class Executor:
 
         while True:
             ready = [
-                nid for nid in graph.get_ready_nodes(completed_ids)
+                nid
+                for nid in graph.get_ready_nodes(completed_ids)
                 if results[node_map[nid][0]] is None
             ]
 
             pending = [
-                nid for nid in node_ids
-                if nid not in completed_ids
-                and results[node_map[nid][0]] is None
+                nid
+                for nid in node_ids
+                if nid not in completed_ids and results[node_map[nid][0]] is None
             ]
 
             if not ready:
@@ -380,7 +385,9 @@ class Executor:
         # --- Runtime Monitor: Sicherheitscheck VOR Ausführung ---
         if self._runtime_monitor:
             security_event = self._runtime_monitor.check_tool_call(
-                tool_name, params, agent_name=_agent_name_var.get(),
+                tool_name,
+                params,
+                agent_name=_agent_name_var.get(),
             )
             if security_event.is_blocked:
                 if self._audit_logger:
@@ -413,7 +420,7 @@ class Executor:
                 content = result.content if hasattr(result, "content") else str(result)
                 truncated = False
                 if len(content) > self._max_output:
-                    content = content[:self._max_output]
+                    content = content[: self._max_output]
                     truncated = True
 
                 is_error = result.is_error if hasattr(result, "is_error") else False
@@ -483,7 +490,9 @@ class Executor:
             if self._error_clusterer:
                 try:
                     self._error_clusterer.add_error(
-                        last_error_type, last_error, f"tool={tool_name}",
+                        last_error_type,
+                        last_error,
+                        f"tool={tool_name}",
                     )
                 except Exception:
                     pass
@@ -500,12 +509,14 @@ class Executor:
                 # Gap melden für Auto-Skill-Generator
                 if self._gap_detector:
                     self._gap_detector.report_unknown_tool(
-                        tool_name, context=f"{last_error_type}: {last_error[:200]}",
+                        tool_name,
+                        context=f"{last_error_type}: {last_error[:200]}",
                     )
                 # Audit: Fehler protokollieren
                 if self._audit_logger:
                     self._audit_logger.log_tool_call(
-                        tool_name, params,
+                        tool_name,
+                        params,
                         agent_name=_agent_name_var.get(),
                         result=f"{last_error_type}: {last_error[:200]}",
                         success=False,
@@ -521,6 +532,7 @@ class Executor:
 
             if attempt < self._max_retries:
                 import random
+
                 _exp_delay = self._base_delay * (2 ** (attempt - 1))
                 delay = min(_exp_delay * (0.5 + random.random()), 30.0)
                 log.warning(
@@ -556,12 +568,14 @@ class Executor:
         # Gap melden für Auto-Skill-Generator
         if self._gap_detector:
             self._gap_detector.report_repeated_failure(
-                tool_name, f"Retries exhausted: {last_error_type}: {last_error[:200]}",
+                tool_name,
+                f"Retries exhausted: {last_error_type}: {last_error[:200]}",
             )
         # Audit: Retries erschöpft
         if self._audit_logger:
             self._audit_logger.log_tool_call(
-                tool_name, params,
+                tool_name,
+                params,
                 agent_name=_agent_name_var.get(),
                 result=f"Retries exhausted: {last_error_type}: {last_error[:200]}",
                 success=False,
@@ -570,6 +584,7 @@ class Executor:
         # User-friendly error message
         try:
             from jarvis.utils.error_messages import retry_exhausted_message
+
             friendly_msg = retry_exhausted_message(tool_name, self._max_retries, last_error)
         except Exception:
             friendly_msg = f"Fehler nach {self._max_retries} Versuchen: {last_error}"

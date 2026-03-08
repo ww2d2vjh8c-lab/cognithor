@@ -79,7 +79,6 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_analyze_document,
             ),
-
             # ── Zusammenfassung ─────────────────────────────────
             MCPPrompt(
                 name="summarize",
@@ -103,7 +102,6 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_summarize,
             ),
-
             # ── Versicherungsberatung ───────────────────────────
             MCPPrompt(
                 name="insurance_advisor",
@@ -127,7 +125,6 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_insurance_advisor,
             ),
-
             # ── Code-Review ─────────────────────────────────────
             MCPPrompt(
                 name="code_review",
@@ -151,7 +148,6 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_code_review,
             ),
-
             # ── Übersetzung ─────────────────────────────────────
             MCPPrompt(
                 name="translate",
@@ -175,7 +171,6 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_translate,
             ),
-
             # ── Brainstorming ───────────────────────────────────
             MCPPrompt(
                 name="brainstorm",
@@ -199,7 +194,6 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_brainstorm,
             ),
-
             # ── Konzepterklärung ────────────────────────────────
             MCPPrompt(
                 name="explain_concept",
@@ -223,7 +217,6 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_explain_concept,
             ),
-
             # ── Tägliches Briefing ──────────────────────────────
             MCPPrompt(
                 name="daily_briefing",
@@ -254,7 +247,9 @@ class JarvisPromptProvider:
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """Generiert Messages für Dokument-Analyse."""
-        lang_instruction = "Antworte auf Deutsch." if language == "de" else f"Respond in {language}."
+        lang_instruction = (
+            "Antworte auf Deutsch." if language == "de" else f"Respond in {language}."
+        )
         focus_map = {
             "summary": "Erstelle eine prägnante Zusammenfassung.",
             "key_points": "Extrahiere die wichtigsten Kernaussagen als strukturierte Liste.",

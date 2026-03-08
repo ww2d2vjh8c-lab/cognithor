@@ -132,7 +132,9 @@ class AgentRegistry:
         self._capabilities: dict[str, list[AgentCapability]] = {}
 
     def register_capabilities(
-        self, agent_name: str, capabilities: list[AgentCapability],
+        self,
+        agent_name: str,
+        capabilities: list[AgentCapability],
     ) -> None:
         """Register capabilities for an agent."""
         self._capabilities[agent_name] = list(capabilities)
@@ -318,8 +320,7 @@ class DelegationEngine:
         if not self._can_delegate(from_agent, to_agent, depth):
             result.status = DelegationStatus.REJECTED
             result.validation_errors = [
-                f"Agent '{from_agent}' cannot delegate to '{to_agent}' "
-                f"(depth={depth})"
+                f"Agent '{from_agent}' cannot delegate to '{to_agent}' (depth={depth})"
             ]
             self._record(result, start_time)
             return result
@@ -337,9 +338,7 @@ class DelegationEngine:
             result.status = DelegationStatus.SUCCESS
         except asyncio.TimeoutError:
             result.status = DelegationStatus.TIMEOUT
-            result.validation_errors = [
-                f"Delegation timed out after {contract.timeout_seconds}s"
-            ]
+            result.validation_errors = [f"Delegation timed out after {contract.timeout_seconds}s"]
             self._record(result, start_time)
             return result
         except Exception as exc:
@@ -429,18 +428,18 @@ class DelegationEngine:
             "timeout": sum(1 for r in self._history if r.status == DelegationStatus.TIMEOUT),
             "rejected": sum(1 for r in self._history if r.status == DelegationStatus.REJECTED),
             "validation_failed": sum(
-                1 for r in self._history
-                if r.status == DelegationStatus.VALIDATION_FAILED
+                1 for r in self._history if r.status == DelegationStatus.VALIDATION_FAILED
             ),
-            "avg_duration_ms": (
-                sum(r.duration_ms for r in self._history) // total if total else 0
-            ),
+            "avg_duration_ms": (sum(r.duration_ms for r in self._history) // total if total else 0),
         }
 
     # -- Internal helpers --------------------------------------------------
 
     def _can_delegate(
-        self, from_agent: str, to_agent: str, depth: int,
+        self,
+        from_agent: str,
+        to_agent: str,
+        depth: int,
     ) -> bool:
         """Check if delegation is permitted."""
         if self._router:
@@ -468,7 +467,10 @@ class DelegationEngine:
         return None
 
     async def _execute_delegation(
-        self, to_agent: str, task: str, context: dict[str, Any],
+        self,
+        to_agent: str,
+        task: str,
+        context: dict[str, Any],
     ) -> str:
         """Execute the actual delegation via orchestrator or router."""
         if self._orchestrator and self._orchestrator._runner:

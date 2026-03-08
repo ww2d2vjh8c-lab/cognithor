@@ -64,7 +64,8 @@ class AgentTask:
             "fail_count": self.fail_count,
             "avg_duration_ms": round(self.avg_duration_ms, 1),
             "success_rate": round(
-                ((self.run_count - self.fail_count) / max(self.run_count, 1)) * 100, 1,
+                ((self.run_count - self.fail_count) / max(self.run_count, 1)) * 100,
+                1,
             ),
         }
 
@@ -206,7 +207,7 @@ class AgentHeartbeatScheduler:
         # Historie
         self._history[run.agent_id].append(run)
         if len(self._history[run.agent_id]) > self._max_history:
-            self._history[run.agent_id] = self._history[run.agent_id][-self._max_history:]
+            self._history[run.agent_id] = self._history[run.agent_id][-self._max_history :]
 
     # ------------------------------------------------------------------
     # Dashboard-Übersicht
@@ -246,7 +247,8 @@ class AgentHeartbeatScheduler:
             "total_runs": total_runs,
             "total_fails": total_fails,
             "success_rate": round(
-                ((total_runs - total_fails) / max(total_runs, 1)) * 100, 1,
+                ((total_runs - total_fails) / max(total_runs, 1)) * 100,
+                1,
             ),
             "agents": summaries,
         }

@@ -34,9 +34,9 @@ from typing import Any
 class RiskLevel(Enum):
     """EU-AI-Act Risikoklassifikation."""
 
-    MINIMAL = "minimal"          # Art. 6: Minimales Risiko
-    LIMITED = "limited"          # Art. 6: Begrenztes Risiko
-    HIGH = "high"                # Art. 6: Hochrisiko
+    MINIMAL = "minimal"  # Art. 6: Minimales Risiko
+    LIMITED = "limited"  # Art. 6: Begrenztes Risiko
+    HIGH = "high"  # Art. 6: Hochrisiko
     UNACCEPTABLE = "unacceptable"  # Art. 5: Verbotene Praktiken
 
 
@@ -116,7 +116,7 @@ class DecisionLog:
         """Protokolliert eine Entscheidung."""
         self._entries.append(record)
         if len(self._entries) > self._max:
-            self._entries = self._entries[-self._max:]
+            self._entries = self._entries[-self._max :]
 
     def query(
         self,
@@ -160,7 +160,8 @@ class DecisionLog:
             "unique_agents": len(set(r.agent_id for r in self._entries)),
             "avg_confidence": (
                 round(sum(r.confidence for r in self._entries) / len(self._entries), 2)
-                if self._entries else 0.0
+                if self._entries
+                else 0.0
             ),
         }
 
@@ -175,7 +176,7 @@ class ComplianceCheck:
     """Eine einzelne Compliance-Prüfung."""
 
     check_id: str
-    regulation: str          # z.B. "EU-AI-Act Art. 12"
+    regulation: str  # z.B. "EU-AI-Act Art. 12"
     requirement: str
     description: str
     status: ComplianceStatus = ComplianceStatus.NOT_ASSESSED
@@ -355,7 +356,9 @@ class ComplianceFramework:
                 "Sandbox + Workspace-Isolation" if has_sandbox else "",
             ),
             "DSGVO-32.1": (
-                ComplianceStatus.COMPLIANT if has_encryption and has_rbac else ComplianceStatus.PARTIAL,
+                ComplianceStatus.COMPLIANT
+                if has_encryption and has_rbac
+                else ComplianceStatus.PARTIAL,
                 "Verschlüsselung + RBAC" if has_encryption else "",
             ),
             "DSGVO-35.1": (
@@ -395,7 +398,9 @@ class ComplianceFramework:
             total_checks=len(self._checks),
             compliant=sum(1 for c in self._checks if c.status == ComplianceStatus.COMPLIANT),
             partial=sum(1 for c in self._checks if c.status == ComplianceStatus.PARTIAL),
-            non_compliant=sum(1 for c in self._checks if c.status == ComplianceStatus.NON_COMPLIANT),
+            non_compliant=sum(
+                1 for c in self._checks if c.status == ComplianceStatus.NON_COMPLIANT
+            ),
             not_assessed=sum(1 for c in self._checks if c.status == ComplianceStatus.NOT_ASSESSED),
             checks=list(self._checks),
         )
@@ -406,7 +411,9 @@ class ComplianceFramework:
             "compliance_score": self.compliance_score(),
             "compliant": sum(1 for c in self._checks if c.status == ComplianceStatus.COMPLIANT),
             "partial": sum(1 for c in self._checks if c.status == ComplianceStatus.PARTIAL),
-            "non_compliant": sum(1 for c in self._checks if c.status == ComplianceStatus.NON_COMPLIANT),
+            "non_compliant": sum(
+                1 for c in self._checks if c.status == ComplianceStatus.NON_COMPLIANT
+            ),
         }
 
 
@@ -461,6 +468,7 @@ class ReportExporter:
     def to_json(report: ComplianceReport) -> str:
         """Exportiert als JSON-String."""
         import json
+
         return json.dumps(report.to_dict(), indent=2, ensure_ascii=False)
 
     @staticmethod
@@ -583,15 +591,18 @@ class RemediationTracker:
 
     def open_items(self) -> list[RemediationItem]:
         return [
-            i for i in self._items.values()
+            i
+            for i in self._items.values()
             if i.status in (RemediationStatus.OPEN, RemediationStatus.IN_PROGRESS)
         ]
 
     def overdue_items(self, reference_date: str = "") -> list[RemediationItem]:
         ref = reference_date or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         return [
-            i for i in self._items.values()
-            if i.due_date and i.due_date < ref
+            i
+            for i in self._items.values()
+            if i.due_date
+            and i.due_date < ref
             and i.status in (RemediationStatus.OPEN, RemediationStatus.IN_PROGRESS)
         ]
 

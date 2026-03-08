@@ -31,16 +31,25 @@ class TestListByAgent:
     def test_list_by_agent(self) -> None:
         registry = SkillRegistry()
         registry._skills["s1"] = Skill(
-            name="S1", slug="s1", file_path=Path("/fake"),
-            agent="email_agent", enabled=True,
+            name="S1",
+            slug="s1",
+            file_path=Path("/fake"),
+            agent="email_agent",
+            enabled=True,
         )
         registry._skills["s2"] = Skill(
-            name="S2", slug="s2", file_path=Path("/fake"),
-            agent="code_agent", enabled=True,
+            name="S2",
+            slug="s2",
+            file_path=Path("/fake"),
+            agent="code_agent",
+            enabled=True,
         )
         registry._skills["s3"] = Skill(
-            name="S3", slug="s3", file_path=Path("/fake"),
-            agent="email_agent", enabled=False,  # Disabled
+            name="S3",
+            slug="s3",
+            file_path=Path("/fake"),
+            agent="email_agent",
+            enabled=False,  # Disabled
         )
         result = registry.list_by_agent("email_agent")
         assert len(result) == 1
@@ -144,7 +153,9 @@ class TestRecordUsage:
     def test_record_success(self) -> None:
         registry = SkillRegistry()
         registry._skills["s1"] = Skill(
-            name="S1", slug="s1", file_path=Path("/fake"),
+            name="S1",
+            slug="s1",
+            file_path=Path("/fake"),
         )
         registry.record_usage("s1", success=True, score=0.9)
         skill = registry.get("s1")
@@ -155,7 +166,9 @@ class TestRecordUsage:
     def test_record_failure(self) -> None:
         registry = SkillRegistry()
         registry._skills["s1"] = Skill(
-            name="S1", slug="s1", file_path=Path("/fake"),
+            name="S1",
+            slug="s1",
+            file_path=Path("/fake"),
         )
         registry.record_usage("s1", success=False, score=0.2)
         skill = registry.get("s1")
@@ -226,7 +239,10 @@ class TestSkillSuccessRate:
 
     def test_success_rate_mixed(self) -> None:
         skill = Skill(
-            name="S", slug="s", file_path=Path("/fake"),
-            success_count=7, failure_count=3,
+            name="S",
+            slug="s",
+            file_path=Path("/fake"),
+            success_count=7,
+            failure_count=3,
         )
         assert abs(skill.success_rate - 0.7) < 0.01

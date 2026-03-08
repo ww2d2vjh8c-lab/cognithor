@@ -38,9 +38,7 @@ class CircuitBreakerOpen(Exception):
     def __init__(self, name: str, remaining_seconds: float) -> None:
         self.name = name
         self.remaining_seconds = remaining_seconds
-        super().__init__(
-            f"Circuit breaker '{name}' is open (retry in {remaining_seconds:.1f}s)"
-        )
+        super().__init__(f"Circuit breaker '{name}' is open (retry in {remaining_seconds:.1f}s)")
 
 
 class CircuitBreaker:
@@ -120,9 +118,7 @@ class CircuitBreaker:
                 elapsed = now - self._opened_at
                 if elapsed < self._recovery_timeout:
                     self._total_rejections += 1
-                    raise CircuitBreakerOpen(
-                        self._name, self._recovery_timeout - elapsed
-                    )
+                    raise CircuitBreakerOpen(self._name, self._recovery_timeout - elapsed)
                 # Timeout abgelaufen → HALF_OPEN
                 self._transition(CircuitState.half_open)
                 self._half_open_successes = 0
@@ -132,9 +128,7 @@ class CircuitBreaker:
             if self._state == CircuitState.half_open:
                 if self._half_open_inflight >= self._half_open_max_calls:
                     self._total_rejections += 1
-                    raise CircuitBreakerOpen(
-                        self._name, self._recovery_timeout
-                    )
+                    raise CircuitBreakerOpen(self._name, self._recovery_timeout)
                 self._half_open_inflight += 1
 
         # Track whether we incremented inflight (only in HALF_OPEN)

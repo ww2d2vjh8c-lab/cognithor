@@ -61,7 +61,8 @@ class A2AHTTPHandler:
     ) -> dict[str, Any]:
         """POST /a2a -- JSON-RPC 2.0 Dispatch."""
         return await self.adapter.handle_a2a_request(
-            body, auth_header=auth_header,
+            body,
+            auth_header=auth_header,
             client_version=client_version,
         )
 
@@ -108,7 +109,8 @@ class A2AHTTPHandler:
             if not await handler._rate_limiter.check(client_ip):
                 return JSONResponse(
                     content={
-                        "jsonrpc": "2.0", "id": None,
+                        "jsonrpc": "2.0",
+                        "id": None,
                         "error": {"code": -32000, "message": "Too Many Requests"},
                     },
                     status_code=429,
@@ -119,7 +121,8 @@ class A2AHTTPHandler:
             except Exception:
                 return JSONResponse(
                     content={
-                        "jsonrpc": "2.0", "id": None,
+                        "jsonrpc": "2.0",
+                        "id": None,
                         "error": {"code": -32700, "message": "Parse error"},
                     },
                     status_code=400,
@@ -130,7 +133,9 @@ class A2AHTTPHandler:
             version = request.headers.get(A2A_VERSION_HEADER, "")
 
             result = await handler.adapter.handle_a2a_request(
-                body, auth_header=auth, client_version=version,
+                body,
+                auth_header=auth,
+                client_version=version,
             )
             status = 200
             if "error" in result:
@@ -152,8 +157,10 @@ class A2AHTTPHandler:
             try:
                 body = await request.json()
             except Exception:
+
                 async def error_gen():
                     yield 'event: error\ndata: {"code": -32700, "message": "Parse error"}\n\n'
+
                 return StreamingResponse(
                     error_gen(),
                     media_type="text/event-stream",
@@ -202,6 +209,7 @@ class A2AHTTPHandler:
         async def well_known(request: web.Request) -> web.Response:
             card = await handler.handle_agent_card()
             import json
+
             return web.Response(
                 text=json.dumps(card),
                 content_type=A2A_CONTENT_TYPE,
@@ -210,14 +218,18 @@ class A2AHTTPHandler:
 
         async def jsonrpc(request: web.Request) -> web.Response:
             import json
+
             try:
                 body = await request.json()
             except Exception:
                 return web.Response(
-                    text=json.dumps({
-                        "jsonrpc": "2.0", "id": None,
-                        "error": {"code": -32700, "message": "Parse error"},
-                    }),
+                    text=json.dumps(
+                        {
+                            "jsonrpc": "2.0",
+                            "id": None,
+                            "error": {"code": -32700, "message": "Parse error"},
+                        }
+                    ),
                     status=400,
                     content_type=A2A_CONTENT_TYPE,
                     headers={A2A_VERSION_HEADER: A2A_PROTOCOL_VERSION},
@@ -225,7 +237,9 @@ class A2AHTTPHandler:
             auth = request.headers.get("Authorization", "")
             version = request.headers.get(A2A_VERSION_HEADER, "")
             result = await handler.adapter.handle_a2a_request(
-                body, auth_header=auth, client_version=version,
+                body,
+                auth_header=auth,
+                client_version=version,
             )
             return web.Response(
                 text=json.dumps(result),
@@ -236,6 +250,7 @@ class A2AHTTPHandler:
         async def health(request: web.Request) -> web.Response:
             result = await handler.handle_health()
             import json
+
             return web.Response(text=json.dumps(result), content_type="application/json")
 
         app.router.add_get("/.well-known/agent.json", well_known)
@@ -253,7 +268,9 @@ class A2AHTTPHandler:
         import asyncio
         import json
 
-        async def handle_connection(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        async def handle_connection(
+            reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+        ) -> None:
             try:
                 data = await reader.read(65536)
                 request_line = data.decode("utf-8", errors="replace").split("\r\n")[0]
@@ -265,14 +282,17 @@ class A2AHTTPHandler:
                 elif method == "POST" and path == "/a2a":
                     # JSON-RPC body aus HTTP-Request extrahieren
                     header_end = data.find(b"\r\n\r\n")
-                    rpc_body = data[header_end + 4:] if header_end != -1 else b""
+                    rpc_body = data[header_end + 4 :] if header_end != -1 else b""
                     try:
                         rpc_request = json.loads(rpc_body.decode("utf-8"))
                     except (json.JSONDecodeError, UnicodeDecodeError):
-                        body = json.dumps({
-                            "jsonrpc": "2.0", "id": None,
-                            "error": {"code": -32700, "message": "Parse error"},
-                        })
+                        body = json.dumps(
+                            {
+                                "jsonrpc": "2.0",
+                                "id": None,
+                                "error": {"code": -32700, "message": "Parse error"},
+                            }
+                        )
                     else:
                         result = await self.adapter.handle_a2a_request(rpc_request)
                         body = json.dumps(result)

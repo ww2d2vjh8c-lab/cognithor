@@ -69,7 +69,9 @@ class TestCanvasToolPush:
 
     @pytest.mark.asyncio
     async def test_push_updates_canvas(
-        self, canvas_tools: CanvasTools, canvas_manager: CanvasManager,
+        self,
+        canvas_tools: CanvasTools,
+        canvas_manager: CanvasManager,
     ) -> None:
         await canvas_tools.handle_tool_call(
             "canvas_push",
@@ -87,19 +89,27 @@ class TestCanvasToolReset:
     @pytest.mark.asyncio
     async def test_reset_success(self, canvas_tools: CanvasTools) -> None:
         await canvas_tools.handle_tool_call(
-            "canvas_push", {"html": "<p>Content</p>"}, "session_1",
+            "canvas_push",
+            {"html": "<p>Content</p>"},
+            "session_1",
         )
         result = await canvas_tools.handle_tool_call(
-            "canvas_reset", {}, "session_1",
+            "canvas_reset",
+            {},
+            "session_1",
         )
         assert result["success"] is True
 
     @pytest.mark.asyncio
     async def test_reset_clears_canvas(
-        self, canvas_tools: CanvasTools, canvas_manager: CanvasManager,
+        self,
+        canvas_tools: CanvasTools,
+        canvas_manager: CanvasManager,
     ) -> None:
         await canvas_tools.handle_tool_call(
-            "canvas_push", {"html": "<p>Content</p>"}, "session_1",
+            "canvas_push",
+            {"html": "<p>Content</p>"},
+            "session_1",
         )
         await canvas_tools.handle_tool_call("canvas_reset", {}, "session_1")
         html = await canvas_manager.snapshot("session_1")
@@ -112,7 +122,9 @@ class TestCanvasToolSnapshot:
     @pytest.mark.asyncio
     async def test_snapshot_empty(self, canvas_tools: CanvasTools) -> None:
         result = await canvas_tools.handle_tool_call(
-            "canvas_snapshot", {}, "session_1",
+            "canvas_snapshot",
+            {},
+            "session_1",
         )
         assert result["success"] is True
         assert result["html"] == ""
@@ -120,10 +132,14 @@ class TestCanvasToolSnapshot:
     @pytest.mark.asyncio
     async def test_snapshot_with_content(self, canvas_tools: CanvasTools) -> None:
         await canvas_tools.handle_tool_call(
-            "canvas_push", {"html": "<div>Test</div>"}, "session_1",
+            "canvas_push",
+            {"html": "<div>Test</div>"},
+            "session_1",
         )
         result = await canvas_tools.handle_tool_call(
-            "canvas_snapshot", {}, "session_1",
+            "canvas_snapshot",
+            {},
+            "session_1",
         )
         assert result["success"] is True
         assert result["html"] == "<div>Test</div>"
@@ -150,7 +166,9 @@ class TestCanvasToolEval:
     @pytest.mark.asyncio
     async def test_eval_empty_js(self, canvas_tools: CanvasTools) -> None:
         result = await canvas_tools.handle_tool_call(
-            "canvas_eval", {"js": ""}, "session_1",
+            "canvas_eval",
+            {"js": ""},
+            "session_1",
         )
         assert "error" in result
 
@@ -161,6 +179,8 @@ class TestCanvasToolUnknown:
     @pytest.mark.asyncio
     async def test_unknown_tool(self, canvas_tools: CanvasTools) -> None:
         result = await canvas_tools.handle_tool_call(
-            "canvas_unknown", {}, "session_1",
+            "canvas_unknown",
+            {},
+            "session_1",
         )
         assert "error" in result

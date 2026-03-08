@@ -66,10 +66,12 @@ def sample_run():
                 GateDecision(status=GateStatus.ALLOW, risk_level=RiskLevel.GREEN, reason="OK"),
             ]
         ],
-        tool_results=[[
-            ToolResult(tool_name="read_file", content="content"),
-            ToolResult(tool_name="search_memory", content="results"),
-        ]],
+        tool_results=[
+            [
+                ToolResult(tool_name="read_file", content="content"),
+                ToolResult(tool_name="search_memory", content="results"),
+            ]
+        ],
     )
 
 

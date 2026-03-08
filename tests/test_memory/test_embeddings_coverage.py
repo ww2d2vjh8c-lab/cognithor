@@ -162,9 +162,7 @@ class TestOpenAICompatibleEmbeddingProvider:
     async def test_embed_single(self) -> None:
         provider = OpenAICompatibleEmbeddingProvider(api_key="test-key")
         mock_resp = MagicMock()
-        mock_resp.json.return_value = {
-            "data": [{"embedding": [0.1, 0.2], "index": 0}]
-        }
+        mock_resp.json.return_value = {"data": [{"embedding": [0.1, 0.2], "index": 0}]}
         mock_resp.raise_for_status = MagicMock()
 
         mock_client = AsyncMock()
@@ -215,9 +213,7 @@ class TestGeminiEmbeddingProvider:
     async def test_embed_single(self) -> None:
         provider = GeminiEmbeddingProvider(api_key="gemini-key")
         mock_resp = MagicMock()
-        mock_resp.json.return_value = {
-            "embedding": {"values": [0.5, 0.6]}
-        }
+        mock_resp.json.return_value = {"embedding": {"values": [0.5, 0.6]}}
         mock_resp.raise_for_status = MagicMock()
 
         mock_client = AsyncMock()
@@ -232,9 +228,7 @@ class TestGeminiEmbeddingProvider:
     async def test_embed_batch_raw(self) -> None:
         provider = GeminiEmbeddingProvider(api_key="gemini-key")
         mock_resp = MagicMock()
-        mock_resp.json.return_value = {
-            "embeddings": [{"values": [0.1]}, {"values": [0.2]}]
-        }
+        mock_resp.json.return_value = {"embeddings": [{"values": [0.1]}, {"values": [0.2]}]}
         mock_resp.raise_for_status = MagicMock()
 
         mock_client = AsyncMock()
@@ -281,7 +275,10 @@ class TestCreateEmbeddingProvider:
         config.llm_backend_type = "openai"
         config.openai_api_key = "test-key"
         config.openai_base_url = "https://api.openai.com/v1"
-        with patch("jarvis.memory.embeddings._get_api_key_and_url", return_value=("key", "https://api.openai.com/v1")):
+        with patch(
+            "jarvis.memory.embeddings._get_api_key_and_url",
+            return_value=("key", "https://api.openai.com/v1"),
+        ):
             provider = create_embedding_provider(config)
             assert isinstance(provider, OpenAICompatibleEmbeddingProvider)
 
@@ -316,7 +313,9 @@ class TestCreateEmbeddingProvider:
 
 class TestEmbeddingClient:
     def test_properties(self) -> None:
-        client = EmbeddingClient(model="test-model", dimensions=128, provider=NullEmbeddingProvider())
+        client = EmbeddingClient(
+            model="test-model", dimensions=128, provider=NullEmbeddingProvider()
+        )
         assert client.model == "test-model"
         assert client.dimensions == 128
 

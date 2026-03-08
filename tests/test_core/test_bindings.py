@@ -106,6 +106,7 @@ class TestMessageContext:
 
     def test_from_incoming_message(self) -> None:
         """Simuliert IncomingMessage-Konvertierung."""
+
         class FakeMsg:
             text = "Test"
             channel = "api"
@@ -370,8 +371,13 @@ class TestTimeWindow:
 
     def test_weekday_filter(self) -> None:
         tw = TimeWindow(
-            weekdays=[Weekday.MONDAY, Weekday.TUESDAY, Weekday.WEDNESDAY,
-                      Weekday.THURSDAY, Weekday.FRIDAY],
+            weekdays=[
+                Weekday.MONDAY,
+                Weekday.TUESDAY,
+                Weekday.WEDNESDAY,
+                Weekday.THURSDAY,
+                Weekday.FRIDAY,
+            ],
         )
         # Montag (24.02.2026 = Dienstag)
         tuesday = datetime(2026, 2, 24, 12, 0)
@@ -424,12 +430,19 @@ class TestTimeWindowInBinding:
         binding = MessageBinding(
             name="business_hours",
             target_agent="support",
-            time_windows=[TimeWindow(
-                start_time=time(8, 0),
-                end_time=time(18, 0),
-                weekdays=[Weekday.MONDAY, Weekday.TUESDAY, Weekday.WEDNESDAY,
-                          Weekday.THURSDAY, Weekday.FRIDAY],
-            )],
+            time_windows=[
+                TimeWindow(
+                    start_time=time(8, 0),
+                    end_time=time(18, 0),
+                    weekdays=[
+                        Weekday.MONDAY,
+                        Weekday.TUESDAY,
+                        Weekday.WEDNESDAY,
+                        Weekday.THURSDAY,
+                        Weekday.FRIDAY,
+                    ],
+                )
+            ],
         )
         # Dienstag 10:00
         ctx_match = MessageContext(
@@ -574,21 +587,25 @@ class TestBindingEngine:
         assert engine.binding_count == 0
 
     def test_add_and_evaluate(self, engine: BindingEngine) -> None:
-        engine.add_binding(MessageBinding(
-            name="catch_all",
-            target_agent="jarvis",
-        ))
+        engine.add_binding(
+            MessageBinding(
+                name="catch_all",
+                target_agent="jarvis",
+            )
+        )
         ctx = MessageContext(text="Test")
         match = engine.evaluate(ctx)
         assert match is not None
         assert match.target_agent == "jarvis"
 
     def test_priority_ordering(self, engine: BindingEngine) -> None:
-        engine.add_bindings([
-            MessageBinding(name="low", target_agent="low_agent", priority=50),
-            MessageBinding(name="high", target_agent="high_agent", priority=200),
-            MessageBinding(name="mid", target_agent="mid_agent", priority=100),
-        ])
+        engine.add_bindings(
+            [
+                MessageBinding(name="low", target_agent="low_agent", priority=50),
+                MessageBinding(name="high", target_agent="high_agent", priority=200),
+                MessageBinding(name="mid", target_agent="mid_agent", priority=100),
+            ]
+        )
         # Alle matchen (keine Bedingungen), aber high hat höchste Prio
         ctx = MessageContext(text="Test")
         match = engine.evaluate(ctx)
@@ -596,29 +613,33 @@ class TestBindingEngine:
         assert match.target_agent == "high_agent"
 
     def test_same_priority_alphabetical(self, engine: BindingEngine) -> None:
-        engine.add_bindings([
-            MessageBinding(name="beta", target_agent="agent_b", priority=100),
-            MessageBinding(name="alpha", target_agent="agent_a", priority=100),
-        ])
+        engine.add_bindings(
+            [
+                MessageBinding(name="beta", target_agent="agent_b", priority=100),
+                MessageBinding(name="alpha", target_agent="agent_a", priority=100),
+            ]
+        )
         ctx = MessageContext(text="Test")
         match = engine.evaluate(ctx)
         assert match is not None
         assert match.target_agent == "agent_a"  # Alpha vor Beta
 
     def test_first_match_wins(self, engine: BindingEngine) -> None:
-        engine.add_bindings([
-            MessageBinding(
-                name="specific",
-                target_agent="coder",
-                priority=200,
-                command_prefixes=["/code"],
-            ),
-            MessageBinding(
-                name="general",
-                target_agent="jarvis",
-                priority=100,
-            ),
-        ])
+        engine.add_bindings(
+            [
+                MessageBinding(
+                    name="specific",
+                    target_agent="coder",
+                    priority=200,
+                    command_prefixes=["/code"],
+                ),
+                MessageBinding(
+                    name="general",
+                    target_agent="jarvis",
+                    priority=100,
+                ),
+            ]
+        )
         ctx_code = MessageContext(text="/code Test")
         ctx_normal = MessageContext(text="Normal")
 
@@ -652,19 +673,23 @@ class TestBindingEngine:
         assert engine.evaluate(ctx) is not None
 
     def test_clear(self, engine: BindingEngine) -> None:
-        engine.add_bindings([
-            MessageBinding(name="a", target_agent="x"),
-            MessageBinding(name="b", target_agent="y"),
-        ])
+        engine.add_bindings(
+            [
+                MessageBinding(name="a", target_agent="x"),
+                MessageBinding(name="b", target_agent="y"),
+            ]
+        )
         assert engine.binding_count == 2
         engine.clear()
         assert engine.binding_count == 0
 
     def test_list_bindings_sorted(self, engine: BindingEngine) -> None:
-        engine.add_bindings([
-            MessageBinding(name="low", target_agent="x", priority=50),
-            MessageBinding(name="high", target_agent="y", priority=200),
-        ])
+        engine.add_bindings(
+            [
+                MessageBinding(name="low", target_agent="x", priority=50),
+                MessageBinding(name="high", target_agent="y", priority=200),
+            ]
+        )
         bindings = engine.list_bindings()
         assert bindings[0].name == "high"
         assert bindings[1].name == "low"
@@ -679,10 +704,12 @@ class TestEvaluateAll:
     """evaluate_all() für Debugging."""
 
     def test_returns_all_results(self, engine: BindingEngine) -> None:
-        engine.add_bindings([
-            MessageBinding(name="a", target_agent="x", channels=["telegram"]),
-            MessageBinding(name="b", target_agent="y"),
-        ])
+        engine.add_bindings(
+            [
+                MessageBinding(name="a", target_agent="x", channels=["telegram"]),
+                MessageBinding(name="b", target_agent="y"),
+            ]
+        )
         ctx = MessageContext(text="Test", channel="cli")
         results = engine.evaluate_all(ctx)
 
@@ -695,11 +722,13 @@ class TestStats:
     """Engine-Statistiken."""
 
     def test_stats(self, engine: BindingEngine) -> None:
-        engine.add_bindings([
-            MessageBinding(name="a", target_agent="coder"),
-            MessageBinding(name="b", target_agent="coder"),
-            MessageBinding(name="c", target_agent="organizer", enabled=False),
-        ])
+        engine.add_bindings(
+            [
+                MessageBinding(name="a", target_agent="coder"),
+                MessageBinding(name="b", target_agent="coder"),
+                MessageBinding(name="c", target_agent="organizer", enabled=False),
+            ]
+        )
         stats = engine.stats()
         assert stats["total_bindings"] == 3
         assert stats["active_bindings"] == 2
@@ -716,21 +745,23 @@ class TestYAMLPersistence:
     """Laden und Speichern von Bindings als YAML."""
 
     def test_save_and_load(self, engine: BindingEngine, tmp_path: Path) -> None:
-        engine.add_bindings([
-            MessageBinding(
-                name="telegram_code",
-                target_agent="coder",
-                priority=200,
-                channels=["telegram"],
-                command_prefixes=["/code", "/shell"],
-            ),
-            MessageBinding(
-                name="vip",
-                target_agent="premium",
-                priority=150,
-                user_ids=["boss"],
-            ),
-        ])
+        engine.add_bindings(
+            [
+                MessageBinding(
+                    name="telegram_code",
+                    target_agent="coder",
+                    priority=200,
+                    channels=["telegram"],
+                    command_prefixes=["/code", "/shell"],
+                ),
+                MessageBinding(
+                    name="vip",
+                    target_agent="premium",
+                    priority=150,
+                    user_ids=["boss"],
+                ),
+            ]
+        )
         yaml_path = tmp_path / "bindings.yaml"
         engine.save_yaml(yaml_path)
 
@@ -747,15 +778,19 @@ class TestYAMLPersistence:
         assert match.target_agent == "coder"
 
     def test_save_with_time_windows(self, engine: BindingEngine, tmp_path: Path) -> None:
-        engine.add_binding(MessageBinding(
-            name="business",
-            target_agent="support",
-            time_windows=[TimeWindow(
-                start_time=time(8, 0),
-                end_time=time(18, 0),
-                weekdays=[Weekday.MONDAY, Weekday.FRIDAY],
-            )],
-        ))
+        engine.add_binding(
+            MessageBinding(
+                name="business",
+                target_agent="support",
+                time_windows=[
+                    TimeWindow(
+                        start_time=time(8, 0),
+                        end_time=time(18, 0),
+                        weekdays=[Weekday.MONDAY, Weekday.FRIDAY],
+                    )
+                ],
+            )
+        )
         yaml_path = tmp_path / "bindings.yaml"
         engine.save_yaml(yaml_path)
 
@@ -787,11 +822,13 @@ class TestYAMLPersistence:
         assert loaded.binding_count == 0
 
     def test_save_with_metadata_conditions(self, engine: BindingEngine, tmp_path: Path) -> None:
-        engine.add_binding(MessageBinding(
-            name="api_v2",
-            target_agent="v2_handler",
-            metadata_conditions={"api_version": "2", "auth": "token"},
-        ))
+        engine.add_binding(
+            MessageBinding(
+                name="api_v2",
+                target_agent="v2_handler",
+                metadata_conditions={"api_version": "2", "auth": "token"},
+            )
+        )
         yaml_path = tmp_path / "bindings.yaml"
         engine.save_yaml(yaml_path)
 
@@ -859,23 +896,27 @@ class TestAgentRouterIntegration:
         from jarvis.core.agent_router import AgentProfile, AgentRouter
 
         router = AgentRouter()
-        router.initialize(custom_agents=[
-            AgentProfile(
-                name="keyword_agent",
-                trigger_keywords=["versicherung"],
-            ),
-            AgentProfile(
-                name="binding_agent",
-            ),
-        ])
+        router.initialize(
+            custom_agents=[
+                AgentProfile(
+                    name="keyword_agent",
+                    trigger_keywords=["versicherung"],
+                ),
+                AgentProfile(
+                    name="binding_agent",
+                ),
+            ]
+        )
 
         # Binding mit höchster Priorität
-        router.bindings.add_binding(MessageBinding(
-            name="force_binding",
-            target_agent="binding_agent",
-            message_patterns=[r"versicherung"],
-            priority=200,
-        ))
+        router.bindings.add_binding(
+            MessageBinding(
+                name="force_binding",
+                target_agent="binding_agent",
+                message_patterns=[r"versicherung"],
+                priority=200,
+            )
+        )
 
         # "versicherung" matcht sowohl Keyword als auch Binding
         # → Binding gewinnt (confidence 1.0)
@@ -888,12 +929,14 @@ class TestAgentRouterIntegration:
         from jarvis.core.agent_router import AgentProfile, AgentRouter
 
         router = AgentRouter()
-        router.initialize(custom_agents=[
-            AgentProfile(
-                name="keyword_agent",
-                trigger_keywords=["versicherung"],
-            ),
-        ])
+        router.initialize(
+            custom_agents=[
+                AgentProfile(
+                    name="keyword_agent",
+                    trigger_keywords=["versicherung"],
+                ),
+            ]
+        )
         # Keine Bindings → Keyword-Routing greift
         decision = router.route("Meine Versicherung kündigen")
         assert decision.agent.name == "keyword_agent"
@@ -902,14 +945,18 @@ class TestAgentRouterIntegration:
         from jarvis.core.agent_router import AgentProfile, AgentRouter
 
         router = AgentRouter()
-        router.initialize(custom_agents=[
-            AgentProfile(name="telegram_bot"),
-        ])
-        router.bindings.add_binding(channel_binding(
-            "tg_route",
-            "telegram_bot",
-            ["telegram"],
-        ))
+        router.initialize(
+            custom_agents=[
+                AgentProfile(name="telegram_bot"),
+            ]
+        )
+        router.bindings.add_binding(
+            channel_binding(
+                "tg_route",
+                "telegram_bot",
+                ["telegram"],
+            )
+        )
 
         ctx = MessageContext(text="Hallo", channel="telegram")
         decision = router.route("Hallo", context=ctx)
@@ -922,10 +969,12 @@ class TestAgentRouterIntegration:
         router.initialize()
 
         # Binding zeigt auf nicht-existierenden Agenten
-        router.bindings.add_binding(MessageBinding(
-            name="ghost",
-            target_agent="nonexistent_agent",
-        ))
+        router.bindings.add_binding(
+            MessageBinding(
+                name="ghost",
+                target_agent="nonexistent_agent",
+            )
+        )
 
         # Sollte graceful auf Default fallen
         decision = router.route("Test")
@@ -936,10 +985,12 @@ class TestAgentRouterIntegration:
 
         router = AgentRouter()
         router.initialize()
-        router.bindings.add_binding(MessageBinding(
-            name="test",
-            target_agent="jarvis",
-        ))
+        router.bindings.add_binding(
+            MessageBinding(
+                name="test",
+                target_agent="jarvis",
+            )
+        )
 
         stats = router.stats()
         assert "bindings" in stats
@@ -952,20 +1003,32 @@ class TestAgentRouterIntegration:
 
         # agents.yaml
         agents_path = tmp_path / "agents.yaml"
-        agents_path.write_text(yaml.dump({
-            "agents": [{"name": "coder", "trigger_keywords": ["code"]}],
-        }), encoding="utf-8")
+        agents_path.write_text(
+            yaml.dump(
+                {
+                    "agents": [{"name": "coder", "trigger_keywords": ["code"]}],
+                }
+            ),
+            encoding="utf-8",
+        )
 
         # bindings.yaml im selben Verzeichnis
         bindings_path = tmp_path / "bindings.yaml"
-        bindings_path.write_text(yaml.dump({
-            "bindings": [{
-                "name": "force_coder",
-                "target_agent": "coder",
-                "command_prefixes": ["/code"],
-                "priority": 200,
-            }],
-        }), encoding="utf-8")
+        bindings_path.write_text(
+            yaml.dump(
+                {
+                    "bindings": [
+                        {
+                            "name": "force_coder",
+                            "target_agent": "coder",
+                            "command_prefixes": ["/code"],
+                            "priority": 200,
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
 
         router = AgentRouter.from_yaml(agents_path)
         assert router.bindings.binding_count == 1
@@ -986,43 +1049,54 @@ class TestRealWorldScenarios:
 
     def test_insurance_broker_setup(self, engine: BindingEngine) -> None:
         """Alexander's Versicherungsmakler-Setup."""
-        engine.add_bindings([
-            # Slash-Commands
-            command_binding("cmd_tarif", "tarif_berater", ["/tarif", "/bu", "/versicherung"]),
-            command_binding("cmd_code", "coder", ["/code", "/shell", "/dev"]),
-            command_binding("cmd_orga", "organizer", ["/kalender", "/todo", "/brief"]),
-
-            # Regex für Versicherungsthemen
-            regex_binding(
-                "insurance_topics",
-                "tarif_berater",
-                [r"bu[- ]?tarif", r"berufsunfähigkeit", r"police\s+\d+",
-                 r"versicherung(s|en)?", r"beitrag(s|shöhe)?"],
-                priority=170,
-            ),
-
-            # API-Anfragen an Coder
-            MessageBinding(
-                name="api_requests",
-                target_agent="coder",
-                channels=["api"],
-                priority=150,
-            ),
-
-            # Telegram-Organizer für Geschäftszeiten
-            MessageBinding(
-                name="business_hours_telegram",
-                target_agent="organizer",
-                channels=["telegram"],
-                priority=50,
-                time_windows=[TimeWindow(
-                    start_time=time(7, 0),
-                    end_time=time(19, 0),
-                    weekdays=[Weekday.MONDAY, Weekday.TUESDAY, Weekday.WEDNESDAY,
-                              Weekday.THURSDAY, Weekday.FRIDAY],
-                )],
-            ),
-        ])
+        engine.add_bindings(
+            [
+                # Slash-Commands
+                command_binding("cmd_tarif", "tarif_berater", ["/tarif", "/bu", "/versicherung"]),
+                command_binding("cmd_code", "coder", ["/code", "/shell", "/dev"]),
+                command_binding("cmd_orga", "organizer", ["/kalender", "/todo", "/brief"]),
+                # Regex für Versicherungsthemen
+                regex_binding(
+                    "insurance_topics",
+                    "tarif_berater",
+                    [
+                        r"bu[- ]?tarif",
+                        r"berufsunfähigkeit",
+                        r"police\s+\d+",
+                        r"versicherung(s|en)?",
+                        r"beitrag(s|shöhe)?",
+                    ],
+                    priority=170,
+                ),
+                # API-Anfragen an Coder
+                MessageBinding(
+                    name="api_requests",
+                    target_agent="coder",
+                    channels=["api"],
+                    priority=150,
+                ),
+                # Telegram-Organizer für Geschäftszeiten
+                MessageBinding(
+                    name="business_hours_telegram",
+                    target_agent="organizer",
+                    channels=["telegram"],
+                    priority=50,
+                    time_windows=[
+                        TimeWindow(
+                            start_time=time(7, 0),
+                            end_time=time(19, 0),
+                            weekdays=[
+                                Weekday.MONDAY,
+                                Weekday.TUESDAY,
+                                Weekday.WEDNESDAY,
+                                Weekday.THURSDAY,
+                                Weekday.FRIDAY,
+                            ],
+                        )
+                    ],
+                ),
+            ]
+        )
 
         # /tarif → tarif_berater (Command-Binding, Prio 200)
         ctx1 = MessageContext(text="/tarif BU-Vergleich", channel="telegram")
@@ -1054,11 +1128,13 @@ class TestRealWorldScenarios:
 
     def test_multi_tenant_setup(self, engine: BindingEngine) -> None:
         """Multi-User mit verschiedenen Agenten."""
-        engine.add_bindings([
-            user_binding("alex_premium", "premium_assistant", ["alex"]),
-            user_binding("team_support", "team_agent", ["member1", "member2"]),
-            MessageBinding(name="default", target_agent="jarvis", priority=10),
-        ])
+        engine.add_bindings(
+            [
+                user_binding("alex_premium", "premium_assistant", ["alex"]),
+                user_binding("team_support", "team_agent", ["member1", "member2"]),
+                MessageBinding(name="default", target_agent="jarvis", priority=10),
+            ]
+        )
 
         ctx_alex = MessageContext(text="X", user_id="alex")
         ctx_team = MessageContext(text="X", user_id="member1")
@@ -1070,10 +1146,12 @@ class TestRealWorldScenarios:
 
     def test_deterministic_always_same_result(self, engine: BindingEngine) -> None:
         """Gleiches Input → immer gleiches Output."""
-        engine.add_bindings([
-            channel_binding("a", "agent_a", ["telegram"], priority=100),
-            regex_binding("b", "agent_b", [r"urgent"], priority=150),
-        ])
+        engine.add_bindings(
+            [
+                channel_binding("a", "agent_a", ["telegram"], priority=100),
+                regex_binding("b", "agent_b", [r"urgent"], priority=150),
+            ]
+        )
 
         ctx = MessageContext(text="urgent request", channel="telegram")
 

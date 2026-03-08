@@ -69,13 +69,27 @@ class Weekday(Enum):
 
 # Abkürzungen für YAML-Konfiguration
 WEEKDAY_ALIASES: dict[str, Weekday] = {
-    "mo": Weekday.MONDAY, "mon": Weekday.MONDAY, "montag": Weekday.MONDAY,
-    "di": Weekday.TUESDAY, "tue": Weekday.TUESDAY, "dienstag": Weekday.TUESDAY,
-    "mi": Weekday.WEDNESDAY, "wed": Weekday.WEDNESDAY, "mittwoch": Weekday.WEDNESDAY,
-    "do": Weekday.THURSDAY, "thu": Weekday.THURSDAY, "donnerstag": Weekday.THURSDAY,
-    "fr": Weekday.FRIDAY, "fri": Weekday.FRIDAY, "freitag": Weekday.FRIDAY,
-    "sa": Weekday.SATURDAY, "sat": Weekday.SATURDAY, "samstag": Weekday.SATURDAY,
-    "so": Weekday.SUNDAY, "sun": Weekday.SUNDAY, "sonntag": Weekday.SUNDAY,
+    "mo": Weekday.MONDAY,
+    "mon": Weekday.MONDAY,
+    "montag": Weekday.MONDAY,
+    "di": Weekday.TUESDAY,
+    "tue": Weekday.TUESDAY,
+    "dienstag": Weekday.TUESDAY,
+    "mi": Weekday.WEDNESDAY,
+    "wed": Weekday.WEDNESDAY,
+    "mittwoch": Weekday.WEDNESDAY,
+    "do": Weekday.THURSDAY,
+    "thu": Weekday.THURSDAY,
+    "donnerstag": Weekday.THURSDAY,
+    "fr": Weekday.FRIDAY,
+    "fri": Weekday.FRIDAY,
+    "freitag": Weekday.FRIDAY,
+    "sa": Weekday.SATURDAY,
+    "sat": Weekday.SATURDAY,
+    "samstag": Weekday.SATURDAY,
+    "so": Weekday.SUNDAY,
+    "sun": Weekday.SUNDAY,
+    "sonntag": Weekday.SUNDAY,
 }
 
 
@@ -116,6 +130,7 @@ class TimeWindow:
         if now is None:
             try:
                 from zoneinfo import ZoneInfo
+
                 now = datetime.now(ZoneInfo(self.timezone))
             except Exception:
                 now = datetime.now()
@@ -249,7 +264,9 @@ class MessageBinding:
 
     # --- Kompilierte Patterns (intern) ---
     _compiled_patterns: list[re.Pattern] = field(
-        default_factory=list, repr=False, compare=False,
+        default_factory=list,
+        repr=False,
+        compare=False,
     )
 
     def __post_init__(self) -> None:
@@ -551,11 +568,13 @@ class BindingEngine:
         results = []
         for binding in self._sorted_bindings:
             result = binding.evaluate(ctx)
-            results.append(BindingMatchInfo(
-                binding=binding,
-                result=result,
-                target_agent=binding.target_agent,
-            ))
+            results.append(
+                BindingMatchInfo(
+                    binding=binding,
+                    result=result,
+                    target_agent=binding.target_agent,
+                )
+            )
         return results
 
     # ========================================================================
@@ -688,9 +707,7 @@ class BindingEngine:
         """Engine-Statistiken."""
         agent_distribution: dict[str, int] = {}
         for b in self._bindings.values():
-            agent_distribution[b.target_agent] = (
-                agent_distribution.get(b.target_agent, 0) + 1
-            )
+            agent_distribution[b.target_agent] = agent_distribution.get(b.target_agent, 0) + 1
 
         return {
             "total_bindings": len(self._bindings),
@@ -921,11 +938,13 @@ def schedule_binding(
     return MessageBinding(
         name=name,
         target_agent=target_agent,
-        time_windows=[TimeWindow(
-            start_time=_parse_time(start),
-            end_time=_parse_time(end),
-            weekdays=wds,
-        )],
+        time_windows=[
+            TimeWindow(
+                start_time=_parse_time(start),
+                end_time=_parse_time(end),
+                weekdays=wds,
+            )
+        ],
         priority=priority,
         description=f"Schedule-Binding: {start}-{end} → {target_agent}",
     )

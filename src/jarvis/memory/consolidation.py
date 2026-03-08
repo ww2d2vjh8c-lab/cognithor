@@ -68,8 +68,8 @@ class ContentDeduplicator:
             return 0.0
         a_lower = a.lower()
         b_lower = b.lower()
-        a_ngrams = {a_lower[i:i + n] for i in range(len(a_lower) - n + 1)}
-        b_ngrams = {b_lower[i:i + n] for i in range(len(b_lower) - n + 1)}
+        a_ngrams = {a_lower[i : i + n] for i in range(len(a_lower) - n + 1)}
+        b_ngrams = {b_lower[i : i + n] for i in range(len(b_lower) - n + 1)}
         if not a_ngrams or not b_ngrams:
             return 0.0
         intersection = len(a_ngrams & b_ngrams)
@@ -99,12 +99,14 @@ class ContentDeduplicator:
             if len(bucket) > 1:
                 canonical = max(bucket, key=lambda e: e.get("confidence", 0.5))
                 dups = [e["id"] for e in bucket if e["id"] != canonical["id"]]
-                groups.append(DuplicateGroup(
-                    canonical_id=canonical["id"],
-                    canonical_content=canonical.get("content", ""),
-                    duplicate_ids=dups,
-                    similarity=1.0,
-                ))
+                groups.append(
+                    DuplicateGroup(
+                        canonical_id=canonical["id"],
+                        canonical_content=canonical.get("content", ""),
+                        duplicate_ids=dups,
+                        similarity=1.0,
+                    )
+                )
                 seen_ids.update(e["id"] for e in bucket)
 
         # Phase 2: Fuzzy n-gram duplicates (skip already matched)
@@ -115,13 +117,13 @@ class ContentDeduplicator:
                 total=len(remaining),
                 limit=self.MAX_FUZZY_ENTRIES,
             )
-            remaining = remaining[:self.MAX_FUZZY_ENTRIES]
+            remaining = remaining[: self.MAX_FUZZY_ENTRIES]
         for i, entry_a in enumerate(remaining):
             if entry_a["id"] in seen_ids:
                 continue
             content_a = entry_a.get("content", "")
             fuzzy_dups: list[str] = []
-            for entry_b in remaining[i + 1:]:
+            for entry_b in remaining[i + 1 :]:
                 if entry_b["id"] in seen_ids:
                     continue
                 content_b = entry_b.get("content", "")
@@ -130,12 +132,14 @@ class ContentDeduplicator:
                     fuzzy_dups.append(entry_b["id"])
                     seen_ids.add(entry_b["id"])
             if fuzzy_dups:
-                groups.append(DuplicateGroup(
-                    canonical_id=entry_a["id"],
-                    canonical_content=content_a,
-                    duplicate_ids=fuzzy_dups,
-                    similarity=self.similarity_threshold,
-                ))
+                groups.append(
+                    DuplicateGroup(
+                        canonical_id=entry_a["id"],
+                        canonical_content=content_a,
+                        duplicate_ids=fuzzy_dups,
+                        similarity=self.similarity_threshold,
+                    )
+                )
                 seen_ids.add(entry_a["id"])
 
         self._merged_count += sum(len(g.duplicate_ids) for g in groups)
@@ -351,9 +355,9 @@ class ConsolidationPipeline:
         # Phase 3: Summarization candidates
         try:
             old_entries = [
-                e for e in entries
-                if e.get("age_days", 0) >= self.summarize_age_days
-                and e["id"] not in archive_ids
+                e
+                for e in entries
+                if e.get("age_days", 0) >= self.summarize_age_days and e["id"] not in archive_ids
             ]
             result.entries_summarized = len(old_entries)
         except Exception as exc:
@@ -362,9 +366,7 @@ class ConsolidationPipeline:
         # Phase 4: Budget check
         try:
             remaining_tokens = sum(
-                e.get("token_count", 100)
-                for e in entries
-                if e["id"] not in archive_ids
+                e.get("token_count", 100) for e in entries if e["id"] not in archive_ids
             )
             self.budget_manager.update_usage(
                 tier,
@@ -374,11 +376,7 @@ class ConsolidationPipeline:
         except Exception as exc:
             result.errors.append(f"Budget error: {exc}")
 
-        result.tokens_freed += sum(
-            e.get("token_count", 100)
-            for e in entries
-            if e["id"] in dup_ids
-        )
+        result.tokens_freed += sum(e.get("token_count", 100) for e in entries if e["id"] in dup_ids)
 
         result.duration_ms = (time.monotonic() - start) * 1000
         self._history.append(result)

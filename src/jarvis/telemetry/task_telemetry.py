@@ -85,6 +85,7 @@ class TaskTelemetryCollector:
         """Erfolgsrate ueber ein Zeitfenster."""
         conn = self._get_conn()
         from datetime import timedelta
+
         cutoff = (datetime.now(UTC) - timedelta(hours=window_hours)).isoformat()
 
         row = conn.execute(
@@ -103,9 +104,7 @@ class TaskTelemetryCollector:
     def get_tool_latency_profile(self) -> dict[str, dict[str, float]]:
         """Tool-Latenz-Profil: {tool: {avg, p50, p95, p99}}."""
         conn = self._get_conn()
-        rows = conn.execute(
-            "SELECT tools_used, duration_ms FROM task_telemetry"
-        ).fetchall()
+        rows = conn.execute("SELECT tools_used, duration_ms FROM task_telemetry").fetchall()
 
         # Collect per-tool latencies
         tool_latencies: dict[str, list[float]] = {}
@@ -133,6 +132,7 @@ class TaskTelemetryCollector:
         """Zeitreihe fuer Dashboard (stuendliche Aggregation)."""
         conn = self._get_conn()
         from datetime import timedelta
+
         cutoff = (datetime.now(UTC) - timedelta(hours=hours)).isoformat()
 
         rows = conn.execute(
@@ -165,9 +165,7 @@ class TaskTelemetryCollector:
         Aggregiert ueber alle aufgezeichneten Tasks.
         """
         conn = self._get_conn()
-        rows = conn.execute(
-            "SELECT tools_used, success FROM task_telemetry"
-        ).fetchall()
+        rows = conn.execute("SELECT tools_used, success FROM task_telemetry").fetchall()
 
         stats: dict[str, dict[str, int]] = {}
         for row in rows:
@@ -195,9 +193,7 @@ class TaskTelemetryCollector:
         cutoff = since.isoformat()
 
         # Alle Tools die jemals genutzt wurden
-        all_rows = conn.execute(
-            "SELECT tools_used FROM task_telemetry"
-        ).fetchall()
+        all_rows = conn.execute("SELECT tools_used FROM task_telemetry").fetchall()
         all_tools: set[str] = set()
         for row in all_rows:
             for tool in json.loads(row["tools_used"]):

@@ -43,11 +43,26 @@ log = get_logger(__name__)
 # ── Capability → Skill Mapping ───────────────────────────────────
 
 CAPABILITY_TO_SKILL: dict[str, dict[str, str]] = {
-    "task_execution": {"name": "Aufgabenausführung", "description": "Allgemeine Aufgaben planen und ausführen"},
-    "data_analysis": {"name": "Datenanalyse", "description": "Strukturierte Datenanalyse und Visualisierung"},
-    "web_search": {"name": "Web-Recherche", "description": "Internet-Suche und Informationsextraktion"},
-    "code_generation": {"name": "Code-Generierung", "description": "Programmcode erstellen und debuggen"},
-    "document_processing": {"name": "Dokumentenverarbeitung", "description": "PDFs, DOCX analysieren"},
+    "task_execution": {
+        "name": "Aufgabenausführung",
+        "description": "Allgemeine Aufgaben planen und ausführen",
+    },
+    "data_analysis": {
+        "name": "Datenanalyse",
+        "description": "Strukturierte Datenanalyse und Visualisierung",
+    },
+    "web_search": {
+        "name": "Web-Recherche",
+        "description": "Internet-Suche und Informationsextraktion",
+    },
+    "code_generation": {
+        "name": "Code-Generierung",
+        "description": "Programmcode erstellen und debuggen",
+    },
+    "document_processing": {
+        "name": "Dokumentenverarbeitung",
+        "description": "PDFs, DOCX analysieren",
+    },
     "image_analysis": {"name": "Bildanalyse", "description": "Bilder beschreiben und analysieren"},
     "translation": {"name": "Übersetzung", "description": "Texte zwischen Sprachen übersetzen"},
     "scheduling": {"name": "Terminplanung", "description": "Termine koordinieren"},
@@ -61,16 +76,19 @@ def capabilities_to_skills(capabilities: list[AgentCapability]) -> list[A2ASkill
     for cap in capabilities:
         cap_type = cap.capability_type.value
         mapping = CAPABILITY_TO_SKILL.get(cap_type, {})
-        skills.append(A2ASkill(
-            id=cap_type,
-            name=mapping.get("name", cap_type),
-            description=cap.description or mapping.get("description", ""),
-            tags=[cap_type] + cap.languages,
-        ))
+        skills.append(
+            A2ASkill(
+                id=cap_type,
+                name=mapping.get("name", cap_type),
+                description=cap.description or mapping.get("description", ""),
+                tags=[cap_type] + cap.languages,
+            )
+        )
     return skills
 
 
 # ── A2A Adapter ──────────────────────────────────────────────────
+
 
 class A2AAdapter:
     """Zentrale Brücke zwischen JAIP und A2A RC v1.0."""
@@ -84,8 +102,7 @@ class A2AAdapter:
         self._setup_time: float = 0
         self._message_handler: Any = None
 
-    def setup(self, interop: InteropProtocol | None = None,
-              message_handler: Any = None) -> bool:
+    def setup(self, interop: InteropProtocol | None = None, message_handler: Any = None) -> bool:
         start = time.time()
         server_config = self._load_config()
         if not server_config.enabled:
@@ -106,8 +123,12 @@ class A2AAdapter:
         self._enabled = True
         self._setup_time = time.time() - start
 
-        log.info("a2a_adapter_setup_complete", host=server_config.host,
-                 port=server_config.port, version=A2A_PROTOCOL_VERSION)
+        log.info(
+            "a2a_adapter_setup_complete",
+            host=server_config.host,
+            port=server_config.port,
+            version=A2A_PROTOCOL_VERSION,
+        )
         return True
 
     async def start(self) -> None:
@@ -140,52 +161,86 @@ class A2AAdapter:
                 break
 
         if not user_text:
-            task.transition(TaskState.FAILED, Message(
-                role=MessageRole.AGENT, parts=[TextPart(text="No text message in task.")],
-            ))
+            task.transition(
+                TaskState.FAILED,
+                Message(
+                    role=MessageRole.AGENT,
+                    parts=[TextPart(text="No text message in task.")],
+                ),
+            )
             return task
 
         if self._message_handler:
             try:
                 import asyncio
+
                 if asyncio.iscoroutinefunction(self._message_handler):
                     result = await self._message_handler(
-                        user_text, session_id=f"a2a-{task.id}", channel="a2a",
+                        user_text,
+                        session_id=f"a2a-{task.id}",
+                        channel="a2a",
                     )
                 else:
                     result = self._message_handler(
-                        user_text, session_id=f"a2a-{task.id}", channel="a2a",
+                        user_text,
+                        session_id=f"a2a-{task.id}",
+                        channel="a2a",
                     )
 
                 result_text = str(result) if result else "Task processed (no result)"
-                task.artifacts.append(Artifact(
-                    parts=[TextPart(text=result_text)], name="response",
-                ))
-                task.transition(TaskState.COMPLETED, Message(
-                    role=MessageRole.AGENT, parts=[TextPart(text=result_text[:500])],
-                ))
+                task.artifacts.append(
+                    Artifact(
+                        parts=[TextPart(text=result_text)],
+                        name="response",
+                    )
+                )
+                task.transition(
+                    TaskState.COMPLETED,
+                    Message(
+                        role=MessageRole.AGENT,
+                        parts=[TextPart(text=result_text[:500])],
+                    ),
+                )
             except Exception as exc:
-                task.transition(TaskState.FAILED, Message(
-                    role=MessageRole.AGENT, parts=[TextPart(text=f"Error: {exc}")],
-                ))
+                task.transition(
+                    TaskState.FAILED,
+                    Message(
+                        role=MessageRole.AGENT,
+                        parts=[TextPart(text=f"Error: {exc}")],
+                    ),
+                )
         else:
-            task.artifacts.append(Artifact(
-                parts=[TextPart(text=f"Echo: {user_text}")], name="echo",
-            ))
-            task.transition(TaskState.COMPLETED, Message(
-                role=MessageRole.AGENT, parts=[TextPart(text=f"Task received: {user_text[:200]}")],
-            ))
+            task.artifacts.append(
+                Artifact(
+                    parts=[TextPart(text=f"Echo: {user_text}")],
+                    name="echo",
+                )
+            )
+            task.transition(
+                TaskState.COMPLETED,
+                Message(
+                    role=MessageRole.AGENT,
+                    parts=[TextPart(text=f"Task received: {user_text[:200]}")],
+                ),
+            )
         return task
 
     # ── Outgoing Delegation ──────────────────────────────────────
 
-    async def delegate_task(self, endpoint: str, text: str,
-                            context_id: str | None = None,
-                            metadata: dict[str, Any] | None = None) -> Task | None:
+    async def delegate_task(
+        self,
+        endpoint: str,
+        text: str,
+        context_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> Task | None:
         if not self._client:
             return None
         return await self._client.send_message(
-            endpoint=endpoint, text=text, context_id=context_id, metadata=metadata,
+            endpoint=endpoint,
+            text=text,
+            context_id=context_id,
+            metadata=metadata,
         )
 
     async def discover_remote(self, endpoint: str) -> A2AAgentCard | None:
@@ -195,8 +250,9 @@ class A2AAdapter:
 
     # ── Agent Card Builder ───────────────────────────────────────
 
-    def _build_card_from_interop(self, interop: InteropProtocol,
-                                 server_config: A2AServerConfig) -> A2AAgentCard:
+    def _build_card_from_interop(
+        self, interop: InteropProtocol, server_config: A2AServerConfig
+    ) -> A2AAgentCard:
         all_caps: list[AgentCapability] = []
         local_agent = interop.get_agent(interop.local_agent_id)
         if local_agent:
@@ -227,6 +283,7 @@ class A2AAdapter:
 
     def _load_config(self) -> A2AServerConfig:
         import yaml
+
         config = A2AServerConfig()
         mcp_config_path = self._config.mcp_config_file
         if mcp_config_path.exists():
@@ -250,17 +307,21 @@ class A2AAdapter:
 
     # ── HTTP Handlers ────────────────────────────────────────────
 
-    async def handle_a2a_request(self, body: dict[str, Any], auth_header: str = "",
-                                 client_version: str = "") -> dict[str, Any]:
+    async def handle_a2a_request(
+        self, body: dict[str, Any], auth_header: str = "", client_version: str = ""
+    ) -> dict[str, Any]:
         if self._server is None:
-            return {"jsonrpc": "2.0", "id": body.get("id"),
-                    "error": {"code": -32000, "message": "A2A Server not running"}}
+            return {
+                "jsonrpc": "2.0",
+                "id": body.get("id"),
+                "error": {"code": -32000, "message": "A2A Server not running"},
+            }
         token = auth_header[7:] if auth_header.startswith("Bearer ") else None
-        return await self._server.handle_http_request(body, auth_token=token,
-                                                       client_version=client_version)
+        return await self._server.handle_http_request(
+            body, auth_token=token, client_version=client_version
+        )
 
-    async def handle_stream_request(self, body: dict[str, Any],
-                                     auth_token: str | None = None):
+    async def handle_stream_request(self, body: dict[str, Any], auth_token: str | None = None):
         """Streaming-Endpoint: Leitet an Server weiter."""
         if self._server is None:
             yield 'event: error\ndata: {"code": -32000, "message": "A2A Server not running"}\n\n'

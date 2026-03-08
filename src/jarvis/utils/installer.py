@@ -184,7 +184,11 @@ def run_install(
         return False, None, "Neither uv nor pip found"
 
     cmd = build_install_command(
-        info, project_dir, extras, editable=editable, quiet=quiet,
+        info,
+        project_dir,
+        extras,
+        editable=editable,
+        quiet=quiet,
     )
 
     try:

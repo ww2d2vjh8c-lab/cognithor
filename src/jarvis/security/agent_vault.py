@@ -240,12 +240,14 @@ class AgentVault:
             )
 
     def _log(self, action: str, target: str) -> None:
-        self._access_log.append({
-            "action": action,
-            "target": target,
-            "agent_id": self._agent_id,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        })
+        self._access_log.append(
+            {
+                "action": action,
+                "target": target,
+                "agent_id": self._agent_id,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
     def stats(self) -> dict[str, Any]:
         all_s = list(self._secrets.values())
@@ -271,9 +273,9 @@ class RotationPolicy:
     policy_id: str
     secret_type: SecretType
     rotation_interval_hours: int = 720  # 30 Tage
-    max_age_hours: int = 2160           # 90 Tage
+    max_age_hours: int = 2160  # 90 Tage
     auto_rotate: bool = True
-    notify_before_hours: int = 168      # 7 Tage vor Ablauf
+    notify_before_hours: int = 168  # 7 Tage vor Ablauf
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -324,6 +326,7 @@ class VaultRotator:
             if last_change:
                 try:
                     import calendar
+
                     change_ts = calendar.timegm(time.strptime(last_change, "%Y-%m-%dT%H:%M:%SZ"))
                 except (ValueError, OverflowError):
                     change_ts = now_ts
@@ -343,12 +346,14 @@ class VaultRotator:
             new_value = secrets.token_urlsafe(32)
             vault.rotate(secret.secret_id, new_value)
             rotated_ids.append(secret.secret_id)
-            self._rotation_log.append({
-                "agent_id": vault.agent_id,
-                "secret_id": secret.secret_id,
-                "type": secret.secret_type.value,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            })
+            self._rotation_log.append(
+                {
+                    "agent_id": vault.agent_id,
+                    "secret_id": secret.secret_id,
+                    "type": secret.secret_type.value,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
         return rotated_ids
 
     @property
@@ -493,18 +498,18 @@ class SessionFirewall:
         self._store = session_store
         self._violations: list[dict[str, Any]] = []
 
-    def authorize(
-        self, requesting_agent: str, target_agent: str, session_id: str
-    ) -> bool:
+    def authorize(self, requesting_agent: str, target_agent: str, session_id: str) -> bool:
         """Prüft ob ein Zugriff erlaubt ist."""
         if requesting_agent != target_agent:
-            self._violations.append({
-                "requester": requesting_agent,
-                "target": target_agent,
-                "session_id": session_id,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "action": "BLOCKED",
-            })
+            self._violations.append(
+                {
+                    "requester": requesting_agent,
+                    "target": target_agent,
+                    "session_id": session_id,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "action": "BLOCKED",
+                }
+            )
             return False
         return True
 

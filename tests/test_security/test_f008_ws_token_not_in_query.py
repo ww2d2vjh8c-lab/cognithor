@@ -25,9 +25,7 @@ class TestNoQueryParamToken:
         source = inspect.getsource(main_mod)
         for i, line in enumerate(source.splitlines(), 1):
             if "query_params" in line and "token" in line:
-                pytest.fail(
-                    f"__main__.py Zeile {i}: Query-Param Token gefunden: {line.strip()}"
-                )
+                pytest.fail(f"__main__.py Zeile {i}: Query-Param Token gefunden: {line.strip()}")
 
     def test_webui_no_query_param(self) -> None:
         """webui.py darf kein query_params.get('token') enthalten."""
@@ -36,9 +34,7 @@ class TestNoQueryParamToken:
         source = inspect.getsource(webui_mod)
         for i, line in enumerate(source.splitlines(), 1):
             if "query_params" in line and "token" in line:
-                pytest.fail(
-                    f"webui.py Zeile {i}: Query-Param Token gefunden: {line.strip()}"
-                )
+                pytest.fail(f"webui.py Zeile {i}: Query-Param Token gefunden: {line.strip()}")
 
 
 class TestWebUIFirstMessageAuth:
@@ -50,45 +46,35 @@ class TestWebUIFirstMessageAuth:
 
         source = inspect.getsource(WebUIChannel._create_app)
         # Nach "accept" muss "receive_text" fuer Auth kommen
-        assert "receive_text" in source, (
-            "WebSocket-Auth muss via receive_text() erfolgen"
-        )
+        assert "receive_text" in source, "WebSocket-Auth muss via receive_text() erfolgen"
 
     def test_auth_checks_type_auth(self) -> None:
         """Auth-Code muss auf type == 'auth' pruefen."""
         from jarvis.channels.webui import WebUIChannel
 
         source = inspect.getsource(WebUIChannel._create_app)
-        assert '"auth"' in source or "'auth'" in source, (
-            "Auth-Code muss auf type=='auth' pruefen"
-        )
+        assert '"auth"' in source or "'auth'" in source, "Auth-Code muss auf type=='auth' pruefen"
 
     def test_auth_uses_hmac_compare(self) -> None:
         """Token-Vergleich muss hmac.compare_digest verwenden (timing-safe)."""
         from jarvis.channels.webui import WebUIChannel
 
         source = inspect.getsource(WebUIChannel._create_app)
-        assert "compare_digest" in source, (
-            "Token-Vergleich muss hmac.compare_digest verwenden"
-        )
+        assert "compare_digest" in source, "Token-Vergleich muss hmac.compare_digest verwenden"
 
     def test_auth_has_timeout(self) -> None:
         """Auth muss einen Timeout haben (Client kann nicht ewig warten)."""
         from jarvis.channels.webui import WebUIChannel
 
         source = inspect.getsource(WebUIChannel._create_app)
-        assert "wait_for" in source or "timeout" in source.lower(), (
-            "Auth muss einen Timeout haben"
-        )
+        assert "wait_for" in source or "timeout" in source.lower(), "Auth muss einen Timeout haben"
 
     def test_auth_sends_error_on_failure(self) -> None:
         """Bei ungueltigem Token muss eine Error-Nachricht gesendet werden."""
         from jarvis.channels.webui import WebUIChannel
 
         source = inspect.getsource(WebUIChannel._create_app)
-        assert "Unauthorized" in source, (
-            "Bei Auth-Failure muss 'Unauthorized' gesendet werden"
-        )
+        assert "Unauthorized" in source, "Bei Auth-Failure muss 'Unauthorized' gesendet werden"
 
 
 class TestMainFirstMessageAuth:
@@ -100,33 +86,33 @@ class TestMainFirstMessageAuth:
 
         source = inspect.getsource(main_mod)
         # Finde den WebSocket-Handler-Bereich
-        ws_section = source[source.index("_cc_ws"):]
+        ws_section = source[source.index("_cc_ws") :]
         assert "receive_text" in ws_section
 
     def test_auth_checks_type_auth(self) -> None:
         import jarvis.__main__ as main_mod
 
         source = inspect.getsource(main_mod)
-        ws_section = source[source.index("_cc_ws"):]
+        ws_section = source[source.index("_cc_ws") :]
         assert '"auth"' in ws_section or "'auth'" in ws_section
 
     def test_auth_uses_hmac_compare(self) -> None:
         import jarvis.__main__ as main_mod
 
         source = inspect.getsource(main_mod)
-        ws_section = source[source.index("_cc_ws"):]
+        ws_section = source[source.index("_cc_ws") :]
         assert "compare_digest" in ws_section
 
     def test_auth_has_timeout(self) -> None:
         import jarvis.__main__ as main_mod
 
         source = inspect.getsource(main_mod)
-        ws_section = source[source.index("_cc_ws"):]
+        ws_section = source[source.index("_cc_ws") :]
         assert "wait_for" in ws_section
 
     def test_auth_sends_error_on_failure(self) -> None:
         import jarvis.__main__ as main_mod
 
         source = inspect.getsource(main_mod)
-        ws_section = source[source.index("_cc_ws"):]
+        ws_section = source[source.index("_cc_ws") :]
         assert "Unauthorized" in ws_section

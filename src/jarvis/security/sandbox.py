@@ -784,9 +784,7 @@ class Sandbox:
                 ctypes.sizeof(info),
             )
             if not success:
-                log.warning(
-                    "jobobject_setinfo_failed", error=ctypes.get_last_error()
-                )
+                log.warning("jobobject_setinfo_failed", error=ctypes.get_last_error())
 
             # 4. Subprocess starten
             work_dir = working_dir or tempfile.mkdtemp(prefix="jarvis_job_")

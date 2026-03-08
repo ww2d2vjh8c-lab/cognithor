@@ -53,9 +53,11 @@ def governor(tmp_path):
 class TestGovernorAnalysis:
     def test_analyze_high_error_rate_proposes_timeout(self, tmp_path):
         """Tool mit 40% Fehler → Vorschlag."""
-        tel = _mock_telemetry(tool_stats={
-            "broken_tool": {"total": 10, "errors": 4},
-        })
+        tel = _mock_telemetry(
+            tool_stats={
+                "broken_tool": {"total": 10, "errors": 4},
+            }
+        )
         gov = GovernanceAgent(task_telemetry=tel, db_path=str(tmp_path / "gov1.db"))
         proposals = gov.analyze()
         gov.close()
@@ -76,9 +78,11 @@ class TestGovernorAnalysis:
 
     def test_analyze_recurring_error_cluster(self, tmp_path):
         """6x gleicher Fehler → Policy-Regel-Vorschlag."""
-        cluster_mock = _mock_error_clusterer(clusters=[
-            {"id": "cluster_1", "pattern": "TimeoutError in web_fetch", "count": 6},
-        ])
+        cluster_mock = _mock_error_clusterer(
+            clusters=[
+                {"id": "cluster_1", "pattern": "TimeoutError in web_fetch", "count": 6},
+            ]
+        )
         gov = GovernanceAgent(error_clusterer=cluster_mock, db_path=str(tmp_path / "gov3.db"))
         proposals = gov.analyze()
         gov.close()
@@ -93,9 +97,11 @@ class TestGovernorAnalysis:
 
     def test_analyze_slow_tool(self, tmp_path):
         """p95 > 10s → Timeout-Anpassung."""
-        profiler = _mock_profiler(latency_stats={
-            "slow_tool": {"p95": 15.0},
-        })
+        profiler = _mock_profiler(
+            latency_stats={
+                "slow_tool": {"p95": 15.0},
+            }
+        )
         gov = GovernanceAgent(task_profiler=profiler, db_path=str(tmp_path / "gov4.db"))
         proposals = gov.analyze()
         gov.close()
@@ -151,12 +157,18 @@ class TestGovernorProposals:
     def test_get_pending_proposals(self, governor):
         """Nur unentschiedene Vorschlaege."""
         pid1 = governor._create_proposal(
-            category="timeout", title="P1", description="D1",
-            evidence={"x": 1}, suggested_change={"a": 1},
+            category="timeout",
+            title="P1",
+            description="D1",
+            evidence={"x": 1},
+            suggested_change={"a": 1},
         )
         pid2 = governor._create_proposal(
-            category="access", title="P2", description="D2",
-            evidence={"x": 2}, suggested_change={"b": 2},
+            category="access",
+            title="P2",
+            description="D2",
+            evidence={"x": 2},
+            suggested_change={"b": 2},
         )
         governor.approve_proposal(pid1)
 
@@ -169,8 +181,11 @@ class TestGovernorProposals:
         db = str(tmp_path / "persist_gov.db")
         gov1 = GovernanceAgent(db_path=db)
         gov1._create_proposal(
-            category="test", title="Persist", description="D",
-            evidence={"k": "v"}, suggested_change={"action": "test"},
+            category="test",
+            title="Persist",
+            description="D",
+            evidence={"k": "v"},
+            suggested_change={"action": "test"},
         )
         gov1.close()
 

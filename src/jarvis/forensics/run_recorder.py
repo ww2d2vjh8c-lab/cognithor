@@ -93,10 +93,7 @@ def _serialize(obj: Any) -> str:
 
 def _serialize_list(items: list[Any]) -> str:
     """Serialize a list of Pydantic models to a JSON string."""
-    dumped = [
-        item.model_dump() if hasattr(item, "model_dump") else item
-        for item in items
-    ]
+    dumped = [item.model_dump() if hasattr(item, "model_dump") else item for item in items]
     return json.dumps(dumped, default=str, ensure_ascii=False)
 
 
@@ -205,8 +202,7 @@ class RunRecorder:
         """Store a snapshot of the active policies for the given run."""
         policies_json = json.dumps(policies, default=str, ensure_ascii=False)
         self._conn.execute(
-            "INSERT OR REPLACE INTO run_policy_snapshots (run_id, policies_json) "
-            "VALUES (?, ?)",
+            "INSERT OR REPLACE INTO run_policy_snapshots (run_id, policies_json) VALUES (?, ?)",
             (run_id, policies_json),
         )
         self._conn.commit()
@@ -223,8 +219,7 @@ class RunRecorder:
         duration_ms = (time.monotonic() - start) * 1000.0 if start is not None else 0.0
 
         self._conn.execute(
-            "UPDATE runs SET success = ?, final_response = ?, duration_ms = ? "
-            "WHERE id = ?",
+            "UPDATE runs SET success = ?, final_response = ?, duration_ms = ? WHERE id = ?",
             (int(success), final_response, duration_ms, run_id),
         )
         self._conn.commit()
@@ -257,8 +252,7 @@ class RunRecorder:
         reflection: ReflectionResult | None = None
 
         step_cur = self._conn.execute(
-            "SELECT step_type, data_json FROM run_steps "
-            "WHERE run_id = ? ORDER BY step_order",
+            "SELECT step_type, data_json FROM run_steps WHERE run_id = ? ORDER BY step_order",
             (run_id,),
         )
         for step_type, data_json in step_cur.fetchall():
@@ -278,9 +272,7 @@ class RunRecorder:
             (run_id,),
         )
         snap_row = snap_cur.fetchone()
-        policy_snapshot: dict[str, Any] = (
-            json.loads(snap_row[0]) if snap_row else {}
-        )
+        policy_snapshot: dict[str, Any] = json.loads(snap_row[0]) if snap_row else {}
 
         return RunRecord(
             id=run_data["id"],

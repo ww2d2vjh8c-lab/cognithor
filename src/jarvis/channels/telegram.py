@@ -111,8 +111,12 @@ class TelegramChannel(Channel):
         self._session_chat_map: TTLDict[str, int] = TTLDict(max_size=10000, ttl_seconds=86400)
         self._user_chat_map: TTLDict[str, int] = TTLDict(max_size=10000, ttl_seconds=86400)
         self._running = False
-        self._typing_tasks: TTLDict[int, asyncio.Task[None]] = TTLDict(max_size=1000, ttl_seconds=300)
-        self._circuit_breaker = CircuitBreaker(name="telegram_api", failure_threshold=5, recovery_timeout=60.0)
+        self._typing_tasks: TTLDict[int, asyncio.Task[None]] = TTLDict(
+            max_size=1000, ttl_seconds=300
+        )
+        self._circuit_breaker = CircuitBreaker(
+            name="telegram_api", failure_threshold=5, recovery_timeout=60.0
+        )
         self._whisper_model: Any | None = None
 
         # Webhook-Konfiguration
@@ -125,6 +129,7 @@ class TelegramChannel(Channel):
         self._webhook_runner: Any | None = None  # aiohttp.web.AppRunner
         # Secret-Token fuer Webhook-Verifizierung (Art. Telegram Bot API)
         import secrets as _secrets
+
         self._webhook_secret_token: str = _secrets.token_hex(32)
 
     @property
@@ -163,7 +168,9 @@ class TelegramChannel(Channel):
 
         # Persistierte Mappings laden (wenn Store vorhanden)
         if self._session_store:
-            for key, val in self._session_store.load_all_channel_mappings("telegram_session").items():
+            for key, val in self._session_store.load_all_channel_mappings(
+                "telegram_session"
+            ).items():
                 self._session_chat_map[key] = int(val)
             for key, val in self._session_store.load_all_channel_mappings("telegram_user").items():
                 self._user_chat_map[key] = int(val)
@@ -321,12 +328,11 @@ class TelegramChannel(Channel):
 
         # Secret-Token-Verifizierung (Telegram sendet den Header automatisch)
         received_token = request.headers.get(
-            "X-Telegram-Bot-Api-Secret-Token", "",
+            "X-Telegram-Bot-Api-Secret-Token",
+            "",
         )
         if not _hmac.compare_digest(received_token, self._webhook_secret_token):
-            logger.warning(
-                "Telegram-Webhook: Ungueltige oder fehlende Secret-Token-Verifizierung"
-            )
+            logger.warning("Telegram-Webhook: Ungueltige oder fehlende Secret-Token-Verifizierung")
             return web.Response(status=403, text="Forbidden")
 
         try:
@@ -342,12 +348,14 @@ class TelegramChannel(Channel):
         """Health-Check-Endpoint für den Webhook-Server."""
         from aiohttp import web
 
-        return web.json_response({
-            "status": "ok",
-            "channel": "telegram",
-            "mode": "webhook",
-            "running": self._running,
-        })
+        return web.json_response(
+            {
+                "status": "ok",
+                "channel": "telegram",
+                "mode": "webhook",
+                "running": self._running,
+            }
+        )
 
     async def send(self, message: OutgoingMessage) -> None:
         """Sendet eine Nachricht an den User.
@@ -382,7 +390,9 @@ class TelegramChannel(Channel):
                 logger.warning("telegram_circuit_open", extra={"chat_id": chat_id})
                 return
             except Exception:
-                logger.debug("Markdown-Parsing fehlgeschlagen, Fallback auf Plain-Text", exc_info=True)
+                logger.debug(
+                    "Markdown-Parsing fehlgeschlagen, Fallback auf Plain-Text", exc_info=True
+                )
                 # Fallback ohne Markdown falls Parsing fehlschlägt
                 try:
                     await self._circuit_breaker.call(
@@ -634,6 +644,7 @@ class TelegramChannel(Channel):
             # Vision-Modell aus Config (auto-adaptiert je nach Backend)
             try:
                 from jarvis.config import load_config
+
                 _cfg = load_config()
                 _vision_model = _cfg.vision_model
                 _ollama_url = _cfg.ollama.base_url
@@ -671,7 +682,9 @@ class TelegramChannel(Channel):
 
             logger.info(
                 "Foto analysiert für User %d: %s (%s)",
-                user_id, photo_path, _vision_model,
+                user_id,
+                photo_path,
+                _vision_model,
             )
         except Exception:
             logger.exception("Fehler bei Vision-Analyse für User %d", user_id)
@@ -763,7 +776,11 @@ class TelegramChannel(Channel):
                 if resp.status_code == 200:
                     polished = resp.json().get("message", {}).get("content", "")
                     if polished.strip():
-                        logger.info("Vision-Text nachbearbeitet (%d → %d Zeichen)", len(raw_text), len(polished))
+                        logger.info(
+                            "Vision-Text nachbearbeitet (%d → %d Zeichen)",
+                            len(raw_text),
+                            len(polished),
+                        )
                         return polished.strip()
         except Exception:
             logger.debug("Vision-Postprocessing fehlgeschlagen, nutze Rohtext", exc_info=True)
@@ -805,7 +822,9 @@ class TelegramChannel(Channel):
                 self._session_chat_map[response.session_id] = chat_id
                 if self._session_store:
                     self._session_store.save_channel_mapping(
-                        "telegram_session", response.session_id, str(chat_id),
+                        "telegram_session",
+                        response.session_id,
+                        str(chat_id),
                     )
             enriched = OutgoingMessage(
                 channel="telegram",
@@ -822,6 +841,7 @@ class TelegramChannel(Channel):
             logger.exception("Fehler bei Telegram-Nachricht von User %d", user_id)
             try:
                 from jarvis.utils.error_messages import classify_error_for_user
+
                 friendly = classify_error_for_user(exc)
             except Exception:
                 friendly = "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
@@ -837,6 +857,7 @@ class TelegramChannel(Channel):
         """
         try:
             import os
+
             # CUDA deaktivieren falls cuDNN nicht verfügbar (verhindert DLL-Crash)
             if not os.environ.get("CUDA_VISIBLE_DEVICES"):
                 os.environ["CUDA_VISIBLE_DEVICES"] = ""

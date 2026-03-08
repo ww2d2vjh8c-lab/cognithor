@@ -88,6 +88,7 @@ class MattermostChannel(Channel):
 
         try:
             import httpx
+
             self._http_client = httpx.AsyncClient(
                 timeout=30.0,
                 headers=self._headers(),
@@ -102,8 +103,7 @@ class MattermostChannel(Channel):
             if resp.status_code == 200:
                 data = resp.json()
                 self._bot_user_id = data.get("id", "")
-                logger.info("Mattermost-Bot authentifiziert als %s",
-                            data.get("username", "?"))
+                logger.info("Mattermost-Bot authentifiziert als %s", data.get("username", "?"))
             else:
                 logger.warning("Mattermost Auth fehlgeschlagen: %s", resp.status_code)
         except Exception as exc:
@@ -129,11 +129,13 @@ class MattermostChannel(Channel):
             try:
                 async with websockets.connect(ws_url) as ws:
                     # Authentifizieren
-                    auth_msg = json.dumps({
-                        "seq": 1,
-                        "action": "authentication_challenge",
-                        "data": {"token": self._token},
-                    })
+                    auth_msg = json.dumps(
+                        {
+                            "seq": 1,
+                            "action": "authentication_challenge",
+                            "data": {"token": self._token},
+                        }
+                    )
                     await ws.send(auth_msg)
 
                     async for raw_msg in ws:
@@ -199,6 +201,7 @@ class MattermostChannel(Channel):
                 logger.error("Mattermost: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
@@ -244,7 +247,8 @@ class MattermostChannel(Channel):
 
         try:
             resp = await self._http_client.post(
-                f"{self.api_url}/posts", json=body,
+                f"{self.api_url}/posts",
+                json=body,
             )
             if resp.status_code == 201:
                 return resp.json().get("id", "")
@@ -275,7 +279,10 @@ class MattermostChannel(Channel):
         await self._create_post(channel_id, message.text, root_id)
 
     async def request_approval(
-        self, session_id: str, action: PlannedAction, reason: str,
+        self,
+        session_id: str,
+        action: PlannedAction,
+        reason: str,
     ) -> bool:
         """Fragt den User per Nachricht + Reactions um Erlaubnis."""
         channel_id = self._default_channel
@@ -319,6 +326,8 @@ class MattermostChannel(Channel):
             if text.strip():
                 await self.send(
                     OutgoingMessage(
-                        channel=self.name, text=text, session_id=session_id,
+                        channel=self.name,
+                        text=text,
+                        session_id=session_id,
                     )
                 )

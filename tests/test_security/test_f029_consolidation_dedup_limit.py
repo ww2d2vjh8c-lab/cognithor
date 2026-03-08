@@ -52,6 +52,7 @@ def _make_entries(n: int, *, unique: bool = True) -> list[dict]:
     if unique:
         # Use hex strings to guarantee low n-gram overlap between entries
         import hashlib
+
         return [
             {"id": f"e{i}", "content": hashlib.sha256(f"seed-{i}".encode()).hexdigest()}
             for i in range(n)

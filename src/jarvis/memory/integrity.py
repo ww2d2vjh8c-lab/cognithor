@@ -34,10 +34,10 @@ class MemoryEntry:
 
     entry_id: str
     content: str
-    source: str = ""          # Woher stammt das Wissen
+    source: str = ""  # Woher stammt das Wissen
     agent_id: str = ""
-    category: str = ""        # "fact", "preference", "context", "skill"
-    confidence: float = 1.0   # 0-1
+    category: str = ""  # "fact", "preference", "context", "skill"
+    confidence: float = 1.0  # 0-1
     created_at: str = ""
     updated_at: str = ""
     version: int = 1
@@ -196,7 +196,7 @@ class DuplicateDetector:
     def detect(self, entries: list[MemoryEntry]) -> list[DuplicateGroup]:
         # Batch-Limit: bei zu vielen Eintraegen nur die neuesten verarbeiten
         if len(entries) > self.MAX_ENTRIES:
-            entries = entries[-self.MAX_ENTRIES:]
+            entries = entries[-self.MAX_ENTRIES :]
 
         # Normalisierung cachen (jeder Entry genau einmal)
         normalized: list[tuple[str, set[str]]] = []
@@ -237,11 +237,13 @@ class DuplicateDetector:
             if len(duplicates) > 1:
                 group_counter += 1
                 seen.add(entry_a.entry_id)
-                groups.append(DuplicateGroup(
-                    group_id=f"DUP-{group_counter:04d}",
-                    entries=duplicates,
-                    similarity=self._threshold,
-                ))
+                groups.append(
+                    DuplicateGroup(
+                        group_id=f"DUP-{group_counter:04d}",
+                        entries=duplicates,
+                        similarity=self._threshold,
+                    )
+                )
 
         return groups
 
@@ -296,9 +298,13 @@ class ContradictionDetector:
     """
 
     OPPOSITES = [
-        ("aktiviert", "deaktiviert"), ("erlaubt", "verboten"),
-        ("wahr", "falsch"), ("ja", "nein"), ("erfolgreich", "fehlgeschlagen"),
-        ("sicher", "unsicher"), ("online", "offline"),
+        ("aktiviert", "deaktiviert"),
+        ("erlaubt", "verboten"),
+        ("wahr", "falsch"),
+        ("ja", "nein"),
+        ("erfolgreich", "fehlgeschlagen"),
+        ("sicher", "unsicher"),
+        ("online", "offline"),
     ]
 
     def __init__(self) -> None:
@@ -313,14 +319,16 @@ class ContradictionDetector:
                 reason = self._check_contradiction(a.content, b.content)
                 if reason:
                     self._counter += 1
-                    contradictions.append(Contradiction(
-                        contradiction_id=f"CONTR-{self._counter:04d}",
-                        entry_a_id=a.entry_id,
-                        entry_b_id=b.entry_id,
-                        entry_a_content=a.content[:100],
-                        entry_b_content=b.content[:100],
-                        reason=reason,
-                    ))
+                    contradictions.append(
+                        Contradiction(
+                            contradiction_id=f"CONTR-{self._counter:04d}",
+                            entry_a_id=a.entry_id,
+                            entry_b_id=b.entry_id,
+                            entry_a_content=a.content[:100],
+                            entry_b_content=b.content[:100],
+                            reason=reason,
+                        )
+                    )
 
         return contradictions
 
@@ -334,7 +342,9 @@ class ContradictionDetector:
                 return f"Gegenteil-Paar: {pos}/{neg}"
 
         # Negation + same subject
-        if ("nicht" in a_lower and "nicht" not in b_lower) or ("nicht" not in a_lower and "nicht" in b_lower):
+        if ("nicht" in a_lower and "nicht" not in b_lower) or (
+            "nicht" not in a_lower and "nicht" in b_lower
+        ):
             words_a = set(re.findall(r"\w+", a_lower)) - {"nicht", "kein", "keine"}
             words_b = set(re.findall(r"\w+", b_lower)) - {"nicht", "kein", "keine"}
             overlap = words_a & words_b
@@ -506,9 +516,11 @@ class PlausibilityChecker:
 
         score = max(0, score)
         result = (
-            PlausibilityResult.PLAUSIBLE if score >= 70 else
-            PlausibilityResult.SUSPICIOUS if score >= 40 else
-            PlausibilityResult.IMPLAUSIBLE
+            PlausibilityResult.PLAUSIBLE
+            if score >= 70
+            else PlausibilityResult.SUSPICIOUS
+            if score >= 40
+            else PlausibilityResult.IMPLAUSIBLE
         )
 
         return PlausibilityCheck(

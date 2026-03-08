@@ -176,13 +176,15 @@ class TenantManager:
             plan=plan,
             owner_email=owner_email,
             created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            users=[TenantUser(
-                user_id=f"usr-{tenant_id[:6]}-001",
-                name="Admin",
-                email=owner_email,
-                role="admin",
-                created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            )],
+            users=[
+                TenantUser(
+                    user_id=f"usr-{tenant_id[:6]}-001",
+                    name="Admin",
+                    email=owner_email,
+                    role="admin",
+                    created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                )
+            ],
         )
         self._tenants[tenant_id] = tenant
         return tenant
@@ -192,7 +194,8 @@ class TenantManager:
 
     def find_by_email(self, email: str) -> list[Tenant]:
         return [
-            t for t in self._tenants.values()
+            t
+            for t in self._tenants.values()
             if t.owner_email == email or any(u.email == email for u in t.users)
         ]
 
@@ -349,7 +352,13 @@ class TrustNegotiator:
             return None
 
         # Stufe hochsetzen
-        levels = [TrustLevel.UNTRUSTED, TrustLevel.BASIC, TrustLevel.VERIFIED, TrustLevel.TRUSTED, TrustLevel.PRIVILEGED]
+        levels = [
+            TrustLevel.UNTRUSTED,
+            TrustLevel.BASIC,
+            TrustLevel.VERIFIED,
+            TrustLevel.TRUSTED,
+            TrustLevel.PRIVILEGED,
+        ]
         idx = levels.index(relation.trust_level)
         if idx < len(levels) - 1:
             relation.trust_level = levels[idx + 1]
@@ -367,7 +376,13 @@ class TrustNegotiator:
         if relation.violations >= 3:
             relation.trust_level = TrustLevel.UNTRUSTED
         elif relation.trust_level != TrustLevel.UNTRUSTED:
-            levels = [TrustLevel.UNTRUSTED, TrustLevel.BASIC, TrustLevel.VERIFIED, TrustLevel.TRUSTED, TrustLevel.PRIVILEGED]
+            levels = [
+                TrustLevel.UNTRUSTED,
+                TrustLevel.BASIC,
+                TrustLevel.VERIFIED,
+                TrustLevel.TRUSTED,
+                TrustLevel.PRIVILEGED,
+            ]
             idx = levels.index(relation.trust_level)
             if idx > 0:
                 relation.trust_level = levels[idx - 1]
@@ -379,16 +394,32 @@ class TrustNegotiator:
         relation = self._relations.get(key)
         if not relation:
             return False
-        levels = [TrustLevel.UNTRUSTED, TrustLevel.BASIC, TrustLevel.VERIFIED, TrustLevel.TRUSTED, TrustLevel.PRIVILEGED]
-        return levels.index(relation.trust_level) >= levels.index(self._policy.min_trust_for_delegation)
+        levels = [
+            TrustLevel.UNTRUSTED,
+            TrustLevel.BASIC,
+            TrustLevel.VERIFIED,
+            TrustLevel.TRUSTED,
+            TrustLevel.PRIVILEGED,
+        ]
+        return levels.index(relation.trust_level) >= levels.index(
+            self._policy.min_trust_for_delegation
+        )
 
     def can_share_data(self, local_id: str, remote_id: str) -> bool:
         key = self._key(local_id, remote_id)
         relation = self._relations.get(key)
         if not relation:
             return False
-        levels = [TrustLevel.UNTRUSTED, TrustLevel.BASIC, TrustLevel.VERIFIED, TrustLevel.TRUSTED, TrustLevel.PRIVILEGED]
-        return levels.index(relation.trust_level) >= levels.index(self._policy.min_trust_for_data_share)
+        levels = [
+            TrustLevel.UNTRUSTED,
+            TrustLevel.BASIC,
+            TrustLevel.VERIFIED,
+            TrustLevel.TRUSTED,
+            TrustLevel.PRIVILEGED,
+        ]
+        return levels.index(relation.trust_level) >= levels.index(
+            self._policy.min_trust_for_data_share
+        )
 
     def get_relation(self, local_id: str, remote_id: str) -> TrustRelation | None:
         return self._relations.get(self._key(local_id, remote_id))
@@ -419,13 +450,13 @@ class TrustNegotiator:
 
 
 class EmergencyAction(Enum):
-    KILL_SWITCH = "kill_switch"               # Alles stoppen
-    QUARANTINE_AGENT = "quarantine_agent"     # Einzelnen Agent isolieren
-    QUARANTINE_SKILL = "quarantine_skill"     # Skill deaktivieren
-    REVOKE_FEDERATION = "revoke_federation"   # Federation-Link kappen
-    EMERGENCY_UPDATE = "emergency_update"     # Sofort-Update pushen
-    LOCKDOWN = "lockdown"                     # Nur Admin-Zugriff
-    ROLLBACK = "rollback"                     # Auf letzte sichere Version
+    KILL_SWITCH = "kill_switch"  # Alles stoppen
+    QUARANTINE_AGENT = "quarantine_agent"  # Einzelnen Agent isolieren
+    QUARANTINE_SKILL = "quarantine_skill"  # Skill deaktivieren
+    REVOKE_FEDERATION = "revoke_federation"  # Federation-Link kappen
+    EMERGENCY_UPDATE = "emergency_update"  # Sofort-Update pushen
+    LOCKDOWN = "lockdown"  # Nur Admin-Zugriff
+    ROLLBACK = "rollback"  # Auf letzte sichere Version
 
 
 @dataclass
@@ -520,7 +551,10 @@ class EmergencyController:
         return self._lockdown_active
 
     def is_quarantined(self, agent_or_skill_id: str) -> bool:
-        return agent_or_skill_id in self._quarantined_agents or agent_or_skill_id in self._quarantined_skills
+        return (
+            agent_or_skill_id in self._quarantined_agents
+            or agent_or_skill_id in self._quarantined_skills
+        )
 
     @property
     def quarantined_agents(self) -> set[str]:

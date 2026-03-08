@@ -179,10 +179,10 @@ class MCPPrompt:
 class MCPServerMode(str, Enum):
     """Betriebsmodus des MCP-Servers."""
 
-    DISABLED = "disabled"   # Standard: Kein MCP-Server
-    STDIO = "stdio"         # stdio-basierter Server (für Claude Desktop etc.)
-    HTTP = "http"           # Streamable HTTP Server (für Netzwerk)
-    BOTH = "both"           # Beide gleichzeitig
+    DISABLED = "disabled"  # Standard: Kein MCP-Server
+    STDIO = "stdio"  # stdio-basierter Server (für Claude Desktop etc.)
+    HTTP = "http"  # Streamable HTTP Server (für Netzwerk)
+    BOTH = "both"  # Beide gleichzeitig
 
 
 @dataclass
@@ -297,9 +297,7 @@ class JarvisMCPServer:
         if self._config.expose_tools and self._tools:
             capabilities["tools"] = {"listChanged": True}
 
-        if self._config.expose_resources and (
-            self._resources or self._resource_templates
-        ):
+        if self._config.expose_resources and (self._resources or self._resource_templates):
             capabilities["resources"] = {
                 "subscribe": True,
                 "listChanged": True,
@@ -353,7 +351,8 @@ class JarvisMCPServer:
             handler = tool.handler
             if asyncio.iscoroutinefunction(handler):
                 result = await asyncio.wait_for(
-                    handler(**(arguments or {})), timeout=self.HANDLER_TIMEOUT,
+                    handler(**(arguments or {})),
+                    timeout=self.HANDLER_TIMEOUT,
                 )
             else:
                 # Sync-Handler in Thread-Pool ausführen (blockiert nicht den Event Loop)
@@ -381,7 +380,9 @@ class JarvisMCPServer:
         except asyncio.TimeoutError:
             log.error("mcp_server_tool_timeout", tool=name, timeout=self.HANDLER_TIMEOUT)
             return {
-                "content": [{"type": "text", "text": f"Tool '{name}' Timeout nach {self.HANDLER_TIMEOUT}s"}],
+                "content": [
+                    {"type": "text", "text": f"Tool '{name}' Timeout nach {self.HANDLER_TIMEOUT}s"}
+                ],
                 "isError": True,
             }
         except Exception as exc:
@@ -413,18 +414,21 @@ class JarvisMCPServer:
             resource = self._match_template(uri)
             if resource is None:
                 return {
-                    "contents": [{
-                        "uri": uri,
-                        "mimeType": "text/plain",
-                        "text": f"Resource '{uri}' nicht gefunden",
-                    }]
+                    "contents": [
+                        {
+                            "uri": uri,
+                            "mimeType": "text/plain",
+                            "text": f"Resource '{uri}' nicht gefunden",
+                        }
+                    ]
                 }
 
         try:
             if resource.handler:
                 if asyncio.iscoroutinefunction(resource.handler):
                     content = await asyncio.wait_for(
-                        resource.handler(uri=uri), timeout=self.HANDLER_TIMEOUT,
+                        resource.handler(uri=uri),
+                        timeout=self.HANDLER_TIMEOUT,
                     )
                 else:
                     content = resource.handler(uri=uri)
@@ -432,29 +436,35 @@ class JarvisMCPServer:
                 content = ""
 
             return {
-                "contents": [{
-                    "uri": uri,
-                    "mimeType": resource.mime_type,
-                    "text": str(content),
-                }]
+                "contents": [
+                    {
+                        "uri": uri,
+                        "mimeType": resource.mime_type,
+                        "text": str(content),
+                    }
+                ]
             }
         except asyncio.TimeoutError:
             log.error("mcp_server_resource_timeout", uri=uri, timeout=self.HANDLER_TIMEOUT)
             return {
-                "contents": [{
-                    "uri": uri,
-                    "mimeType": "text/plain",
-                    "text": f"Resource-Timeout nach {self.HANDLER_TIMEOUT}s",
-                }]
+                "contents": [
+                    {
+                        "uri": uri,
+                        "mimeType": "text/plain",
+                        "text": f"Resource-Timeout nach {self.HANDLER_TIMEOUT}s",
+                    }
+                ]
             }
         except Exception as exc:
             log.error("mcp_server_resource_error", uri=uri, error=str(exc))
             return {
-                "contents": [{
-                    "uri": uri,
-                    "mimeType": "text/plain",
-                    "text": "Resource-Lesefehler",
-                }]
+                "contents": [
+                    {
+                        "uri": uri,
+                        "mimeType": "text/plain",
+                        "text": "Resource-Lesefehler",
+                    }
+                ]
             }
 
     async def handle_resources_subscribe(self, uri: str) -> dict[str, Any]:
@@ -508,7 +518,8 @@ class JarvisMCPServer:
             if prompt.handler:
                 if asyncio.iscoroutinefunction(prompt.handler):
                     messages = await asyncio.wait_for(
-                        prompt.handler(**(arguments or {})), timeout=self.HANDLER_TIMEOUT,
+                        prompt.handler(**(arguments or {})),
+                        timeout=self.HANDLER_TIMEOUT,
                     )
                 else:
                     messages = prompt.handler(**(arguments or {}))
@@ -692,6 +703,7 @@ class JarvisMCPServer:
             # ProactorEventLoop doesn't support connect_read_pipe;
             # use a thread to read stdin line-by-line instead.
             import concurrent.futures
+
             _executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
             def _read_line() -> bytes:
@@ -783,6 +795,7 @@ class JarvisMCPServer:
         # Auth prüfen
         if self._config.require_auth:
             import hmac
+
             if not hmac.compare_digest(
                 (auth_token or "").encode(), self._config.auth_token.encode()
             ):

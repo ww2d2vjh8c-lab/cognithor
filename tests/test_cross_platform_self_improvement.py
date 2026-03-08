@@ -243,6 +243,7 @@ class TestConfigCrossPlatform:
 
     def test_jarvis_config_includes_new_fields(self):
         from jarvis.config import JarvisConfig
+
         config = JarvisConfig()
         assert hasattr(config, "improvement")
         assert hasattr(config, "prompt_evolution")

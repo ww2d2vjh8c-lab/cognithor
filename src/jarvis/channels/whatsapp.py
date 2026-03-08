@@ -91,10 +91,13 @@ class WhatsAppChannel(Channel):
         self._whisper = None
         try:
             from faster_whisper import WhisperModel
+
             self._whisper = WhisperModel("base", compute_type="int8")
             logger.info("WhatsApp: faster-whisper geladen fuer Voice-Transkription")
         except ImportError:
-            logger.debug("WhatsApp: faster-whisper nicht verfuegbar, Voice wird als Text-Hinweis weitergeleitet")
+            logger.debug(
+                "WhatsApp: faster-whisper nicht verfuegbar, Voice wird als Text-Hinweis weitergeleitet"
+            )
 
     @property
     def _api_token(self) -> str:
@@ -159,13 +162,15 @@ class WhatsAppChannel(Channel):
         client = await self._ensure_http()
         button_list = []
         for i, btn in enumerate(buttons[:3]):
-            button_list.append({
-                "type": "reply",
-                "reply": {
-                    "id": btn.get("id", f"btn_{i}"),
-                    "title": btn.get("title", f"Option {i+1}")[:20],
-                },
-            })
+            button_list.append(
+                {
+                    "type": "reply",
+                    "reply": {
+                        "id": btn.get("id", f"btn_{i}"),
+                        "title": btn.get("title", f"Option {i + 1}")[:20],
+                    },
+                }
+            )
 
         payload = {
             "messaging_product": "whatsapp",
@@ -245,10 +250,13 @@ class WhatsAppChannel(Channel):
         ssl_ctx = None
         if self._ssl_certfile and self._ssl_keyfile:
             from jarvis.security.token_store import create_ssl_context
+
             ssl_ctx = create_ssl_context(self._ssl_certfile, self._ssl_keyfile)
 
         if not ssl_ctx and self._webhook_host not in ("127.0.0.1", "localhost", "::1"):
-            logger.warning("WARNUNG: WhatsApp-Webhook auf %s ohne TLS gestartet!", self._webhook_host)
+            logger.warning(
+                "WARNUNG: WhatsApp-Webhook auf %s ohne TLS gestartet!", self._webhook_host
+            )
 
         if not self._app_secret:
             logger.warning(
@@ -330,7 +338,7 @@ class WhatsAppChannel(Channel):
         if not signature_header.startswith("sha256="):
             return False
 
-        expected_sig = signature_header[len("sha256="):]
+        expected_sig = signature_header[len("sha256=") :]
         computed = hmac.new(
             self._app_secret.encode("utf-8"),
             payload,
@@ -439,6 +447,7 @@ class WhatsAppChannel(Channel):
                 logger.error("WhatsApp: Handler-Fehler: %s", e)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(e)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
@@ -462,7 +471,9 @@ class WhatsAppChannel(Channel):
             self._sessions[phone_number] = uuid.uuid4().hex
             if self._session_store:
                 self._session_store.save_channel_mapping(
-                    "whatsapp_sessions", phone_number, self._sessions[phone_number],
+                    "whatsapp_sessions",
+                    phone_number,
+                    self._sessions[phone_number],
                 )
         return self._sessions[phone_number]
 
@@ -474,7 +485,9 @@ class WhatsAppChannel(Channel):
 
         # Persistierte Mappings laden
         if self._session_store:
-            for key, val in self._session_store.load_all_channel_mappings("whatsapp_sessions").items():
+            for key, val in self._session_store.load_all_channel_mappings(
+                "whatsapp_sessions"
+            ).items():
                 self._sessions[key] = val
 
         await self._setup_webhook()

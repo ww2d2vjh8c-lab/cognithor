@@ -99,10 +99,7 @@ class TestConcurrentSessionCreation:
             session = gateway._get_or_create_session("cli", user_id)
             results[user_id] = session.session_id
 
-        threads = [
-            threading.Thread(target=create_for_user, args=(f"user_{i}",))
-            for i in range(20)
-        ]
+        threads = [threading.Thread(target=create_for_user, args=(f"user_{i}",)) for i in range(20)]
         for t in threads:
             t.start()
         for t in threads:

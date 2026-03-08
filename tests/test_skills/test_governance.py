@@ -91,11 +91,16 @@ class TestReputationEngine:
     def test_trust_levels(self) -> None:
         engine = ReputationEngine()
         s = engine.get_or_create("s1")
-        s.score = 90; assert s.trust_level == TrustLevel.VERIFIED
-        s.score = 70; assert s.trust_level == TrustLevel.HIGH
-        s.score = 50; assert s.trust_level == TrustLevel.MODERATE
-        s.score = 30; assert s.trust_level == TrustLevel.LOW
-        s.score = 10; assert s.trust_level == TrustLevel.UNTRUSTED
+        s.score = 90
+        assert s.trust_level == TrustLevel.VERIFIED
+        s.score = 70
+        assert s.trust_level == TrustLevel.HIGH
+        s.score = 50
+        assert s.trust_level == TrustLevel.MODERATE
+        s.score = 30
+        assert s.trust_level == TrustLevel.LOW
+        s.score = 10
+        assert s.trust_level == TrustLevel.UNTRUSTED
 
     def test_top_rated(self) -> None:
         engine = ReputationEngine()
@@ -108,8 +113,10 @@ class TestReputationEngine:
 
     def test_flagged(self) -> None:
         engine = ReputationEngine()
-        s1 = engine.get_or_create("good"); s1.score = 80
-        s2 = engine.get_or_create("bad"); s2.score = 20
+        s1 = engine.get_or_create("good")
+        s1.score = 80
+        s2 = engine.get_or_create("bad")
+        s2.score = 20
         flagged = engine.flagged(threshold=30)
         assert len(flagged) == 1
         assert flagged[0].entity_id == "bad"
@@ -139,8 +146,10 @@ class TestSkillRecallManager:
     def test_issue_recall(self) -> None:
         mgr = SkillRecallManager()
         notice = mgr.issue_recall(
-            "skill-bad", "BadSkill",
-            RecallReason.MALICIOUS_BEHAVIOR, "Daten exfiltriert",
+            "skill-bad",
+            "BadSkill",
+            RecallReason.MALICIOUS_BEHAVIOR,
+            "Daten exfiltriert",
         )
         assert notice.skill_id == "skill-bad"
         assert mgr.is_recalled("skill-bad")
@@ -266,18 +275,22 @@ class TestGovernancePolicy:
         assert any(a["action"] == "flag" for a in actions)
 
     def test_custom_rule(self) -> None:
-        policy = GovernancePolicy(rules=[
-            GovernanceRule("CUSTOM-1", "Block bei Score < 50", "score < 50", "block"),
-        ])
+        policy = GovernancePolicy(
+            rules=[
+                GovernanceRule("CUSTOM-1", "Block bei Score < 50", "score < 50", "block"),
+            ]
+        )
         score = ReputationScore(entity_id="s1", entity_type="skill", score=40)
         actions = policy.evaluate(score)
         assert len(actions) == 1
         assert actions[0]["action"] == "block"
 
     def test_disabled_rule(self) -> None:
-        policy = GovernancePolicy(rules=[
-            GovernanceRule("CUSTOM-1", "Disabled", "score < 50", "block", enabled=False),
-        ])
+        policy = GovernancePolicy(
+            rules=[
+                GovernanceRule("CUSTOM-1", "Disabled", "score < 50", "block", enabled=False),
+            ]
+        )
         score = ReputationScore(entity_id="s1", entity_type="skill", score=10)
         actions = policy.evaluate(score)
         assert len(actions) == 0

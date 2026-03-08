@@ -77,7 +77,7 @@ class TestConcurrentWorkspaceGuard:
         for i in range(50):
             agent_id = f"agent_{i}"
             assert guard.check_access(agent_id, tmp_path / agent_id / "work.txt")
-            other = f"agent_{(i+1) % 50}"
+            other = f"agent_{(i + 1) % 50}"
             assert not guard.check_access(agent_id, tmp_path / other / "secret.txt")
 
 
@@ -384,7 +384,9 @@ class TestConcurrentRBAC:
         from jarvis.gateway.wizards import DashboardUser, UserRole
 
         user = DashboardUser(
-            user_id="bob", display_name="Bob", role=UserRole.USER,
+            user_id="bob",
+            display_name="Bob",
+            role=UserRole.USER,
             agent_scope=["coder", "assistant"],
         )
         assert user.can_access_agent("coder")

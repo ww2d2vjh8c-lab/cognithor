@@ -48,49 +48,55 @@ log = get_logger(__name__)
 # ============================================================================
 
 # Welche Tools sind read-only (ändern nichts am System)?
-READ_ONLY_TOOLS = frozenset({
-    "read_file",
-    "list_directory",
-    "web_search",
-    "web_fetch",
-    "search_memory",
-    "get_entity",
-    "get_core_memory",
-    "get_recent_episodes",
-    "search_procedures",
-    "memory_stats",
-    "browse_url",
-    "browse_screenshot",
-    "browse_page_info",
-    "media_transcribe_audio",
-    "media_analyze_image",
-    "media_extract_text",
-})
+READ_ONLY_TOOLS = frozenset(
+    {
+        "read_file",
+        "list_directory",
+        "web_search",
+        "web_fetch",
+        "search_memory",
+        "get_entity",
+        "get_core_memory",
+        "get_recent_episodes",
+        "search_procedures",
+        "memory_stats",
+        "browse_url",
+        "browse_screenshot",
+        "browse_page_info",
+        "media_transcribe_audio",
+        "media_analyze_image",
+        "media_extract_text",
+    }
+)
 
 # Welche Tools sind destruktiv (können Daten löschen/überschreiben)?
-DESTRUCTIVE_TOOLS = frozenset({
-    "write_file",
-    "edit_file",
-    "exec_command",
-    "browse_fill",
-    "browse_click",
-    "browse_execute_js",
-})
+DESTRUCTIVE_TOOLS = frozenset(
+    {
+        "write_file",
+        "edit_file",
+        "exec_command",
+        "browse_fill",
+        "browse_click",
+        "browse_execute_js",
+    }
+)
 
 # Welche Tools sind idempotent (mehrfach aufrufen = gleich)?
-IDEMPOTENT_TOOLS = frozenset({
-    "read_file",
-    "list_directory",
-    "web_search",
-    "web_fetch",
-    "search_memory",
-    "get_entity",
-    "get_core_memory",
-    "get_recent_episodes",
-    "memory_stats",
-    "browse_url",
-    "browse_screenshot",
-})
+IDEMPOTENT_TOOLS = frozenset(
+    {
+        "read_file",
+        "list_directory",
+        "web_search",
+        "web_fetch",
+        "search_memory",
+        "get_entity",
+        "get_core_memory",
+        "get_recent_episodes",
+        "memory_stats",
+        "browse_url",
+        "browse_screenshot",
+    }
+)
 
 
 def _build_annotations(tool_name: str) -> dict[str, Any]:
@@ -301,10 +307,16 @@ class MCPBridge:
                     config.server_name = server_section.get("server_name", config.server_name)
                     config.require_auth = server_section.get("require_auth", config.require_auth)
                     config.auth_token = server_section.get("auth_token", config.auth_token)
-                    config.enable_sampling = server_section.get("enable_sampling", config.enable_sampling)
+                    config.enable_sampling = server_section.get(
+                        "enable_sampling", config.enable_sampling
+                    )
                     config.expose_tools = server_section.get("expose_tools", config.expose_tools)
-                    config.expose_resources = server_section.get("expose_resources", config.expose_resources)
-                    config.expose_prompts = server_section.get("expose_prompts", config.expose_prompts)
+                    config.expose_resources = server_section.get(
+                        "expose_resources", config.expose_resources
+                    )
+                    config.expose_prompts = server_section.get(
+                        "expose_prompts", config.expose_prompts
+                    )
 
             except Exception as exc:
                 log.warning("mcp_server_config_load_error", error=str(exc))

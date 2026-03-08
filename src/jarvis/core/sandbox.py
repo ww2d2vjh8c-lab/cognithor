@@ -65,15 +65,27 @@ class SandboxConfig:
 
     # Dateisystem
     workspace_dir: Path = field(default_factory=lambda: Path.home() / ".jarvis" / "workspace")
-    allowed_read_paths: list[str] = field(default_factory=lambda: (
-        [] if sys.platform == "win32" else
-        [p for p in [
-            "/usr", "/bin", "/sbin", "/lib",
-            "/lib64",           # Linux only
-            "/etc/alternatives",# Linux only
-            "/etc/ssl", "/etc/resolv.conf", "/etc/hosts",
-        ] if Path(p).exists()]
-    ))
+    allowed_read_paths: list[str] = field(
+        default_factory=lambda: (
+            []
+            if sys.platform == "win32"
+            else [
+                p
+                for p in [
+                    "/usr",
+                    "/bin",
+                    "/sbin",
+                    "/lib",
+                    "/lib64",  # Linux only
+                    "/etc/alternatives",  # Linux only
+                    "/etc/ssl",
+                    "/etc/resolv.conf",
+                    "/etc/hosts",
+                ]
+                if Path(p).exists()
+            ]
+        )
+    )
     allowed_write_paths: list[str] = field(default_factory=list)
 
     # Netzwerk
@@ -86,9 +98,15 @@ class SandboxConfig:
     default_timeout: int = 30
 
     # Umgebungsvariablen die durchgereicht werden
-    env_passthrough: list[str] = field(default_factory=lambda: [
-        "PATH", "HOME", "LANG", "LC_ALL", "TERM",
-    ])
+    env_passthrough: list[str] = field(
+        default_factory=lambda: [
+            "PATH",
+            "HOME",
+            "LANG",
+            "LC_ALL",
+            "TERM",
+        ]
+    )
 
 
 # ============================================================================
@@ -431,9 +449,7 @@ class WindowsJobObjectSandbox:
             )
 
             # 5. Prozess-Handle holen und dem Job zuweisen
-            proc_handle = kernel32.OpenProcess(
-                self.PROCESS_ALL_ACCESS, False, proc.pid
-            )
+            proc_handle = kernel32.OpenProcess(self.PROCESS_ALL_ACCESS, False, proc.pid)
             if proc_handle:
                 kernel32.AssignProcessToJobObject(job_handle, proc_handle)
             else:
@@ -519,6 +535,7 @@ class SandboxExecutor:
 
     def __init__(self, config: SandboxConfig | None = None) -> None:
         import asyncio
+
         self._config = config or SandboxConfig()
         self._config_lock = asyncio.Lock()
         self._level: SandboxLevel = SandboxLevel.BARE
@@ -539,7 +556,10 @@ class SandboxExecutor:
             log.info("sandbox_detected", level="bwrap", isolation="full")
             return
 
-        if preferred in (SandboxLevel.BWRAP, SandboxLevel.FIREJAIL) and FirejailSandbox.is_available():
+        if (
+            preferred in (SandboxLevel.BWRAP, SandboxLevel.FIREJAIL)
+            and FirejailSandbox.is_available()
+        ):
             self._firejail = FirejailSandbox(self._config)
             self._level = SandboxLevel.FIREJAIL
             log.info("sandbox_detected", level="firejail", isolation="good")
@@ -635,7 +655,11 @@ class SandboxExecutor:
 
                 if self._level == SandboxLevel.JOBOBJECT and self._jobobject:
                     return await self._exec_with_jobobject(
-                        command, cwd, timeout, eff_memory, eff_processes,
+                        command,
+                        cwd,
+                        timeout,
+                        eff_memory,
+                        eff_processes,
                     )
 
                 # Bare-Modus (kein Sandbox)
@@ -822,7 +846,9 @@ class SandboxExecutor:
             )
 
         except OSError as exc:
-            return SandboxResult(error=f"Befehl konnte nicht gestartet werden: {exc}", sandbox_level="bare")
+            return SandboxResult(
+                error=f"Befehl konnte nicht gestartet werden: {exc}", sandbox_level="bare"
+            )
 
     @staticmethod
     def _decode_and_truncate(
@@ -830,6 +856,7 @@ class SandboxExecutor:
         stderr_bytes: bytes,
     ) -> tuple[str, str, bool]:
         """Decodiert und beschränkt Output-Größe."""
+
         def decode(data: bytes) -> str:
             if not data:
                 return ""
@@ -845,8 +872,8 @@ class SandboxExecutor:
         if len(stdout) + len(stderr) > MAX_OUTPUT_BYTES:
             truncated = True
             if stdout:
-                stdout = stdout[:MAX_OUTPUT_BYTES // 2]
+                stdout = stdout[: MAX_OUTPUT_BYTES // 2]
             if stderr:
-                stderr = stderr[:MAX_OUTPUT_BYTES // 2]
+                stderr = stderr[: MAX_OUTPUT_BYTES // 2]
 
         return stdout, stderr, truncated

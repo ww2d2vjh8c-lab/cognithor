@@ -182,7 +182,9 @@ class TestIngestFile:
         assert "nicht gefunden" in result.error
 
     @pytest.mark.asyncio
-    async def test_ingest_unsupported_format(self, pipeline: IngestPipeline, ingest_dir: Path) -> None:
+    async def test_ingest_unsupported_format(
+        self, pipeline: IngestPipeline, ingest_dir: Path
+    ) -> None:
         f = ingest_dir / "binary.exe"
         f.write_bytes(b"\x00\x01")
         result = await pipeline.ingest_file(f)
@@ -209,7 +211,9 @@ class TestIngestFile:
         assert "Kein Text" in result.error
 
     @pytest.mark.asyncio
-    async def test_ingest_duplicate_detection(self, pipeline: IngestPipeline, ingest_dir: Path) -> None:
+    async def test_ingest_duplicate_detection(
+        self, pipeline: IngestPipeline, ingest_dir: Path
+    ) -> None:
         # Erste Datei
         f1 = ingest_dir / "doc1.txt"
         f1.write_text("Gleicher Inhalt", encoding="utf-8")
@@ -247,7 +251,9 @@ class TestScanAndIngest:
         assert len(success) == 3
 
     @pytest.mark.asyncio
-    async def test_scan_ignores_unsupported(self, pipeline: IngestPipeline, ingest_dir: Path) -> None:
+    async def test_scan_ignores_unsupported(
+        self, pipeline: IngestPipeline, ingest_dir: Path
+    ) -> None:
         (ingest_dir / "good.txt").write_text("Guter Inhalt", encoding="utf-8")
         (ingest_dir / "bad.exe").write_bytes(b"\x00")  # Wird ignoriert
 

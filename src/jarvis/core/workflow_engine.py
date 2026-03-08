@@ -92,9 +92,7 @@ class WorkflowEngine:
         for node in workflow.nodes:
             for dep in node.depends_on:
                 if dep not in node_ids:
-                    errors.append(
-                        f"Node '{node.id}' depends on unknown node '{dep}'"
-                    )
+                    errors.append(f"Node '{node.id}' depends on unknown node '{dep}'")
 
         # Condition branch references
         for node in workflow.nodes:
@@ -131,15 +129,11 @@ class WorkflowEngine:
                 templates.append(node.approval_message)
             if node.condition:
                 templates.append(node.condition)
-            templates.extend(
-                v for v in node.tool_params.values() if isinstance(v, str)
-            )
+            templates.extend(v for v in node.tool_params.values() if isinstance(v, str))
             for tmpl in templates:
                 for ref_id, _ in _TEMPLATE_RE.findall(tmpl):
                     if ref_id == node.id:
-                        errors.append(
-                            f"Node '{node.id}' references itself in template"
-                        )
+                        errors.append(f"Node '{node.id}' references itself in template")
 
         return errors
 
@@ -193,9 +187,7 @@ class WorkflowEngine:
         run.status = NodeStatus.SUCCESS if run.is_success else NodeStatus.FAILURE
 
         duration = (
-            int((run.completed_at - run.started_at).total_seconds() * 1000)
-            if run.started_at
-            else 0
+            int((run.completed_at - run.started_at).total_seconds() * 1000) if run.started_at else 0
         )
         log.info(
             "workflow_completed",
@@ -227,9 +219,7 @@ class WorkflowEngine:
             "workflow_resumed",
             workflow_id=workflow.id,
             run_id=run.id,
-            pending=sum(
-                1 for nr in run.node_results.values() if nr.status == NodeStatus.PENDING
-            ),
+            pending=sum(1 for nr in run.node_results.values() if nr.status == NodeStatus.PENDING),
         )
 
         try:
@@ -305,8 +295,7 @@ class WorkflowEngine:
 
             if not ready:
                 running = [
-                    nid for nid, nr in run.node_results.items()
-                    if nr.status == NodeStatus.RUNNING
+                    nid for nid, nr in run.node_results.items() if nr.status == NodeStatus.RUNNING
                 ]
                 if not running:
                     # Deadlock — no nodes can proceed
@@ -326,10 +315,7 @@ class WorkflowEngine:
                 run.node_results[node.id].status = NodeStatus.RUNNING
                 run.node_results[node.id].started_at = _utc_now()
 
-            tasks = [
-                self._execute_with_semaphore(semaphore, node, run, session)
-                for node in ready
-            ]
+            tasks = [self._execute_with_semaphore(semaphore, node, run, session) for node in ready]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # 4. Process results
@@ -342,10 +328,7 @@ class WorkflowEngine:
                 else:
                     run.node_results[node.id] = result
                     # Condition branching
-                    if (
-                        node.type == NodeType.CONDITION
-                        and result.status == NodeStatus.SUCCESS
-                    ):
+                    if node.type == NodeType.CONDITION and result.status == NodeStatus.SUCCESS:
                         self._apply_condition_result(node, result, workflow, run)
 
             # 5. Checkpoint
@@ -569,9 +552,7 @@ class WorkflowEngine:
                 completed_at=_utc_now(),
             )
 
-        message = self._resolve_template(
-            node.approval_message or "Genehmigung erforderlich", run
-        )
+        message = self._resolve_template(node.approval_message or "Genehmigung erforderlich", run)
         approved = await self._approval_func(node.id, message)
 
         return NodeResult(
@@ -599,9 +580,7 @@ class WorkflowEngine:
 
         return _TEMPLATE_RE.sub(_replacer, template)
 
-    def _resolve_params(
-        self, params: dict[str, Any], run: WorkflowRun
-    ) -> dict[str, Any]:
+    def _resolve_params(self, params: dict[str, Any], run: WorkflowRun) -> dict[str, Any]:
         """Resolve templates in tool parameter values (string values only)."""
         resolved: dict[str, Any] = {}
         for key, value in params.items():
@@ -668,9 +647,7 @@ class WorkflowEngine:
                 ready.append(node)
         return ready
 
-    def _propagate_skips(
-        self, workflow: WorkflowDefinition, run: WorkflowRun
-    ) -> None:
+    def _propagate_skips(self, workflow: WorkflowDefinition, run: WorkflowRun) -> None:
         """Transitively skip PENDING nodes whose dependencies FAILED or were SKIPPED."""
         max_iterations = len(workflow.nodes) + 1  # upper bound: one pass per node
         for _ in range(max_iterations):
@@ -714,9 +691,7 @@ class WorkflowEngine:
                 nr.error = f"Condition '{node.id}' branched away"
                 nr.completed_at = _utc_now()
 
-    def _get_descendants(
-        self, node_id: str, workflow: WorkflowDefinition
-    ) -> set[str]:
+    def _get_descendants(self, node_id: str, workflow: WorkflowDefinition) -> set[str]:
         """All nodes that transitively depend on *node_id*."""
         descendants: set[str] = set()
         queue = deque([node_id])
@@ -775,7 +750,7 @@ class WorkflowEngine:
     def _calculate_retry_delay(strategy: RetryStrategy, attempt: int) -> float:
         """Seconds to wait before the next retry attempt."""
         if strategy == RetryStrategy.EXPONENTIAL:
-            return min(2.0 ** attempt, 30.0)
+            return min(2.0**attempt, 30.0)
         if strategy == RetryStrategy.LINEAR:
             return min(1.0 * (attempt + 1), 15.0)
         return 0.0
@@ -803,6 +778,7 @@ class WorkflowEngine:
 # ---------------------------------------------------------------------------
 # Module-level helpers
 # ---------------------------------------------------------------------------
+
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)

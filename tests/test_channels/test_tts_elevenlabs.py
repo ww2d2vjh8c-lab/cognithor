@@ -108,6 +108,7 @@ class TestElevenLabsTTSSynthesize:
 
             # Patch the import inside synthesize
             import sys
+
             mock_httpx_module = MagicMock()
             mock_httpx_module.AsyncClient = MagicMock(return_value=mock_client)
             mock_httpx_module.HTTPStatusError = type("HTTPStatusError", (Exception,), {})
@@ -132,6 +133,7 @@ class TestElevenLabsTTSSynthesize:
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
         import sys
+
         mock_httpx_module = MagicMock()
         mock_httpx_module.AsyncClient = MagicMock(return_value=mock_client)
         mock_httpx_module.HTTPStatusError = type("HTTPStatusError", (Exception,), {})
@@ -169,6 +171,7 @@ class TestElevenLabsTTSStream:
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
         import sys
+
         mock_httpx_module = MagicMock()
         mock_httpx_module.AsyncClient = MagicMock(return_value=mock_client)
         mock_httpx_module.HTTPStatusError = type("HTTPStatusError", (Exception,), {})
@@ -200,6 +203,7 @@ class TestElevenLabsTTSStream:
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
         import sys
+
         mock_httpx_module = MagicMock()
         mock_httpx_module.AsyncClient = MagicMock(return_value=mock_client)
         mock_httpx_module.RequestError = type("RequestError", (Exception,), {})

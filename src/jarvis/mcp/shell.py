@@ -40,11 +40,27 @@ MAX_REDACTED_LOG_PREFIX = 50
 # Pfad-Validierung (Layer 0)
 _NULL_BYTE_RE = re.compile(r"\x00")
 _PATH_TRAVERSAL_RE = re.compile(r"(?:^|[\s;|&])(?:\.\.[/\\]){2,}")
-_FILE_COMMANDS = frozenset({
-    "cat", "head", "tail", "less", "more", "cp", "mv",
-    "rm", "chmod", "chown", "ln", "readlink", "stat",
-    "file", "touch", "mkdir", "rmdir",
-})
+_FILE_COMMANDS = frozenset(
+    {
+        "cat",
+        "head",
+        "tail",
+        "less",
+        "more",
+        "cp",
+        "mv",
+        "rm",
+        "chmod",
+        "chown",
+        "ln",
+        "readlink",
+        "stat",
+        "file",
+        "touch",
+        "mkdir",
+        "rmdir",
+    }
+)
 
 __all__ = [
     "ShellTools",
@@ -74,10 +90,14 @@ class ShellTools:
         self._config = config
 
         # Konfigurierbare Limits aus config.shell (mit sicheren Defaults)
-        _shell_cfg = getattr(config, 'shell', None)
-        self._default_timeout: int = getattr(_shell_cfg, 'default_timeout_seconds', 30)
-        self._max_log_command_length: int = getattr(_shell_cfg, 'max_log_command_length', MAX_LOG_COMMAND_LENGTH)
-        self._max_redacted_log_prefix: int = getattr(_shell_cfg, 'max_redacted_log_prefix', MAX_REDACTED_LOG_PREFIX)
+        _shell_cfg = getattr(config, "shell", None)
+        self._default_timeout: int = getattr(_shell_cfg, "default_timeout_seconds", 30)
+        self._max_log_command_length: int = getattr(
+            _shell_cfg, "max_log_command_length", MAX_LOG_COMMAND_LENGTH
+        )
+        self._max_redacted_log_prefix: int = getattr(
+            _shell_cfg, "max_redacted_log_prefix", MAX_REDACTED_LOG_PREFIX
+        )
 
         # Sandbox-Konfiguration aus JarvisConfig ableiten
         sandbox_config = SandboxConfig(
@@ -193,7 +213,9 @@ class ShellTools:
         cwd_path.mkdir(parents=True, exist_ok=True)
 
         # Layer-0-Validierung: Null-Bytes, Path-Traversal
-        if getattr(self._config, "security", None) and getattr(self._config.security, "shell_validate_paths", True):
+        if getattr(self._config, "security", None) and getattr(
+            self._config.security, "shell_validate_paths", True
+        ):
             validation_error = self._validate_command(command, str(workspace_root))
             if validation_error:
                 return validation_error
@@ -207,10 +229,10 @@ class ShellTools:
                 pass
 
         # Befehls-Logging: Kuerzen und sensitive Muster maskieren
-        _log_cmd = command[:self._max_log_command_length]
+        _log_cmd = command[: self._max_log_command_length]
         for _pattern in ("API_KEY=", "TOKEN=", "PASSWORD=", "SECRET=", "BEARER "):
             if _pattern.lower() in _log_cmd.lower():
-                _log_cmd = _log_cmd[:self._max_redacted_log_prefix] + " [REDACTED]"
+                _log_cmd = _log_cmd[: self._max_redacted_log_prefix] + " [REDACTED]"
                 break
 
         log.info(

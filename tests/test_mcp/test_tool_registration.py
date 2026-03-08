@@ -93,9 +93,15 @@ class TestRegisterMediaTools:
 
 
 # Expected web tool names
-WEB_TOOL_NAMES = frozenset({
-    "web_search", "web_fetch", "search_and_read", "web_news_search", "http_request",
-})
+WEB_TOOL_NAMES = frozenset(
+    {
+        "web_search",
+        "web_fetch",
+        "search_and_read",
+        "web_news_search",
+        "http_request",
+    }
+)
 
 
 class TestRegisterWebTools:

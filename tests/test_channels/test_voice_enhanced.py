@@ -34,9 +34,13 @@ def _make_pcm_silence(duration_ms: int = 100, sample_rate: int = 16000) -> bytes
     return struct.pack(f"<{num_samples}h", *([0] * num_samples))
 
 
-def _make_pcm_tone(duration_ms: int = 100, sample_rate: int = 16000, amplitude: int = 10000) -> bytes:
+def _make_pcm_tone(
+    duration_ms: int = 100, sample_rate: int = 16000, amplitude: int = 10000
+) -> bytes:
     num_samples = int(sample_rate * duration_ms / 1000)
-    samples = [int(amplitude * math.sin(2 * math.pi * 440 * i / sample_rate)) for i in range(num_samples)]
+    samples = [
+        int(amplitude * math.sin(2 * math.pi * 440 * i / sample_rate)) for i in range(num_samples)
+    ]
     return struct.pack(f"<{num_samples}h", *samples)
 
 
@@ -215,7 +219,9 @@ class TestTTSEngineAdvanced:
         config = VoiceConfig(tts_backend=TTSBackend.PIPER)
         engine = TTSEngine(config)
 
-        with patch.object(engine, "_synthesize_piper", new_callable=AsyncMock, return_value=b"audio"):
+        with patch.object(
+            engine, "_synthesize_piper", new_callable=AsyncMock, return_value=b"audio"
+        ):
             result = await engine.synthesize("test")
         assert result == b"audio"
 
@@ -224,7 +230,9 @@ class TestTTSEngineAdvanced:
         config = VoiceConfig(tts_backend=TTSBackend.ELEVENLABS)
         engine = TTSEngine(config)
 
-        with patch.object(engine, "_synthesize_elevenlabs", new_callable=AsyncMock, return_value=b"audio"):
+        with patch.object(
+            engine, "_synthesize_elevenlabs", new_callable=AsyncMock, return_value=b"audio"
+        ):
             result = await engine.synthesize("test")
         assert result == b"audio"
 
@@ -233,7 +241,9 @@ class TestTTSEngineAdvanced:
         config = VoiceConfig(tts_backend=TTSBackend.ESPEAK)
         engine = TTSEngine(config)
 
-        with patch.object(engine, "_synthesize_espeak", new_callable=AsyncMock, return_value=b"audio"):
+        with patch.object(
+            engine, "_synthesize_espeak", new_callable=AsyncMock, return_value=b"audio"
+        ):
             result = await engine.synthesize("test")
         assert result == b"audio"
 
@@ -460,6 +470,7 @@ class TestVoiceChannelAdvanced:
 
         # Now silence
         import time
+
         ch._vad.is_speech.return_value = False
         ch._audio_buffer._silence_start = time.monotonic() - 1.0
         result = await ch.process_audio_chunk(_make_pcm_silence(100))
@@ -481,6 +492,7 @@ class TestVoiceChannelAdvanced:
         # Silence starts
         ch._vad.is_speech.return_value = False
         import time
+
         ch._audio_buffer._silence_start = time.monotonic() - 1.0
         result = await ch.process_audio_chunk(_make_pcm_silence(50))
         assert result is None  # Too short, just cleared
@@ -500,6 +512,7 @@ class TestVoiceChannelAdvanced:
 
         ch._vad.is_speech.return_value = False
         import time
+
         ch._audio_buffer._silence_start = time.monotonic() - 1.0
         result = await ch.process_audio_chunk(_make_pcm_silence(100))
         assert result is None

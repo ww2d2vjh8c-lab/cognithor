@@ -219,7 +219,8 @@ class TestUserAgentScope:
 
     def test_custom_credential_namespace(self) -> None:
         scope = UserAgentScope(
-            user_id="alice", agent_id="coder",
+            user_id="alice",
+            agent_id="coder",
             credential_namespace="custom_ns",
         )
         assert scope.effective_credential_namespace == "custom_ns"

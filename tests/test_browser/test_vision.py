@@ -107,12 +107,16 @@ class TestVisionAnalyzerDisabled:
 
 
 class TestVisionAnalyzerEnabled:
-    def _make_enabled(self, llm_response: str = "Beschreibung der Seite") -> tuple[VisionAnalyzer, AsyncMock]:
+    def _make_enabled(
+        self, llm_response: str = "Beschreibung der Seite"
+    ) -> tuple[VisionAnalyzer, AsyncMock]:
         llm = AsyncMock()
-        llm.chat = AsyncMock(return_value={
-            "message": {"role": "assistant", "content": llm_response},
-            "done": True,
-        })
+        llm.chat = AsyncMock(
+            return_value={
+                "message": {"role": "assistant", "content": llm_response},
+                "done": True,
+            }
+        )
         cfg = VisionConfig(enabled=True, model="llava:13b", backend_type="ollama")
         v = VisionAnalyzer(llm, cfg)
         return v, llm
@@ -138,7 +142,11 @@ class TestVisionAnalyzerEnabled:
         assert result.success is True
         # Prüfe dass der Custom-Prompt gesendet wurde
         call_args = llm.chat.call_args
-        messages = call_args.kwargs.get("messages") or call_args[1] if len(call_args) > 1 else call_args.kwargs.get("messages")
+        messages = (
+            call_args.kwargs.get("messages") or call_args[1]
+            if len(call_args) > 1
+            else call_args.kwargs.get("messages")
+        )
         assert messages is not None
 
     @pytest.mark.asyncio
@@ -201,10 +209,12 @@ class TestFindElementByVision:
     @pytest.mark.asyncio
     async def test_element_found(self) -> None:
         llm = AsyncMock()
-        llm.chat = AsyncMock(return_value={
-            "message": {"content": "Der Login-Button befindet sich oben rechts, blaue Farbe."},
-            "done": True,
-        })
+        llm.chat = AsyncMock(
+            return_value={
+                "message": {"content": "Der Login-Button befindet sich oben rechts, blaue Farbe."},
+                "done": True,
+            }
+        )
         cfg = VisionConfig(enabled=True, model="llava:13b", backend_type="ollama")
         v = VisionAnalyzer(llm, cfg)
 
@@ -215,10 +225,12 @@ class TestFindElementByVision:
     @pytest.mark.asyncio
     async def test_element_not_found(self) -> None:
         llm = AsyncMock()
-        llm.chat = AsyncMock(return_value={
-            "message": {"content": "NOT FOUND"},
-            "done": True,
-        })
+        llm.chat = AsyncMock(
+            return_value={
+                "message": {"content": "NOT FOUND"},
+                "done": True,
+            }
+        )
         cfg = VisionConfig(enabled=True, model="llava:13b", backend_type="ollama")
         v = VisionAnalyzer(llm, cfg)
 
@@ -236,10 +248,12 @@ class TestDescribePage:
     @pytest.mark.asyncio
     async def test_describe_success(self) -> None:
         llm = AsyncMock()
-        llm.chat = AsyncMock(return_value={
-            "message": {"content": "Ein Online-Shop mit Produktübersicht."},
-            "done": True,
-        })
+        llm.chat = AsyncMock(
+            return_value={
+                "message": {"content": "Ein Online-Shop mit Produktübersicht."},
+                "done": True,
+            }
+        )
         cfg = VisionConfig(enabled=True, model="llava:13b", backend_type="ollama")
         v = VisionAnalyzer(llm, cfg)
 
@@ -267,10 +281,12 @@ class TestVisionPageContent:
 
     def _make_enabled(self, llm_response: str = "Analyse") -> tuple[VisionAnalyzer, AsyncMock]:
         llm = AsyncMock()
-        llm.chat = AsyncMock(return_value={
-            "message": {"role": "assistant", "content": llm_response},
-            "done": True,
-        })
+        llm.chat = AsyncMock(
+            return_value={
+                "message": {"role": "assistant", "content": llm_response},
+                "done": True,
+            }
+        )
         cfg = VisionConfig(enabled=True, model="llava:13b", backend_type="ollama")
         v = VisionAnalyzer(llm, cfg)
         return v, llm
@@ -279,9 +295,7 @@ class TestVisionPageContent:
     async def test_analyze_with_page_content(self) -> None:
         """page_content wird an analyze_screenshot übergeben."""
         v, llm = self._make_enabled("Seite mit Formular")
-        result = await v.analyze_screenshot(
-            "aGVsbG8=", page_content="<div>Login</div>"
-        )
+        result = await v.analyze_screenshot("aGVsbG8=", page_content="<div>Login</div>")
         assert result.success is True
         # Prüfe dass HTML im Prompt gelandet ist
         call_args = llm.chat.call_args
@@ -301,7 +315,7 @@ class TestVisionPageContent:
 
         async def capturing_send(screenshot_b64, prompt, page_content=""):
             if page_content:
-                truncated = page_content[:v._config.max_page_content_chars]
+                truncated = page_content[: v._config.max_page_content_chars]
                 prompt = f"{prompt}\n\n## Seiten-HTML (bereinigt)\n```html\n{truncated}\n```"
             captured_prompts.append(prompt)
             # Rufe nicht das Original auf, sondern gib direkt zurück

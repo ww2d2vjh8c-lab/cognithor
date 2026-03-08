@@ -327,36 +327,28 @@ class TestDepth:
     @pytest.mark.asyncio
     async def test_depth_0_can_spawn(self, orchestrator: Orchestrator):
         """Top-Level (depth=0) darf spawnen."""
-        result = await orchestrator.spawn_agent(
-            _config("task_d0"), "sess_d", depth=0
-        )
+        result = await orchestrator.spawn_agent(_config("task_d0"), "sess_d", depth=0)
         assert isinstance(result, AgentHandle)
         assert result.depth == 1
 
     @pytest.mark.asyncio
     async def test_depth_1_can_spawn(self, orchestrator: Orchestrator):
         """Depth 1 darf weiterspawnen."""
-        result = await orchestrator.spawn_agent(
-            _config("task_d1"), "sess_d", depth=1
-        )
+        result = await orchestrator.spawn_agent(_config("task_d1"), "sess_d", depth=1)
         assert isinstance(result, AgentHandle)
         assert result.depth == 2
 
     @pytest.mark.asyncio
     async def test_depth_2_can_spawn(self, orchestrator: Orchestrator):
         """Depth 2 darf noch spawnen (max_depth=3)."""
-        result = await orchestrator.spawn_agent(
-            _config("task_d2"), "sess_d", depth=2
-        )
+        result = await orchestrator.spawn_agent(_config("task_d2"), "sess_d", depth=2)
         assert isinstance(result, AgentHandle)
         assert result.depth == 3
 
     @pytest.mark.asyncio
     async def test_depth_3_cannot_spawn(self, orchestrator: Orchestrator):
         """Depth 3 wird blockiert (max_depth=3 → depth 3 nicht erlaubt)."""
-        result = await orchestrator.spawn_agent(
-            _config("task_d3"), "sess_d", depth=3
-        )
+        result = await orchestrator.spawn_agent(_config("task_d3"), "sess_d", depth=3)
         assert isinstance(result, PolicyViolation)
         assert result.rule == "max_depth_exceeded"
 
@@ -364,9 +356,7 @@ class TestDepth:
     async def test_max_depth_configurable(self):
         """Custom max_depth wird respektiert."""
         orch = Orchestrator(
-            policy_engine=PolicyEngine(
-                default_quota=ResourceQuota(max_depth=1)
-            ),
+            policy_engine=PolicyEngine(default_quota=ResourceQuota(max_depth=1)),
         )
         orch.set_runner(_mock_runner)
 
@@ -382,18 +372,14 @@ class TestDepth:
     @pytest.mark.asyncio
     async def test_spawn_and_run_with_depth(self, orchestrator: Orchestrator):
         """spawn_and_run propagiert depth korrekt."""
-        result = await orchestrator.spawn_and_run(
-            _config("deep_task"), "sess_d", depth=1
-        )
+        result = await orchestrator.spawn_and_run(_config("deep_task"), "sess_d", depth=1)
         assert result.success is True
 
     @pytest.mark.asyncio
     async def test_spawn_and_run_parallel_with_depth(self, orchestrator: Orchestrator):
         """spawn_and_run_parallel propagiert depth korrekt."""
         configs = [_config("t1"), _config("t2")]
-        results = await orchestrator.spawn_and_run_parallel(
-            configs, "sess_d", depth=2
-        )
+        results = await orchestrator.spawn_and_run_parallel(configs, "sess_d", depth=2)
         assert len(results) == 2
         assert all(r.success for r in results)
 
@@ -408,7 +394,9 @@ class TestDepth:
     async def test_researcher_can_spawn_at_depth(self, orchestrator: Orchestrator):
         """RESEARCHER darf seit v22 Sub-Agents spawnen (bei depth < max_depth)."""
         result = await orchestrator.spawn_agent(
-            _config("research_sub"), "sess_r",
-            parent_type=AgentType.RESEARCHER, depth=1,
+            _config("research_sub"),
+            "sess_r",
+            parent_type=AgentType.RESEARCHER,
+            depth=1,
         )
         assert isinstance(result, AgentHandle)

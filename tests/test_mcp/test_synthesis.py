@@ -187,10 +187,7 @@ class TestRegisterSynthesisTools:
         assert isinstance(synth, KnowledgeSynthesizer)
         assert client.register_builtin_handler.call_count == 4
 
-        registered_names = [
-            call.args[0]
-            for call in client.register_builtin_handler.call_args_list
-        ]
+        registered_names = [call.args[0] for call in client.register_builtin_handler.call_args_list]
         for name in self.EXPECTED_TOOLS:
             assert name in registered_names
 
@@ -378,9 +375,7 @@ class TestKnowledgeSynthesize:
     @pytest.mark.asyncio
     async def test_depth_quick(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """depth=quick ruft kein Web auf."""
-        result = await wired_synthesizer.knowledge_synthesize(
-            topic="Tesla", depth="quick"
-        )
+        result = await wired_synthesizer.knowledge_synthesize(topic="Tesla", depth="quick")
         assert "Tiefe: quick" in result
         # Web-Tools sollten nicht aufgerufen worden sein
         wired_synthesizer._web_tools.search_and_read.assert_not_called()
@@ -388,17 +383,13 @@ class TestKnowledgeSynthesize:
     @pytest.mark.asyncio
     async def test_depth_deep(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """depth=deep funktioniert."""
-        result = await wired_synthesizer.knowledge_synthesize(
-            topic="Tesla", depth="deep"
-        )
+        result = await wired_synthesizer.knowledge_synthesize(topic="Tesla", depth="deep")
         assert "Tiefe: deep" in result
 
     @pytest.mark.asyncio
     async def test_save_to_vault(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """save_to_vault speichert im Vault."""
-        result = await wired_synthesizer.knowledge_synthesize(
-            topic="Tesla", save_to_vault=True
-        )
+        result = await wired_synthesizer.knowledge_synthesize(topic="Tesla", save_to_vault=True)
         wired_synthesizer._vault_tools.vault_save.assert_called_once()
         assert "Im Vault gespeichert" in result
 
@@ -426,6 +417,7 @@ class TestKnowledgeSynthesize:
     @pytest.mark.asyncio
     async def test_llm_failure(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """LLM-Fehler wird abgefangen."""
+
         async def failing_llm(prompt: str, model: str = "") -> str:
             raise RuntimeError("LLM timeout")
 
@@ -449,9 +441,7 @@ class TestKnowledgeContradictions:
         assert "nicht verfügbar" in result
 
     @pytest.mark.asyncio
-    async def test_basic_contradiction_check(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    async def test_basic_contradiction_check(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         result = await wired_synthesizer.knowledge_contradictions(topic="Tesla")
         assert "LLM-Antwort" in result
 
@@ -488,9 +478,7 @@ class TestKnowledgeTimeline:
         assert "nicht verfügbar" in result
 
     @pytest.mark.asyncio
-    async def test_basic_timeline(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    async def test_basic_timeline(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         result = await wired_synthesizer.knowledge_timeline(topic="Tesla")
         assert "LLM-Antwort" in result
 
@@ -540,9 +528,7 @@ class TestGatherSources:
     """Tests für _gather_sources()."""
 
     @pytest.mark.asyncio
-    async def test_gathers_all_sources(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    async def test_gathers_all_sources(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """Sammelt von allen 5 Quelltypen."""
         sources = await wired_synthesizer._gather_sources("Tesla")
 
@@ -553,44 +539,28 @@ class TestGatherSources:
         assert "web" in sources
 
     @pytest.mark.asyncio
-    async def test_exclude_web(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    async def test_exclude_web(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """include_web=False schließt Web aus."""
-        sources = await wired_synthesizer._gather_sources(
-            "Tesla", include_web=False
-        )
+        sources = await wired_synthesizer._gather_sources("Tesla", include_web=False)
         assert "web" not in sources
 
     @pytest.mark.asyncio
-    async def test_exclude_vault(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    async def test_exclude_vault(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """include_vault=False schließt Vault aus."""
-        sources = await wired_synthesizer._gather_sources(
-            "Tesla", include_vault=False
-        )
+        sources = await wired_synthesizer._gather_sources("Tesla", include_vault=False)
         assert "vault" not in sources
 
     @pytest.mark.asyncio
-    async def test_exclude_memory(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    async def test_exclude_memory(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """include_memory=False schließt Memory + Entities aus."""
-        sources = await wired_synthesizer._gather_sources(
-            "Tesla", include_memory=False
-        )
+        sources = await wired_synthesizer._gather_sources("Tesla", include_memory=False)
         assert "memory" not in sources
         assert "entities" not in sources
 
     @pytest.mark.asyncio
-    async def test_exclude_episodes(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    async def test_exclude_episodes(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """include_episodes=False schließt Episoden aus."""
-        sources = await wired_synthesizer._gather_sources(
-            "Tesla", include_episodes=False
-        )
+        sources = await wired_synthesizer._gather_sources("Tesla", include_episodes=False)
         assert "episodes" not in sources
 
     @pytest.mark.asyncio
@@ -621,9 +591,7 @@ class TestGatherSources:
 class TestFormatSourceContext:
     """Tests für _format_source_context()."""
 
-    def test_formats_all_sections(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    def test_formats_all_sections(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         sources = {
             "memory": "Memory-Daten",
             "entities": "Entity-Daten",
@@ -638,15 +606,11 @@ class TestFormatSourceContext:
         assert "AKTUELLE WEB-RECHERCHE" in result
         assert "---" in result
 
-    def test_empty_sources(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    def test_empty_sources(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         result = wired_synthesizer._format_source_context({})
         assert result == ""
 
-    def test_truncates_large_context(
-        self, wired_synthesizer: KnowledgeSynthesizer
-    ) -> None:
+    def test_truncates_large_context(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         sources = {"memory": "X" * 30000}
         result = wired_synthesizer._format_source_context(sources)
         assert len(result) <= 26000  # MAX_CONTEXT_CHARS + header + truncation notice
@@ -701,7 +665,12 @@ class TestToolsWiring:
 class TestWissensSyntheseSkill:
     """Tests dass die Skill-Prozedur existiert und gültig ist."""
 
-    SKILL_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "procedures" / "wissens-synthese.md"
+    SKILL_PATH = (
+        Path(__file__).resolve().parent.parent.parent
+        / "data"
+        / "procedures"
+        / "wissens-synthese.md"
+    )
 
     def test_skill_file_exists(self) -> None:
         assert self.SKILL_PATH.exists(), "wissens-synthese.md existiert nicht"

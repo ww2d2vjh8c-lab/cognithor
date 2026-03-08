@@ -3,6 +3,7 @@
 Smoke-Tests: Verbindung, execute, fetchone, fetchall, commit, close,
 placeholder, backend_type.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -46,17 +47,13 @@ class TestSQLiteBackendProperties:
 class TestSQLiteBackendOperations:
     @pytest.mark.asyncio
     async def test_execute_create_table(self, backend: SQLiteBackend) -> None:
-        await backend.execute(
-            "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        await backend.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)")
         # Table should exist -- inserting should not raise
         await backend.execute("INSERT INTO test (id, name) VALUES (?, ?)", (1, "alice"))
 
     @pytest.mark.asyncio
     async def test_fetchone(self, backend: SQLiteBackend) -> None:
-        await backend.execute(
-            "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        await backend.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)")
         await backend.execute("INSERT INTO test (id, name) VALUES (?, ?)", (1, "bob"))
 
         row = await backend.fetchone("SELECT * FROM test WHERE id = ?", (1,))
@@ -66,17 +63,13 @@ class TestSQLiteBackendOperations:
 
     @pytest.mark.asyncio
     async def test_fetchone_returns_none_for_missing(self, backend: SQLiteBackend) -> None:
-        await backend.execute(
-            "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        await backend.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)")
         row = await backend.fetchone("SELECT * FROM test WHERE id = ?", (999,))
         assert row is None
 
     @pytest.mark.asyncio
     async def test_fetchall(self, backend: SQLiteBackend) -> None:
-        await backend.execute(
-            "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        await backend.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)")
         await backend.execute("INSERT INTO test (id, name) VALUES (?, ?)", (1, "a"))
         await backend.execute("INSERT INTO test (id, name) VALUES (?, ?)", (2, "b"))
         await backend.execute("INSERT INTO test (id, name) VALUES (?, ?)", (3, "c"))
@@ -88,17 +81,13 @@ class TestSQLiteBackendOperations:
 
     @pytest.mark.asyncio
     async def test_fetchall_empty(self, backend: SQLiteBackend) -> None:
-        await backend.execute(
-            "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        await backend.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)")
         rows = await backend.fetchall("SELECT * FROM test")
         assert rows == []
 
     @pytest.mark.asyncio
     async def test_commit(self, backend: SQLiteBackend) -> None:
-        await backend.execute(
-            "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        await backend.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)")
         await backend.execute("INSERT INTO test (id, name) VALUES (?, ?)", (1, "x"))
         await backend.commit()  # Should not raise
 
@@ -126,9 +115,7 @@ class TestSQLiteBackendOperations:
 
     @pytest.mark.asyncio
     async def test_executemany(self, backend: SQLiteBackend) -> None:
-        await backend.execute(
-            "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        await backend.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)")
         await backend.executemany(
             "INSERT INTO test (id, name) VALUES (?, ?)",
             [(1, "a"), (2, "b"), (3, "c")],

@@ -143,13 +143,17 @@ class TestGatekeeperOfflineEnforcement:
     """Tests fuer OperationMode-Enforcement im Gatekeeper."""
 
     def test_offline_blocks_network_tool(
-        self, gk_config_offline: JarvisConfig, session: SessionContext,
+        self,
+        gk_config_offline: JarvisConfig,
+        session: SessionContext,
     ) -> None:
         """HTTP-Tool wird im OFFLINE-Modus blockiert."""
         gk = Gatekeeper(gk_config_offline, operation_mode=OperationMode.OFFLINE)
-        gk._capability_matrix = _make_capability_matrix({
-            "cloud_api_call": frozenset({ToolCapability.NETWORK_HTTP}),
-        })
+        gk._capability_matrix = _make_capability_matrix(
+            {
+                "cloud_api_call": frozenset({ToolCapability.NETWORK_HTTP}),
+            }
+        )
         gk.initialize()
 
         action = PlannedAction(tool="cloud_api_call", params={"url": "https://api.example.com"})
@@ -160,13 +164,17 @@ class TestGatekeeperOfflineEnforcement:
         assert decision.policy_name == "operation_mode_offline"
 
     def test_offline_blocks_websocket_tool(
-        self, gk_config_offline: JarvisConfig, session: SessionContext,
+        self,
+        gk_config_offline: JarvisConfig,
+        session: SessionContext,
     ) -> None:
         """WebSocket-Tool wird im OFFLINE-Modus blockiert."""
         gk = Gatekeeper(gk_config_offline, operation_mode=OperationMode.OFFLINE)
-        gk._capability_matrix = _make_capability_matrix({
-            "ws_connect": frozenset({ToolCapability.NETWORK_WS}),
-        })
+        gk._capability_matrix = _make_capability_matrix(
+            {
+                "ws_connect": frozenset({ToolCapability.NETWORK_WS}),
+            }
+        )
         gk.initialize()
 
         action = PlannedAction(tool="ws_connect", params={"url": "wss://stream.example.com"})
@@ -176,13 +184,17 @@ class TestGatekeeperOfflineEnforcement:
         assert decision.policy_name == "operation_mode_offline"
 
     def test_online_allows_network_tool(
-        self, gk_config_online: JarvisConfig, session: SessionContext,
+        self,
+        gk_config_online: JarvisConfig,
+        session: SessionContext,
     ) -> None:
         """HTTP-Tool wird im ONLINE-Modus durchgelassen."""
         gk = Gatekeeper(gk_config_online, operation_mode=OperationMode.ONLINE)
-        gk._capability_matrix = _make_capability_matrix({
-            "cloud_api_call": frozenset({ToolCapability.NETWORK_HTTP}),
-        })
+        gk._capability_matrix = _make_capability_matrix(
+            {
+                "cloud_api_call": frozenset({ToolCapability.NETWORK_HTTP}),
+            }
+        )
         gk.initialize()
 
         action = PlannedAction(tool="cloud_api_call", params={"url": "https://api.example.com"})
@@ -192,13 +204,17 @@ class TestGatekeeperOfflineEnforcement:
         assert decision.policy_name != "operation_mode_offline"
 
     def test_offline_allows_local_tool(
-        self, gk_config_offline: JarvisConfig, session: SessionContext,
+        self,
+        gk_config_offline: JarvisConfig,
+        session: SessionContext,
     ) -> None:
         """FS/exec-Tools gehen im OFFLINE-Modus durch."""
         gk = Gatekeeper(gk_config_offline, operation_mode=OperationMode.OFFLINE)
-        gk._capability_matrix = _make_capability_matrix({
-            "read_file": frozenset({ToolCapability.FS_READ}),
-        })
+        gk._capability_matrix = _make_capability_matrix(
+            {
+                "read_file": frozenset({ToolCapability.FS_READ}),
+            }
+        )
         gk.initialize()
 
         action = PlannedAction(
@@ -207,16 +223,22 @@ class TestGatekeeperOfflineEnforcement:
         )
         decision = gk.evaluate(action, session)
 
-        assert decision.status != GateStatus.BLOCK or decision.policy_name != "operation_mode_offline"
+        assert (
+            decision.status != GateStatus.BLOCK or decision.policy_name != "operation_mode_offline"
+        )
 
     def test_offline_allows_web_search(
-        self, gk_config_offline: JarvisConfig, session: SessionContext,
+        self,
+        gk_config_offline: JarvisConfig,
+        session: SessionContext,
     ) -> None:
         """Web-Recherche bleibt im OFFLINE-Modus erlaubt."""
         gk = Gatekeeper(gk_config_offline, operation_mode=OperationMode.OFFLINE)
-        gk._capability_matrix = _make_capability_matrix({
-            "web_search": frozenset({ToolCapability.NETWORK_HTTP}),
-        })
+        gk._capability_matrix = _make_capability_matrix(
+            {
+                "web_search": frozenset({ToolCapability.NETWORK_HTTP}),
+            }
+        )
         gk.initialize()
 
         action = PlannedAction(tool="web_search", params={"query": "Python tutorials"})
@@ -226,13 +248,17 @@ class TestGatekeeperOfflineEnforcement:
         assert decision.policy_name != "operation_mode_offline"
 
     def test_offline_allows_web_fetch(
-        self, gk_config_offline: JarvisConfig, session: SessionContext,
+        self,
+        gk_config_offline: JarvisConfig,
+        session: SessionContext,
     ) -> None:
         """web_fetch bleibt im OFFLINE-Modus erlaubt (Recherche)."""
         gk = Gatekeeper(gk_config_offline, operation_mode=OperationMode.OFFLINE)
-        gk._capability_matrix = _make_capability_matrix({
-            "web_fetch": frozenset({ToolCapability.NETWORK_HTTP}),
-        })
+        gk._capability_matrix = _make_capability_matrix(
+            {
+                "web_fetch": frozenset({ToolCapability.NETWORK_HTTP}),
+            }
+        )
         gk.initialize()
 
         action = PlannedAction(tool="web_fetch", params={"url": "https://example.com"})
@@ -241,7 +267,9 @@ class TestGatekeeperOfflineEnforcement:
         assert decision.policy_name != "operation_mode_offline"
 
     def test_offline_no_capability_matrix_no_crash(
-        self, gk_config_offline: JarvisConfig, session: SessionContext,
+        self,
+        gk_config_offline: JarvisConfig,
+        session: SessionContext,
     ) -> None:
         """Ohne CapabilityMatrix → kein Crash, kein Block."""
         gk = Gatekeeper(gk_config_offline, operation_mode=OperationMode.OFFLINE)

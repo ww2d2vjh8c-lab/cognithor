@@ -31,7 +31,10 @@ class TestCostRecording:
     def test_record_llm_call_calculates_cost(self, tracker):
         """GPT-4o 1000 tokens → korrekte USD."""
         record = tracker.record_llm_call(
-            model="gpt-4o", input_tokens=1000, output_tokens=500, session_id="s1",
+            model="gpt-4o",
+            input_tokens=1000,
+            output_tokens=500,
+            session_id="s1",
         )
         # gpt-4o: input=2.50/1M, output=10.00/1M
         expected = 1000 * 2.50 / 1_000_000 + 500 * 10.00 / 1_000_000
@@ -43,14 +46,18 @@ class TestCostRecording:
     def test_ollama_is_free(self, tracker):
         """Ollama-Modelle → $0.00."""
         record = tracker.record_llm_call(
-            model="qwen3:32b", input_tokens=5000, output_tokens=2000,
+            model="qwen3:32b",
+            input_tokens=5000,
+            output_tokens=2000,
         )
         assert record.cost_usd == 0.0
 
     def test_unknown_model_default_pricing(self, tracker):
         """Unbekanntes Modell → Fallback-Preis."""
         record = tracker.record_llm_call(
-            model="some-future-model", input_tokens=1000, output_tokens=1000,
+            model="some-future-model",
+            input_tokens=1000,
+            output_tokens=1000,
         )
         # Fallback: input=5.00/1M, output=15.00/1M
         expected = 1000 * 5.00 / 1_000_000 + 1000 * 15.00 / 1_000_000
@@ -59,7 +66,9 @@ class TestCostRecording:
     def test_prefix_match(self, tracker):
         """Model mit Version-Suffix → Prefix-Match."""
         record = tracker.record_llm_call(
-            model="gpt-4o-2024-11-20", input_tokens=1000, output_tokens=0,
+            model="gpt-4o-2024-11-20",
+            input_tokens=1000,
+            output_tokens=0,
         )
         # Sollte gpt-4o pricing matchen
         expected = 1000 * 2.50 / 1_000_000
@@ -87,7 +96,9 @@ class TestBudgetEnforcement:
 
     def test_no_budget_unlimited(self, tracker_no_budget):
         """budget=0 → immer ok."""
-        tracker_no_budget.record_llm_call(model="gpt-4-turbo", input_tokens=1_000_000, output_tokens=1_000_000)
+        tracker_no_budget.record_llm_call(
+            model="gpt-4-turbo", input_tokens=1_000_000, output_tokens=1_000_000
+        )
         budget = tracker_no_budget.check_budget()
         assert budget.ok
         assert budget.daily_remaining == -1.0
@@ -106,9 +117,15 @@ class TestBudgetEnforcement:
 class TestSessionCosts:
     def test_get_session_cost(self, tracker):
         """Kosten pro Session korrekt aggregiert."""
-        tracker.record_llm_call(model="gpt-4o", input_tokens=1000, output_tokens=500, session_id="s1")
-        tracker.record_llm_call(model="gpt-4o", input_tokens=2000, output_tokens=1000, session_id="s1")
-        tracker.record_llm_call(model="gpt-4o", input_tokens=500, output_tokens=200, session_id="s2")
+        tracker.record_llm_call(
+            model="gpt-4o", input_tokens=1000, output_tokens=500, session_id="s1"
+        )
+        tracker.record_llm_call(
+            model="gpt-4o", input_tokens=2000, output_tokens=1000, session_id="s1"
+        )
+        tracker.record_llm_call(
+            model="gpt-4o", input_tokens=500, output_tokens=200, session_id="s2"
+        )
 
         s1_cost = tracker.get_session_cost("s1")
         s2_cost = tracker.get_session_cost("s2")

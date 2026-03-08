@@ -39,7 +39,7 @@ class CheckpointManager:
         cps.append(cp)
         # Evict oldest checkpoints if over limit
         if len(cps) > self.MAX_CHECKPOINTS_PER_SESSION:
-            self._checkpoints[session_id] = cps[-self.MAX_CHECKPOINTS_PER_SESSION:]
+            self._checkpoints[session_id] = cps[-self.MAX_CHECKPOINTS_PER_SESSION :]
         log.debug(
             "checkpoint_created",
             session=session_id[:8],

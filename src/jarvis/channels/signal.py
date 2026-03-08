@@ -120,6 +120,7 @@ class SignalChannel(Channel):
         # Whisper fuer Voice-Transkription laden
         try:
             from faster_whisper import WhisperModel
+
             self._whisper = WhisperModel("base", device="auto", compute_type="int8")
             logger.info("Signal: faster-whisper geladen fuer Voice-Transkription")
         except ImportError:
@@ -211,7 +212,10 @@ class SignalChannel(Channel):
                 logger.error("Signal: Senden fehlgeschlagen: %s", exc)
 
     async def _send_attachment(
-        self, recipient: str, file_path: Path, message: str = "",
+        self,
+        recipient: str,
+        file_path: Path,
+        message: str = "",
     ) -> None:
         """Sendet eine Datei als Attachment."""
         if not self._http:
@@ -301,6 +305,7 @@ class SignalChannel(Channel):
     async def _handle_health(self, request: Any) -> Any:
         """GET /signal/health -- Healthcheck."""
         from aiohttp import web
+
         return web.json_response({"status": "ok", "channel": "signal"})
 
     async def _handle_webhook(self, request: Any) -> Any:
@@ -447,6 +452,7 @@ class SignalChannel(Channel):
                     logger.error("Signal: Handler-Fehler: %s", exc)
                     try:
                         from jarvis.utils.error_messages import classify_error_for_user
+
                         friendly = classify_error_for_user(exc)
                     except Exception:
                         friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."

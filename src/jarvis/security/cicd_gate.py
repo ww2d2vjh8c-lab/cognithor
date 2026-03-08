@@ -135,9 +135,13 @@ class SecurityGate:
         if self._policy.block_on_high and findings["high"] > 0:
             reasons.append(f"{findings['high']} High-Severity Findings")
         if findings["medium"] > self._policy.max_medium_findings:
-            reasons.append(f"{findings['medium']} Medium-Findings > Limit {self._policy.max_medium_findings}")
+            reasons.append(
+                f"{findings['medium']} Medium-Findings > Limit {self._policy.max_medium_findings}"
+            )
         if findings["low"] > self._policy.max_low_findings:
-            reasons.append(f"{findings['low']} Low-Findings > Limit {self._policy.max_low_findings}")
+            reasons.append(
+                f"{findings['low']} Low-Findings > Limit {self._policy.max_low_findings}"
+            )
 
         if self._policy.require_all_stages_pass:
             failed = [k for k, v in stages.items() if v == "failed"]
@@ -146,7 +150,9 @@ class SecurityGate:
 
         pass_rate = pipeline_result.get("pass_rate", 100)
         if pass_rate < self._policy.min_fuzzing_pass_rate:
-            reasons.append(f"Fuzzing-Pass-Rate {pass_rate:.0f}% < {self._policy.min_fuzzing_pass_rate}%")
+            reasons.append(
+                f"Fuzzing-Pass-Rate {pass_rate:.0f}% < {self._policy.min_fuzzing_pass_rate}%"
+            )
 
         verdict = GateVerdict.FAIL if reasons else GateVerdict.PASS
 
@@ -180,27 +186,31 @@ class SecurityGate:
             ValueError: Wenn ``reason`` zu kurz oder leer ist.
         """
         if not by or by not in self.AUTHORIZED_OVERRIDE_ROLES:
-            self._audit_log.append({
-                "action": "override_denied",
-                "gate_id": gate_id,
-                "by": by,
-                "reason": reason,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "detail": "unauthorized_role",
-            })
+            self._audit_log.append(
+                {
+                    "action": "override_denied",
+                    "gate_id": gate_id,
+                    "by": by,
+                    "reason": reason,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "detail": "unauthorized_role",
+                }
+            )
             raise PermissionError(
                 f"Override verweigert: Rolle '{by}' ist nicht autorisiert. "
                 f"Erlaubt: {sorted(self.AUTHORIZED_OVERRIDE_ROLES)}"
             )
         if not reason or len(reason.strip()) < 10:
-            self._audit_log.append({
-                "action": "override_denied",
-                "gate_id": gate_id,
-                "by": by,
-                "reason": reason,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "detail": "reason_too_short",
-            })
+            self._audit_log.append(
+                {
+                    "action": "override_denied",
+                    "gate_id": gate_id,
+                    "by": by,
+                    "reason": reason,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "detail": "reason_too_short",
+                }
+            )
             raise ValueError(
                 "Override verweigert: Begruendung muss mindestens 10 Zeichen lang sein."
             )
@@ -210,14 +220,16 @@ class SecurityGate:
                 r.verdict = GateVerdict.OVERRIDE
                 r.override_by = by
                 r.override_reason = reason
-                self._audit_log.append({
-                    "action": "override_approved",
-                    "gate_id": gate_id,
-                    "by": by,
-                    "reason": reason,
-                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                    "previous_verdict": previous_verdict,
-                })
+                self._audit_log.append(
+                    {
+                        "action": "override_approved",
+                        "gate_id": gate_id,
+                        "by": by,
+                        "reason": reason,
+                        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                        "previous_verdict": previous_verdict,
+                    }
+                )
                 return r
         return None
 
@@ -231,7 +243,9 @@ class SecurityGate:
     def pass_rate(self) -> float:
         if not self._history:
             return 100.0
-        passed = sum(1 for r in self._history if r.verdict in (GateVerdict.PASS, GateVerdict.OVERRIDE))
+        passed = sum(
+            1 for r in self._history if r.verdict in (GateVerdict.PASS, GateVerdict.OVERRIDE)
+        )
         return passed / len(self._history) * 100
 
     def stats(self) -> dict[str, Any]:
@@ -345,7 +359,11 @@ class ContinuousRedTeam:
                 if was_blocked:
                     blocked += 1
 
-            results[cat] = {"total": total, "blocked": blocked, "pass_rate": (blocked / total * 100) if total else 100}
+            results[cat] = {
+                "total": total,
+                "blocked": blocked,
+                "pass_rate": (blocked / total * 100) if total else 100,
+            }
 
         overall_total = sum(r["total"] for r in results.values())
         overall_blocked = sum(r["blocked"] for r in results.values())
@@ -398,7 +416,12 @@ class WebhookConfig:
     secret: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {"webhook_id": self.webhook_id, "url": self.url, "events": self.events, "enabled": self.enabled}
+        return {
+            "webhook_id": self.webhook_id,
+            "url": self.url,
+            "events": self.events,
+            "enabled": self.enabled,
+        }
 
 
 class WebhookNotifier:
@@ -421,12 +444,14 @@ class WebhookNotifier:
             if not wh.enabled:
                 continue
             if event in wh.events or "*" in wh.events:
-                self._sent_log.append({
-                    "webhook_id": wh.webhook_id,
-                    "event": event,
-                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                    "payload_keys": list(payload.keys()),
-                })
+                self._sent_log.append(
+                    {
+                        "webhook_id": wh.webhook_id,
+                        "event": event,
+                        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                        "payload_keys": list(payload.keys()),
+                    }
+                )
                 sent += 1
         return sent
 
@@ -478,12 +503,21 @@ class ScanScheduler:
     """Verwaltet geplante Security-Scans."""
 
     DEFAULT_SCHEDULES = [
-        ScanSchedule("sched-daily", "Täglicher Quick-Scan", "0 3 * * *",
-                      categories=["prompt_injection"]),
-        ScanSchedule("sched-weekly", "Wöchentlicher Full-Scan", "0 3 * * 1",
-                      categories=["prompt_injection", "jailbreak", "exfiltration", "escalation"]),
-        ScanSchedule("sched-monthly", "Monatlicher Penetrations-Test", "0 3 1 * *",
-                      categories=["prompt_injection", "jailbreak", "exfiltration", "escalation"]),
+        ScanSchedule(
+            "sched-daily", "Täglicher Quick-Scan", "0 3 * * *", categories=["prompt_injection"]
+        ),
+        ScanSchedule(
+            "sched-weekly",
+            "Wöchentlicher Full-Scan",
+            "0 3 * * 1",
+            categories=["prompt_injection", "jailbreak", "exfiltration", "escalation"],
+        ),
+        ScanSchedule(
+            "sched-monthly",
+            "Monatlicher Penetrations-Test",
+            "0 3 1 * *",
+            categories=["prompt_injection", "jailbreak", "exfiltration", "escalation"],
+        ),
     ]
 
     def __init__(self, schedules: list[ScanSchedule] | None = None) -> None:

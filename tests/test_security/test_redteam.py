@@ -64,11 +64,16 @@ class TestVulnerabilityReport:
 
     def test_risk_score_capped_at_100(self) -> None:
         from jarvis.security.redteam import SecurityFinding
+
         findings = [
             SecurityFinding(
-                finding_id=f"f{i}", category=AttackCategory.PROMPT_INJECTION,
-                severity=Severity.CRITICAL, title="x", description="x",
-                payload_used="x", result=TestResult.FAIL,
+                finding_id=f"f{i}",
+                category=AttackCategory.PROMPT_INJECTION,
+                severity=Severity.CRITICAL,
+                title="x",
+                description="x",
+                payload_used="x",
+                result=TestResult.FAIL,
             )
             for i in range(10)
         ]
@@ -76,7 +81,9 @@ class TestVulnerabilityReport:
         assert r.calculate_risk_score() == 100.0
 
     def test_to_dict(self) -> None:
-        r = VulnerabilityReport(report_id="r1", campaign_name="test", total_tests=5, passed=3, failed=2)
+        r = VulnerabilityReport(
+            report_id="r1", campaign_name="test", total_tests=5, passed=3, failed=2
+        )
         d = r.to_dict()
         assert d["total_tests"] == 5
         assert d["pass_rate"] == 60.0
@@ -95,10 +102,15 @@ class TestPromptFuzzer:
     def test_add_payload(self) -> None:
         f = PromptFuzzer()
         before = f.payload_count
-        f.add_payload(AttackPayload(
-            payload_id="CUSTOM-1", category=AttackCategory.JAILBREAK,
-            severity=Severity.HIGH, description="custom", payload="test",
-        ))
+        f.add_payload(
+            AttackPayload(
+                payload_id="CUSTOM-1",
+                category=AttackCategory.JAILBREAK,
+                severity=Severity.HIGH,
+                description="custom",
+                payload="test",
+            )
+        )
         assert f.payload_count == before + 1
 
     def test_mutate_payload(self) -> None:
@@ -195,8 +207,10 @@ class TestPenetrationSuite:
 
         def custom() -> VulnerabilityReport:
             return VulnerabilityReport(
-                report_id="custom", campaign_name="custom",
-                total_tests=5, passed=5,
+                report_id="custom",
+                campaign_name="custom",
+                total_tests=5,
+                passed=5,
             )
 
         suite.add_custom_test("custom", custom)
@@ -228,10 +242,12 @@ class TestSecurityScanner:
         assert result.passed
 
     def test_scan_fails_with_permissive_sanitizer(self) -> None:
-        scanner = SecurityScanner(policy=ScanPolicy(
-            max_risk_score=10,
-            block_on_critical=True,
-        ))
+        scanner = SecurityScanner(
+            policy=ScanPolicy(
+                max_risk_score=10,
+                block_on_critical=True,
+            )
+        )
         result = scanner.scan(
             sanitizer_fn=lambda t: {"blocked": False},
             is_blocked_fn=lambda r: False,

@@ -42,10 +42,10 @@ class ModelCapability(Enum):
 class ModelProvider(Enum):
     """Herkunft des Modells."""
 
-    LOCAL = "local"           # Lokal gehostet (Ollama, llama.cpp)
-    ANTHROPIC = "anthropic"   # Claude API
-    OPENAI = "openai"         # OpenAI API
-    CUSTOM_API = "custom_api" # Eigener API-Endpoint
+    LOCAL = "local"  # Lokal gehostet (Ollama, llama.cpp)
+    ANTHROPIC = "anthropic"  # Claude API
+    OPENAI = "openai"  # OpenAI API
+    CUSTOM_API = "custom_api"  # Eigener API-Endpoint
     HUGGINGFACE = "huggingface"
 
 
@@ -58,7 +58,7 @@ class ModelDefinition:
     provider: ModelProvider
     capabilities: set[ModelCapability] = field(default_factory=set)
     endpoint: str = ""
-    api_key_ref: str = ""       # Verweis auf Vault-Eintrag
+    api_key_ref: str = ""  # Verweis auf Vault-Eintrag
     max_context: int = 4096
     languages: list[str] = field(default_factory=lambda: ["en"])
     cost_per_1k_tokens: float = 0.0
@@ -199,7 +199,7 @@ class TranslationBundle:
     """Sprachpaket für eine Sprache."""
 
     locale: str  # z.B. "de", "en", "fr"
-    name: str    # z.B. "Deutsch", "English"
+    name: str  # z.B. "Deutsch", "English"
     strings: dict[str, str] = field(default_factory=dict)
 
     def get(self, key: str, **kwargs: Any) -> str:
@@ -232,41 +232,35 @@ _BUNDLE_DE = TranslationBundle(
         "nav.compliance": "Compliance",
         "nav.workflows": "Workflows",
         "nav.connectors": "Konnektoren",
-
         # Dashboard
         "dashboard.title": "Jarvis Agent OS -- Dashboard",
         "dashboard.active_agents": "Aktive Agenten",
         "dashboard.tasks_running": "Laufende Tasks",
         "dashboard.success_rate": "Erfolgsquote",
         "dashboard.threats_detected": "Erkannte Bedrohungen",
-
         # Security
         "security.redteam": "Red-Team-Testing",
         "security.scan_now": "Jetzt scannen",
         "security.risk_score": "Risiko-Score",
         "security.findings": "Findings",
         "security.last_scan": "Letzter Scan",
-
         # Compliance
         "compliance.title": "Compliance-Bericht",
         "compliance.score": "Compliance-Score",
         "compliance.eu_ai_act": "EU-AI-Verordnung",
         "compliance.dsgvo": "DSGVO",
         "compliance.export": "Bericht exportieren",
-
         # Memory
         "memory.hygiene": "Memory-Hygiene",
         "memory.scan": "Memory scannen",
         "memory.quarantine": "Quarantäne",
         "memory.threats": "Bedrohungen",
         "memory.clean": "Sauber",
-
         # Workflows
         "workflow.start": "Workflow starten",
         "workflow.running": "Läuft",
         "workflow.completed": "Abgeschlossen",
         "workflow.templates": "Vorlagen",
-
         # Common
         "common.save": "Speichern",
         "common.cancel": "Abbrechen",
@@ -292,36 +286,30 @@ _BUNDLE_EN = TranslationBundle(
         "nav.compliance": "Compliance",
         "nav.workflows": "Workflows",
         "nav.connectors": "Connectors",
-
         "dashboard.title": "Jarvis Agent OS -- Dashboard",
         "dashboard.active_agents": "Active Agents",
         "dashboard.tasks_running": "Running Tasks",
         "dashboard.success_rate": "Success Rate",
         "dashboard.threats_detected": "Threats Detected",
-
         "security.redteam": "Red Team Testing",
         "security.scan_now": "Scan Now",
         "security.risk_score": "Risk Score",
         "security.findings": "Findings",
         "security.last_scan": "Last Scan",
-
         "compliance.title": "Compliance Report",
         "compliance.score": "Compliance Score",
         "compliance.eu_ai_act": "EU AI Act",
         "compliance.dsgvo": "GDPR",
         "compliance.export": "Export Report",
-
         "memory.hygiene": "Memory Hygiene",
         "memory.scan": "Scan Memory",
         "memory.quarantine": "Quarantine",
         "memory.threats": "Threats",
         "memory.clean": "Clean",
-
         "workflow.start": "Start Workflow",
         "workflow.running": "Running",
         "workflow.completed": "Completed",
         "workflow.templates": "Templates",
-
         "common.save": "Save",
         "common.cancel": "Cancel",
         "common.delete": "Delete",

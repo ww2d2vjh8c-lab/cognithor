@@ -32,8 +32,8 @@ log = get_logger(__name__)
 class NetworkPermission(StrEnum):
     """Network access level for a tool."""
 
-    ALLOW = "allow"        # Full network access
-    BLOCK = "block"        # No network at all
+    ALLOW = "allow"  # Full network access
+    BLOCK = "block"  # No network at all
     RESTRICTED = "restricted"  # Only whitelisted hosts
 
 
@@ -262,7 +262,7 @@ class WatchdogEvent:
     """A resource limit violation event."""
 
     tool_name: str
-    resource: str       # "cpu", "memory", "disk", "timeout", "output"
+    resource: str  # "cpu", "memory", "disk", "timeout", "output"
     limit: float
     actual: float
     action: WatchdogAction
@@ -451,7 +451,7 @@ class ResourceWatchdog:
     def _record_event(self, event: WatchdogEvent) -> None:
         self._events.append(event)
         if len(self._events) > self._max_events:
-            self._events = self._events[-self._max_events:]
+            self._events = self._events[-self._max_events :]
         log.warning(
             "watchdog_violation",
             tool=event.tool_name,
@@ -558,47 +558,47 @@ class NetworkGuard:
 # Patterns indicating sandbox escape attempts
 _ESCAPE_PATTERNS: dict[EscapeType, list[re.Pattern[str]]] = {
     EscapeType.PATH_TRAVERSAL: [
-        re.compile(r"(?:\.\.[/\\]){3,}"),             # Deep traversal
-        re.compile(r"/proc/\d+/root"),                 # procfs root escape
-        re.compile(r"/proc/self/cwd"),                 # Follow CWD via procfs
+        re.compile(r"(?:\.\.[/\\]){3,}"),  # Deep traversal
+        re.compile(r"/proc/\d+/root"),  # procfs root escape
+        re.compile(r"/proc/self/cwd"),  # Follow CWD via procfs
     ],
     EscapeType.SYMLINK_ATTACK: [
-        re.compile(r"ln\s+-s.*(?:/etc|/proc|/sys)"),   # Symlink to sensitive dirs
-        re.compile(r"readlink\s+.*(?:/proc|/sys)"),     # Read sensitive symlinks
+        re.compile(r"ln\s+-s.*(?:/etc|/proc|/sys)"),  # Symlink to sensitive dirs
+        re.compile(r"readlink\s+.*(?:/proc|/sys)"),  # Read sensitive symlinks
     ],
     EscapeType.PROC_MOUNT: [
-        re.compile(r"mount\s+-t\s+proc"),               # Mount procfs
-        re.compile(r"nsenter\s+"),                       # Enter namespaces
-        re.compile(r"unshare\s+"),                       # Create new namespaces
+        re.compile(r"mount\s+-t\s+proc"),  # Mount procfs
+        re.compile(r"nsenter\s+"),  # Enter namespaces
+        re.compile(r"unshare\s+"),  # Create new namespaces
     ],
     EscapeType.CAPABILITY_ESCALATION: [
-        re.compile(r"capsh\s+"),                         # Capability shell
-        re.compile(r"setcap\s+"),                        # Set capabilities
-        re.compile(r"chmod\s+[0-7]*[4-7][0-7]*\s+/"),   # setuid/setgid on system paths
-        re.compile(r"sudo\s+"),                          # Privilege escalation
+        re.compile(r"capsh\s+"),  # Capability shell
+        re.compile(r"setcap\s+"),  # Set capabilities
+        re.compile(r"chmod\s+[0-7]*[4-7][0-7]*\s+/"),  # setuid/setgid on system paths
+        re.compile(r"sudo\s+"),  # Privilege escalation
     ],
     EscapeType.KERNEL_EXPLOIT: [
-        re.compile(r"/dev/(?:mem|kmem|port)"),           # Direct kernel memory
-        re.compile(r"insmod\s+"),                        # Load kernel module
-        re.compile(r"modprobe\s+"),                      # Module loading
-        re.compile(r"kexec\s+"),                         # Kernel execution
+        re.compile(r"/dev/(?:mem|kmem|port)"),  # Direct kernel memory
+        re.compile(r"insmod\s+"),  # Load kernel module
+        re.compile(r"modprobe\s+"),  # Module loading
+        re.compile(r"kexec\s+"),  # Kernel execution
     ],
     EscapeType.NETWORK_BYPASS: [
-        re.compile(r"iptables\s+"),                      # Firewall manipulation
-        re.compile(r"ip\s+(?:route|rule|link)\s+"),      # Network config changes
-        re.compile(r"socat\s+.*EXEC"),                   # Reverse shell via socat
-        re.compile(r"nc\s+-[el]"),                       # Netcat listener
+        re.compile(r"iptables\s+"),  # Firewall manipulation
+        re.compile(r"ip\s+(?:route|rule|link)\s+"),  # Network config changes
+        re.compile(r"socat\s+.*EXEC"),  # Reverse shell via socat
+        re.compile(r"nc\s+-[el]"),  # Netcat listener
     ],
     EscapeType.ENV_INJECTION: [
-        re.compile(r"LD_PRELOAD="),                      # Library injection
+        re.compile(r"LD_PRELOAD="),  # Library injection
         re.compile(r"LD_LIBRARY_PATH=.*(?:/tmp|/dev)"),  # Library path hijack
-        re.compile(r"PYTHONPATH=.*(?:/tmp|/dev)"),       # Python path hijack
+        re.compile(r"PYTHONPATH=.*(?:/tmp|/dev)"),  # Python path hijack
     ],
     EscapeType.COMMAND_INJECTION: [
-        re.compile(r"\$\(.*(?:curl|wget|nc)\s+"),        # Command subst with network
-        re.compile(r"`.*(?:curl|wget|nc)\s+"),            # Backtick subst with network
-        re.compile(r"\|\s*(?:bash|sh|zsh|dash)\s"),       # Pipe to shell
-        re.compile(r";\s*(?:rm|dd)\s+-"),                 # Chained destructive commands
+        re.compile(r"\$\(.*(?:curl|wget|nc)\s+"),  # Command subst with network
+        re.compile(r"`.*(?:curl|wget|nc)\s+"),  # Backtick subst with network
+        re.compile(r"\|\s*(?:bash|sh|zsh|dash)\s"),  # Pipe to shell
+        re.compile(r";\s*(?:rm|dd)\s+-"),  # Chained destructive commands
     ],
 }
 
@@ -632,11 +632,13 @@ class EscapeDetector:
     """
 
     # Critical escape types that should always block
-    CRITICAL_TYPES: frozenset[EscapeType] = frozenset({
-        EscapeType.KERNEL_EXPLOIT,
-        EscapeType.CAPABILITY_ESCALATION,
-        EscapeType.PROC_MOUNT,
-    })
+    CRITICAL_TYPES: frozenset[EscapeType] = frozenset(
+        {
+            EscapeType.KERNEL_EXPLOIT,
+            EscapeType.CAPABILITY_ESCALATION,
+            EscapeType.PROC_MOUNT,
+        }
+    )
 
     def __init__(self, max_history: int = 500) -> None:
         self._history: list[EscapeAttempt] = []
@@ -666,7 +668,7 @@ class EscapeDetector:
         if attempts:
             self._history.extend(attempts)
             if len(self._history) > self._max_history:
-                self._history = self._history[-self._max_history:]
+                self._history = self._history[-self._max_history :]
             log.warning(
                 "escape_attempt_detected",
                 tool=tool_name,
@@ -778,7 +780,7 @@ class ToolResourceMetrics:
         """Record a completed tool execution."""
         self._executions.append(execution)
         if len(self._executions) > self._max_history:
-            self._executions = self._executions[-self._max_history:]
+            self._executions = self._executions[-self._max_history :]
 
     def for_tool(self, tool_name: str) -> list[ToolExecution]:
         return [e for e in self._executions if e.tool_name == tool_name]
@@ -920,9 +922,7 @@ class ToolSandboxManager:
         # 2. Network check
         network_allowed = True
         if target_host or profile.network != NetworkPermission.BLOCK:
-            network_allowed = self._network_guard.check_access(
-                tool_name, profile, target_host
-            )
+            network_allowed = self._network_guard.check_access(tool_name, profile, target_host)
             if not network_allowed and target_host:
                 warnings.append(f"Network access blocked for host: {target_host}")
 

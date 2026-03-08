@@ -25,10 +25,10 @@ log = get_logger(__name__)
 class UpdateStrategy(Enum):
     """Update-Strategie."""
 
-    MANUAL = "manual"          # Nur auf Anfrage
-    NOTIFY = "notify"          # Benachrichtigen, nicht installieren
+    MANUAL = "manual"  # Nur auf Anfrage
+    NOTIFY = "notify"  # Benachrichtigen, nicht installieren
     AUTO_MINOR = "auto_minor"  # Minor/Patch automatisch, Major manuell
-    AUTO_ALL = "auto_all"      # Alles automatisch
+    AUTO_ALL = "auto_all"  # Alles automatisch
 
 
 class UpdateSeverity(Enum):
@@ -36,8 +36,8 @@ class UpdateSeverity(Enum):
 
     LOW = "low"
     NORMAL = "normal"
-    HIGH = "high"           # Sicherheitsfix
-    CRITICAL = "critical"   # Notfall-Update (erzwungen)
+    HIGH = "high"  # Sicherheitsfix
+    CRITICAL = "critical"  # Notfall-Update (erzwungen)
 
 
 @dataclass
@@ -45,10 +45,10 @@ class UpdatePolicy:
     """Konfigurierbare Update-Strategie."""
 
     strategy: UpdateStrategy = UpdateStrategy.NOTIFY
-    auto_security_updates: bool = True   # Security immer automatisch
+    auto_security_updates: bool = True  # Security immer automatisch
     check_interval_hours: int = 24
     require_signature: bool = True
-    require_review: bool = False         # Review vor Installation
+    require_review: bool = False  # Review vor Installation
     max_auto_updates_per_day: int = 10
     blocked_packages: list[str] = field(default_factory=list)
 
@@ -158,7 +158,7 @@ class SkillUpdater:
 
     def __init__(self, policy: UpdatePolicy | None = None) -> None:
         self._policy = policy or UpdatePolicy()
-        self._installed: dict[str, str] = {}        # package_id → version
+        self._installed: dict[str, str] = {}  # package_id → version
         self._available: dict[str, UpdateCheck] = {}  # package_id → check
         self._recalls: dict[str, SecurityRecall] = {}
         self._history: list[UpdateResult] = []

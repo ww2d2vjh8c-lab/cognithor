@@ -17,6 +17,7 @@ Covers:
   - security/sandbox_isolation.py (more lines)
   - security/framework.py (more lines)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -36,6 +37,7 @@ import pytest
 class TestA2AHTTPHandler:
     def test_init_and_response_headers(self):
         from jarvis.a2a.http_handler import A2AHTTPHandler
+
         adapter = MagicMock()
         handler = A2AHTTPHandler(adapter)
         headers = handler._response_headers()
@@ -43,6 +45,7 @@ class TestA2AHTTPHandler:
 
     def test_extract_token_bearer(self):
         from jarvis.a2a.http_handler import A2AHTTPHandler
+
         handler = A2AHTTPHandler(MagicMock())
         assert handler._extract_token("Bearer abc123") == "abc123"
         assert handler._extract_token("Basic abc123") is None
@@ -51,6 +54,7 @@ class TestA2AHTTPHandler:
 
     async def test_handle_agent_card(self):
         from jarvis.a2a.http_handler import A2AHTTPHandler
+
         adapter = MagicMock()
         adapter.get_agent_card.return_value = {"name": "Jarvis"}
         handler = A2AHTTPHandler(adapter)
@@ -59,6 +63,7 @@ class TestA2AHTTPHandler:
 
     async def test_handle_jsonrpc(self):
         from jarvis.a2a.http_handler import A2AHTTPHandler
+
         adapter = MagicMock()
         adapter.handle_a2a_request = AsyncMock(return_value={"jsonrpc": "2.0", "result": "ok"})
         handler = A2AHTTPHandler(adapter)
@@ -71,6 +76,7 @@ class TestA2AHTTPHandler:
 
     async def test_handle_health_enabled(self):
         from jarvis.a2a.http_handler import A2AHTTPHandler
+
         adapter = MagicMock()
         adapter.enabled = True
         adapter.stats.return_value = {"server": {"running": True}}
@@ -81,6 +87,7 @@ class TestA2AHTTPHandler:
 
     async def test_handle_health_disabled(self):
         from jarvis.a2a.http_handler import A2AHTTPHandler
+
         adapter = MagicMock()
         adapter.enabled = False
         adapter.stats.return_value = {"server": {"running": False}}
@@ -91,13 +98,17 @@ class TestA2AHTTPHandler:
     def test_register_routes_no_starlette(self):
         """When starlette is not available, register_routes returns early."""
         from jarvis.a2a.http_handler import A2AHTTPHandler
+
         handler = A2AHTTPHandler(MagicMock())
         # Temporarily make starlette unimportable
-        with patch.dict(sys.modules, {
-            "starlette": None,
-            "starlette.requests": None,
-            "starlette.responses": None,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "starlette": None,
+                "starlette.requests": None,
+                "starlette.responses": None,
+            },
+        ):
             app = MagicMock()
             handler.register_routes(app)
             # Routes should NOT be registered (no app.get calls)
@@ -106,6 +117,7 @@ class TestA2AHTTPHandler:
     def test_register_routes_with_starlette(self):
         """When starlette is available, register_routes decorates app."""
         from jarvis.a2a.http_handler import A2AHTTPHandler
+
         handler = A2AHTTPHandler(MagicMock())
         app = MagicMock()
         # Ensure starlette modules are present (they may or may not be installed)
@@ -117,11 +129,14 @@ class TestA2AHTTPHandler:
         starlette_resp = ModuleType("starlette.responses")
         starlette_resp.JSONResponse = mock_json_resp
         starlette_resp.StreamingResponse = mock_streaming_resp
-        with patch.dict(sys.modules, {
-            "starlette": ModuleType("starlette"),
-            "starlette.requests": starlette_req,
-            "starlette.responses": starlette_resp,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "starlette": ModuleType("starlette"),
+                "starlette.requests": starlette_req,
+                "starlette.responses": starlette_resp,
+            },
+        ):
             handler.register_routes(app)
             # Should have registered routes via decorators
             assert app.get.called or app.post.called
@@ -145,6 +160,7 @@ class TestBrowserTools:
 
     def test_register_browser_use_tools_returns_agent(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent_inst = MagicMock()
@@ -156,6 +172,7 @@ class TestBrowserTools:
 
     async def test_navigate_no_url(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
@@ -165,6 +182,7 @@ class TestBrowserTools:
 
     async def test_navigate_start_fails(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -177,6 +195,7 @@ class TestBrowserTools:
 
     async def test_navigate_success(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -191,6 +210,7 @@ class TestBrowserTools:
 
     async def test_click_by_description(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -204,6 +224,7 @@ class TestBrowserTools:
 
     async def test_click_by_selector(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -217,6 +238,7 @@ class TestBrowserTools:
 
     async def test_click_no_params(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
@@ -226,6 +248,7 @@ class TestBrowserTools:
 
     async def test_fill_no_selector(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
@@ -235,6 +258,7 @@ class TestBrowserTools:
 
     async def test_fill_success(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -243,13 +267,14 @@ class TestBrowserTools:
             agent.fill = AsyncMock(return_value=res)
             MockAgent.return_value = agent
             register_browser_use_tools(mcp)
-            result = json.loads(await mcp._tools["browser_fill"](
-                {"selector": "#name", "value": "Alice"}
-            ))
+            result = json.loads(
+                await mcp._tools["browser_fill"]({"selector": "#name", "value": "Alice"})
+            )
             assert result["success"] is True
 
     async def test_fill_form_no_data(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
@@ -259,6 +284,7 @@ class TestBrowserTools:
 
     async def test_fill_form_success(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -267,13 +293,14 @@ class TestBrowserTools:
             agent.fill_form = AsyncMock(return_value=[res])
             MockAgent.return_value = agent
             register_browser_use_tools(mcp)
-            result = json.loads(await mcp._tools["browser_fill_form"](
-                {"data": {"name": "Alice"}, "submit": True}
-            ))
+            result = json.loads(
+                await mcp._tools["browser_fill_form"]({"data": {"name": "Alice"}, "submit": True})
+            )
             assert result["filled"] == 1
 
     async def test_screenshot_success(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -289,6 +316,7 @@ class TestBrowserTools:
 
     async def test_screenshot_failure(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -303,6 +331,7 @@ class TestBrowserTools:
 
     async def test_extract_text(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -314,6 +343,7 @@ class TestBrowserTools:
 
     async def test_extract_tables(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -325,6 +355,7 @@ class TestBrowserTools:
 
     async def test_extract_links(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -336,6 +367,7 @@ class TestBrowserTools:
 
     async def test_extract_unknown_mode(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
@@ -345,6 +377,7 @@ class TestBrowserTools:
 
     async def test_analyze(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -359,6 +392,7 @@ class TestBrowserTools:
 
     async def test_execute_js_no_script(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
@@ -368,29 +402,30 @@ class TestBrowserTools:
 
     async def test_execute_js_blocked(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
             register_browser_use_tools(mcp)
-            result = json.loads(await mcp._tools["browser_execute_js"](
-                {"script": "eval('alert(1)')"}
-            ))
+            result = json.loads(
+                await mcp._tools["browser_execute_js"]({"script": "eval('alert(1)')"})
+            )
             assert "error" in result
             assert "Blocked" in result["error"]
 
     async def test_execute_js_too_long(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
             register_browser_use_tools(mcp)
-            result = json.loads(await mcp._tools["browser_execute_js"](
-                {"script": "x" * 60000}
-            ))
+            result = json.loads(await mcp._tools["browser_execute_js"]({"script": "x" * 60000}))
             assert "error" in result
 
     async def test_execute_js_success(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -399,13 +434,14 @@ class TestBrowserTools:
             agent.execute_js = AsyncMock(return_value=res)
             MockAgent.return_value = agent
             register_browser_use_tools(mcp)
-            result = json.loads(await mcp._tools["browser_execute_js"](
-                {"script": "document.title"}
-            ))
+            result = json.loads(
+                await mcp._tools["browser_execute_js"]({"script": "document.title"})
+            )
             assert result["success"] is True
 
     async def test_tab_new(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -414,13 +450,14 @@ class TestBrowserTools:
             agent.new_tab = AsyncMock(return_value=res)
             MockAgent.return_value = agent
             register_browser_use_tools(mcp)
-            result = json.loads(await mcp._tools["browser_tab"](
-                {"action": "new", "url": "http://x.com"}
-            ))
+            result = json.loads(
+                await mcp._tools["browser_tab"]({"action": "new", "url": "http://x.com"})
+            )
             assert result["success"] is True
 
     async def test_tab_close(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -434,6 +471,7 @@ class TestBrowserTools:
 
     async def test_tab_switch(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -447,6 +485,7 @@ class TestBrowserTools:
 
     async def test_tab_list(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -459,6 +498,7 @@ class TestBrowserTools:
 
     async def test_tab_unknown_action(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
@@ -468,6 +508,7 @@ class TestBrowserTools:
 
     async def test_key_press(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -481,6 +522,7 @@ class TestBrowserTools:
 
     async def test_vision_analyze_not_running(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -493,6 +535,7 @@ class TestBrowserTools:
 
     async def test_vision_analyze_no_vision(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -505,6 +548,7 @@ class TestBrowserTools:
 
     async def test_vision_find_no_desc(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             MockAgent.return_value = MagicMock()
@@ -514,6 +558,7 @@ class TestBrowserTools:
 
     async def test_vision_screenshot_not_running(self):
         from jarvis.browser.tools import register_browser_use_tools
+
         mcp = self._make_mock_mcp()
         with patch("jarvis.browser.tools.BrowserAgent") as MockAgent:
             agent = MagicMock()
@@ -533,25 +578,30 @@ class TestBrowserTools:
 class TestSessionManager:
     def test_init_default_path(self):
         from jarvis.browser.session_manager import SessionManager
+
         sm = SessionManager()
         assert "sessions" in str(sm._storage_dir)
 
     def test_init_custom_path(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager
+
         sm = SessionManager(storage_dir=tmp_path)
         assert sm._storage_dir == tmp_path
 
     def test_session_snapshot_post_init(self):
         from jarvis.browser.session_manager import SessionSnapshot
+
         snap = SessionSnapshot(session_id="s1", domain="example.com")
         assert snap.created_at != ""
         assert snap.updated_at != ""
 
     def test_save_and_get_session(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         snap = SessionSnapshot(
-            session_id="s1", domain="example.com",
+            session_id="s1",
+            domain="example.com",
             cookies=[{"name": "sid", "value": "abc"}],
             last_url="http://example.com",
         )
@@ -563,6 +613,7 @@ class TestSessionManager:
 
     def test_load_from_disk(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         snap = SessionSnapshot(session_id="s2", domain="test.com")
         sm.save_session(snap)
@@ -574,11 +625,13 @@ class TestSessionManager:
 
     def test_get_nonexistent(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager
+
         sm = SessionManager(storage_dir=tmp_path)
         assert sm.get_session("nonexistent") is None
 
     def test_delete_session(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         sm.save_session(SessionSnapshot(session_id="s1", domain="x.com"))
         assert sm.delete_session("s1") is True
@@ -587,6 +640,7 @@ class TestSessionManager:
 
     def test_list_sessions(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         sm.save_session(SessionSnapshot(session_id="s1", domain="a.com"))
         sm.save_session(SessionSnapshot(session_id="s2", domain="b.com"))
@@ -595,20 +649,22 @@ class TestSessionManager:
 
     def test_list_sessions_empty_dir(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager
+
         sm = SessionManager(storage_dir=tmp_path / "nonexistent")
         sessions = sm.list_sessions()
         assert sessions == []
 
     async def test_save_from_page(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager
+
         sm = SessionManager(storage_dir=tmp_path)
         page = MagicMock()
         page.url = "http://example.com/page"
         page.title = AsyncMock(return_value="Test Page")
         context = MagicMock()
-        context.cookies = AsyncMock(return_value=[
-            {"name": "sid", "value": "abc", "domain": ".example.com", "path": "/"}
-        ])
+        context.cookies = AsyncMock(
+            return_value=[{"name": "sid", "value": "abc", "domain": ".example.com", "path": "/"}]
+        )
         page.context = context
         page.evaluate = AsyncMock(return_value={"key": "val"})
         snap = await sm.save_from_page(page, "s1")
@@ -617,6 +673,7 @@ class TestSessionManager:
 
     async def test_save_from_page_errors(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager
+
         sm = SessionManager(storage_dir=tmp_path)
         page = MagicMock()
         page.url = "not-a-url"
@@ -630,9 +687,11 @@ class TestSessionManager:
 
     async def test_restore_to_context(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         snap = SessionSnapshot(
-            session_id="s1", domain="x.com",
+            session_id="s1",
+            domain="x.com",
             cookies=[{"name": "sid", "value": "abc"}],
         )
         sm.save_session(snap)
@@ -644,6 +703,7 @@ class TestSessionManager:
 
     async def test_restore_to_context_no_cookies(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         snap = SessionSnapshot(session_id="s1", domain="x.com", cookies=[])
         sm.save_session(snap)
@@ -652,9 +712,11 @@ class TestSessionManager:
 
     async def test_restore_to_context_error(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         snap = SessionSnapshot(
-            session_id="s1", domain="x.com",
+            session_id="s1",
+            domain="x.com",
             cookies=[{"name": "sid"}],
         )
         sm.save_session(snap)
@@ -665,9 +727,11 @@ class TestSessionManager:
 
     async def test_restore_local_storage(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         snap = SessionSnapshot(
-            session_id="s1", domain="x.com",
+            session_id="s1",
+            domain="x.com",
             local_storage={"theme": "dark"},
         )
         sm.save_session(snap)
@@ -678,6 +742,7 @@ class TestSessionManager:
 
     async def test_restore_local_storage_no_data(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         snap = SessionSnapshot(session_id="s1", domain="x.com")
         sm.save_session(snap)
@@ -686,9 +751,11 @@ class TestSessionManager:
 
     async def test_restore_local_storage_error(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         snap = SessionSnapshot(
-            session_id="s1", domain="x.com",
+            session_id="s1",
+            domain="x.com",
             local_storage={"key": "val"},
         )
         sm.save_session(snap)
@@ -699,6 +766,7 @@ class TestSessionManager:
 
     def test_cleanup(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         snap = SessionSnapshot(session_id="old", domain="x.com")
         sm.save_session(snap)
@@ -716,6 +784,7 @@ class TestSessionManager:
 
     def test_stats(self, tmp_path):
         from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+
         sm = SessionManager(storage_dir=tmp_path)
         sm.save_session(SessionSnapshot(session_id="s1", domain="testdomain"))
         s = sm.stats()
@@ -731,6 +800,7 @@ class TestSessionManager:
 class TestCronEngine:
     async def test_start_stop(self, tmp_path):
         from jarvis.cron.engine import CronEngine
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         engine = CronEngine(jobs_path=str(jobs_yaml))
@@ -748,6 +818,7 @@ class TestCronEngine:
     async def test_start_loads_enabled_jobs(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         import yaml
+
         jobs_data = {
             "jobs": {
                 "test_job": {
@@ -770,6 +841,7 @@ class TestCronEngine:
     async def test_schedule_invalid_cron(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         from jarvis.models import CronJob
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         engine = CronEngine(jobs_path=str(jobs_yaml))
@@ -782,6 +854,7 @@ class TestCronEngine:
     async def test_execute_job_no_handler(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         from jarvis.models import CronJob
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         engine = CronEngine(jobs_path=str(jobs_yaml))
@@ -794,6 +867,7 @@ class TestCronEngine:
     async def test_execute_job_with_handler(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         from jarvis.models import CronJob
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         handler = AsyncMock()
@@ -807,6 +881,7 @@ class TestCronEngine:
     async def test_execute_job_with_agent(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         from jarvis.models import CronJob
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         handler = AsyncMock()
@@ -821,6 +896,7 @@ class TestCronEngine:
     async def test_execute_job_handler_error(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         from jarvis.models import CronJob
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         handler = AsyncMock(side_effect=Exception("Handler crashed"))
@@ -834,6 +910,7 @@ class TestCronEngine:
     async def test_add_runtime_job(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         from jarvis.models import CronJob
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         engine = CronEngine(jobs_path=str(jobs_yaml))
@@ -847,6 +924,7 @@ class TestCronEngine:
     async def test_remove_runtime_job(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         from jarvis.models import CronJob
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         engine = CronEngine(jobs_path=str(jobs_yaml))
@@ -862,6 +940,7 @@ class TestCronEngine:
     async def test_list_jobs(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         import yaml
+
         jobs_data = {
             "jobs": {
                 "j1": {"schedule": "0 0 * * *", "prompt": "x", "enabled": True},
@@ -879,6 +958,7 @@ class TestCronEngine:
     async def test_get_next_run_times(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         import yaml
+
         jobs_data = {
             "jobs": {
                 "j1": {"schedule": "0 7 * * 1-5", "prompt": "x", "enabled": True},
@@ -895,6 +975,7 @@ class TestCronEngine:
     async def test_trigger_now(self, tmp_path):
         from jarvis.cron.engine import CronEngine
         import yaml
+
         handler = AsyncMock()
         jobs_data = {
             "jobs": {
@@ -914,6 +995,7 @@ class TestCronEngine:
 
     async def test_add_system_job(self, tmp_path):
         from jarvis.cron.engine import CronEngine
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         engine = CronEngine(jobs_path=str(jobs_yaml))
@@ -929,6 +1011,7 @@ class TestCronEngine:
 
     async def test_set_handler(self, tmp_path):
         from jarvis.cron.engine import CronEngine
+
         engine = CronEngine()
         handler = AsyncMock()
         engine.set_handler(handler)
@@ -936,12 +1019,14 @@ class TestCronEngine:
 
     def test_job_count_no_store(self):
         from jarvis.cron.engine import CronEngine
+
         engine = CronEngine()
         assert engine.job_count == 0
         assert engine.has_enabled_jobs is False
 
     async def test_heartbeat_with_config(self, tmp_path):
         from jarvis.cron.engine import CronEngine
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         hb_config = MagicMock()
@@ -967,6 +1052,7 @@ class TestCronEngine:
 
     async def test_heartbeat_no_checklist(self, tmp_path):
         from jarvis.cron.engine import CronEngine
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         hb_config = MagicMock()
@@ -989,6 +1075,7 @@ class TestCronEngine:
 
     def test_parse_cron_fields(self):
         from jarvis.cron.engine import _parse_cron_fields
+
         fields = _parse_cron_fields("0 7 * * 1-5")
         assert fields["minute"] == "0"
         assert fields["hour"] == "7"
@@ -996,11 +1083,13 @@ class TestCronEngine:
 
     def test_parse_cron_fields_invalid(self):
         from jarvis.cron.engine import _parse_cron_fields
+
         with pytest.raises(ValueError):
             _parse_cron_fields("0 7 *")
 
     async def test_remove_scheduled_nonexistent(self, tmp_path):
         from jarvis.cron.engine import CronEngine
+
         jobs_yaml = tmp_path / "jobs.yaml"
         jobs_yaml.write_text("jobs: {}", encoding="utf-8")
         engine = CronEngine(jobs_path=str(jobs_yaml))
@@ -1018,6 +1107,7 @@ class TestCronEngine:
 class TestCronJobs:
     def test_load_default_creation(self, tmp_path):
         from jarvis.cron.jobs import JobStore
+
         store = JobStore(tmp_path / "cron" / "jobs.yaml")
         jobs = store.load()
         assert isinstance(jobs, dict)
@@ -1027,6 +1117,7 @@ class TestCronJobs:
     def test_load_existing_dict_format(self, tmp_path):
         import yaml
         from jarvis.cron.jobs import JobStore
+
         data = {
             "jobs": {
                 "my_job": {
@@ -1047,6 +1138,7 @@ class TestCronJobs:
     def test_load_existing_list_format(self, tmp_path):
         import yaml
         from jarvis.cron.jobs import JobStore
+
         data = {
             "jobs": [
                 {
@@ -1066,6 +1158,7 @@ class TestCronJobs:
 
     def test_load_invalid_yaml(self, tmp_path):
         from jarvis.cron.jobs import JobStore
+
         path = tmp_path / "jobs.yaml"
         # Write truly invalid YAML (mapping with bad indentation / unbalanced)
         path.write_text("jobs:\n  - [broken: {unterminated", encoding="utf-8")
@@ -1076,6 +1169,7 @@ class TestCronJobs:
     def test_get_enabled(self, tmp_path):
         import yaml
         from jarvis.cron.jobs import JobStore
+
         data = {
             "jobs": {
                 "j1": {"schedule": "0 0 * * *", "prompt": "a", "enabled": True},
@@ -1093,6 +1187,7 @@ class TestCronJobs:
     def test_add_job(self, tmp_path):
         from jarvis.cron.jobs import JobStore
         from jarvis.models import CronJob
+
         path = tmp_path / "jobs.yaml"
         path.write_text("jobs: {}", encoding="utf-8")
         store = JobStore(path)
@@ -1102,12 +1197,14 @@ class TestCronJobs:
         assert "new_job" in store.jobs
         # File should be updated
         import yaml
+
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert "new_job" in data["jobs"]
 
     def test_remove_job(self, tmp_path):
         from jarvis.cron.jobs import JobStore
         from jarvis.models import CronJob
+
         path = tmp_path / "jobs.yaml"
         path.write_text("jobs: {}", encoding="utf-8")
         store = JobStore(path)
@@ -1119,6 +1216,7 @@ class TestCronJobs:
     def test_toggle_job(self, tmp_path):
         from jarvis.cron.jobs import JobStore
         from jarvis.models import CronJob
+
         path = tmp_path / "jobs.yaml"
         path.write_text("jobs: {}", encoding="utf-8")
         store = JobStore(path)
@@ -1130,6 +1228,7 @@ class TestCronJobs:
 
     def test_governance_analysis(self):
         from jarvis.cron.jobs import governance_analysis
+
         # No governance agent
         gateway = MagicMock()
         gateway._governance_agent = None
@@ -1143,6 +1242,7 @@ class TestCronJobs:
     def test_add_job_with_agent(self, tmp_path):
         from jarvis.cron.jobs import JobStore
         from jarvis.models import CronJob
+
         path = tmp_path / "jobs.yaml"
         path.write_text("jobs: {}", encoding="utf-8")
         store = JobStore(path)
@@ -1150,6 +1250,7 @@ class TestCronJobs:
         job = CronJob(name="agent_job", schedule="0 0 * * *", prompt="x", agent="researcher")
         store.add_job(job)
         import yaml
+
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert data["jobs"]["agent_job"]["agent"] == "researcher"
 
@@ -1162,6 +1263,7 @@ class TestCronJobs:
 class TestDBFactory:
     def test_create_sqlite_default(self, tmp_path):
         from jarvis.db.factory import create_backend
+
         config = MagicMock()
         config.database = None
         config.db_path = tmp_path / "test.db"
@@ -1170,6 +1272,7 @@ class TestDBFactory:
 
     def test_create_sqlite_explicit(self, tmp_path):
         from jarvis.db.factory import create_backend
+
         config = MagicMock()
         config.database = MagicMock()
         config.database.backend = "sqlite"
@@ -1179,6 +1282,7 @@ class TestDBFactory:
 
     def test_create_postgresql(self):
         from jarvis.db.factory import create_backend
+
         config = MagicMock()
         config.database = MagicMock()
         config.database.backend = "postgresql"
@@ -1194,6 +1298,7 @@ class TestDBFactory:
 
     def test_create_unknown_backend(self):
         from jarvis.db.factory import create_backend
+
         config = MagicMock()
         config.database = MagicMock()
         config.database.backend = "mongodb"
@@ -1209,17 +1314,20 @@ class TestDBFactory:
 class TestSQLiteBackend:
     def test_init(self, tmp_path):
         from jarvis.db.sqlite_backend import SQLiteBackend
+
         db = SQLiteBackend(tmp_path / "test.db")
         assert db.backend_type == "sqlite"
         assert db.placeholder == "?"
 
     def test_conn_property(self, tmp_path):
         from jarvis.db.sqlite_backend import SQLiteBackend
+
         db = SQLiteBackend(tmp_path / "test.db")
         assert db.conn is not None
 
     async def test_execute_and_fetchall(self, tmp_path):
         from jarvis.db.sqlite_backend import SQLiteBackend
+
         db = SQLiteBackend(tmp_path / "test.db")
         await db.executescript("CREATE TABLE t1 (id INTEGER PRIMARY KEY, name TEXT)")
         await db.execute("INSERT INTO t1 (name) VALUES (?)", ("Alice",))
@@ -1230,6 +1338,7 @@ class TestSQLiteBackend:
 
     async def test_fetchone(self, tmp_path):
         from jarvis.db.sqlite_backend import SQLiteBackend
+
         db = SQLiteBackend(tmp_path / "test.db")
         await db.executescript("CREATE TABLE t2 (id INTEGER PRIMARY KEY, val TEXT)")
         await db.execute("INSERT INTO t2 (val) VALUES (?)", ("x",))
@@ -1241,6 +1350,7 @@ class TestSQLiteBackend:
 
     async def test_executemany(self, tmp_path):
         from jarvis.db.sqlite_backend import SQLiteBackend
+
         db = SQLiteBackend(tmp_path / "test.db")
         await db.executescript("CREATE TABLE t3 (id INTEGER PRIMARY KEY, n TEXT)")
         await db.executemany("INSERT INTO t3 (n) VALUES (?)", [("a",), ("b",), ("c",)])
@@ -1249,6 +1359,7 @@ class TestSQLiteBackend:
 
     async def test_commit_and_close(self, tmp_path):
         from jarvis.db.sqlite_backend import SQLiteBackend
+
         db = SQLiteBackend(tmp_path / "test.db")
         await db.commit()
         await db.close()
@@ -1289,6 +1400,7 @@ class TestPostgreSQLBackend:
         with patch.dict(sys.modules, {"psycopg": None, "psycopg.conninfo": None}):
             from importlib import reload
             import jarvis.db.postgresql_backend as pg_mod
+
             reload(pg_mod)
             backend = pg_mod.PostgreSQLBackend(host="localhost", password="s3cret")
             assert backend.backend_type == "postgresql"
@@ -1297,6 +1409,7 @@ class TestPostgreSQLBackend:
 
     async def test_ensure_pool_no_psycopg_pool(self):
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend()
         with patch.dict(sys.modules, {"psycopg_pool": None}):
             with pytest.raises(ImportError):
@@ -1304,6 +1417,7 @@ class TestPostgreSQLBackend:
 
     async def test_execute_with_mocked_pool(self):
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend()
         mock_cursor = MagicMock()
         mock_conn = AsyncMock()
@@ -1315,6 +1429,7 @@ class TestPostgreSQLBackend:
 
     async def test_fetchone_with_mocked_pool(self):
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend()
         mock_cursor = AsyncMock()
         mock_cursor.execute = AsyncMock()
@@ -1327,6 +1442,7 @@ class TestPostgreSQLBackend:
 
     async def test_fetchone_returns_none(self):
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend()
         mock_cursor = AsyncMock()
         mock_cursor.execute = AsyncMock()
@@ -1338,6 +1454,7 @@ class TestPostgreSQLBackend:
 
     async def test_fetchall_with_mocked_pool(self):
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend()
         mock_cursor = AsyncMock()
         mock_cursor.execute = AsyncMock()
@@ -1350,6 +1467,7 @@ class TestPostgreSQLBackend:
 
     async def test_executemany_with_mocked_pool(self):
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend()
         mock_cursor = AsyncMock()
         mock_cursor.executemany = AsyncMock()
@@ -1359,6 +1477,7 @@ class TestPostgreSQLBackend:
 
     async def test_executescript_with_mocked_pool(self):
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend()
         mock_conn = AsyncMock()
         mock_conn.execute = AsyncMock()
@@ -1369,11 +1488,13 @@ class TestPostgreSQLBackend:
 
     async def test_commit_noop(self):
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend()
         await backend.commit()  # Should be a no-op
 
     async def test_close(self):
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend()
         mock_pool = AsyncMock()
         mock_pool.close = AsyncMock()
@@ -1401,6 +1522,7 @@ class TestReplayEngine:
     def test_replay_run_no_plans(self):
         from jarvis.forensics.replay_engine import ReplayEngine
         from jarvis.models import RunRecord
+
         gk = self._make_gatekeeper()
         engine = ReplayEngine(gk)
         run = RunRecord(session_id="s1", plans=[], gate_decisions=[])
@@ -1411,8 +1533,13 @@ class TestReplayEngine:
     def test_replay_run_with_plan_no_divergence(self):
         from jarvis.forensics.replay_engine import ReplayEngine
         from jarvis.models import (
-            RunRecord, ActionPlan, PlannedAction, GateDecision, GateStatus,
+            RunRecord,
+            ActionPlan,
+            PlannedAction,
+            GateDecision,
+            GateStatus,
         )
+
         gk = self._make_gatekeeper()
         step = PlannedAction(tool="read_file", params={"path": "/tmp"})
         plan = ActionPlan(goal="test", steps=[step])
@@ -1432,13 +1559,20 @@ class TestReplayEngine:
     def test_replay_run_with_divergence_new_block(self):
         from jarvis.forensics.replay_engine import ReplayEngine
         from jarvis.models import (
-            RunRecord, ActionPlan, PlannedAction, GateDecision, GateStatus,
+            RunRecord,
+            ActionPlan,
+            PlannedAction,
+            GateDecision,
+            GateStatus,
         )
+
         gk = self._make_gatekeeper()
         step = PlannedAction(tool="exec_command", params={"cmd": "rm -rf /"})
         plan = ActionPlan(goal="test", steps=[step])
         orig_decision = GateDecision(status=GateStatus.ALLOW, original_action=step)
-        replay_decision = GateDecision(status=GateStatus.BLOCK, original_action=step, reason="Too dangerous")
+        replay_decision = GateDecision(
+            status=GateStatus.BLOCK, original_action=step, reason="Too dangerous"
+        )
         gk.evaluate_plan.return_value = [replay_decision]
         engine = ReplayEngine(gk)
         run = RunRecord(
@@ -1456,8 +1590,13 @@ class TestReplayEngine:
     def test_replay_run_with_divergence_new_allow(self):
         from jarvis.forensics.replay_engine import ReplayEngine
         from jarvis.models import (
-            RunRecord, ActionPlan, PlannedAction, GateDecision, GateStatus,
+            RunRecord,
+            ActionPlan,
+            PlannedAction,
+            GateDecision,
+            GateStatus,
         )
+
         gk = self._make_gatekeeper()
         step = PlannedAction(tool="read_file")
         plan = ActionPlan(goal="test", steps=[step])
@@ -1477,6 +1616,7 @@ class TestReplayEngine:
     def test_replay_run_with_new_policies(self):
         from jarvis.forensics.replay_engine import ReplayEngine
         from jarvis.models import RunRecord
+
         gk = self._make_gatekeeper()
         engine = ReplayEngine(gk)
         run = RunRecord(session_id="s1")
@@ -1489,6 +1629,7 @@ class TestReplayEngine:
     def test_counterfactual_analysis(self):
         from jarvis.forensics.replay_engine import ReplayEngine
         from jarvis.models import RunRecord
+
         gk = self._make_gatekeeper()
         engine = ReplayEngine(gk)
         run = RunRecord(session_id="s1")
@@ -1504,6 +1645,7 @@ class TestReplayEngine:
     def test_compare_decisions_missing(self):
         from jarvis.forensics.replay_engine import ReplayEngine
         from jarvis.models import GateDecision, GateStatus, PlannedAction
+
         gk = self._make_gatekeeper()
         engine = ReplayEngine(gk)
         step = PlannedAction(tool="test")
@@ -1517,6 +1659,7 @@ class TestReplayEngine:
     def test_swap_policies_parse_error(self):
         from jarvis.forensics.replay_engine import ReplayEngine
         from jarvis.models import RunRecord
+
         gk = self._make_gatekeeper()
         gk._parse_rule.side_effect = Exception("bad rule")
         engine = ReplayEngine(gk)
@@ -1534,6 +1677,7 @@ class TestReplayEngine:
 class TestAuditDeep:
     def test_mask_credentials_patterns(self):
         from jarvis.security.audit import mask_credentials
+
         # Bearer token
         assert "***" in mask_credentials("Bearer eyJhbGciOiJIUzI1NiJ9.abc")
         # API key pattern
@@ -1549,6 +1693,7 @@ class TestAuditDeep:
 
     def test_mask_dict_list_values(self):
         from jarvis.security.audit import mask_dict
+
         data = {"keys": ["Bearer abc123456789", "normal text"]}
         masked = mask_dict(data)
         assert "***" in masked["keys"][0]
@@ -1556,6 +1701,7 @@ class TestAuditDeep:
 
     def test_mask_dict_non_string_values(self):
         from jarvis.security.audit import mask_dict
+
         data = {"count": 42, "active": True, "nested": {"val": 3.14}}
         masked = mask_dict(data)
         assert masked["count"] == 42
@@ -1563,6 +1709,7 @@ class TestAuditDeep:
 
     def test_audit_write_error(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         # Force write error by making log_path a directory
         trail._log_path.mkdir(parents=True, exist_ok=True)
@@ -1571,6 +1718,7 @@ class TestAuditDeep:
 
     def test_query_with_tool_and_status_filters(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         # Record a regular event
         trail.record_event("s1", "login")
@@ -1580,6 +1728,7 @@ class TestAuditDeep:
 
     def test_verify_chain_tampered(self, tmp_path):
         from jarvis.security.audit import AuditTrail
+
         trail = AuditTrail(log_dir=tmp_path)
         trail.record_event("s1", "ev1")
         trail.record_event("s1", "ev2")
@@ -1602,6 +1751,7 @@ class TestAuditDeep:
 class TestAgentVaultDeep:
     def test_vault_rotator(self):
         from jarvis.security.agent_vault import VaultRotator, RotationPolicy, SecretType
+
         rotator = VaultRotator()
         assert len(rotator._policies) > 0
         s = rotator.stats()
@@ -1609,11 +1759,13 @@ class TestAgentVaultDeep:
 
     def test_vault_rotator_no_defaults(self):
         from jarvis.security.agent_vault import VaultRotator
+
         rotator = VaultRotator(load_defaults=False)
         assert len(rotator._policies) == 0
 
     def test_agent_secret_properties(self):
         from jarvis.security.agent_vault import AgentSecret, SecretType, SecretStatus
+
         secret = AgentSecret(
             secret_id="SEC-1",
             agent_id="a1",
@@ -1627,6 +1779,7 @@ class TestAgentVaultDeep:
 
     def test_agent_secret_expired(self):
         from jarvis.security.agent_vault import AgentSecret, SecretType, SecretStatus
+
         secret = AgentSecret(
             secret_id="SEC-1",
             agent_id="a1",
@@ -1638,6 +1791,7 @@ class TestAgentVaultDeep:
 
     def test_vault_expire_check(self):
         from jarvis.security.agent_vault import AgentVault
+
         vault = AgentVault("agent1")
         s = vault.store("short_lived", "value", ttl_hours=0)
         # Manually set expiry in the past
@@ -1655,16 +1809,23 @@ class TestAgentVaultDeep:
 class TestCICDGateDeep:
     def test_evaluate_with_stages(self):
         from jarvis.security.cicd_gate import SecurityGate, GatePolicy, GateVerdict
-        gate = SecurityGate(policy=GatePolicy(
-            require_all_stages_pass=True,
-            min_fuzzing_pass_rate=95.0,
-        ))
+
+        gate = SecurityGate(
+            policy=GatePolicy(
+                require_all_stages_pass=True,
+                min_fuzzing_pass_rate=95.0,
+            )
+        )
         pipeline = {
             "stages": [
                 {"stage": "scan", "result": "passed", "findings": []},
-                {"stage": "fuzz", "result": "failed", "findings": [
-                    {"severity": "medium"},
-                ]},
+                {
+                    "stage": "fuzz",
+                    "result": "failed",
+                    "findings": [
+                        {"severity": "medium"},
+                    ],
+                },
             ],
             "pass_rate": 80,
         }
@@ -1675,18 +1836,25 @@ class TestCICDGateDeep:
 
     def test_evaluate_medium_low_limits(self):
         from jarvis.security.cicd_gate import SecurityGate, GatePolicy, GateVerdict
-        gate = SecurityGate(policy=GatePolicy(
-            block_on_critical=False,
-            block_on_high=False,
-            max_medium_findings=0,
-            max_low_findings=0,
-        ))
+
+        gate = SecurityGate(
+            policy=GatePolicy(
+                block_on_critical=False,
+                block_on_high=False,
+                max_medium_findings=0,
+                max_low_findings=0,
+            )
+        )
         pipeline = {
             "stages": [
-                {"stage": "s1", "result": "ok", "findings": [
-                    {"severity": "medium"},
-                    {"severity": "low"},
-                ]},
+                {
+                    "stage": "s1",
+                    "result": "ok",
+                    "findings": [
+                        {"severity": "medium"},
+                        {"severity": "low"},
+                    ],
+                },
             ],
         }
         result = gate.evaluate(pipeline)
@@ -1694,6 +1862,7 @@ class TestCICDGateDeep:
 
     def test_continuous_red_team_probe(self):
         from jarvis.security.cicd_gate import RedTeamProbe
+
         probe = RedTeamProbe(
             probe_id="P1",
             category="prompt_injection",
@@ -1715,6 +1884,7 @@ class TestCICDGateDeep:
 class TestSandboxIsolationDeep:
     def test_sandbox_to_dict(self):
         from jarvis.security.sandbox_isolation import AgentSandbox, ResourceType, ResourceLimit
+
         sb = AgentSandbox(
             sandbox_id="sb1",
             agent_id="a1",
@@ -1726,13 +1896,18 @@ class TestSandboxIsolationDeep:
 
     def test_namespace_path_traversal(self):
         from jarvis.security.sandbox_isolation import NamespaceIsolation
+
         ni = NamespaceIsolation()
         ni.create("agent1", "tenant1")
         # Path traversal attempt
-        assert ni.validate_path("agent1", "/data/tenant1/agent1/../../../etc/passwd", "tenant1") is False
+        assert (
+            ni.validate_path("agent1", "/data/tenant1/agent1/../../../etc/passwd", "tenant1")
+            is False
+        )
 
     def test_per_agent_secret_vault(self):
         from jarvis.security.sandbox_isolation import PerAgentSecretVault
+
         vault = PerAgentSecretVault()
         vault.store("agent1", "api_key", "secret123")
         assert vault.retrieve("agent1", "api_key") is not None
@@ -1757,6 +1932,7 @@ class TestSandboxIsolationDeep:
 
     def test_sandbox_manager_stats(self):
         from jarvis.security.sandbox_isolation import SandboxManager
+
         sm = SandboxManager()
         sm.create("a1")
         sm.create("a2")
@@ -1766,6 +1942,7 @@ class TestSandboxIsolationDeep:
 
     def test_admin_manager_stats(self):
         from jarvis.security.sandbox_isolation import AdminManager, AdminRole
+
         am = AdminManager()
         am.create("a@x.com", "t1", AdminRole.SUPER_ADMIN)
         s = am.stats()
@@ -1782,6 +1959,7 @@ class TestSandboxIsolationDeep:
 class TestFrameworkDeep:
     def test_security_team_remove_member(self):
         from jarvis.security.framework import SecurityTeam, TeamMember, TeamRole
+
         team = SecurityTeam()
         m = TeamMember("M1", "Alice", TeamRole.SECURITY_ANALYST)
         team.add_member(m)
@@ -1790,11 +1968,16 @@ class TestFrameworkDeep:
 
     def test_security_team_auto_assign_no_match(self):
         from jarvis.security.framework import (
-            SecurityTeam, SecurityIncident, IncidentCategory, IncidentSeverity,
+            SecurityTeam,
+            SecurityIncident,
+            IncidentCategory,
+            IncidentSeverity,
         )
+
         team = SecurityTeam()
         inc = SecurityIncident(
-            incident_id="INC-1", title="Test",
+            incident_id="INC-1",
+            title="Test",
             category=IncidentCategory.PROMPT_INJECTION,
             severity=IncidentSeverity.HIGH,
         )
@@ -1803,16 +1986,24 @@ class TestFrameworkDeep:
 
     def test_security_metrics_with_incidents(self):
         from jarvis.security.framework import (
-            SecurityMetrics, IncidentTracker, IncidentCategory,
-            IncidentSeverity, IncidentStatus,
+            SecurityMetrics,
+            IncidentTracker,
+            IncidentCategory,
+            IncidentSeverity,
+            IncidentStatus,
         )
+
         tracker = IncidentTracker()
         tracker.create(
-            "Inc1", IncidentCategory.DENIAL_OF_SERVICE, IncidentSeverity.HIGH,
+            "Inc1",
+            IncidentCategory.DENIAL_OF_SERVICE,
+            IncidentSeverity.HIGH,
             occurred_at="2025-01-01T00:00:00Z",
         )
         tracker.create(
-            "Inc2", IncidentCategory.CREDENTIAL_LEAK, IncidentSeverity.CRITICAL,
+            "Inc2",
+            IncidentCategory.CREDENTIAL_LEAK,
+            IncidentSeverity.CRITICAL,
             occurred_at="2025-01-01T00:01:00Z",
         )
         metrics = SecurityMetrics(tracker)
@@ -1826,6 +2017,7 @@ class TestFrameworkDeep:
 
     def test_team_member_to_dict(self):
         from jarvis.security.framework import TeamMember, TeamRole
+
         m = TeamMember("M1", "Bob", TeamRole.DEVELOPER, on_call=True, specialties=["python"])
         d = m.to_dict()
         assert d["role"] == "developer"
@@ -1833,6 +2025,7 @@ class TestFrameworkDeep:
 
     def test_security_team_stats(self):
         from jarvis.security.framework import SecurityTeam, TeamMember, TeamRole
+
         team = SecurityTeam()
         team.add_member(TeamMember("M1", "Alice", TeamRole.ML_ENGINEER, on_call=True))
         s = team.stats()
@@ -1841,10 +2034,14 @@ class TestFrameworkDeep:
 
     def test_incident_time_properties_no_dates(self):
         from jarvis.security.framework import (
-            SecurityIncident, IncidentCategory, IncidentSeverity,
+            SecurityIncident,
+            IncidentCategory,
+            IncidentSeverity,
         )
+
         inc = SecurityIncident(
-            incident_id="INC-1", title="Test",
+            incident_id="INC-1",
+            title="Test",
             category=IncidentCategory.DENIAL_OF_SERVICE,
             severity=IncidentSeverity.LOW,
         )
@@ -1853,10 +2050,14 @@ class TestFrameworkDeep:
 
     def test_incident_time_invalid_dates(self):
         from jarvis.security.framework import (
-            SecurityIncident, IncidentCategory, IncidentSeverity,
+            SecurityIncident,
+            IncidentCategory,
+            IncidentSeverity,
         )
+
         inc = SecurityIncident(
-            incident_id="INC-1", title="Test",
+            incident_id="INC-1",
+            title="Test",
             category=IncidentCategory.DENIAL_OF_SERVICE,
             severity=IncidentSeverity.LOW,
             occurred_at="not-a-date",

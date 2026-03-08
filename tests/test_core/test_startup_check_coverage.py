@@ -165,7 +165,9 @@ class TestCheckOllama:
             report = checker.check_ollama()
         assert "Ollama running" in report.checks_passed
 
-    def test_check_ollama_not_running_warns_without_auto_install(self, config: JarvisConfig) -> None:
+    def test_check_ollama_not_running_warns_without_auto_install(
+        self, config: JarvisConfig
+    ) -> None:
         checker = StartupChecker(config)
         with patch.object(checker, "_ollama_is_running", return_value=False):
             report = checker.check_ollama()

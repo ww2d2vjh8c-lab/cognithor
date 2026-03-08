@@ -26,11 +26,11 @@ from typing import Any
 
 
 class TrustLevel(Enum):
-    UNTRUSTED = "untrusted"       # Score 0-20
-    LOW = "low"                    # Score 21-40
-    MODERATE = "moderate"          # Score 41-60
-    HIGH = "high"                  # Score 61-80
-    VERIFIED = "verified"          # Score 81-100
+    UNTRUSTED = "untrusted"  # Score 0-20
+    LOW = "low"  # Score 21-40
+    MODERATE = "moderate"  # Score 41-60
+    HIGH = "high"  # Score 61-80
+    VERIFIED = "verified"  # Score 81-100
 
 
 @dataclass
@@ -327,10 +327,7 @@ class SkillRecallManager:
         return False
 
     def active_recalls(self) -> list[RecallNotice]:
-        return [
-            r for r in self._recalls.values()
-            if r.skill_id in self._blocked_skills
-        ]
+        return [r for r in self._recalls.values() if r.skill_id in self._blocked_skills]
 
     def all_recalls(self) -> list[RecallNotice]:
         return list(self._recalls.values())
@@ -466,7 +463,7 @@ class GovernanceRule:
     rule_id: str
     name: str
     condition: str  # "abuse_reports >= 5", "score < 20", etc.
-    action: str     # "block", "recall", "flag", "notify"
+    action: str  # "block", "recall", "flag", "notify"
     enabled: bool = True
 
     def to_dict(self) -> dict[str, Any]:

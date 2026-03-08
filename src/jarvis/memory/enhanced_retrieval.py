@@ -51,77 +51,352 @@ logger = logging.getLogger("jarvis.memory.enhanced_retrieval")
 # Häufige deutsche Alltagsnomen die KEINE Named Entities sind.
 # Erweiterte Liste mit den ~300 häufigsten deutschen Nomen aus
 # Wortfrequenzlisten (DeReWo, SUBTLEX-DE). Umlaute normalisiert.
-_GERMAN_COMMON_NOUNS: frozenset[str] = frozenset({
-    # Abstrakte Konzepte
-    "Anfang", "Angebot", "Angst", "Antwort", "Arbeit", "Art", "Aufgabe",
-    "Augenblick", "Aussage", "Bedeutung", "Bedingung", "Beginn",
-    "Beispiel", "Bereich", "Bericht", "Bewegung", "Beziehung", "Bild",
-    "Chance", "Ding", "Druck", "Eindruck", "Einfluss", "Ende",
-    "Entscheidung", "Erfahrung", "Erfolg", "Ergebnis", "Erinnerung",
-    "Fall", "Frage", "Freiheit", "Freude", "Friede", "Gedanke",
-    "Gefahr", "Geschichte", "Gesellschaft", "Gesetz", "Gewalt",
-    "Glaube", "Grund", "Hilfe", "Hinweis", "Hoffnung", "Idee",
-    "Information", "Interesse", "Kampf", "Kenntnis", "Kosten", "Kraft",
-    "Krieg", "Kritik", "Kultur", "Kunst", "Lage", "Leben", "Leistung",
-    "Liebe", "Lust", "Macht", "Meinung", "Menge", "Mittel", "Moment",
-    "Nacht", "Natur", "Notwendigkeit", "Ordnung", "Pflicht", "Plan",
-    "Politik", "Praxis", "Prinzip", "Problem", "Programm", "Projekt",
-    "Prozess", "Punkt", "Recht", "Rede", "Regel", "Reihe", "Richtung",
-    "Risiko", "Rolle", "Sache", "Schritt", "Schuld", "Schutz",
-    "Seite", "Sicherheit", "Sinn", "Situation", "Sorge", "Spass",
-    "Sprache", "Staat", "Stelle", "Stimme", "Streit", "Stunde",
-    "System", "Tag", "Tat", "Teil", "Thema", "Tod", "Traum", "Trend",
-    "Ursache", "Urteil", "Verantwortung", "Verhalten", "Versuch",
-    "Vertrauen", "Vorstellung", "Wahl", "Wahrheit", "Weg", "Weise",
-    "Welt", "Wert", "Wirkung", "Wissen", "Woche", "Wort", "Wunsch",
-    "Zahl", "Zeit", "Ziel", "Zukunft", "Zusammenhang", "Zustand",
-    # Physische Objekte und Orte
-    "Auge", "Auto", "Bau", "Baum", "Bett", "Blatt", "Blick", "Blut",
-    "Boden", "Brief", "Brot", "Buch", "Computer", "Dach", "Dorf",
-    "Erde", "Essen", "Fenster", "Feuer", "Film", "Foto", "Garten",
-    "Geld", "Glas", "Haar", "Hand", "Haus", "Herz", "Hund", "Insel",
-    "Karte", "Kind", "Kirche", "Klasse", "Kopf", "Kreis", "Land",
-    "Licht", "Liste", "Luft", "Markt", "Meer", "Messer", "Morgen",
-    "Mund", "Musik", "Nase", "Nummer", "Ohr", "Papier", "Platz",
-    "Post", "Raum", "Ring", "Schloss", "Schule", "Sonne", "Spiel",
-    "Stadt", "Stein", "Stern", "Strasse", "Stuhl", "Stunde", "Tisch",
-    "Tuer", "Turm", "Uhr", "Wald", "Wand", "Wasser", "Wetter",
-    "Wohnung", "Wolke", "Zeitung", "Zimmer", "Zug",
-    # Personen (generisch)
-    "Arzt", "Bauer", "Bruder", "Chef", "Eltern", "Feind", "Frau",
-    "Freund", "Gast", "Herr", "Junge", "Kellner", "Lehrer", "Leute",
-    "Mann", "Mutter", "Nachbar", "Onkel", "Partner", "Schwester",
-    "Soldat", "Sohn", "Tochter", "Vater", "Volk",
-    # Versicherungs- und Finanzbegriffe (Domain-spezifisch häufig)
-    "Antrag", "Beitrag", "Berater", "Beratung", "Betrag", "Deckung",
-    "Dokument", "Einnahme", "Garantie", "Kapital", "Konto", "Kredit",
-    "Kunde", "Laufzeit", "Leistung", "Police", "Praemie", "Provision",
-    "Rate", "Rente", "Rendite", "Steuer", "Tarif", "Umsatz",
-    "Versicherung", "Vertrag", "Vorsorge", "Zahlung", "Zinsen",
-    # IT / Technik (häufig in gemischten Texten)
-    "Abfrage", "Anwendung", "Code", "Datei", "Daten", "Datenbank",
-    "Fehler", "Funktion", "Klick", "Meldung", "Modul", "Netzwerk",
-    "Nutzer", "Schnittstelle", "Server", "Software", "Speicher",
-    "Tabelle", "Update", "Verbindung", "Version", "Zugang", "Zugriff",
-})
+_GERMAN_COMMON_NOUNS: frozenset[str] = frozenset(
+    {
+        # Abstrakte Konzepte
+        "Anfang",
+        "Angebot",
+        "Angst",
+        "Antwort",
+        "Arbeit",
+        "Art",
+        "Aufgabe",
+        "Augenblick",
+        "Aussage",
+        "Bedeutung",
+        "Bedingung",
+        "Beginn",
+        "Beispiel",
+        "Bereich",
+        "Bericht",
+        "Bewegung",
+        "Beziehung",
+        "Bild",
+        "Chance",
+        "Ding",
+        "Druck",
+        "Eindruck",
+        "Einfluss",
+        "Ende",
+        "Entscheidung",
+        "Erfahrung",
+        "Erfolg",
+        "Ergebnis",
+        "Erinnerung",
+        "Fall",
+        "Frage",
+        "Freiheit",
+        "Freude",
+        "Friede",
+        "Gedanke",
+        "Gefahr",
+        "Geschichte",
+        "Gesellschaft",
+        "Gesetz",
+        "Gewalt",
+        "Glaube",
+        "Grund",
+        "Hilfe",
+        "Hinweis",
+        "Hoffnung",
+        "Idee",
+        "Information",
+        "Interesse",
+        "Kampf",
+        "Kenntnis",
+        "Kosten",
+        "Kraft",
+        "Krieg",
+        "Kritik",
+        "Kultur",
+        "Kunst",
+        "Lage",
+        "Leben",
+        "Leistung",
+        "Liebe",
+        "Lust",
+        "Macht",
+        "Meinung",
+        "Menge",
+        "Mittel",
+        "Moment",
+        "Nacht",
+        "Natur",
+        "Notwendigkeit",
+        "Ordnung",
+        "Pflicht",
+        "Plan",
+        "Politik",
+        "Praxis",
+        "Prinzip",
+        "Problem",
+        "Programm",
+        "Projekt",
+        "Prozess",
+        "Punkt",
+        "Recht",
+        "Rede",
+        "Regel",
+        "Reihe",
+        "Richtung",
+        "Risiko",
+        "Rolle",
+        "Sache",
+        "Schritt",
+        "Schuld",
+        "Schutz",
+        "Seite",
+        "Sicherheit",
+        "Sinn",
+        "Situation",
+        "Sorge",
+        "Spass",
+        "Sprache",
+        "Staat",
+        "Stelle",
+        "Stimme",
+        "Streit",
+        "Stunde",
+        "System",
+        "Tag",
+        "Tat",
+        "Teil",
+        "Thema",
+        "Tod",
+        "Traum",
+        "Trend",
+        "Ursache",
+        "Urteil",
+        "Verantwortung",
+        "Verhalten",
+        "Versuch",
+        "Vertrauen",
+        "Vorstellung",
+        "Wahl",
+        "Wahrheit",
+        "Weg",
+        "Weise",
+        "Welt",
+        "Wert",
+        "Wirkung",
+        "Wissen",
+        "Woche",
+        "Wort",
+        "Wunsch",
+        "Zahl",
+        "Zeit",
+        "Ziel",
+        "Zukunft",
+        "Zusammenhang",
+        "Zustand",
+        # Physische Objekte und Orte
+        "Auge",
+        "Auto",
+        "Bau",
+        "Baum",
+        "Bett",
+        "Blatt",
+        "Blick",
+        "Blut",
+        "Boden",
+        "Brief",
+        "Brot",
+        "Buch",
+        "Computer",
+        "Dach",
+        "Dorf",
+        "Erde",
+        "Essen",
+        "Fenster",
+        "Feuer",
+        "Film",
+        "Foto",
+        "Garten",
+        "Geld",
+        "Glas",
+        "Haar",
+        "Hand",
+        "Haus",
+        "Herz",
+        "Hund",
+        "Insel",
+        "Karte",
+        "Kind",
+        "Kirche",
+        "Klasse",
+        "Kopf",
+        "Kreis",
+        "Land",
+        "Licht",
+        "Liste",
+        "Luft",
+        "Markt",
+        "Meer",
+        "Messer",
+        "Morgen",
+        "Mund",
+        "Musik",
+        "Nase",
+        "Nummer",
+        "Ohr",
+        "Papier",
+        "Platz",
+        "Post",
+        "Raum",
+        "Ring",
+        "Schloss",
+        "Schule",
+        "Sonne",
+        "Spiel",
+        "Stadt",
+        "Stein",
+        "Stern",
+        "Strasse",
+        "Stuhl",
+        "Stunde",
+        "Tisch",
+        "Tuer",
+        "Turm",
+        "Uhr",
+        "Wald",
+        "Wand",
+        "Wasser",
+        "Wetter",
+        "Wohnung",
+        "Wolke",
+        "Zeitung",
+        "Zimmer",
+        "Zug",
+        # Personen (generisch)
+        "Arzt",
+        "Bauer",
+        "Bruder",
+        "Chef",
+        "Eltern",
+        "Feind",
+        "Frau",
+        "Freund",
+        "Gast",
+        "Herr",
+        "Junge",
+        "Kellner",
+        "Lehrer",
+        "Leute",
+        "Mann",
+        "Mutter",
+        "Nachbar",
+        "Onkel",
+        "Partner",
+        "Schwester",
+        "Soldat",
+        "Sohn",
+        "Tochter",
+        "Vater",
+        "Volk",
+        # Versicherungs- und Finanzbegriffe (Domain-spezifisch häufig)
+        "Antrag",
+        "Beitrag",
+        "Berater",
+        "Beratung",
+        "Betrag",
+        "Deckung",
+        "Dokument",
+        "Einnahme",
+        "Garantie",
+        "Kapital",
+        "Konto",
+        "Kredit",
+        "Kunde",
+        "Laufzeit",
+        "Leistung",
+        "Police",
+        "Praemie",
+        "Provision",
+        "Rate",
+        "Rente",
+        "Rendite",
+        "Steuer",
+        "Tarif",
+        "Umsatz",
+        "Versicherung",
+        "Vertrag",
+        "Vorsorge",
+        "Zahlung",
+        "Zinsen",
+        # IT / Technik (häufig in gemischten Texten)
+        "Abfrage",
+        "Anwendung",
+        "Code",
+        "Datei",
+        "Daten",
+        "Datenbank",
+        "Fehler",
+        "Funktion",
+        "Klick",
+        "Meldung",
+        "Modul",
+        "Netzwerk",
+        "Nutzer",
+        "Schnittstelle",
+        "Server",
+        "Software",
+        "Speicher",
+        "Tabelle",
+        "Update",
+        "Verbindung",
+        "Version",
+        "Zugang",
+        "Zugriff",
+    }
+)
 
 # Pattern für Named-Entity-Kandidaten: Großbuchstabe + mindestens 2 Kleinbuchstaben
 _ENTITY_CANDIDATE_RE = re.compile(r"\b[A-ZÄÖÜ][a-zäöüß]{2,}\b")
 
 # Pattern für starke NE-Signale (Mehrwort-Entitäten, CamelCase etc.)
-_MULTI_WORD_ENTITY_RE = re.compile(
-    r"\b[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)+\b"
-)
+_MULTI_WORD_ENTITY_RE = re.compile(r"\b[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)+\b")
 
 # Deutsche Artikel und Pronomen die bei Mehrwort-Entitäten irrelevant sind
-_GERMAN_ARTICLES: frozenset[str] = frozenset({
-    "Der", "Die", "Das", "Den", "Dem", "Des",
-    "Ein", "Eine", "Eines", "Einem", "Einen", "Einer",
-    "Kein", "Keine", "Keines", "Keinem", "Keinen", "Keiner",
-    "Ihr", "Ihre", "Sein", "Seine", "Mein", "Meine",
-    "Jeder", "Jede", "Jedes", "Dieser", "Diese", "Dieses",
-    "Welcher", "Welche", "Welches", "Alle", "Viele", "Einige",
-})
+_GERMAN_ARTICLES: frozenset[str] = frozenset(
+    {
+        "Der",
+        "Die",
+        "Das",
+        "Den",
+        "Dem",
+        "Des",
+        "Ein",
+        "Eine",
+        "Eines",
+        "Einem",
+        "Einen",
+        "Einer",
+        "Kein",
+        "Keine",
+        "Keines",
+        "Keinem",
+        "Keinen",
+        "Keiner",
+        "Ihr",
+        "Ihre",
+        "Sein",
+        "Seine",
+        "Mein",
+        "Meine",
+        "Jeder",
+        "Jede",
+        "Jedes",
+        "Dieser",
+        "Diese",
+        "Dieses",
+        "Welcher",
+        "Welche",
+        "Welches",
+        "Alle",
+        "Viele",
+        "Einige",
+    }
+)
 
 # Trailing-Punctuation Pattern für Wort-Bereinigung
 _TRAILING_PUNCT_RE = re.compile(r'[.,;:!?\"\'"()]+$')
@@ -229,6 +504,7 @@ def _count_german_entities_in_text(text: str) -> int:
 # 1. Query-Dekomposition
 # ============================================================================
 
+
 @dataclass
 class DecomposedQuery:
     """Ergebnis der Query-Dekomposition."""
@@ -276,7 +552,7 @@ class QueryDecomposer:
 
     def __init__(self, llm_fn: Callable[..., Any] | None = None) -> None:
         """Args:
-            llm_fn: Optionale async LLM-Funktion für bessere Dekomposition.
+        llm_fn: Optionale async LLM-Funktion für bessere Dekomposition.
         """
         self._llm_fn = llm_fn
 
@@ -370,6 +646,7 @@ class QueryDecomposer:
 # 2. Reciprocal Rank Fusion (RRF)
 # ============================================================================
 
+
 def reciprocal_rank_fusion(
     result_lists: list[list[MemorySearchResult]],
     *,
@@ -435,6 +712,7 @@ def reciprocal_rank_fusion(
 # ============================================================================
 # 3. Corrective RAG
 # ============================================================================
+
 
 @dataclass
 class RelevanceVerdict:
@@ -529,12 +807,60 @@ class CorrectiveRAG:
 
         # Strategie 1: Nur Schlüsselwörter (Stoppwörter entfernen)
         stopwords = {
-            "der", "die", "das", "ein", "eine", "ist", "sind", "war", "hat",
-            "und", "oder", "aber", "in", "an", "auf", "mit", "von", "zu",
-            "für", "über", "nach", "aus", "bei", "um", "wie", "was", "wer",
-            "wo", "wann", "warum", "ich", "du", "er", "sie", "es", "wir",
-            "mein", "dein", "sein", "ihr", "the", "a", "is", "are", "was",
-            "and", "or", "in", "on", "at", "with", "for", "to", "of",
+            "der",
+            "die",
+            "das",
+            "ein",
+            "eine",
+            "ist",
+            "sind",
+            "war",
+            "hat",
+            "und",
+            "oder",
+            "aber",
+            "in",
+            "an",
+            "auf",
+            "mit",
+            "von",
+            "zu",
+            "für",
+            "über",
+            "nach",
+            "aus",
+            "bei",
+            "um",
+            "wie",
+            "was",
+            "wer",
+            "wo",
+            "wann",
+            "warum",
+            "ich",
+            "du",
+            "er",
+            "sie",
+            "es",
+            "wir",
+            "mein",
+            "dein",
+            "sein",
+            "ihr",
+            "the",
+            "a",
+            "is",
+            "are",
+            "was",
+            "and",
+            "or",
+            "in",
+            "on",
+            "at",
+            "with",
+            "for",
+            "to",
+            "of",
         }
         keywords = [w for w in words if w.lower() not in stopwords and len(w) > 2]
         if keywords and len(keywords) < len(words):
@@ -554,6 +880,7 @@ class CorrectiveRAG:
 # ============================================================================
 # 4. Frequenz-Gewichtung
 # ============================================================================
+
 
 class FrequencyTracker:
     """Trackt wie oft Chunks abgerufen werden.
@@ -646,6 +973,7 @@ class FrequencyTracker:
 # ============================================================================
 # 5. Episodenkompression
 # ============================================================================
+
 
 @dataclass
 class CompressedEpisode:
@@ -828,7 +1156,9 @@ class EpisodicCompressor:
         """
         if self._llm_fn is None or not entries:
             return self.compress_heuristic(
-                entries, start_date=start_date, end_date=end_date,
+                entries,
+                start_date=start_date,
+                end_date=end_date,
             )
 
         combined = "\n\n".join(entries)
@@ -853,13 +1183,16 @@ class EpisodicCompressor:
         except Exception as exc:
             logger.warning("llm_compression_failed: %s", exc)
             return self.compress_heuristic(
-                entries, start_date=start_date, end_date=end_date,
+                entries,
+                start_date=start_date,
+                end_date=end_date,
             )
 
 
 # ============================================================================
 # 6. Enhanced Search Pipeline (orchestriert alles)
 # ============================================================================
+
 
 class EnhancedSearchPipeline:
     """Orchestriert alle Enhanced-Retrieval-Komponenten.
@@ -928,7 +1261,9 @@ class EnhancedSearchPipeline:
         all_results: list[list[MemorySearchResult]] = []
         for sq in sub_queries:
             results = await self._search.search(
-                sq, top_k=top_k * 2, tier_filter=tier_filter,
+                sq,
+                top_k=top_k * 2,
+                tier_filter=tier_filter,
             )
             all_results.append(results)
 
@@ -949,7 +1284,9 @@ class EnhancedSearchPipeline:
                 alternatives = self._corrective.generate_alternative_queries(query)
                 for alt_query in alternatives[:2]:
                     retry_results = await self._search.search(
-                        alt_query, top_k=top_k, tier_filter=tier_filter,
+                        alt_query,
+                        top_k=top_k,
+                        tier_filter=tier_filter,
                     )
                     all_results.append(retry_results)
 

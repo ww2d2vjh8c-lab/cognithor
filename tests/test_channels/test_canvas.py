@@ -25,11 +25,14 @@ class TestCanvasManager:
         broadcaster = AsyncMock()
         cm = CanvasManager(broadcaster=broadcaster)
         await cm.push("s1", "<p>Content</p>", "Title")
-        broadcaster.assert_called_once_with("s1", {
-            "type": "canvas_push",
-            "html": "<p>Content</p>",
-            "title": "Title",
-        })
+        broadcaster.assert_called_once_with(
+            "s1",
+            {
+                "type": "canvas_push",
+                "html": "<p>Content</p>",
+                "title": "Title",
+            },
+        )
 
     @pytest.mark.asyncio
     async def test_reset(self) -> None:
@@ -59,10 +62,13 @@ class TestCanvasManager:
         broadcaster = AsyncMock()
         cm = CanvasManager(broadcaster=broadcaster)
         await cm.eval_js("s1", "alert('test')")
-        broadcaster.assert_called_once_with("s1", {
-            "type": "canvas_eval",
-            "js": "alert('test')",
-        })
+        broadcaster.assert_called_once_with(
+            "s1",
+            {
+                "type": "canvas_eval",
+                "js": "alert('test')",
+            },
+        )
 
     @pytest.mark.asyncio
     async def test_undo(self) -> None:

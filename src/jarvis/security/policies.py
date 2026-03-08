@@ -223,9 +223,7 @@ class PolicyEngine:
         if current_depth >= quota.max_depth:
             return PolicyViolation(
                 rule="max_depth_exceeded",
-                details=(
-                    f"Max. Spawn-Tiefe erreicht: {current_depth}/{quota.max_depth}"
-                ),
+                details=(f"Max. Spawn-Tiefe erreicht: {current_depth}/{quota.max_depth}"),
             )
 
         if quota.current_sub_agents >= quota.max_sub_agents:
@@ -260,9 +258,7 @@ class PolicyEngine:
         if current_depth >= quota.max_depth:
             return PolicyViolation(
                 rule="max_depth_exceeded",
-                details=(
-                    f"Max. Spawn-Tiefe erreicht: {current_depth}/{quota.max_depth}"
-                ),
+                details=(f"Max. Spawn-Tiefe erreicht: {current_depth}/{quota.max_depth}"),
             )
         return None
 

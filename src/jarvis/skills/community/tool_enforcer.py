@@ -156,9 +156,7 @@ class ToolEnforcer:
         # Max-Tool-Calls Enforcement (aus Manifest)
         manifest = getattr(skill, "manifest", None)
         max_calls = (
-            getattr(manifest, "max_tool_calls", 0)
-            if manifest
-            else self._default_max_tool_calls
+            getattr(manifest, "max_tool_calls", 0) if manifest else self._default_max_tool_calls
         )
         if max_calls > 0:
             key = skill.slug

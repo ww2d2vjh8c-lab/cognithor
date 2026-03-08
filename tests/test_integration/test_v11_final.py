@@ -31,18 +31,24 @@ class TestSecurityGate:
 
     def test_fail_critical_finding(self) -> None:
         gate = SecurityGate()
-        result = gate.evaluate({
-            "stages": [{"stage": "fuzzing", "result": "done", "findings": [{"severity": "critical"}]}],
-            "pass_rate": 80,
-        })
+        result = gate.evaluate(
+            {
+                "stages": [
+                    {"stage": "fuzzing", "result": "done", "findings": [{"severity": "critical"}]}
+                ],
+                "pass_rate": 80,
+            }
+        )
         assert result.verdict == GateVerdict.FAIL
         assert "kritische" in result.reasons[0]
 
     def test_fail_high_finding(self) -> None:
         gate = SecurityGate()
-        result = gate.evaluate({
-            "stages": [{"stage": "scan", "result": "done", "findings": [{"severity": "high"}]}],
-        })
+        result = gate.evaluate(
+            {
+                "stages": [{"stage": "scan", "result": "done", "findings": [{"severity": "high"}]}],
+            }
+        )
         assert result.verdict == GateVerdict.FAIL
 
     def test_fail_low_pass_rate(self) -> None:
@@ -53,9 +59,13 @@ class TestSecurityGate:
 
     def test_override(self) -> None:
         gate = SecurityGate()
-        result = gate.evaluate({
-            "stages": [{"stage": "s", "result": "done", "findings": [{"severity": "critical"}]}],
-        })
+        result = gate.evaluate(
+            {
+                "stages": [
+                    {"stage": "s", "result": "done", "findings": [{"severity": "critical"}]}
+                ],
+            }
+        )
         assert result.verdict == GateVerdict.FAIL
         overridden = gate.override(result.gate_id, "admin", "accepted risk")
         assert overridden.verdict == GateVerdict.OVERRIDE
@@ -81,9 +91,13 @@ class TestSecurityGate:
     def test_custom_policy(self) -> None:
         policy = GatePolicy(block_on_critical=False, block_on_high=False)
         gate = SecurityGate(policy)
-        result = gate.evaluate({
-            "stages": [{"stage": "s", "result": "done", "findings": [{"severity": "critical"}]}],
-        })
+        result = gate.evaluate(
+            {
+                "stages": [
+                    {"stage": "s", "result": "done", "findings": [{"severity": "critical"}]}
+                ],
+            }
+        )
         assert result.verdict == GateVerdict.PASS
 
 
@@ -106,9 +120,11 @@ class TestContinuousRedTeam:
     def test_partial_detection(self) -> None:
         rt = ContinuousRedTeam()
         count = [0]
+
         def handler(p):
             count[0] += 1
             return {}
+
         rt.run_probes(handler, lambda r: count[0] % 2 == 0, ["escalation"])
         assert 0 < rt.detection_rate() < 100
 
@@ -152,6 +168,7 @@ class TestScanScheduler:
 
     def test_add_remove(self) -> None:
         from jarvis.security.cicd_gate import ScanSchedule
+
         scheduler = ScanScheduler(schedules=[])
         scheduler.add(ScanSchedule("s1", "Test", "0 * * * *"))
         assert scheduler.schedule_count == 1
@@ -265,17 +282,13 @@ class TestNamespaceIsolation:
         ns = NamespaceIsolation()
         ns.create("agent-1", "tenant-1")
         # Prefix-Angriff: tenant-1-evil beginnt mit tenant-1 aber ist anderer Tenant
-        assert not ns.validate_path(
-            "agent-1", "/data/tenant-1-evil/agent-1/secret.txt", "tenant-1"
-        )
+        assert not ns.validate_path("agent-1", "/data/tenant-1-evil/agent-1/secret.txt", "tenant-1")
         # Parent-Traversal
         assert not ns.validate_path(
             "agent-1", "/data/tenant-1/agent-1/../agent-2/secret.txt", "tenant-1"
         )
         # Nur exakte Unterverzeichnisse erlaubt
-        assert ns.validate_path(
-            "agent-1", "/data/tenant-1/agent-1/sub/deep/file.txt", "tenant-1"
-        )
+        assert ns.validate_path("agent-1", "/data/tenant-1/agent-1/sub/deep/file.txt", "tenant-1")
 
     def test_stats(self) -> None:
         ns = NamespaceIsolation()
@@ -478,7 +491,9 @@ class TestMemoryVersionControl:
 class TestPlausibilityChecker:
     def test_plausible(self) -> None:
         checker = PlausibilityChecker()
-        entry = MemoryEntry("e1", "Der Benutzer bevorzugt Python.", source="conversation", confidence=0.9)
+        entry = MemoryEntry(
+            "e1", "Der Benutzer bevorzugt Python.", source="conversation", confidence=0.9
+        )
         result = checker.check(entry)
         assert result.result == PlausibilityResult.PLAUSIBLE
 
@@ -499,7 +514,8 @@ class TestDecisionExplainer:
     def test_explain(self) -> None:
         explainer = DecisionExplainer()
         exp = explainer.explain(
-            "Welches Modell?", "GPT-4o",
+            "Welches Modell?",
+            "GPT-4o",
             sources=[{"type": "benchmark", "name": "MMLU"}],
             reasoning_steps=["Schritt 1", "Schritt 2"],
             confidence=0.85,
@@ -716,8 +732,9 @@ class TestFraudDetector:
 
     def test_reputation_gaming(self) -> None:
         detector = FraudDetector()
-        signals = detector.scan("new-skill", "pass",
-                                {"reviews_count": 500, "avg_stars": 5.0, "age_days": 2})
+        signals = detector.scan(
+            "new-skill", "pass", {"reviews_count": 500, "avg_stars": 5.0, "age_days": 2}
+        )
         assert any(s.signal_type == "reputation_gaming" for s in signals)
 
 

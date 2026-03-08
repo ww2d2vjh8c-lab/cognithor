@@ -26,6 +26,7 @@ CanvasBroadcaster = Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
 @dataclass
 class CanvasSnapshot:
     """Einzelner Canvas-Zustand."""
+
     html: str
     title: str = ""
     timestamp: float = 0.0
@@ -34,6 +35,7 @@ class CanvasSnapshot:
 @dataclass
 class CanvasState:
     """Canvas-Zustand pro Session mit Undo/Redo-History."""
+
     current_html: str = ""
     current_title: str = ""
     history: list[CanvasSnapshot] = field(default_factory=list)
@@ -74,14 +76,16 @@ class CanvasManager:
 
             # Aktuellen Zustand in History sichern (für Undo)
             if state.current_html:
-                state.history.append(CanvasSnapshot(
-                    html=state.current_html,
-                    title=state.current_title,
-                    timestamp=time.time(),
-                ))
+                state.history.append(
+                    CanvasSnapshot(
+                        html=state.current_html,
+                        title=state.current_title,
+                        timestamp=time.time(),
+                    )
+                )
                 # History begrenzen
                 if len(state.history) > state.max_history:
-                    state.history = state.history[-state.max_history:]
+                    state.history = state.history[-state.max_history :]
 
             # Redo-Stack leeren bei neuem Push
             state.redo_stack.clear()
@@ -92,14 +96,16 @@ class CanvasManager:
 
         # An Clients broadcasten
         if self._broadcaster:
-            await self._broadcaster(session_id, {
-                "type": "canvas_push",
-                "html": html,
-                "title": title,
-            })
+            await self._broadcaster(
+                session_id,
+                {
+                    "type": "canvas_push",
+                    "html": html,
+                    "title": title,
+                },
+            )
 
-        logger.debug("Canvas push: session=%s title=%s len=%d",
-                      session_id, title, len(html))
+        logger.debug("Canvas push: session=%s title=%s len=%d", session_id, title, len(html))
 
     async def reset(self, session_id: str) -> None:
         """Leert das Canvas einer Session.
@@ -112,11 +118,14 @@ class CanvasManager:
 
             if state.current_html:
                 import time
-                state.history.append(CanvasSnapshot(
-                    html=state.current_html,
-                    title=state.current_title,
-                    timestamp=time.time(),
-                ))
+
+                state.history.append(
+                    CanvasSnapshot(
+                        html=state.current_html,
+                        title=state.current_title,
+                        timestamp=time.time(),
+                    )
+                )
 
             state.current_html = ""
             state.current_title = ""
@@ -148,10 +157,13 @@ class CanvasManager:
             js: JavaScript-Code zur Ausführung im Canvas-iframe.
         """
         if self._broadcaster:
-            await self._broadcaster(session_id, {
-                "type": "canvas_eval",
-                "js": js,
-            })
+            await self._broadcaster(
+                session_id,
+                {
+                    "type": "canvas_eval",
+                    "js": js,
+                },
+            )
 
         logger.debug("Canvas eval: session=%s len=%d", session_id, len(js))
 
@@ -171,11 +183,14 @@ class CanvasManager:
 
             # Aktuellen Zustand auf Redo-Stack
             import time
-            state.redo_stack.append(CanvasSnapshot(
-                html=state.current_html,
-                title=state.current_title,
-                timestamp=time.time(),
-            ))
+
+            state.redo_stack.append(
+                CanvasSnapshot(
+                    html=state.current_html,
+                    title=state.current_title,
+                    timestamp=time.time(),
+                )
+            )
 
             # Letzten History-Eintrag wiederherstellen
             prev = state.history.pop()
@@ -183,11 +198,14 @@ class CanvasManager:
             state.current_title = prev.title
 
         if self._broadcaster:
-            await self._broadcaster(session_id, {
-                "type": "canvas_push",
-                "html": state.current_html,
-                "title": state.current_title,
-            })
+            await self._broadcaster(
+                session_id,
+                {
+                    "type": "canvas_push",
+                    "html": state.current_html,
+                    "title": state.current_title,
+                },
+            )
 
         return state.current_html
 
@@ -206,22 +224,28 @@ class CanvasManager:
                 return None
 
             import time
-            state.history.append(CanvasSnapshot(
-                html=state.current_html,
-                title=state.current_title,
-                timestamp=time.time(),
-            ))
+
+            state.history.append(
+                CanvasSnapshot(
+                    html=state.current_html,
+                    title=state.current_title,
+                    timestamp=time.time(),
+                )
+            )
 
             next_state = state.redo_stack.pop()
             state.current_html = next_state.html
             state.current_title = next_state.title
 
         if self._broadcaster:
-            await self._broadcaster(session_id, {
-                "type": "canvas_push",
-                "html": state.current_html,
-                "title": state.current_title,
-            })
+            await self._broadcaster(
+                session_id,
+                {
+                    "type": "canvas_push",
+                    "html": state.current_html,
+                    "title": state.current_title,
+                },
+            )
 
         return state.current_html
 

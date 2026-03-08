@@ -2,6 +2,7 @@
 
 Einfacher Token-Bucket-Algorithmus fuer API-Endpoints.
 """
+
 from __future__ import annotations
 
 import time
@@ -12,8 +13,9 @@ from dataclasses import dataclass, field
 @dataclass
 class TokenBucket:
     """Token-Bucket fuer einen Client."""
-    rate: float          # tokens per second
-    capacity: float      # max burst
+
+    rate: float  # tokens per second
+    capacity: float  # max burst
     tokens: float = field(init=False)
     last_refill: float = field(init=False)
 
@@ -37,8 +39,8 @@ class RateLimiter:
 
     def __init__(
         self,
-        rate: float = 10.0,       # requests per second
-        capacity: float = 50.0,   # burst capacity
+        rate: float = 10.0,  # requests per second
+        capacity: float = 50.0,  # burst capacity
         cleanup_interval: float = 300.0,  # cleanup every 5 min
     ) -> None:
         self._rate = rate
@@ -62,7 +64,8 @@ class RateLimiter:
             return bucket.consume()
 
     def _cleanup(self, now: float) -> None:
-        stale = [k for k, v in self._buckets.items()
-                 if now - v.last_refill > self._cleanup_interval]
+        stale = [
+            k for k, v in self._buckets.items() if now - v.last_refill > self._cleanup_interval
+        ]
         for k in stale:
             del self._buckets[k]

@@ -77,7 +77,7 @@ class ReplayResult:
     events: list[ExecutionEvent] = field(default_factory=list)
     duration_ms: float = 0.0
     success: bool = False
-    deterministic: bool = True   # True if replay matches original exactly
+    deterministic: bool = True  # True if replay matches original exactly
     diffs: list[DiffEntry] = field(default_factory=list)
     error: str = ""
 
@@ -177,7 +177,9 @@ class ReplayEngine:
         try:
             for event in recording.events:
                 # Check for override
-                short_id = event.event_id.split(":")[-1] if ":" in event.event_id else event.event_id
+                short_id = (
+                    event.event_id.split(":")[-1] if ":" in event.event_id else event.event_id
+                )
                 override = overrides.get(short_id) or overrides.get(event.event_id)
 
                 if override:
@@ -271,7 +273,8 @@ class ReplayEngine:
             "non_deterministic": sum(1 for r in self._results if not r.deterministic),
             "avg_match_rate": (
                 round(sum(r.match_rate for r in self._results) / len(self._results), 1)
-                if self._results else 0.0
+                if self._results
+                else 0.0
             ),
         }
 
@@ -326,50 +329,60 @@ class ReplayEngine:
             repl = replayed[i] if i < len(replayed) else None
 
             if orig and not repl:
-                diffs.append(DiffEntry(
-                    diff_type=DiffType.REMOVED,
-                    event_type=orig.event_type.value,
-                    sequence=orig.sequence,
-                    original=orig.to_dict(),
-                    description=f"Event removed: {orig.event_type.value}",
-                ))
-            elif repl and not orig:
-                diffs.append(DiffEntry(
-                    diff_type=DiffType.ADDED,
-                    event_type=repl.event_type.value,
-                    sequence=repl.sequence,
-                    replay=repl.to_dict(),
-                    description=f"Event added: {repl.event_type.value}",
-                ))
-            elif orig and repl:
-                # Compare data (ignore timestamps and event_ids which differ)
-                if orig.event_type != repl.event_type:
-                    diffs.append(DiffEntry(
-                        diff_type=DiffType.MODIFIED,
+                diffs.append(
+                    DiffEntry(
+                        diff_type=DiffType.REMOVED,
                         event_type=orig.event_type.value,
                         sequence=orig.sequence,
                         original=orig.to_dict(),
+                        description=f"Event removed: {orig.event_type.value}",
+                    )
+                )
+            elif repl and not orig:
+                diffs.append(
+                    DiffEntry(
+                        diff_type=DiffType.ADDED,
+                        event_type=repl.event_type.value,
+                        sequence=repl.sequence,
                         replay=repl.to_dict(),
-                        field_name="event_type",
-                        description=f"Type changed: {orig.event_type} → {repl.event_type}",
-                    ))
+                        description=f"Event added: {repl.event_type.value}",
+                    )
+                )
+            elif orig and repl:
+                # Compare data (ignore timestamps and event_ids which differ)
+                if orig.event_type != repl.event_type:
+                    diffs.append(
+                        DiffEntry(
+                            diff_type=DiffType.MODIFIED,
+                            event_type=orig.event_type.value,
+                            sequence=orig.sequence,
+                            original=orig.to_dict(),
+                            replay=repl.to_dict(),
+                            field_name="event_type",
+                            description=f"Type changed: {orig.event_type} → {repl.event_type}",
+                        )
+                    )
                 elif orig.data != repl.data:
                     changed_fields = _diff_dicts(orig.data, repl.data)
-                    diffs.append(DiffEntry(
-                        diff_type=DiffType.MODIFIED,
-                        event_type=orig.event_type.value,
-                        sequence=orig.sequence,
-                        original={"data": orig.data},
-                        replay={"data": repl.data},
-                        field_name=", ".join(changed_fields),
-                        description=f"Data changed in fields: {', '.join(changed_fields)}",
-                    ))
+                    diffs.append(
+                        DiffEntry(
+                            diff_type=DiffType.MODIFIED,
+                            event_type=orig.event_type.value,
+                            sequence=orig.sequence,
+                            original={"data": orig.data},
+                            replay={"data": repl.data},
+                            field_name=", ".join(changed_fields),
+                            description=f"Data changed in fields: {', '.join(changed_fields)}",
+                        )
+                    )
                 else:
-                    diffs.append(DiffEntry(
-                        diff_type=DiffType.MATCH,
-                        event_type=orig.event_type.value,
-                        sequence=orig.sequence,
-                    ))
+                    diffs.append(
+                        DiffEntry(
+                            diff_type=DiffType.MATCH,
+                            event_type=orig.event_type.value,
+                            sequence=orig.sequence,
+                        )
+                    )
 
         return diffs
 
@@ -391,10 +404,14 @@ class ReplayDiff:
         replay_result: ReplayResult,
     ) -> dict[str, Any]:
         """High-level comparison between original and replay."""
-        orig_tools = [e.data.get("tool", "") for e in original.events
-                      if e.event_type == EventType.TOOL_CALL]
-        replay_tools = [e.data.get("tool", "") for e in replay_result.events
-                        if e.event_type == EventType.TOOL_CALL]
+        orig_tools = [
+            e.data.get("tool", "") for e in original.events if e.event_type == EventType.TOOL_CALL
+        ]
+        replay_tools = [
+            e.data.get("tool", "")
+            for e in replay_result.events
+            if e.event_type == EventType.TOOL_CALL
+        ]
 
         orig_plans = [e for e in original.events if e.event_type == EventType.PLAN_GENERATED]
         replay_plans = [e for e in replay_result.events if e.event_type == EventType.PLAN_GENERATED]

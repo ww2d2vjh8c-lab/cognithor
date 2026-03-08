@@ -137,8 +137,7 @@ _SENTIMENT_SYSTEM_MESSAGES: dict[Sentiment, str] = {
         "Frage nach, ob die Erklärung verständlich war."
     ),
     Sentiment.POSITIVE: (
-        "HINWEIS: Der User ist positiv gestimmt. "
-        "Teile die gute Stimmung und sei motivierend."
+        "HINWEIS: Der User ist positiv gestimmt. Teile die gute Stimmung und sei motivierend."
     ),
 }
 

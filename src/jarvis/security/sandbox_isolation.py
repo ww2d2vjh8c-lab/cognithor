@@ -149,8 +149,9 @@ class SandboxManager:
         custom_limits: dict[ResourceType, ResourceLimit] | None = None,
     ) -> AgentSandbox:
         sandbox_id = hashlib.sha256(f"sb:{agent_id}:{time.time()}".encode()).hexdigest()[:12]
-        limits = custom_limits or {k: ResourceLimit(k, v.max_value, unit=v.unit)
-                                   for k, v in self.DEFAULT_LIMITS.items()}
+        limits = custom_limits or {
+            k: ResourceLimit(k, v.max_value, unit=v.unit) for k, v in self.DEFAULT_LIMITS.items()
+        }
 
         sandbox = AgentSandbox(
             sandbox_id=sandbox_id,
@@ -286,13 +287,15 @@ class PerAgentSecretVault:
     def retrieve(self, agent_id: str, key: str, requesting_agent: str = "") -> str | None:
         """Holt ein Secret -- nur der eigene Agent darf zugreifen."""
         effective_requester = requesting_agent or agent_id
-        self._access_log.append({
-            "agent_id": agent_id,
-            "key": key,
-            "requester": effective_requester,
-            "allowed": effective_requester == agent_id,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        })
+        self._access_log.append(
+            {
+                "agent_id": agent_id,
+                "key": key,
+                "requester": effective_requester,
+                "allowed": effective_requester == agent_id,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        )
 
         if effective_requester != agent_id:
             return None  # BLOCKIERT: Cross-Agent-Zugriff
@@ -591,12 +594,21 @@ class DelegatedAdmin:
 ROLE_PERMISSIONS: dict[AdminRole, set[str]] = {
     AdminRole.SUPER_ADMIN: {"*"},
     AdminRole.TENANT_ADMIN: {
-        "manage_agents", "manage_users", "view_audit", "manage_skills",
-        "manage_budgets", "view_security", "manage_config",
+        "manage_agents",
+        "manage_users",
+        "view_audit",
+        "manage_skills",
+        "manage_budgets",
+        "view_security",
+        "manage_config",
     },
     AdminRole.SECURITY_ADMIN: {
-        "view_audit", "manage_security", "view_incidents", "manage_gates",
-        "run_scans", "view_compliance",
+        "view_audit",
+        "manage_security",
+        "view_incidents",
+        "manage_gates",
+        "run_scans",
+        "view_compliance",
     },
     AdminRole.READONLY: {"view_dashboard", "view_audit", "view_security"},
 }

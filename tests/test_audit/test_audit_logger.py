@@ -80,7 +80,8 @@ class TestAuditLogging:
 
     def test_log_gatekeeper_block(self, logger: AuditLogger) -> None:
         entry = logger.log_gatekeeper(
-            "BLOCK", "Netzwerkzugriff verweigert",
+            "BLOCK",
+            "Netzwerkzugriff verweigert",
             tool_name="http_fetch",
         )
         assert entry.category == AuditCategory.GATEKEEPER

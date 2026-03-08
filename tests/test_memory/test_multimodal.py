@@ -125,8 +125,10 @@ class TestMediaAsset:
 
     def test_filename_from_path(self) -> None:
         asset = MediaAsset(
-            id="x", media_type=MediaType.DOCUMENT,
-            file_path="/deep/nested/path/report.pdf", file_hash="h",
+            id="x",
+            media_type=MediaType.DOCUMENT,
+            file_path="/deep/nested/path/report.pdf",
+            file_hash="h",
         )
         assert asset.filename == "report.pdf"
 
@@ -155,7 +157,9 @@ class TestMultimodalMemoryBasic:
 
     @pytest.mark.asyncio
     async def test_ingest_unsupported_type(
-        self, mm: MultimodalMemory, tmp_path: Path,
+        self,
+        mm: MultimodalMemory,
+        tmp_path: Path,
     ) -> None:
         f = tmp_path / "file.xyz"
         f.write_text("data")
@@ -164,7 +168,9 @@ class TestMultimodalMemoryBasic:
 
     @pytest.mark.asyncio
     async def test_ingest_text_file_direct_read(
-        self, mm: MultimodalMemory, tmp_path: Path,
+        self,
+        mm: MultimodalMemory,
+        tmp_path: Path,
     ) -> None:
         """Textdateien werden direkt gelesen (ohne Pipeline)."""
         f = tmp_path / "notes.txt"
@@ -179,7 +185,9 @@ class TestMultimodalMemoryBasic:
 
     @pytest.mark.asyncio
     async def test_ingest_with_text_override(
-        self, mm: MultimodalMemory, tmp_path: Path,
+        self,
+        mm: MultimodalMemory,
+        tmp_path: Path,
     ) -> None:
         f = tmp_path / "photo.jpg"
         f.write_bytes(b"\xff\xd8\xff\xe0")  # JPEG magic bytes
@@ -191,7 +199,9 @@ class TestMultimodalMemoryBasic:
 
     @pytest.mark.asyncio
     async def test_ingest_markdown_direct_read(
-        self, mm: MultimodalMemory, tmp_path: Path,
+        self,
+        mm: MultimodalMemory,
+        tmp_path: Path,
     ) -> None:
         f = tmp_path / "readme.md"
         f.write_text("# Jarvis Agent OS\n\nArchitektur-Überblick")
@@ -241,7 +251,8 @@ class TestMultimodalSearch:
 
     @pytest.mark.asyncio
     async def test_search_finds_relevant(
-        self, mm_with_assets: MultimodalMemory,
+        self,
+        mm_with_assets: MultimodalMemory,
     ) -> None:
         results = mm_with_assets.search_media("BU Tarife WWK")
         assert len(results) >= 1
@@ -249,21 +260,24 @@ class TestMultimodalSearch:
 
     @pytest.mark.asyncio
     async def test_search_with_type_filter(
-        self, mm_with_assets: MultimodalMemory,
+        self,
+        mm_with_assets: MultimodalMemory,
     ) -> None:
         results = mm_with_assets.search_media("Python", media_type=MediaType.DOCUMENT)
         assert len(results) >= 1
 
     @pytest.mark.asyncio
     async def test_search_no_results(
-        self, mm_with_assets: MultimodalMemory,
+        self,
+        mm_with_assets: MultimodalMemory,
     ) -> None:
         results = mm_with_assets.search_media("Quantenphysik")
         assert len(results) == 0
 
     @pytest.mark.asyncio
     async def test_search_top_k(
-        self, mm_with_assets: MultimodalMemory,
+        self,
+        mm_with_assets: MultimodalMemory,
     ) -> None:
         results = mm_with_assets.search_media("a", top_k=1)
         assert len(results) <= 1

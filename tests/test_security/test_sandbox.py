@@ -69,7 +69,7 @@ class TestProcessExecution:
     @pytest.mark.asyncio
     async def test_exit_code(self, sandbox: Sandbox):
         result = await sandbox.execute(
-            "python -c \"import sys; sys.exit(42)\"",
+            'python -c "import sys; sys.exit(42)"',
             level=SandboxLevel.PROCESS,
         )
         assert result.exit_code == 42

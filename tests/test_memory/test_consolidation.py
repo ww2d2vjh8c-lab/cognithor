@@ -74,8 +74,14 @@ class TestContentDeduplicator:
 
     def test_find_fuzzy_duplicates(self) -> None:
         entries = [
-            {"id": "a", "content": "Berlin ist die Hauptstadt von Deutschland und hat viele Sehenswuerdigkeiten."},
-            {"id": "b", "content": "Berlin ist die Hauptstadt Deutschlands und hat viele Sehenswuerdigkeiten."},
+            {
+                "id": "a",
+                "content": "Berlin ist die Hauptstadt von Deutschland und hat viele Sehenswuerdigkeiten.",
+            },
+            {
+                "id": "b",
+                "content": "Berlin ist die Hauptstadt Deutschlands und hat viele Sehenswuerdigkeiten.",
+            },
         ]
         dedup = ContentDeduplicator(similarity_threshold=0.80)
         groups = dedup.find_duplicates(entries)
@@ -235,8 +241,20 @@ class TestConsolidationPipeline:
     def test_no_duplicates(self) -> None:
         pipeline = ConsolidationPipeline()
         entries = [
-            {"id": "a", "content": "Apples are red fruits", "age_days": 5, "source_confidence": 0.8, "token_count": 50},
-            {"id": "b", "content": "Bananas are yellow fruits", "age_days": 3, "source_confidence": 0.7, "token_count": 50},
+            {
+                "id": "a",
+                "content": "Apples are red fruits",
+                "age_days": 5,
+                "source_confidence": 0.8,
+                "token_count": 50,
+            },
+            {
+                "id": "b",
+                "content": "Bananas are yellow fruits",
+                "age_days": 3,
+                "source_confidence": 0.7,
+                "token_count": 50,
+            },
         ]
         result = pipeline.run(entries)
         assert result.entries_scanned == 2
@@ -245,9 +263,27 @@ class TestConsolidationPipeline:
     def test_with_duplicates(self) -> None:
         pipeline = ConsolidationPipeline()
         entries = [
-            {"id": "a", "content": "Same content here", "age_days": 5, "source_confidence": 0.8, "token_count": 50},
-            {"id": "b", "content": "Same content here", "age_days": 3, "source_confidence": 0.5, "token_count": 50},
-            {"id": "c", "content": "Different content entirely", "age_days": 1, "source_confidence": 0.9, "token_count": 50},
+            {
+                "id": "a",
+                "content": "Same content here",
+                "age_days": 5,
+                "source_confidence": 0.8,
+                "token_count": 50,
+            },
+            {
+                "id": "b",
+                "content": "Same content here",
+                "age_days": 3,
+                "source_confidence": 0.5,
+                "token_count": 50,
+            },
+            {
+                "id": "c",
+                "content": "Different content entirely",
+                "age_days": 1,
+                "source_confidence": 0.9,
+                "token_count": 50,
+            },
         ]
         result = pipeline.run(entries)
         assert result.duplicates_found >= 1
@@ -256,8 +292,20 @@ class TestConsolidationPipeline:
     def test_archives_low_score_entries(self) -> None:
         pipeline = ConsolidationPipeline(archive_threshold=0.5)
         entries = [
-            {"id": "old", "content": "Very old and irrelevant", "age_days": 500, "source_confidence": 0.1, "token_count": 200},
-            {"id": "new", "content": "Fresh and relevant", "age_days": 0, "source_confidence": 0.9, "token_count": 100},
+            {
+                "id": "old",
+                "content": "Very old and irrelevant",
+                "age_days": 500,
+                "source_confidence": 0.1,
+                "token_count": 200,
+            },
+            {
+                "id": "new",
+                "content": "Fresh and relevant",
+                "age_days": 0,
+                "source_confidence": 0.9,
+                "token_count": 100,
+            },
         ]
         result = pipeline.run(entries)
         assert result.entries_archived >= 1
@@ -265,8 +313,20 @@ class TestConsolidationPipeline:
     def test_summarization_candidates(self) -> None:
         pipeline = ConsolidationPipeline(summarize_age_days=30.0)
         entries = [
-            {"id": "old", "content": "An old entry", "age_days": 45, "source_confidence": 0.7, "token_count": 100},
-            {"id": "new", "content": "A fresh entry", "age_days": 2, "source_confidence": 0.8, "token_count": 100},
+            {
+                "id": "old",
+                "content": "An old entry",
+                "age_days": 45,
+                "source_confidence": 0.7,
+                "token_count": 100,
+            },
+            {
+                "id": "new",
+                "content": "A fresh entry",
+                "age_days": 2,
+                "source_confidence": 0.8,
+                "token_count": 100,
+            },
         ]
         result = pipeline.run(entries)
         assert result.entries_summarized >= 1
@@ -274,8 +334,20 @@ class TestConsolidationPipeline:
     def test_budget_updated(self) -> None:
         pipeline = ConsolidationPipeline()
         entries = [
-            {"id": "a", "content": "Entry A", "age_days": 0, "source_confidence": 0.8, "token_count": 200},
-            {"id": "b", "content": "Entry B", "age_days": 0, "source_confidence": 0.7, "token_count": 300},
+            {
+                "id": "a",
+                "content": "Entry A",
+                "age_days": 0,
+                "source_confidence": 0.8,
+                "token_count": 200,
+            },
+            {
+                "id": "b",
+                "content": "Entry B",
+                "age_days": 0,
+                "source_confidence": 0.7,
+                "token_count": 300,
+            },
         ]
         pipeline.run(entries, tier="episodic")
         budget = pipeline.budget_manager.get_budget("episodic")
@@ -290,7 +362,9 @@ class TestConsolidationPipeline:
 
     def test_duration_positive(self) -> None:
         pipeline = ConsolidationPipeline()
-        result = pipeline.run([{"id": "a", "content": "X", "age_days": 0, "source_confidence": 0.5}])
+        result = pipeline.run(
+            [{"id": "a", "content": "X", "age_days": 0, "source_confidence": 0.5}]
+        )
         assert result.duration_ms >= 0
 
     def test_stats(self) -> None:
@@ -305,14 +379,22 @@ class TestConsolidationPipeline:
     def test_tokens_freed_from_archived(self) -> None:
         pipeline = ConsolidationPipeline(archive_threshold=0.5)
         entries = [
-            {"id": "trash", "content": "Useless", "age_days": 999, "source_confidence": 0.0, "token_count": 500},
+            {
+                "id": "trash",
+                "content": "Useless",
+                "age_days": 999,
+                "source_confidence": 0.0,
+                "token_count": 500,
+            },
         ]
         result = pipeline.run(entries)
         assert result.tokens_freed >= 500
 
     def test_custom_tier(self) -> None:
         pipeline = ConsolidationPipeline()
-        entries = [{"id": "a", "content": "X", "age_days": 0, "source_confidence": 0.5, "token_count": 100}]
+        entries = [
+            {"id": "a", "content": "X", "age_days": 0, "source_confidence": 0.5, "token_count": 100}
+        ]
         pipeline.run(entries, tier="semantic")
         budget = pipeline.budget_manager.get_budget("semantic")
         assert budget.current_tokens > 0

@@ -15,11 +15,21 @@ def policies_dir(tmp_path):
     pol_dir = tmp_path / "policies"
     pol_dir.mkdir()
     default_yaml = pol_dir / "default.yaml"
-    default_yaml.write_text(yaml.dump({
-        "rules": [
-            {"name": "rule1", "match": {"tool": "read_file"}, "action": "ALLOW", "reason": "OK"},
-        ]
-    }), encoding="utf-8")
+    default_yaml.write_text(
+        yaml.dump(
+            {
+                "rules": [
+                    {
+                        "name": "rule1",
+                        "match": {"tool": "read_file"},
+                        "action": "ALLOW",
+                        "reason": "OK",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
     return str(pol_dir)
 
 
@@ -44,7 +54,10 @@ class TestPolicyPatcher:
         assert result is True
 
         import pathlib
-        content = yaml.safe_load(pathlib.Path(policies_dir, "default.yaml").read_text(encoding="utf-8"))
+
+        content = yaml.safe_load(
+            pathlib.Path(policies_dir, "default.yaml").read_text(encoding="utf-8")
+        )
         # Die Aenderung wird in einer "changes" Liste gespeichert
         assert "changes" in content
         assert len(content["changes"]) >= 1
@@ -64,6 +77,7 @@ class TestPolicyPatcher:
 
     def test_rollback_restores_original(self, patcher, policies_dir):
         import pathlib
+
         original = pathlib.Path(policies_dir, "default.yaml").read_text(encoding="utf-8")
 
         change = PolicyChange(
@@ -97,6 +111,7 @@ class TestPolicyPatcher:
         assert result is True
 
         import pathlib
+
         new_file = pathlib.Path(policies_dir, "newcat.yaml")
         assert new_file.exists()
         content = yaml.safe_load(new_file.read_text(encoding="utf-8"))

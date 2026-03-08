@@ -1,4 +1,5 @@
 """Database Backend Factory."""
+
 from __future__ import annotations
 
 import logging
@@ -23,6 +24,7 @@ def create_backend(config: Any) -> Any:
 
     if db_config is None or getattr(db_config, "backend", "sqlite") == "sqlite":
         from jarvis.db.sqlite_backend import SQLiteBackend
+
         db_path = getattr(config, "db_path", Path.home() / ".jarvis" / "index" / "memory.db")
         backend = SQLiteBackend(db_path)
         logger.info("Database-Backend: SQLite (%s)", db_path)
@@ -30,6 +32,7 @@ def create_backend(config: Any) -> Any:
 
     if getattr(db_config, "backend", "") == "postgresql":
         from jarvis.db.postgresql_backend import PostgreSQLBackend
+
         backend = PostgreSQLBackend(
             host=db_config.pg_host,
             port=db_config.pg_port,
@@ -39,7 +42,12 @@ def create_backend(config: Any) -> Any:
             pool_min=db_config.pg_pool_min,
             pool_max=db_config.pg_pool_max,
         )
-        logger.info("Database-Backend: PostgreSQL (%s:%d/%s)", db_config.pg_host, db_config.pg_port, db_config.pg_dbname)
+        logger.info(
+            "Database-Backend: PostgreSQL (%s:%d/%s)",
+            db_config.pg_host,
+            db_config.pg_port,
+            db_config.pg_dbname,
+        )
         return backend
 
     raise ValueError(f"Unbekanntes Database-Backend: {db_config.backend}")

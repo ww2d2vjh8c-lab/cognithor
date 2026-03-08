@@ -24,9 +24,11 @@ def _mock_ollama_client(config: JarvisConfig) -> MagicMock:
     mock = MagicMock(spec=OllamaClient)
     mock.list_models = AsyncMock(return_value=["qwen3:32b", "qwen3:8b"])
     mock.is_available = AsyncMock(return_value=True)
-    mock.chat = AsyncMock(return_value={
-        "message": {"role": "assistant", "content": "Hello"},
-    })
+    mock.chat = AsyncMock(
+        return_value={
+            "message": {"role": "assistant", "content": "Hello"},
+        }
+    )
     return mock
 
 
@@ -56,6 +58,7 @@ class TestModelRouterCoverage:
     def _reset_coding_override(self):
         """Reset ContextVar before/after each test to prevent cross-test contamination."""
         from jarvis.core.model_router import _coding_override_var
+
         _coding_override_var.set(None)
         yield
         _coding_override_var.set(None)

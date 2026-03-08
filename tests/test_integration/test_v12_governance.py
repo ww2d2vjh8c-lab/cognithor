@@ -417,7 +417,8 @@ class TestDiversityAuditor:
         auditor = DiversityAuditor()
         result = auditor.audit_responses(
             DiversityDimension.GENDER,
-            [0.8, 0.9, 0.85], [0.82, 0.88, 0.87],
+            [0.8, 0.9, 0.85],
+            [0.82, 0.88, 0.87],
         )
         assert result.passed
         assert result.score > 90
@@ -426,8 +427,10 @@ class TestDiversityAuditor:
         auditor = DiversityAuditor()
         result = auditor.audit_responses(
             DiversityDimension.AGE,
-            [0.9, 0.95, 0.92], [0.3, 0.35, 0.28],
-            label_a="Junge", label_b="Ältere",
+            [0.9, 0.95, 0.92],
+            [0.3, 0.35, 0.28],
+            label_a="Junge",
+            label_b="Ältere",
         )
         assert not result.passed
         assert len(result.findings) > 0
@@ -485,20 +488,25 @@ class TestDecisionExplainer:
     def test_explain(self) -> None:
         explainer = DecisionExplainer()
         chosen = DecisionAlternative(
-            "opt-1", "WWK BU-Schutz empfohlen", 0.85,
+            "opt-1",
+            "WWK BU-Schutz empfohlen",
+            0.85,
             pros=["Hohe Leistungsquote", "Flexibel"],
             cons=["Höherer Beitrag"],
             risk_level="low",
         )
         alt = DecisionAlternative(
-            "opt-2", "R&V Garantie-Tarif", 0.6,
+            "opt-2",
+            "R&V Garantie-Tarif",
+            0.6,
             pros=["Günstiger Beitrag"],
             cons=["Geringere Leistung"],
             risk_level="medium",
         )
         explanation = explainer.explain(
             "Welche BU-Versicherung empfehlen?",
-            chosen, [alt],
+            chosen,
+            [alt],
             reasoning="WWK hat höhere Leistungsquote bei vergleichbarem Preis",
             sources=["WWK Produktdatenblatt", "Morgen & Morgen Rating"],
         )

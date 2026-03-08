@@ -140,11 +140,27 @@ _ORG_PATTERNS = re.compile(
     r"(GmbH|AG|SE|e\.V\.|Inc\.|Corp\.|Ltd\.|KG|OHG|UG)\b",
     re.UNICODE,
 )
-_LOCATION_KEYWORDS = frozenset({
-    "Berlin", "München", "Hamburg", "Frankfurt", "Köln", "Stuttgart",
-    "Düsseldorf", "Wien", "Zürich", "Bern", "Deutschland", "Österreich",
-    "Schweiz", "Europa", "USA", "China", "Japan",
-})
+_LOCATION_KEYWORDS = frozenset(
+    {
+        "Berlin",
+        "München",
+        "Hamburg",
+        "Frankfurt",
+        "Köln",
+        "Stuttgart",
+        "Düsseldorf",
+        "Wien",
+        "Zürich",
+        "Bern",
+        "Deutschland",
+        "Österreich",
+        "Schweiz",
+        "Europa",
+        "USA",
+        "China",
+        "Japan",
+    }
+)
 _PRODUCT_INDICATORS = re.compile(
     r"\b(Version|v\d|Release|Update|Plugin|App|Tool|Software|Plattform|System)\b",
     re.IGNORECASE,
@@ -155,31 +171,89 @@ _PRODUCT_INDICATORS = re.compile(
 # ---------------------------------------------------------------------------
 
 _CAUSAL_PATTERNS = [
-    (re.compile(r"(.+?)\s+(?:verursacht|führt zu|bewirkt)\s+(.+)", re.IGNORECASE), RelationType.CAUSES),
+    (
+        re.compile(r"(.+?)\s+(?:verursacht|führt zu|bewirkt)\s+(.+)", re.IGNORECASE),
+        RelationType.CAUSES,
+    ),
     (re.compile(r"(.+?)\s+(?:verhindert|blockiert)\s+(.+)", re.IGNORECASE), RelationType.PREVENTS),
     (re.compile(r"(.+?)\s+(?:ermöglicht|erlaubt)\s+(.+)", re.IGNORECASE), RelationType.ENABLES),
-    (re.compile(r"(.+?)\s+(?:widerspricht|widerlegt)\s+(.+)", re.IGNORECASE), RelationType.CONTRADICTS),
-    (re.compile(r"(.+?)\s+(?:unterstützt|bestätigt|bekräftigt)\s+(.+)", re.IGNORECASE), RelationType.SUPPORTS),
+    (
+        re.compile(r"(.+?)\s+(?:widerspricht|widerlegt)\s+(.+)", re.IGNORECASE),
+        RelationType.CONTRADICTS,
+    ),
+    (
+        re.compile(r"(.+?)\s+(?:unterstützt|bestätigt|bekräftigt)\s+(.+)", re.IGNORECASE),
+        RelationType.SUPPORTS,
+    ),
 ]
 
 _STRUCTURAL_PATTERNS = [
-    (re.compile(r"(.+?)\s+(?:arbeitet bei|ist bei|arbeitet für)\s+(.+)", re.IGNORECASE), RelationType.WORKS_AT),
-    (re.compile(r"(.+?)\s+(?:ist|war)\s+(.+?)(?:\s+bei\s+(.+))?$", re.IGNORECASE), RelationType.HAS_ROLE),
+    (
+        re.compile(r"(.+?)\s+(?:arbeitet bei|ist bei|arbeitet für)\s+(.+)", re.IGNORECASE),
+        RelationType.WORKS_AT,
+    ),
+    (
+        re.compile(r"(.+?)\s+(?:ist|war)\s+(.+?)(?:\s+bei\s+(.+))?$", re.IGNORECASE),
+        RelationType.HAS_ROLE,
+    ),
     (re.compile(r"(.+?)\s+(?:leitet|führt|managt)\s+(.+)", re.IGNORECASE), RelationType.MANAGES),
     (re.compile(r"(.+?)\s+(?:gehört zu|ist Teil von)\s+(.+)", re.IGNORECASE), RelationType.PART_OF),
     (re.compile(r"(.+?)\s+(?:kennt|traf)\s+(.+)", re.IGNORECASE), RelationType.KNOWS),
-    (re.compile(r"(.+?)\s+(?:hängt ab von|abhängig von|braucht)\s+(.+)", re.IGNORECASE), RelationType.DEPENDS_ON),
+    (
+        re.compile(r"(.+?)\s+(?:hängt ab von|abhängig von|braucht)\s+(.+)", re.IGNORECASE),
+        RelationType.DEPENDS_ON,
+    ),
 ]
 
 # German common nouns to filter (subset — full list in enhanced_retrieval.py)
-_COMMON_NOUNS = frozenset({
-    "Anfang", "Arbeit", "Aufgabe", "Beispiel", "Bericht", "Daten", "Ende",
-    "Ergebnis", "Frage", "Grund", "Information", "Jahr", "Lösung", "Monat",
-    "Name", "Problem", "Projekt", "Sache", "System", "Tag", "Teil", "Text",
-    "Thema", "Woche", "Zeit", "Ziel", "Antwort", "Bereich", "Fall", "Form",
-    "Gruppe", "Hilfe", "Idee", "Kategorie", "Liste", "Methode", "Nummer",
-    "Punkt", "Schritt", "Seite", "Stelle", "Typ", "Version", "Weg",
-})
+_COMMON_NOUNS = frozenset(
+    {
+        "Anfang",
+        "Arbeit",
+        "Aufgabe",
+        "Beispiel",
+        "Bericht",
+        "Daten",
+        "Ende",
+        "Ergebnis",
+        "Frage",
+        "Grund",
+        "Information",
+        "Jahr",
+        "Lösung",
+        "Monat",
+        "Name",
+        "Problem",
+        "Projekt",
+        "Sache",
+        "System",
+        "Tag",
+        "Teil",
+        "Text",
+        "Thema",
+        "Woche",
+        "Zeit",
+        "Ziel",
+        "Antwort",
+        "Bereich",
+        "Fall",
+        "Form",
+        "Gruppe",
+        "Hilfe",
+        "Idee",
+        "Kategorie",
+        "Liste",
+        "Methode",
+        "Nummer",
+        "Punkt",
+        "Schritt",
+        "Seite",
+        "Stelle",
+        "Typ",
+        "Version",
+        "Weg",
+    }
+)
 
 _ENTITY_RE = re.compile(r"\b[A-ZÄÖÜ][a-zäöüß]{2,}\b")
 _MULTI_WORD_RE = re.compile(r"\b([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)+)\b")
@@ -302,13 +376,15 @@ class EntityExtractor:
                     src = self._find_entity_in_text(m.group(1), entity_names)
                     tgt = self._find_entity_in_text(m.group(2), entity_names)
                     if src and tgt and src != tgt:
-                        relations.append(ExtractedRelation(
-                            source_name=src,
-                            relation_type=rel_type,
-                            target_name=tgt,
-                            confidence=base_confidence,
-                            source=source,
-                        ))
+                        relations.append(
+                            ExtractedRelation(
+                                source_name=src,
+                                relation_type=rel_type,
+                                target_name=tgt,
+                                confidence=base_confidence,
+                                source=source,
+                            )
+                        )
 
             # Try structural patterns
             for pattern, rel_type in _STRUCTURAL_PATTERNS:
@@ -317,13 +393,15 @@ class EntityExtractor:
                     src = self._find_entity_in_text(m.group(1), entity_names)
                     tgt = self._find_entity_in_text(m.group(2), entity_names)
                     if src and tgt and src != tgt:
-                        relations.append(ExtractedRelation(
-                            source_name=src,
-                            relation_type=rel_type,
-                            target_name=tgt,
-                            confidence=base_confidence,
-                            source=source,
-                        ))
+                        relations.append(
+                            ExtractedRelation(
+                                source_name=src,
+                                relation_type=rel_type,
+                                target_name=tgt,
+                                confidence=base_confidence,
+                                source=source,
+                            )
+                        )
 
         return relations
 
@@ -333,12 +411,16 @@ class EntityExtractor:
             return "location"
         if _ORG_PATTERNS.search(f"{name} GmbH"):
             return "organization"
-        if _PRODUCT_INDICATORS.search(context[max(0, context.find(name) - 50):context.find(name) + 50 + len(name)]):
+        if _PRODUCT_INDICATORS.search(
+            context[max(0, context.find(name) - 50) : context.find(name) + 50 + len(name)]
+        ):
             return "product"
         return "unknown"
 
     def _find_entity_in_text(
-        self, text_fragment: str, entity_names: set[str],
+        self,
+        text_fragment: str,
+        entity_names: set[str],
     ) -> str | None:
         """Find the best matching entity name in a text fragment."""
         text_fragment = text_fragment.strip()
@@ -372,7 +454,8 @@ class EntityDeduplicator:
         return self._aliases.get(name.lower(), name)
 
     def find_duplicates(
-        self, entities: list[ExtractedEntity],
+        self,
+        entities: list[ExtractedEntity],
     ) -> list[tuple[str, str]]:
         """Find potential duplicate entity pairs.
 
@@ -385,14 +468,15 @@ class EntityDeduplicator:
         names = [e.name for e in entities]
 
         for i, name_a in enumerate(names):
-            for name_b in names[i + 1:]:
+            for name_b in names[i + 1 :]:
                 if self._is_potential_duplicate(name_a, name_b):
                     pairs.append((name_a, name_b))
 
         return pairs
 
     def merge_entities(
-        self, entities: list[ExtractedEntity],
+        self,
+        entities: list[ExtractedEntity],
     ) -> list[ExtractedEntity]:
         """Merge duplicate entities, keeping the highest-confidence version."""
         canonical: dict[str, ExtractedEntity] = {}

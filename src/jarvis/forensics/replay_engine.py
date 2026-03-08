@@ -87,9 +87,7 @@ class ReplayEngine:
 
             for plan_idx, plan in enumerate(run.plans):
                 # Replay each plan's steps through the gatekeeper
-                replayed_decisions = self._gatekeeper.evaluate_plan(
-                    plan.steps, context
-                )
+                replayed_decisions = self._gatekeeper.evaluate_plan(plan.steps, context)
 
                 # Fetch original decisions for this plan (if available)
                 original_decisions: list[GateDecision] = []
@@ -99,9 +97,7 @@ class ReplayEngine:
                 divergences = self.compare_decisions(
                     original_decisions,
                     replayed_decisions,
-                    step_offset=sum(
-                        len(p.steps) for p in run.plans[:plan_idx]
-                    ),
+                    step_offset=sum(len(p.steps) for p in run.plans[:plan_idx]),
                 )
                 all_divergences.extend(divergences)
 

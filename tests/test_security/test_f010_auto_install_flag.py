@@ -56,9 +56,7 @@ class TestDefaultNoAutoInstall:
 
     @patch("jarvis.core.startup_check._can_import", return_value=False)
     @patch("jarvis.core.startup_check._pip_install")
-    def test_warning_contains_hint(
-        self, mock_pip: MagicMock, mock_import: MagicMock
-    ) -> None:
+    def test_warning_contains_hint(self, mock_pip: MagicMock, mock_import: MagicMock) -> None:
         """Warning-Text enthaelt Hinweis auf --auto-install."""
         checker = StartupChecker()
         report = checker.check_python_packages()
@@ -89,9 +87,7 @@ class TestAutoInstallEnabled:
 
     @patch("jarvis.core.startup_check._can_import", return_value=False)
     @patch("jarvis.core.startup_check._pip_install", return_value=(True, ""))
-    def test_auto_install_calls_pip(
-        self, mock_pip: MagicMock, mock_import: MagicMock
-    ) -> None:
+    def test_auto_install_calls_pip(self, mock_pip: MagicMock, mock_import: MagicMock) -> None:
         """Mit auto_install=True wird _pip_install aufgerufen."""
         checker = StartupChecker(auto_install=True)
         report = checker.check_python_packages()
@@ -124,9 +120,7 @@ class TestAutoInstallEnabled:
 
     @patch("jarvis.core.startup_check._can_import", return_value=True)
     @patch("jarvis.core.startup_check._pip_install")
-    def test_no_install_when_all_present(
-        self, mock_pip: MagicMock, mock_import: MagicMock
-    ) -> None:
+    def test_no_install_when_all_present(self, mock_pip: MagicMock, mock_import: MagicMock) -> None:
         """Wenn alle Pakete vorhanden, kein pip install -- auch mit Flag."""
         checker = StartupChecker(auto_install=True)
         report = checker.check_python_packages()
@@ -147,18 +141,20 @@ class TestCLIArgument:
     def test_argparse_has_auto_install(self) -> None:
         """__main__.py definiert --auto-install Argument."""
         import jarvis.__main__ as main_mod
+
         source = inspect.getsource(main_mod)
         assert "--auto-install" in source
 
     def test_auto_install_is_store_true(self) -> None:
         """--auto-install ist ein store_true Flag (kein Wert noetig)."""
         import jarvis.__main__ as main_mod
+
         source = inspect.getsource(main_mod)
         # Find the auto-install argument definition
         idx = source.find("--auto-install")
         assert idx > 0
         # Look at the surrounding context (next 200 chars)
-        context = source[idx:idx + 200]
+        context = source[idx : idx + 200]
         assert "store_true" in context
 
 
@@ -222,6 +218,7 @@ class TestSourceLevelChecks:
     def test_main_passes_auto_install_to_checker(self) -> None:
         """__main__.py gibt auto_install an StartupChecker weiter."""
         import jarvis.__main__ as main_mod
+
         source = inspect.getsource(main_mod)
         assert "auto_install" in source
 

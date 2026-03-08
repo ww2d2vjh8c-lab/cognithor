@@ -33,7 +33,7 @@ class WorkerState(StrEnum):
 
     IDLE = "idle"
     BUSY = "busy"
-    DRAINING = "draining"    # Finishing current job, then shutting down
+    DRAINING = "draining"  # Finishing current job, then shutting down
     OFFLINE = "offline"
     FAILED = "failed"
 
@@ -47,7 +47,7 @@ class JobState(StrEnum):
     COMPLETED = "completed"
     FAILED = "failed"
     REQUEUED = "requeued"
-    DEAD = "dead"            # Exhausted all retries
+    DEAD = "dead"  # Exhausted all retries
 
 
 class RoutingStrategy(StrEnum):
@@ -69,9 +69,9 @@ class Job:
     """A unit of work to be executed by a worker."""
 
     job_id: str
-    task_type: str                          # e.g. "agent_turn", "tool_call", "batch"
+    task_type: str  # e.g. "agent_turn", "tool_call", "batch"
     payload: dict[str, Any] = field(default_factory=dict)
-    priority: int = 5                       # 1 (low) - 10 (critical)
+    priority: int = 5  # 1 (low) - 10 (critical)
     state: JobState = JobState.PENDING
     assigned_worker: str = ""
     created_at: float = field(default_factory=time.time)
@@ -148,10 +148,7 @@ class WorkerNode:
 
     @property
     def is_available(self) -> bool:
-        return (
-            self.state in (WorkerState.IDLE, WorkerState.BUSY)
-            and self.available_slots > 0
-        )
+        return self.state in (WorkerState.IDLE, WorkerState.BUSY) and self.available_slots > 0
 
     def has_capability(self, capability: str) -> bool:
         """Check if worker can handle a specific capability."""
@@ -353,13 +350,17 @@ class FailoverManager:
                     retries=job.retry_count,
                 )
 
-            self._failover_log.append({
-                "job_id": job.job_id,
-                "worker_id": worker.worker_id,
-                "action": "requeued" if job.can_retry or job.state == JobState.REQUEUED else "dead",
-                "retry_count": job.retry_count,
-                "timestamp": time.time(),
-            })
+            self._failover_log.append(
+                {
+                    "job_id": job.job_id,
+                    "worker_id": worker.worker_id,
+                    "action": "requeued"
+                    if job.can_retry or job.state == JobState.REQUEUED
+                    else "dead",
+                    "retry_count": job.retry_count,
+                    "timestamp": time.time(),
+                }
+            )
 
         worker.current_jobs.clear()
         return requeued
@@ -435,6 +436,7 @@ class JobDistributor:
             worker = self._capability_based(job, candidates)
         else:  # RANDOM
             import random
+
             worker = random.choice(candidates)
 
         if worker.assign_job(job.job_id):
@@ -485,12 +487,14 @@ class JobDistributor:
         candidates: list[WorkerNode],
     ) -> WorkerNode:
         """Pick worker with best explicit capability match, then lowest load."""
+
         def score(w: WorkerNode) -> tuple[int, int, float]:
             # Explicit matches (capability listed and present)
             explicit = sum(1 for c in job.required_capabilities if c in w.capabilities)
             # Penalty for generalist workers (no capabilities defined)
             specificity = 1 if w.capabilities else 0
             return (-explicit, -specificity, w.load)
+
         return min(candidates, key=score)
 
     def stats(self) -> dict[str, Any]:

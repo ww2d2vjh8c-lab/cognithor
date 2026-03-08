@@ -32,8 +32,8 @@ class BudgetLimit:
 
     entity_id: str
     entity_type: str  # "agent", "team", "system"
-    daily_limit: float = 50.0       # EUR pro Tag
-    monthly_limit: float = 1000.0   # EUR pro Monat
+    daily_limit: float = 50.0  # EUR pro Tag
+    monthly_limit: float = 1000.0  # EUR pro Monat
     per_request_limit: float = 5.0  # EUR pro Einzelanfrage
     spent_today: float = 0.0
     spent_this_month: float = 0.0
@@ -102,11 +102,20 @@ class BudgetManager:
             return {"allowed": True, "reason": "Kein Limit konfiguriert"}
 
         if amount > limit.per_request_limit:
-            return {"allowed": False, "reason": f"Einzelanfrage {amount:.2f}€ > Limit {limit.per_request_limit:.2f}€"}
+            return {
+                "allowed": False,
+                "reason": f"Einzelanfrage {amount:.2f}€ > Limit {limit.per_request_limit:.2f}€",
+            }
         if limit.spent_today + amount > limit.daily_limit:
-            return {"allowed": False, "reason": f"Tagesbudget erschöpft ({limit.daily_remaining:.2f}€ übrig)"}
+            return {
+                "allowed": False,
+                "reason": f"Tagesbudget erschöpft ({limit.daily_remaining:.2f}€ übrig)",
+            }
         if limit.spent_this_month + amount > limit.monthly_limit:
-            return {"allowed": False, "reason": f"Monatsbudget erschöpft ({limit.monthly_remaining:.2f}€ übrig)"}
+            return {
+                "allowed": False,
+                "reason": f"Monatsbudget erschöpft ({limit.monthly_remaining:.2f}€ übrig)",
+            }
 
         return {"allowed": True, "reason": "OK"}
 
@@ -314,8 +323,11 @@ class BiasDetector:
     }
 
     AGEISM_INDICATORS = [
-        "zu alt für", "digital native", "die jungen verstehen",
-        "in seinem alter", "alte generation",
+        "zu alt für",
+        "digital native",
+        "die jungen verstehen",
+        "in seinem alter",
+        "alte generation",
     ]
 
     def __init__(self) -> None:
@@ -493,16 +505,22 @@ class FairnessAuditor:
 
         values = list(allocated_by_group.values())
         if len(values) < 2:
-            return self._create_result(FairnessMetric.PROPORTIONAL_ALLOCATION, 100.0, allocated_by_group)
+            return self._create_result(
+                FairnessMetric.PROPORTIONAL_ALLOCATION, 100.0, allocated_by_group
+            )
 
         avg = sum(values) / len(values)
         if avg == 0:
-            return self._create_result(FairnessMetric.PROPORTIONAL_ALLOCATION, 100.0, allocated_by_group)
+            return self._create_result(
+                FairnessMetric.PROPORTIONAL_ALLOCATION, 100.0, allocated_by_group
+            )
 
         max_deviation = max(abs(v - avg) / avg * 100 for v in values)
         score = max(0, 100 - max_deviation)
 
-        return self._create_result(FairnessMetric.PROPORTIONAL_ALLOCATION, score, allocated_by_group)
+        return self._create_result(
+            FairnessMetric.PROPORTIONAL_ALLOCATION, score, allocated_by_group
+        )
 
     def _create_result(
         self, metric: FairnessMetric, score: float, details: dict[str, Any]
@@ -538,9 +556,7 @@ class FairnessAuditor:
             "passed": sum(1 for r in results if r.passed),
             "failed": sum(1 for r in results if not r.passed),
             "pass_rate": round(self.pass_rate(), 1),
-            "avg_score": round(
-                sum(r.score for r in results) / len(results), 1
-            ) if results else 0,
+            "avg_score": round(sum(r.score for r in results) / len(results), 1) if results else 0,
         }
 
 

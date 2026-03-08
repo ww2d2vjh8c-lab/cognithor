@@ -194,18 +194,12 @@ class HybridSearch:
 
                 # VectorIndex fuer ANN-Suche nutzen
                 if self._vector_index.size > 0:
-                    ann_results = self._vector_index.search(
-                        query_emb.vector, top_k=fetch_k
-                    )
+                    ann_results = self._vector_index.search(query_emb.vector, top_k=fetch_k)
                     for content_hash, sim in ann_results:
                         chunk_ids = self._chunk_hash_map.get(content_hash, [])
                         for cid in chunk_ids:
-                            scores.setdefault(
-                                cid, {"bm25": 0, "vector": 0, "graph": 0}
-                            )
-                            scores[cid]["vector"] = max(
-                                scores[cid]["vector"], max(0.0, sim)
-                            )
+                            scores.setdefault(cid, {"bm25": 0, "vector": 0, "graph": 0})
+                            scores[cid]["vector"] = max(scores[cid]["vector"], max(0.0, sim))
                 else:
                     # Fallback: Brute-Force ueber alle Embeddings aus DB
                     all_embeddings = self._index.get_all_embeddings()
@@ -218,9 +212,7 @@ class HybridSearch:
 
                     vector_scores.sort(key=lambda x: x[1], reverse=True)
                     for chunk_id, sim in vector_scores[:fetch_k]:
-                        scores.setdefault(
-                            chunk_id, {"bm25": 0, "vector": 0, "graph": 0}
-                        )
+                        scores.setdefault(chunk_id, {"bm25": 0, "vector": 0, "graph": 0})
                         scores[chunk_id]["vector"] = max(0.0, sim)
 
             except Exception as e:
@@ -297,11 +289,7 @@ class HybridSearch:
             vector_s = channel_scores["vector"]
             graph_s = channel_scores["graph"]
 
-            final_score = (
-                w_vector * vector_s
-                + w_bm25 * bm25_s
-                + w_graph * graph_s
-            ) * decay
+            final_score = (w_vector * vector_s + w_bm25 * bm25_s + w_graph * graph_s) * decay
 
             results.append(
                 MemorySearchResult(

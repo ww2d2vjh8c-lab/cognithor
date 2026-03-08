@@ -41,14 +41,14 @@ class GateDecision(Enum):
 class GatePolicy:
     """Konfigurierbare Schwellwerte für das Security-Gate."""
 
-    max_critical_findings: int = 0       # 0 = kein Critical erlaubt
+    max_critical_findings: int = 0  # 0 = kein Critical erlaubt
     max_high_findings: int = 3
     max_total_findings: int = 20
-    min_pass_rate: float = 80.0          # Pipeline-Pass-Rate
+    min_pass_rate: float = 80.0  # Pipeline-Pass-Rate
     require_dependency_scan: bool = True
     require_fuzzing: bool = True
     require_inversion_check: bool = True
-    block_on_unscanned: bool = True      # Block wenn Scan fehlt
+    block_on_unscanned: bool = True  # Block wenn Scan fehlt
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -118,7 +118,9 @@ class SecurityGate:
         # Critical Findings
         if critical_findings > self._policy.max_critical_findings:
             decision = GateDecision.BLOCK
-            reasons.append(f"{critical_findings} kritische Findings (max: {self._policy.max_critical_findings})")
+            reasons.append(
+                f"{critical_findings} kritische Findings (max: {self._policy.max_critical_findings})"
+            )
 
         # High Findings
         if high_findings > self._policy.max_high_findings:
@@ -189,9 +191,7 @@ class SecurityGate:
             "allowed": sum(1 for r in h if r.decision == GateDecision.ALLOW),
             "blocked": sum(1 for r in h if r.decision == GateDecision.BLOCK),
             "warned": sum(1 for r in h if r.decision == GateDecision.WARN),
-            "block_rate": (
-                sum(1 for r in h if r.blocked) / len(h) * 100 if h else 0
-            ),
+            "block_rate": (sum(1 for r in h if r.blocked) / len(h) * 100 if h else 0),
         }
 
 
@@ -262,10 +262,10 @@ repos:
 
 class IsolationLevel(Enum):
     NONE = "none"
-    PROCESS = "process"           # Eigener Prozess
-    NAMESPACE = "namespace"       # Linux-Namespaces
-    CONTAINER = "container"       # Docker/Podman
-    VM = "vm"                     # Volle VM-Isolation
+    PROCESS = "process"  # Eigener Prozess
+    NAMESPACE = "namespace"  # Linux-Namespaces
+    CONTAINER = "container"  # Docker/Podman
+    VM = "vm"  # Volle VM-Isolation
 
 
 @dataclass
@@ -413,6 +413,7 @@ class CredentialScanner:
     def scan_text(self, text: str) -> list[dict[str, str]]:
         """Scannt einen Text auf Credential-Patterns."""
         import re
+
         findings = []
         for pattern, cred_type in self.PATTERNS:
             if re.search(pattern, text, re.IGNORECASE):
@@ -439,7 +440,9 @@ class WebhookConfig:
     """Webhook-Konfiguration für Security-Events."""
 
     url: str
-    events: list[str] = field(default_factory=lambda: ["gate_blocked", "critical_finding", "recall"])
+    events: list[str] = field(
+        default_factory=lambda: ["gate_blocked", "critical_finding", "recall"]
+    )
     enabled: bool = True
     secret: str = ""
     timeout_seconds: int = 10
@@ -490,7 +493,9 @@ class WebhookNotifier:
             headers: dict[str, str] = {"Content-Type": "application/json"}
             if webhook.secret:
                 sig = hmac.new(
-                    webhook.secret.encode(), body_bytes, hashlib.sha256,
+                    webhook.secret.encode(),
+                    body_bytes,
+                    hashlib.sha256,
                 ).hexdigest()
                 headers["X-Signature-SHA256"] = sig
 
@@ -504,14 +509,14 @@ class WebhookNotifier:
 
             try:
                 import httpx
+
                 with httpx.Client(timeout=webhook.timeout_seconds) as client:
                     resp = client.post(webhook.url, content=body_bytes, headers=headers)
                     notification["status_code"] = resp.status_code
                     notification["success"] = 200 <= resp.status_code < 300
             except ImportError:
                 logger.warning(
-                    "webhook_httpx_not_installed: pip install httpx "
-                    "fuer echte Webhook-Zustellung"
+                    "webhook_httpx_not_installed: pip install httpx fuer echte Webhook-Zustellung"
                 )
                 notification["success"] = False
                 notification["error"] = "httpx_not_installed"
@@ -573,15 +578,38 @@ class ScanScheduler:
     """Verwaltet zeitgesteuerte Security-Scans."""
 
     DEFAULT_SCHEDULES = [
-        ScheduledScan("daily-quick", "Täglicher Quick-Scan", "0 2 * * *",
-                       ["prompt_injection", "model_inversion"]),
-        ScheduledScan("weekly-full", "Wöchentlicher Full-Scan", "0 3 * * 1",
-                       ["adversarial_fuzzing", "prompt_injection", "model_inversion",
-                        "dependency_scan", "memory_poisoning"]),
-        ScheduledScan("monthly-pentest", "Monatlicher Penetration-Test", "0 4 1 * *",
-                       ["adversarial_fuzzing", "prompt_injection", "model_inversion",
-                        "data_exfiltration", "privilege_escalation", "denial_of_service",
-                        "dependency_scan"]),
+        ScheduledScan(
+            "daily-quick",
+            "Täglicher Quick-Scan",
+            "0 2 * * *",
+            ["prompt_injection", "model_inversion"],
+        ),
+        ScheduledScan(
+            "weekly-full",
+            "Wöchentlicher Full-Scan",
+            "0 3 * * 1",
+            [
+                "adversarial_fuzzing",
+                "prompt_injection",
+                "model_inversion",
+                "dependency_scan",
+                "memory_poisoning",
+            ],
+        ),
+        ScheduledScan(
+            "monthly-pentest",
+            "Monatlicher Penetration-Test",
+            "0 4 1 * *",
+            [
+                "adversarial_fuzzing",
+                "prompt_injection",
+                "model_inversion",
+                "data_exfiltration",
+                "privilege_escalation",
+                "denial_of_service",
+                "dependency_scan",
+            ],
+        ),
     ]
 
     def __init__(self, load_defaults: bool = True) -> None:

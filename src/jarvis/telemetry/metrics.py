@@ -33,8 +33,7 @@ log = get_logger(__name__)
 class MetricsProvider:
     """Zentrale Instanz für Metriken-Erfassung."""
 
-    def __init__(self, service_name: str = "jarvis",
-                 max_points_per_metric: int = 500) -> None:
+    def __init__(self, service_name: str = "jarvis", max_points_per_metric: int = 500) -> None:
         self._service_name = service_name
         self._max_points = max_points_per_metric
         self._lock = threading.Lock()
@@ -96,8 +95,7 @@ class MetricsProvider:
 
     # ── Time Series ──────────────────────────────────────────────
 
-    def get_history(self, name: str, last_n: int = 60,
-                    **labels: str) -> list[dict[str, Any]]:
+    def get_history(self, name: str, last_n: int = 60, **labels: str) -> list[dict[str, Any]]:
         """Gibt Zeitreihe einer Metrik zurück."""
         key = self._make_key(name, labels)
         points = self._time_series.get(key, deque())
@@ -113,9 +111,7 @@ class MetricsProvider:
                 "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "counters": dict(self._counters),
                 "gauges": dict(self._gauges),
-                "histograms": {
-                    k: v.to_dict() for k, v in self._histograms.items()
-                },
+                "histograms": {k: v.to_dict() for k, v in self._histograms.items()},
             }
         return result
 
@@ -125,30 +121,39 @@ class MetricsProvider:
 
         for key, value in self._counters.items():
             name = key.split("{")[0]
-            metrics.append(MetricDefinition(
-                name=name, kind=MetricKind.COUNTER,
-                description=self._descriptions.get(name, ""),
-                unit=self._units.get(name, ""),
-                data_points=[MetricDataPoint(value=value)],
-            ))
+            metrics.append(
+                MetricDefinition(
+                    name=name,
+                    kind=MetricKind.COUNTER,
+                    description=self._descriptions.get(name, ""),
+                    unit=self._units.get(name, ""),
+                    data_points=[MetricDataPoint(value=value)],
+                )
+            )
 
         for key, value in self._gauges.items():
             name = key.split("{")[0]
-            metrics.append(MetricDefinition(
-                name=name, kind=MetricKind.GAUGE,
-                description=self._descriptions.get(name, ""),
-                unit=self._units.get(name, ""),
-                data_points=[MetricDataPoint(value=value)],
-            ))
+            metrics.append(
+                MetricDefinition(
+                    name=name,
+                    kind=MetricKind.GAUGE,
+                    description=self._descriptions.get(name, ""),
+                    unit=self._units.get(name, ""),
+                    data_points=[MetricDataPoint(value=value)],
+                )
+            )
 
         for key, hist in self._histograms.items():
             name = key.split("{")[0]
-            metrics.append(MetricDefinition(
-                name=name, kind=MetricKind.HISTOGRAM,
-                description=self._descriptions.get(name, ""),
-                unit=self._units.get(name, ""),
-                histogram=hist,
-            ))
+            metrics.append(
+                MetricDefinition(
+                    name=name,
+                    kind=MetricKind.HISTOGRAM,
+                    description=self._descriptions.get(name, ""),
+                    unit=self._units.get(name, ""),
+                    histogram=hist,
+                )
+            )
 
         return metrics
 
@@ -191,32 +196,37 @@ class MetricsProvider:
             elif metric.kind == MetricKind.HISTOGRAM and metric.histogram:
                 h = metric.histogram
                 m["histogram"] = {
-                    "dataPoints": [{
-                        "count": str(h.count),
-                        "sum": h.total,
-                        "min": h.min_value if h.count else 0,
-                        "max": h.max_value if h.count else 0,
-                        "bucketCounts": [str(c) for c in h.bucket_counts],
-                        "explicitBounds": h.bucket_boundaries,
-                        "timeUnixNano": str(h.timestamp_ns),
-                    }],
+                    "dataPoints": [
+                        {
+                            "count": str(h.count),
+                            "sum": h.total,
+                            "min": h.min_value if h.count else 0,
+                            "max": h.max_value if h.count else 0,
+                            "bucketCounts": [str(c) for c in h.bucket_counts],
+                            "explicitBounds": h.bucket_boundaries,
+                            "timeUnixNano": str(h.timestamp_ns),
+                        }
+                    ],
                     "aggregationTemporality": 2,
                 }
             scope_metrics.append(m)
 
         return {
-            "resourceMetrics": [{
-                "resource": {
-                    "attributes": [
-                        {"key": "service.name",
-                         "value": {"stringValue": self._service_name}},
+            "resourceMetrics": [
+                {
+                    "resource": {
+                        "attributes": [
+                            {"key": "service.name", "value": {"stringValue": self._service_name}},
+                        ],
+                    },
+                    "scopeMetrics": [
+                        {
+                            "scope": {"name": "jarvis.telemetry", "version": "1.0"},
+                            "metrics": scope_metrics,
+                        }
                     ],
-                },
-                "scopeMetrics": [{
-                    "scope": {"name": "jarvis.telemetry", "version": "1.0"},
-                    "metrics": scope_metrics,
-                }],
-            }],
+                }
+            ],
         }
 
     # ── Helpers ───────────────────────────────────────────────────
@@ -227,13 +237,10 @@ class MetricsProvider:
         label_str = ",".join(f"{k}={v}" for k, v in sorted(labels.items()))
         return f"{name}{{{label_str}}}"
 
-    def _record_point(self, key: str, value: float,
-                      labels: dict[str, str]) -> None:
+    def _record_point(self, key: str, value: float, labels: dict[str, str]) -> None:
         if key not in self._time_series:
             self._time_series[key] = deque(maxlen=self._max_points)
-        self._time_series[key].append(
-            MetricDataPoint(value=value, attributes=labels)
-        )
+        self._time_series[key].append(MetricDataPoint(value=value, attributes=labels))
 
     def reset(self) -> None:
         """Setzt alle Metriken zurück."""

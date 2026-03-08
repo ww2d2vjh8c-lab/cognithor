@@ -89,8 +89,12 @@ class TestRunRecorder:
         assert run.reflection is not None
         assert run.policy_snapshot == {"rule1": "allow"}
 
-    def test_get_run_restores_complete_record(self, recorder, sample_plan, sample_decisions, sample_results):
-        run_id = recorder.start_run(session_id="s2", user_message="Full test", operation_mode="offline")
+    def test_get_run_restores_complete_record(
+        self, recorder, sample_plan, sample_decisions, sample_results
+    ):
+        run_id = recorder.start_run(
+            session_id="s2", user_message="Full test", operation_mode="offline"
+        )
         recorder.record_plan(run_id, sample_plan)
         recorder.record_gate_decisions(run_id, sample_decisions)
         recorder.record_tool_results(run_id, sample_results)

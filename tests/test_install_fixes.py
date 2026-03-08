@@ -28,19 +28,17 @@ PYPROJECT = REPO / "pyproject.toml"
 # Locate bash: Git Bash on Windows, /bin/bash on Unix
 _BASH = shutil.which("bash")
 
-needs_bash = pytest.mark.skipif(
-    _BASH is None, reason="bash not found in PATH"
-)
-needs_node = pytest.mark.skipif(
-    shutil.which("node") is None, reason="node not found in PATH"
-)
+needs_bash = pytest.mark.skipif(_BASH is None, reason="bash not found in PATH")
+needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node not found in PATH")
 
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _run_bash(script: str, *, env: dict | None = None, timeout: int = 15) -> subprocess.CompletedProcess:
+def _run_bash(
+    script: str, *, env: dict | None = None, timeout: int = 15
+) -> subprocess.CompletedProcess:
     """Run a bash snippet and return the result (never raises on non-zero)."""
     merged_env = {**os.environ, **(env or {})}
     # Force LANG for reproducible output
@@ -68,6 +66,7 @@ def _run_node(script: str, *, timeout: int = 10) -> subprocess.CompletedProcess:
 # Fix #1: chmod +x in docs (QUICKSTART.md + README.md)
 # =========================================================================
 
+
 class TestFix1ChmodInDocs:
     """Docs must tell users to chmod +x install.sh BEFORE running it."""
 
@@ -92,6 +91,7 @@ class TestFix1ChmodInDocs:
 # =========================================================================
 # Fix #2: pip not found → abort with helpful message
 # =========================================================================
+
 
 class TestFix2PipAbort:
     """If pip is missing, install.sh must exit with the exact fix command."""
@@ -189,6 +189,7 @@ class TestFix2PipAbort:
 # Fix #3: venv broken → delete and recreate
 # =========================================================================
 
+
 class TestFix3VenvCorruption:
     """If venv dir exists but bin/activate is missing, delete + recreate."""
 
@@ -252,6 +253,7 @@ class TestFix3VenvCorruption:
 # Fix #4: Ollama model download is optional (never blocking)
 # =========================================================================
 
+
 class TestFix4OllamaOptional:
     """install.sh must NOT contain any 'ollama pull' that runs automatically."""
 
@@ -277,10 +279,11 @@ class TestFix4OllamaOptional:
 
     def test_prints_manual_pull_commands(self):
         text = _read(INSTALL_SH)
-        assert 'ollama pull' in text, "Must mention ollama pull commands for the user"
+        assert "ollama pull" in text, "Must mention ollama pull commands for the user"
         # But only inside echo/info/warn
         pull_lines = [
-            line.strip() for line in text.splitlines()
+            line.strip()
+            for line in text.splitlines()
             if "ollama pull" in line and not line.strip().startswith("#")
         ]
         for line in pull_lines:
@@ -293,34 +296,30 @@ class TestFix4OllamaOptional:
 # Fix #5: pip install has progress feedback
 # =========================================================================
 
+
 class TestFix5PipProgress:
     """pip install must use --progress-bar on and print duration estimate."""
 
     def test_progress_bar_flag(self):
         text = _read(INSTALL_SH)
-        assert "--progress-bar on" in text, (
-            "pip install command must include --progress-bar on"
-        )
+        assert "--progress-bar on" in text, "pip install command must include --progress-bar on"
 
     def test_duration_estimate_printed(self):
         text = _read(INSTALL_SH)
-        assert "2-5 Minuten" in text, (
-            "Must print duration estimate before pip install"
-        )
+        assert "2-5 Minuten" in text, "Must print duration estimate before pip install"
 
 
 # =========================================================================
 # Fix #6: Verbose directory creation with timeout and permission errors
 # =========================================================================
 
+
 class TestFix6VerboseMkdir:
     """Every mkdir must be verbose, have a timeout, and handle permission errors."""
 
     def test_create_directory_safe_function_exists(self):
         text = _read(INSTALL_SH)
-        assert "create_directory_safe()" in text, (
-            "Must define create_directory_safe function"
-        )
+        assert "create_directory_safe()" in text, "Must define create_directory_safe function"
 
     @needs_bash
     def test_creates_directory_with_verbose_output(self, tmp_path):
@@ -395,17 +394,14 @@ class TestFix6VerboseMkdir:
 
     def test_has_sudo_fix_on_permission_error(self):
         text = _read(INSTALL_SH)
-        assert "sudo mkdir -p" in text, (
-            "Must print sudo mkdir fix command on permission failure"
-        )
-        assert "sudo chown" in text, (
-            "Must print sudo chown fix command on permission failure"
-        )
+        assert "sudo mkdir -p" in text, "Must print sudo mkdir fix command on permission failure"
+        assert "sudo chown" in text, "Must print sudo chown fix command on permission failure"
 
 
 # =========================================================================
 # Fix #7: Dynamic version from pyproject.toml (not hardcoded)
 # =========================================================================
+
 
 class TestFix7DynamicVersion:
     """Banner must read version from pyproject.toml, not hardcode v0.1.0."""
@@ -442,6 +438,7 @@ class TestFix7DynamicVersion:
 # Fix #8: Windows python ENOENT fallback in vite.config.js
 # =========================================================================
 
+
 class TestFix8VitePythonFallback:
     """Vite launcher must try python3 if python fails (and vice versa)."""
 
@@ -450,9 +447,7 @@ class TestFix8VitePythonFallback:
         assert "process.platform === 'win32'" in text, (
             "Must check platform to choose python command"
         )
-        assert "'python'" in text and "'python3'" in text, (
-            "Must reference both python and python3"
-        )
+        assert "'python'" in text and "'python3'" in text, "Must reference both python and python3"
 
     def test_enoent_retry_logic_exists(self):
         text = _read(VITE_CONFIG)
@@ -464,9 +459,7 @@ class TestFix8VitePythonFallback:
         assert "sudo apt install python3" in text, (
             "Must include Ubuntu install hint on final failure"
         )
-        assert "brew install python" in text, (
-            "Must include macOS install hint on final failure"
-        )
+        assert "brew install python" in text, "Must include macOS install hint on final failure"
 
     @needs_node
     def test_fallback_logic_correctness(self):
@@ -525,6 +518,7 @@ class TestFix8VitePythonFallback:
 # Fix #9: Error submission helper at end of failures
 # =========================================================================
 
+
 class TestFix9ErrorSubmission:
     """On any fatal error, print GitHub issue URL."""
 
@@ -576,6 +570,7 @@ class TestFix9ErrorSubmission:
 # General: ASCII-safe output (no Unicode that breaks cp1252)
 # =========================================================================
 
+
 class TestASCIISafe:
     """install.sh must not use Unicode symbols that break on Windows cp1252."""
 
@@ -611,6 +606,7 @@ class TestASCIISafe:
 # macOS portability: no 'timeout' command, no 'sed -i' without backup
 # =========================================================================
 
+
 class TestMacOSPortability:
     """install.sh must not use GNU-only commands."""
 
@@ -623,8 +619,7 @@ class TestMacOSPortability:
                 continue
             if re.match(r"\btimeout\b", stripped):
                 pytest.fail(
-                    f"Line {i}: uses 'timeout' command (GNU-only, not on macOS): "
-                    f"{stripped!r}"
+                    f"Line {i}: uses 'timeout' command (GNU-only, not on macOS): {stripped!r}"
                 )
 
     def test_no_sed_dash_i(self):
@@ -676,6 +671,7 @@ class TestMacOSPortability:
 # Bash set -e safety: ((errors++)) when errors=0 is falsy → kills script
 # =========================================================================
 
+
 class TestSetESafety:
     """install.sh must not use ((errors++)) — it's falsy when errors=0 under set -e."""
 
@@ -701,9 +697,7 @@ class TestSetESafety:
             echo "SURVIVED errors=$errors"
         """)
         r = _run_bash(script)
-        assert "SURVIVED errors=1" in r.stdout, (
-            "errors=$((errors + 1)) must survive set -e"
-        )
+        assert "SURVIVED errors=1" in r.stdout, "errors=$((errors + 1)) must survive set -e"
 
     @needs_bash
     def test_unsafe_increment_dies_under_set_e(self):
@@ -723,14 +717,13 @@ class TestSetESafety:
 # Vite venv Python detection
 # =========================================================================
 
+
 class TestViteVenvPython:
     """Vite must prefer venv Python over system Python."""
 
     def test_findPythonCmd_exists(self):
         text = _read(VITE_CONFIG)
-        assert "findPythonCmd" in text, (
-            "Must have findPythonCmd function for venv detection"
-        )
+        assert "findPythonCmd" in text, "Must have findPythonCmd function for venv detection"
 
     def test_checks_local_venv(self):
         text = _read(VITE_CONFIG)
@@ -738,9 +731,7 @@ class TestViteVenvPython:
 
     def test_checks_jarvis_home_venv(self):
         text = _read(VITE_CONFIG)
-        assert ".jarvis" in text and "venv" in text, (
-            "Must check for ~/.jarvis/venv"
-        )
+        assert ".jarvis" in text and "venv" in text, "Must check for ~/.jarvis/venv"
 
     def test_uses_existsSync(self):
         text = _read(VITE_CONFIG)
@@ -776,7 +767,5 @@ class TestViteVenvPython:
             }}
         """)
         r = _run_node(script)
-        assert "FOUND_VENV=" in r.stdout, (
-            f"Must detect .venv Python, got: {r.stdout!r}"
-        )
+        assert "FOUND_VENV=" in r.stdout, f"Must detect .venv Python, got: {r.stdout!r}"
         assert ".venv" in r.stdout

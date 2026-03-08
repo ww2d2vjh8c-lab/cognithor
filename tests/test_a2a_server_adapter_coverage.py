@@ -1,4 +1,5 @@
 """Tests for a2a/server.py and a2a/adapter.py -- Coverage boost."""
+
 from __future__ import annotations
 
 import asyncio
@@ -60,18 +61,25 @@ class TestA2AServerDispatch:
 
         # Send message to existing task
         msg2 = Message(role=MessageRole.USER, parts=[TextPart(text="More")])
-        r2 = await server.dispatch("message/send", {
-            "id": task_id, "message": msg2.to_dict(),
-        })
+        r2 = await server.dispatch(
+            "message/send",
+            {
+                "id": task_id,
+                "message": msg2.to_dict(),
+            },
+        )
         assert r2["id"] == task_id
 
     @pytest.mark.asyncio
     async def test_dispatch_tasks_send_legacy(self):
         """Legacy tasks/send alias."""
         server = A2AServer()
-        result = await server.dispatch("tasks/send", {
-            "message": {"role": "user", "parts": [{"type": "text", "text": "hi"}]},
-        })
+        result = await server.dispatch(
+            "tasks/send",
+            {
+                "message": {"role": "user", "parts": [{"type": "text", "text": "hi"}]},
+            },
+        )
         assert "id" in result
 
     @pytest.mark.asyncio
@@ -122,15 +130,20 @@ class TestA2AServerMessageSend:
     async def test_send_with_metadata(self):
         server = A2AServer()
         msg = {"role": "user", "parts": [{"type": "text", "text": "hi"}]}
-        result = await server.dispatch("message/send", {
-            "message": msg, "metadata": {"key": "val"},
-            "contextId": "ctx1",
-        })
+        result = await server.dispatch(
+            "message/send",
+            {
+                "message": msg,
+                "metadata": {"key": "val"},
+                "contextId": "ctx1",
+            },
+        )
         assert "id" in result
 
     @pytest.mark.asyncio
     async def test_send_with_handler(self):
         """With task_handler, task is submitted and executed in background."""
+
         async def handler(task):
             task.transition(TaskState.COMPLETED)
             return task
@@ -285,9 +298,13 @@ class TestA2AServerPush:
     @pytest.mark.asyncio
     async def test_push_disabled(self):
         server = A2AServer(A2AServerConfig(enable_push=False))
-        result = await server.dispatch("tasks/pushNotification/create", {
-            "taskId": "t1", "url": "https://example.com/callback",
-        })
+        result = await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": "t1",
+                "url": "https://example.com/callback",
+            },
+        )
         assert "error" in result
 
     @pytest.mark.asyncio
@@ -295,9 +312,13 @@ class TestA2AServerPush:
         server = A2AServer(A2AServerConfig(enable_push=True))
         msg = {"role": "user", "parts": [{"type": "text", "text": "hi"}]}
         r = await server.dispatch("message/send", {"message": msg})
-        result = await server.dispatch("tasks/pushNotification/create", {
-            "taskId": r["id"], "url": "https://callback.example.com/hook",
-        })
+        result = await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": r["id"],
+                "url": "https://callback.example.com/hook",
+            },
+        )
         assert "configId" in result or "config_id" in result
 
     @pytest.mark.asyncio
@@ -311,9 +332,13 @@ class TestA2AServerPush:
         server = A2AServer(A2AServerConfig(enable_push=True))
         msg = {"role": "user", "parts": [{"type": "text", "text": "hi"}]}
         r = await server.dispatch("message/send", {"message": msg})
-        result = await server.dispatch("tasks/pushNotification/create", {
-            "taskId": r["id"], "url": "ftp://bad.com/hook",
-        })
+        result = await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": r["id"],
+                "url": "ftp://bad.com/hook",
+            },
+        )
         assert "error" in result
 
     @pytest.mark.asyncio
@@ -321,17 +346,25 @@ class TestA2AServerPush:
         server = A2AServer(A2AServerConfig(enable_push=True))
         msg = {"role": "user", "parts": [{"type": "text", "text": "hi"}]}
         r = await server.dispatch("message/send", {"message": msg})
-        result = await server.dispatch("tasks/pushNotification/create", {
-            "taskId": r["id"], "url": "https:///no-host",
-        })
+        result = await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": r["id"],
+                "url": "https:///no-host",
+            },
+        )
         assert "error" in result
 
     @pytest.mark.asyncio
     async def test_push_create_task_not_found(self):
         server = A2AServer(A2AServerConfig(enable_push=True))
-        result = await server.dispatch("tasks/pushNotification/create", {
-            "taskId": "ghost", "url": "https://callback.example.com/hook",
-        })
+        result = await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": "ghost",
+                "url": "https://callback.example.com/hook",
+            },
+        )
         assert "error" in result
 
     @pytest.mark.asyncio
@@ -339,10 +372,14 @@ class TestA2AServerPush:
         server = A2AServer(A2AServerConfig(enable_push=True))
         msg = {"role": "user", "parts": [{"type": "text", "text": "hi"}]}
         r = await server.dispatch("message/send", {"message": msg})
-        result = await server.dispatch("tasks/pushNotification/create", {
-            "taskId": r["id"], "url": "https://callback.example.com/hook",
-            "authentication": {"type": "bearer", "credentials": "tok123"},
-        })
+        result = await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": r["id"],
+                "url": "https://callback.example.com/hook",
+                "authentication": {"type": "bearer", "credentials": "tok123"},
+            },
+        )
         assert "error" not in result
 
     @pytest.mark.asyncio
@@ -350,9 +387,13 @@ class TestA2AServerPush:
         server = A2AServer(A2AServerConfig(enable_push=True))
         msg = {"role": "user", "parts": [{"type": "text", "text": "hi"}]}
         r = await server.dispatch("message/send", {"message": msg})
-        cr = await server.dispatch("tasks/pushNotification/create", {
-            "taskId": r["id"], "url": "https://callback.example.com/hook",
-        })
+        cr = await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": r["id"],
+                "url": "https://callback.example.com/hook",
+            },
+        )
         config_id = cr.get("configId") or cr.get("config_id")
         result = await server.dispatch("tasks/pushNotification/get", {"configId": config_id})
         assert "error" not in result
@@ -368,9 +409,13 @@ class TestA2AServerPush:
         server = A2AServer(A2AServerConfig(enable_push=True))
         msg = {"role": "user", "parts": [{"type": "text", "text": "hi"}]}
         r = await server.dispatch("message/send", {"message": msg})
-        await server.dispatch("tasks/pushNotification/create", {
-            "taskId": r["id"], "url": "https://cb.example.com/hook1",
-        })
+        await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": r["id"],
+                "url": "https://cb.example.com/hook1",
+            },
+        )
         result = await server.dispatch("tasks/pushNotification/list", {"taskId": r["id"]})
         assert len(result["configs"]) == 1
 
@@ -385,9 +430,13 @@ class TestA2AServerPush:
         server = A2AServer(A2AServerConfig(enable_push=True))
         msg = {"role": "user", "parts": [{"type": "text", "text": "hi"}]}
         r = await server.dispatch("message/send", {"message": msg})
-        cr = await server.dispatch("tasks/pushNotification/create", {
-            "taskId": r["id"], "url": "https://cb.example.com/hook",
-        })
+        cr = await server.dispatch(
+            "tasks/pushNotification/create",
+            {
+                "taskId": r["id"],
+                "url": "https://cb.example.com/hook",
+            },
+        )
         config_id = cr.get("configId") or cr.get("config_id")
         result = await server.dispatch("tasks/pushNotification/delete", {"configId": config_id})
         assert result.get("deleted") is True
@@ -408,9 +457,14 @@ class TestA2AServerHTTP:
     @pytest.mark.asyncio
     async def test_process_jsonrpc_with_id(self):
         server = A2AServer()
-        result = await server.process_jsonrpc({
-            "jsonrpc": "2.0", "id": 1, "method": "tasks/list", "params": {},
-        })
+        result = await server.process_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tasks/list",
+                "params": {},
+            }
+        )
         assert result["jsonrpc"] == "2.0"
         assert "result" in result
 
@@ -418,17 +472,24 @@ class TestA2AServerHTTP:
     async def test_process_jsonrpc_notification(self):
         """JSON-RPC notification (no id) returns None."""
         server = A2AServer()
-        result = await server.process_jsonrpc({
-            "method": "tasks/list", "params": {},
-        })
+        result = await server.process_jsonrpc(
+            {
+                "method": "tasks/list",
+                "params": {},
+            }
+        )
         assert result is None
 
     @pytest.mark.asyncio
     async def test_process_jsonrpc_error(self):
         server = A2AServer()
-        result = await server.process_jsonrpc({
-            "jsonrpc": "2.0", "id": 1, "method": "unknown",
-        })
+        result = await server.process_jsonrpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "unknown",
+            }
+        )
         assert "error" in result
 
     @pytest.mark.asyncio
@@ -600,8 +661,10 @@ class TestA2AServerStreaming:
     async def test_stream_with_stream_handler(self):
         async def stream_handler(task):
             yield TaskStatusUpdateEvent(
-                task_id=task.id, context_id=task.context_id,
-                status=TaskStatus(state=TaskState.COMPLETED), final=True,
+                task_id=task.id,
+                context_id=task.context_id,
+                status=TaskStatus(state=TaskState.COMPLETED),
+                final=True,
             )
 
         server = A2AServer()
@@ -708,6 +771,7 @@ class TestA2AAdapter:
     def _make_config(self, a2a_enabled=True, tmp_path=None):
         """Create a mock JarvisConfig."""
         import tempfile
+
         config = MagicMock()
         mcp_path = MagicMock()
         mcp_path.exists.return_value = False
@@ -716,6 +780,7 @@ class TestA2AAdapter:
 
     def test_setup_disabled(self):
         from jarvis.a2a.adapter import A2AAdapter
+
         config = self._make_config()
         adapter = A2AAdapter(config)
         result = adapter.setup()
@@ -725,6 +790,7 @@ class TestA2AAdapter:
     def test_setup_enabled_from_yaml(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
         import yaml
+
         mcp_yaml = tmp_path / "mcp.yaml"
         mcp_yaml.write_text(yaml.dump({"a2a": {"enabled": True, "port": 3099}}))
         config = MagicMock()
@@ -739,6 +805,7 @@ class TestA2AAdapter:
     def test_setup_with_interop(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
         import yaml
+
         mcp_yaml = tmp_path / "mcp.yaml"
         mcp_yaml.write_text(yaml.dump({"a2a": {"enabled": True}}))
         config = MagicMock()
@@ -759,6 +826,7 @@ class TestA2AAdapter:
     async def test_start_stop(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
         import yaml
+
         mcp_yaml = tmp_path / "mcp.yaml"
         mcp_yaml.write_text(yaml.dump({"a2a": {"enabled": True}}))
         config = MagicMock()
@@ -775,6 +843,7 @@ class TestA2AAdapter:
     async def test_handle_incoming_task_no_text(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
         import yaml
+
         mcp_yaml = tmp_path / "mcp.yaml"
         mcp_yaml.write_text(yaml.dump({"a2a": {"enabled": True}}))
         config = MagicMock()
@@ -790,6 +859,7 @@ class TestA2AAdapter:
     async def test_handle_incoming_task_echo(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
         import yaml
+
         mcp_yaml = tmp_path / "mcp.yaml"
         mcp_yaml.write_text(yaml.dump({"a2a": {"enabled": True}}))
         config = MagicMock()
@@ -809,6 +879,7 @@ class TestA2AAdapter:
     async def test_handle_incoming_task_with_handler(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
         import yaml
+
         mcp_yaml = tmp_path / "mcp.yaml"
         mcp_yaml.write_text(yaml.dump({"a2a": {"enabled": True}}))
         config = MagicMock()
@@ -830,6 +901,7 @@ class TestA2AAdapter:
     async def test_handle_incoming_task_handler_exception(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
         import yaml
+
         mcp_yaml = tmp_path / "mcp.yaml"
         mcp_yaml.write_text(yaml.dump({"a2a": {"enabled": True}}))
         config = MagicMock()
@@ -850,6 +922,7 @@ class TestA2AAdapter:
     @pytest.mark.asyncio
     async def test_delegate_task_no_client(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
+
         config = MagicMock()
         config.mcp_config_file = MagicMock()
         config.mcp_config_file.exists.return_value = False
@@ -860,6 +933,7 @@ class TestA2AAdapter:
     @pytest.mark.asyncio
     async def test_discover_remote_no_client(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
+
         config = MagicMock()
         config.mcp_config_file = MagicMock()
         config.mcp_config_file.exists.return_value = False
@@ -870,6 +944,7 @@ class TestA2AAdapter:
     @pytest.mark.asyncio
     async def test_handle_a2a_request_no_server(self):
         from jarvis.a2a.adapter import A2AAdapter
+
         config = MagicMock()
         config.mcp_config_file = MagicMock()
         config.mcp_config_file.exists.return_value = False
@@ -880,6 +955,7 @@ class TestA2AAdapter:
     @pytest.mark.asyncio
     async def test_handle_stream_request_no_server(self):
         from jarvis.a2a.adapter import A2AAdapter
+
         config = MagicMock()
         config.mcp_config_file = MagicMock()
         config.mcp_config_file.exists.return_value = False
@@ -892,6 +968,7 @@ class TestA2AAdapter:
 
     def test_get_agent_card_no_server(self):
         from jarvis.a2a.adapter import A2AAdapter
+
         config = MagicMock()
         config.mcp_config_file = MagicMock()
         config.mcp_config_file.exists.return_value = False
@@ -902,6 +979,7 @@ class TestA2AAdapter:
     def test_stats(self, tmp_path):
         from jarvis.a2a.adapter import A2AAdapter
         import yaml
+
         mcp_yaml = tmp_path / "mcp.yaml"
         mcp_yaml.write_text(yaml.dump({"a2a": {"enabled": True}}))
         config = MagicMock()
@@ -922,6 +1000,7 @@ class TestA2AAdapter:
 class TestCapabilitiesToSkills:
     def test_known_capability(self):
         from jarvis.a2a.adapter import capabilities_to_skills
+
         cap = MagicMock()
         cap.capability_type.value = "web_search"
         cap.description = ""
@@ -933,6 +1012,7 @@ class TestCapabilitiesToSkills:
 
     def test_unknown_capability(self):
         from jarvis.a2a.adapter import capabilities_to_skills
+
         cap = MagicMock()
         cap.capability_type.value = "custom_thing"
         cap.description = "Custom"

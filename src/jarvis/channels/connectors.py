@@ -108,23 +108,27 @@ class ScopeGuard:
         policy = self._policies.get(key)
 
         if not policy:
-            self._violations.append({
-                "type": "no_policy",
-                "agent_id": agent_id,
-                "connector_id": connector_id,
-                "scope": scope.value,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            })
+            self._violations.append(
+                {
+                    "type": "no_policy",
+                    "agent_id": agent_id,
+                    "connector_id": connector_id,
+                    "scope": scope.value,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
             return False
 
         if not policy.is_allowed(scope):
-            self._violations.append({
-                "type": "scope_denied",
-                "agent_id": agent_id,
-                "connector_id": connector_id,
-                "scope": scope.value,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            })
+            self._violations.append(
+                {
+                    "type": "scope_denied",
+                    "agent_id": agent_id,
+                    "connector_id": connector_id,
+                    "scope": scope.value,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
             return False
 
         # Rate-Limiting
@@ -134,12 +138,14 @@ class ScopeGuard:
             self._request_counts[rkey] = []
         self._request_counts[rkey] = [t for t in self._request_counts[rkey] if now - t < 60]
         if len(self._request_counts[rkey]) >= policy.max_requests_per_minute:
-            self._violations.append({
-                "type": "rate_limited",
-                "agent_id": agent_id,
-                "connector_id": connector_id,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            })
+            self._violations.append(
+                {
+                    "type": "rate_limited",
+                    "agent_id": agent_id,
+                    "connector_id": connector_id,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
             return False
         self._request_counts[rkey].append(now)
         return True
@@ -219,12 +225,14 @@ class BaseConnector:
         self._status = ConnectorStatus.DISCONNECTED
 
     def _log_request(self, method: str, endpoint: str, **kwargs: Any) -> None:
-        self._request_log.append({
-            "method": method,
-            "endpoint": endpoint,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            **kwargs,
-        })
+        self._request_log.append(
+            {
+                "method": method,
+                "endpoint": endpoint,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                **kwargs,
+            }
+        )
 
     def stats(self) -> dict[str, Any]:
         return {
@@ -265,7 +273,9 @@ class TeamsConnector(BaseConnector):
         self._channels: list[dict[str, Any]] = []
         self._sent_messages: list[dict[str, Any]] = []
 
-    def send_message(self, channel_id: str, text: str, *, card: dict[str, Any] | None = None) -> dict[str, Any]:
+    def send_message(
+        self, channel_id: str, text: str, *, card: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Sendet eine Nachricht an einen Teams-Channel."""
         msg = {
             "channel_id": channel_id,
@@ -439,8 +449,7 @@ class ServiceNowConnector(BaseConnector):
         self._log_request("GET", "/api/now/table/kb_knowledge")
         if query:
             return [
-                k for k in self._knowledge.values()
-                if query.lower() in k.get("title", "").lower()
+                k for k in self._knowledge.values() if query.lower() in k.get("title", "").lower()
             ]
         return list(self._knowledge.values())
 

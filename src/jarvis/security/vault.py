@@ -118,9 +118,7 @@ class _SimpleEncryptor:
         stream = b""
         counter = 0
         while len(stream) < len(cipher):
-            block = hashlib.sha256(
-                raw_key + iv + counter.to_bytes(4, "big")
-            ).digest()
+            block = hashlib.sha256(raw_key + iv + counter.to_bytes(4, "big")).digest()
             stream += block
             counter += 1
         stream = stream[: len(cipher)]
@@ -266,12 +264,17 @@ class VaultManager:
             return None
         return vault.retrieve(service, key)
 
-    def cross_agent_attempt(self, requesting_agent: str, target_agent: str, service: str, key: str) -> str | None:
+    def cross_agent_attempt(
+        self, requesting_agent: str, target_agent: str, service: str, key: str
+    ) -> str | None:
         """Cross-Agent-Zugriff. Blockiert und loggt fremde Zugriffe."""
         if requesting_agent != target_agent:
             _vault_log.warning(
                 "cross_agent_access_blocked: agent=%s versuchte Zugriff auf agent=%s (service=%s, key=%s)",
-                requesting_agent, target_agent, service, key,
+                requesting_agent,
+                target_agent,
+                service,
+                key,
             )
             return None
         return self.retrieve(requesting_agent, service, key)
@@ -338,9 +341,7 @@ class IsolatedSessionStore:
         if not token:
             token = hashlib.sha256(os.urandom(32)).hexdigest()
 
-        session_id = hashlib.sha256(
-            f"{agent_id}:{user_id}:{time.time()}".encode()
-        ).hexdigest()[:16]
+        session_id = hashlib.sha256(f"{agent_id}:{user_id}:{time.time()}".encode()).hexdigest()[:16]
 
         session = AgentSession(
             session_id=session_id,
@@ -384,7 +385,9 @@ class IsolatedSessionStore:
         store = self._stores.get(agent_id, {})
         return [s for s in store.values() if s.active]
 
-    def cross_agent_attempt(self, requesting_agent: str, target_agent: str, session_id: str) -> AgentSession | None:
+    def cross_agent_attempt(
+        self, requesting_agent: str, target_agent: str, session_id: str
+    ) -> AgentSession | None:
         """Cross-Agent-Session-Zugriff. Wird immer blockiert."""
         if requesting_agent != target_agent:
             return None
@@ -396,10 +399,7 @@ class IsolatedSessionStore:
 
     @property
     def active_sessions(self) -> int:
-        return sum(
-            sum(1 for s in store.values() if s.active)
-            for store in self._stores.values()
-        )
+        return sum(sum(1 for s in store.values() if s.active) for store in self._stores.values())
 
     def stats(self) -> dict[str, Any]:
         return {
@@ -443,14 +443,16 @@ class SessionIsolationGuard:
     ) -> str | None:
         """Prüft Credential-Zugriff. Blockiert Cross-Agent."""
         if requesting_agent != target_agent:
-            self._violations.append({
-                "type": "credential_cross_access",
-                "requesting_agent": requesting_agent,
-                "target_agent": target_agent,
-                "service": service,
-                "key": key,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            })
+            self._violations.append(
+                {
+                    "type": "credential_cross_access",
+                    "requesting_agent": requesting_agent,
+                    "target_agent": target_agent,
+                    "service": service,
+                    "key": key,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
             return None
         return self._vault.retrieve(requesting_agent, service, key)
 
@@ -462,13 +464,15 @@ class SessionIsolationGuard:
     ) -> AgentSession | None:
         """Prüft Session-Zugriff. Blockiert Cross-Agent."""
         if requesting_agent != target_agent:
-            self._violations.append({
-                "type": "session_cross_access",
-                "requesting_agent": requesting_agent,
-                "target_agent": target_agent,
-                "session_id": session_id,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            })
+            self._violations.append(
+                {
+                    "type": "session_cross_access",
+                    "requesting_agent": requesting_agent,
+                    "target_agent": target_agent,
+                    "session_id": session_id,
+                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
             return None
         return self._sessions.get_session(requesting_agent, session_id)
 

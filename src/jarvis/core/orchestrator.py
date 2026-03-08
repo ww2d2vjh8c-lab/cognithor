@@ -316,7 +316,10 @@ class Orchestrator:
             AgentResult.
         """
         handle_or_violation = await self.spawn_agent(
-            config, session_id, parent_type, depth=depth,
+            config,
+            session_id,
+            parent_type,
+            depth=depth,
         )
         if isinstance(handle_or_violation, PolicyViolation):
             return AgentResult(
@@ -351,7 +354,10 @@ class Orchestrator:
 
         for config in configs:
             handle_or_violation = await self.spawn_agent(
-                config, session_id, parent_type, depth=depth,
+                config,
+                session_id,
+                parent_type,
+                depth=depth,
             )
             if isinstance(handle_or_violation, PolicyViolation):
                 results.append(

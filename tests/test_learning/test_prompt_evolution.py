@@ -362,6 +362,7 @@ class TestIntervalEnforcement:
 class TestCronCallback:
     async def test_cron_skips_when_no_engine(self):
         from jarvis.cron.jobs import prompt_evolution_check
+
         gw = MagicMock(spec=[])  # no _prompt_evolution attr
         await prompt_evolution_check(gw)  # should not raise
 

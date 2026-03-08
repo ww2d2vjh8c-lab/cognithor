@@ -165,7 +165,9 @@ class VisionAnalyzer:
         if not self.is_enabled:
             return ""
 
-        result = await self._send_vision_request(screenshot_b64, _DESCRIBE_PAGE_PROMPT, page_content)
+        result = await self._send_vision_request(
+            screenshot_b64, _DESCRIBE_PAGE_PROMPT, page_content
+        )
         return result.description if result.success else ""
 
     def stats(self) -> dict[str, Any]:
@@ -192,7 +194,7 @@ class VisionAnalyzer:
 
         try:
             if page_content:
-                truncated = page_content[:self._config.max_page_content_chars]
+                truncated = page_content[: self._config.max_page_content_chars]
                 prompt = f"{prompt}\n\n## Seiten-HTML (bereinigt)\n```html\n{truncated}\n```"
 
             msg = build_vision_message(prompt, [screenshot_b64])

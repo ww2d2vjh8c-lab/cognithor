@@ -476,7 +476,8 @@ class HeartbeatScheduler:
             Aktualisierte Konfiguration.
         """
         config = self._configs.setdefault(
-            event_type, EventConfig(event_type=event_type),
+            event_type,
+            EventConfig(event_type=event_type),
         )
 
         if enabled is not None:
@@ -589,7 +590,9 @@ class HeartbeatScheduler:
                     task.status = TaskStatus.PENDING
                 else:
                     self._queue.complete(
-                        task.task_id, success=False, error=str(exc),
+                        task.task_id,
+                        success=False,
+                        error=str(exc),
                     )
                     self._total_tasks_failed += 1
 

@@ -148,7 +148,9 @@ class TestWatchdogEvent:
         assert d["action"] == "kill"
 
     def test_exceeded_by_negative(self) -> None:
-        e = WatchdogEvent(tool_name="t", resource="mem", limit=512, actual=256, action=WatchdogAction.WARN)
+        e = WatchdogEvent(
+            tool_name="t", resource="mem", limit=512, actual=256, action=WatchdogAction.WARN
+        )
         d = e.to_dict()
         assert d["exceeded_by"] == -256.0
 

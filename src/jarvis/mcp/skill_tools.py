@@ -87,7 +87,9 @@ class SkillTools:
 
         # Keywords und Tools als YAML-Listen formatieren
         keywords = [kw.strip() for kw in trigger_keywords.split(",") if kw.strip()]
-        tools = [t.strip() for t in tools_required.split(",") if t.strip()] if tools_required else []
+        tools = (
+            [t.strip() for t in tools_required.split(",") if t.strip()] if tools_required else []
+        )
 
         keywords_yaml = ", ".join(keywords)
         tools_yaml = ", ".join(tools) if tools else ""
@@ -97,7 +99,7 @@ class SkillTools:
             "---",
             f"name: {name.strip()}",
             f"slug: {slug}",
-            f"description: \"{description.strip()}\"",
+            f'description: "{description.strip()}"',
             f"trigger_keywords: [{keywords_yaml}]",
             f"category: {category.strip()}",
             f"priority: 0",
@@ -210,9 +212,7 @@ class SkillTools:
                 success_info = f"Erfolg: {skill.success_rate:.0%} ({total}x genutzt)"
 
             lines.append(
-                f"  - {skill.name} [{skill.slug}] "
-                f"({status}, {success_info}, "
-                f"Keywords: {keywords})"
+                f"  - {skill.name} [{skill.slug}] ({status}, {success_info}, Keywords: {keywords})"
             )
 
         return "\n".join(lines)
@@ -307,7 +307,9 @@ def register_skill_tools(
         try:
             from jarvis.skills.community.client import CommunityRegistryClient
 
-            community_dir = skills_dirs[-1] / "community" if skills_dirs else Path("~/.jarvis/skills/community")
+            community_dir = (
+                skills_dirs[-1] / "community" if skills_dirs else Path("~/.jarvis/skills/community")
+            )
             client = CommunityRegistryClient(community_dir=community_dir)
             result = await client.install(name)
 
@@ -340,7 +342,9 @@ def register_skill_tools(
         try:
             from jarvis.skills.community.client import CommunityRegistryClient
 
-            community_dir = skills_dirs[-1] / "community" if skills_dirs else Path("~/.jarvis/skills/community")
+            community_dir = (
+                skills_dirs[-1] / "community" if skills_dirs else Path("~/.jarvis/skills/community")
+            )
             client = CommunityRegistryClient(community_dir=community_dir)
             results = await client.search(query=query, category=category)
 
@@ -442,7 +446,12 @@ def register_skill_tools(
 
     log.info(
         "skill_tools_registered",
-        tools=["create_skill", "list_skills", "install_community_skill",
-               "search_community_skills", "report_skill"],
+        tools=[
+            "create_skill",
+            "list_skills",
+            "install_community_skill",
+            "search_community_skills",
+            "report_skill",
+        ],
     )
     return st

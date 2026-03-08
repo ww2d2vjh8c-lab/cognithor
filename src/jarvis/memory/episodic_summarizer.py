@@ -56,7 +56,10 @@ class EpisodicSummarizer:
                 response = await self._llm.chat(
                     model="qwen3:8b",
                     messages=[
-                        {"role": "system", "content": "Erstelle eine kurze Tageszusammenfassung auf Deutsch."},
+                        {
+                            "role": "system",
+                            "content": "Erstelle eine kurze Tageszusammenfassung auf Deutsch.",
+                        },
                         {"role": "user", "content": prompt_text},
                     ],
                 )
@@ -82,9 +85,9 @@ class EpisodicSummarizer:
         # Get daily summaries for this week
         summaries = self._store.get_summaries(period="day")
         week_summaries = [
-            s for s in summaries
-            if s["start_date"] >= week_start.isoformat()
-            and s["start_date"] < week_end.isoformat()
+            s
+            for s in summaries
+            if s["start_date"] >= week_start.isoformat() and s["start_date"] < week_end.isoformat()
         ]
 
         if not week_summaries:

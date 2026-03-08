@@ -84,6 +84,7 @@ async def prompt_evolution_check(gateway: Any) -> None:
     gate = getattr(gateway, "_improvement_gate", None)
     if gate is not None:
         from jarvis.governance.improvement_gate import GateVerdict, ImprovementDomain
+
         verdict = gate.check(ImprovementDomain.PROMPT_TUNING)
         if verdict != GateVerdict.ALLOWED:
             logger.debug("prompt_evolution_gate_blocked: %s", verdict.value)

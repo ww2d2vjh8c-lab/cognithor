@@ -55,9 +55,17 @@ MAX_REFLECTION_INPUT_CHARS = 12_000
 # ---------------------------------------------------------------------------
 
 _INJECTION_PATTERNS = [
-    r"#\s*SYSTEM:", r"<\|im_start\|>", r"<\|im_end\|>",
-    r"\[INST\]", r"\[/INST\]", r"<<SYS>>", r"<</SYS>>",
-    r"Human:", r"Assistant:", r"<\|user\|>", r"<\|assistant\|>",
+    r"#\s*SYSTEM:",
+    r"<\|im_start\|>",
+    r"<\|im_end\|>",
+    r"\[INST\]",
+    r"\[/INST\]",
+    r"<<SYS>>",
+    r"<</SYS>>",
+    r"Human:",
+    r"Assistant:",
+    r"<\|user\|>",
+    r"<\|assistant\|>",
 ]
 _INJECTION_RE = re.compile("|".join(_INJECTION_PATTERNS), re.IGNORECASE)
 
@@ -450,8 +458,10 @@ class Reflector:
             log.error("reflection_llm_error", error=str(exc))
             if self._audit_logger:
                 self._audit_logger.log_tool_call(
-                    "llm_reflect", {"model": model, "session": session.session_id[:8]},
-                    result=f"ERROR: {exc}", success=False,
+                    "llm_reflect",
+                    {"model": model, "session": session.session_id[:8]},
+                    result=f"ERROR: {exc}",
+                    success=False,
                 )
             return self._fallback_reflection(session, agent_result)
 
@@ -476,7 +486,8 @@ class Reflector:
 
         if self._audit_logger:
             self._audit_logger.log_tool_call(
-                "llm_reflect", {"model": model, "session": session.session_id[:8]},
+                "llm_reflect",
+                {"model": model, "session": session.session_id[:8]},
                 result=f"score={result.success_score}, facts={len(result.extracted_facts)}",
                 success=True,
             )
@@ -688,9 +699,7 @@ Regeln:
             parts.append("PLAN-SCHRITTE:\n" + "\n".join(plan_lines))
 
         # Fehler & Blockierungen aus Audit
-        blocks = [
-            a for a in agent_result.audit_entries if a.decision_status == GateStatus.BLOCK
-        ]
+        blocks = [a for a in agent_result.audit_entries if a.decision_status == GateStatus.BLOCK]
         if blocks:
             block_lines = [f"BLOCKIERT: {a.action_tool} -- {a.decision_reason}" for a in blocks[:5]]
             parts.append("\n".join(block_lines))
@@ -869,7 +878,10 @@ Regeln:
         lines.append(f"- **Score:** {result.success_score:.1f}")
 
         if summary.key_decisions:
-            lines.append("- **Entscheidungen:** " + "; ".join(_sanitize_memory_text(d) for d in summary.key_decisions))
+            lines.append(
+                "- **Entscheidungen:** "
+                + "; ".join(_sanitize_memory_text(d) for d in summary.key_decisions)
+            )
         if summary.open_items:
             lines.append("- **Offen:** " + "; ".join(summary.open_items))
         if summary.tools_used:
@@ -901,7 +913,9 @@ Regeln:
                     return e
             return results[0] if results else None
 
-        def _ensure_entity(name: str, entity_type: str, source: str, attrs: dict | None = None) -> str:
+        def _ensure_entity(
+            name: str, entity_type: str, source: str, attrs: dict | None = None
+        ) -> str:
             """Erstellt oder findet eine Entität, gibt die ID zurück."""
             existing = _find_entity_by_name(name)
             if existing:
@@ -918,7 +932,11 @@ Regeln:
         for fact in facts:
             # Sanitize fact fields before storage
             fact_entity_name = _sanitize_memory_text(fact.entity_name, max_len=500)
-            fact_attr_value = _sanitize_memory_text(fact.attribute_value, max_len=2000) if fact.attribute_value else fact.attribute_value
+            fact_attr_value = (
+                _sanitize_memory_text(fact.attribute_value, max_len=2000)
+                if fact.attribute_value
+                else fact.attribute_value
+            )
             source_ref = f"reflection:{fact.source_session}"
 
             # Entität anlegen/finden
@@ -937,7 +955,10 @@ Regeln:
                 if fact.attribute_key and fact_attr_value:
                     attrs[fact.attribute_key] = fact_attr_value
                 entity_id = _ensure_entity(
-                    fact_entity_name, fact.entity_type, source_ref, attrs,
+                    fact_entity_name,
+                    fact.entity_type,
+                    source_ref,
+                    attrs,
                 )
                 written += 1
 
@@ -972,7 +993,9 @@ Regeln:
         # Sanitize candidate fields before storage
         safe_name = _sanitize_memory_text(candidate.name, max_len=500)
         safe_steps = _sanitize_memory_text(candidate.steps_text) if candidate.steps_text else ""
-        safe_learned = _sanitize_memory_text(candidate.learned_text) if candidate.learned_text else ""
+        safe_learned = (
+            _sanitize_memory_text(candidate.learned_text) if candidate.learned_text else ""
+        )
 
         # Prozedur-Body im SKILL.md-Format aufbauen
         body_parts: list[str] = [f"# {safe_name}\n"]

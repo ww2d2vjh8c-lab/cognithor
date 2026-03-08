@@ -67,8 +67,8 @@ BLOCKED_DOMAINS = frozenset(
         "localhost",
         "127.0.0.1",
         "0.0.0.0",
-        "::",           # IPv6 unspecified (urlparse strips brackets)
-        "::1",          # IPv6 loopback (urlparse strips brackets)
+        "::",  # IPv6 unspecified (urlparse strips brackets)
+        "::1",  # IPv6 loopback (urlparse strips brackets)
         "metadata.google.internal",
         "169.254.169.254",  # AWS metadata
     }
@@ -160,7 +160,9 @@ class WebTools:
             web_cfg = getattr(config, "web", None)
             if web_cfg is not None:
                 self._searxng_url = self._searxng_url or getattr(web_cfg, "searxng_url", None) or ""
-                self._brave_api_key = self._brave_api_key or getattr(web_cfg, "brave_api_key", None) or ""
+                self._brave_api_key = (
+                    self._brave_api_key or getattr(web_cfg, "brave_api_key", None) or ""
+                )
                 self._google_cse_api_key = getattr(web_cfg, "google_cse_api_key", "") or ""
                 self._google_cse_cx = getattr(web_cfg, "google_cse_cx", "") or ""
                 self._jina_api_key = getattr(web_cfg, "jina_api_key", "") or ""
@@ -172,17 +174,31 @@ class WebTools:
                 self._max_fetch_bytes = getattr(web_cfg, "max_fetch_bytes", self._max_fetch_bytes)
                 self._max_text_chars = getattr(web_cfg, "max_text_chars", self._max_text_chars)
                 self._fetch_timeout = getattr(web_cfg, "fetch_timeout_seconds", self._fetch_timeout)
-                self._search_timeout = getattr(web_cfg, "search_timeout_seconds", self._search_timeout)
-                self._max_search_results = getattr(web_cfg, "max_search_results", self._max_search_results)
+                self._search_timeout = getattr(
+                    web_cfg, "search_timeout_seconds", self._search_timeout
+                )
+                self._max_search_results = getattr(
+                    web_cfg, "max_search_results", self._max_search_results
+                )
                 self._ddg_min_delay = getattr(web_cfg, "ddg_min_delay_seconds", self._ddg_min_delay)
-                self._ddg_ratelimit_wait = getattr(web_cfg, "ddg_ratelimit_wait_seconds", self._ddg_ratelimit_wait)
+                self._ddg_ratelimit_wait = getattr(
+                    web_cfg, "ddg_ratelimit_wait_seconds", self._ddg_ratelimit_wait
+                )
                 self._ddg_cache_ttl = getattr(web_cfg, "ddg_cache_ttl_seconds", self._ddg_cache_ttl)
-                self._search_and_read_max_chars = getattr(web_cfg, "search_and_read_max_chars", self._search_and_read_max_chars)
+                self._search_and_read_max_chars = getattr(
+                    web_cfg, "search_and_read_max_chars", self._search_and_read_max_chars
+                )
 
                 # HTTP Request Tool
-                self._http_request_max_body = getattr(web_cfg, "http_request_max_body_bytes", self._http_request_max_body)
-                self._http_request_timeout = getattr(web_cfg, "http_request_timeout_seconds", self._http_request_timeout)
-                self._http_request_rate_limit = getattr(web_cfg, "http_request_rate_limit_seconds", self._http_request_rate_limit)
+                self._http_request_max_body = getattr(
+                    web_cfg, "http_request_max_body_bytes", self._http_request_max_body
+                )
+                self._http_request_timeout = getattr(
+                    web_cfg, "http_request_timeout_seconds", self._http_request_timeout
+                )
+                self._http_request_rate_limit = getattr(
+                    web_cfg, "http_request_rate_limit_seconds", self._http_request_rate_limit
+                )
 
             # Cache-Verzeichnis: ~/.jarvis/cache/web_search/
             jarvis_home = getattr(config, "jarvis_home", None)
@@ -197,7 +213,9 @@ class WebTools:
 
         # DNS-Cache: vermeidet wiederholte DNS-Auflösung pro Request
         self._dns_cache: TTLDict[str, list[str]] = TTLDict(
-            max_size=1000, ttl_seconds=300, cleanup_interval=60,
+            max_size=1000,
+            ttl_seconds=300,
+            cleanup_interval=60,
         )
 
     def reload_config(self, config: "JarvisConfig") -> None:
@@ -226,13 +244,23 @@ class WebTools:
         self._search_timeout = getattr(web_cfg, "search_timeout_seconds", self._search_timeout)
         self._max_search_results = getattr(web_cfg, "max_search_results", self._max_search_results)
         self._ddg_min_delay = getattr(web_cfg, "ddg_min_delay_seconds", self._ddg_min_delay)
-        self._ddg_ratelimit_wait = getattr(web_cfg, "ddg_ratelimit_wait_seconds", self._ddg_ratelimit_wait)
+        self._ddg_ratelimit_wait = getattr(
+            web_cfg, "ddg_ratelimit_wait_seconds", self._ddg_ratelimit_wait
+        )
         self._ddg_cache_ttl = getattr(web_cfg, "ddg_cache_ttl_seconds", self._ddg_cache_ttl)
-        self._search_and_read_max_chars = getattr(web_cfg, "search_and_read_max_chars", self._search_and_read_max_chars)
+        self._search_and_read_max_chars = getattr(
+            web_cfg, "search_and_read_max_chars", self._search_and_read_max_chars
+        )
 
-        self._http_request_max_body = getattr(web_cfg, "http_request_max_body_bytes", self._http_request_max_body)
-        self._http_request_timeout = getattr(web_cfg, "http_request_timeout_seconds", self._http_request_timeout)
-        self._http_request_rate_limit = getattr(web_cfg, "http_request_rate_limit_seconds", self._http_request_rate_limit)
+        self._http_request_max_body = getattr(
+            web_cfg, "http_request_max_body_bytes", self._http_request_max_body
+        )
+        self._http_request_timeout = getattr(
+            web_cfg, "http_request_timeout_seconds", self._http_request_timeout
+        )
+        self._http_request_rate_limit = getattr(
+            web_cfg, "http_request_rate_limit_seconds", self._http_request_rate_limit
+        )
 
         log.info("web_tools_config_reloaded")
 
@@ -534,9 +562,18 @@ class WebTools:
 
         # Region-Mapping
         region_map = {
-            "de": "de-de", "en": "us-en", "fr": "fr-fr", "es": "es-es",
-            "it": "it-it", "pt": "pt-pt", "nl": "nl-nl", "ja": "jp-jp",
-            "zh": "cn-zh", "ru": "ru-ru", "ko": "kr-ko", "pl": "pl-pl",
+            "de": "de-de",
+            "en": "us-en",
+            "fr": "fr-fr",
+            "es": "es-es",
+            "it": "it-it",
+            "pt": "pt-pt",
+            "nl": "nl-nl",
+            "ja": "jp-jp",
+            "zh": "cn-zh",
+            "ru": "ru-ru",
+            "ko": "kr-ko",
+            "pl": "pl-pl",
         }
         region = region_map.get(language, "wt-wt")
         tl = timelimit if timelimit in ("d", "w", "m", "y") else None
@@ -645,7 +682,9 @@ class WebTools:
 
         # Alle Backends gescheitert
         if last_error:
-            raise WebError(f"DuckDuckGo-Suche fehlgeschlagen (alle Backends): {last_error}") from last_error
+            raise WebError(
+                f"DuckDuckGo-Suche fehlgeschlagen (alle Backends): {last_error}"
+            ) from last_error
         return []
 
     # ── DuckDuckGo News-Suche ──────────────────────────────────────────────
@@ -676,7 +715,10 @@ class WebTools:
         import anyio
 
         region_map = {
-            "de": "de-de", "en": "us-en", "fr": "fr-fr", "es": "es-es",
+            "de": "de-de",
+            "en": "us-en",
+            "fr": "fr-fr",
+            "es": "es-es",
         }
         region = region_map.get(language, "wt-wt")
         tl = timelimit if timelimit in ("d", "w", "m") else "w"
@@ -860,7 +902,7 @@ class WebTools:
         raw = resp.content
 
         if len(raw) > self._max_fetch_bytes:
-            raw = raw[:self._max_fetch_bytes]
+            raw = raw[: self._max_fetch_bytes]
 
         # Nicht-HTML → als Plaintext zurückgeben
         if "text/html" not in content_type and extract_text:
@@ -913,8 +955,7 @@ class WebTools:
         method = method.upper()
         if method not in allowed_methods:
             raise WebError(
-                f"Ungültige HTTP-Methode: {method}. "
-                f"Erlaubt: {', '.join(sorted(allowed_methods))}"
+                f"Ungültige HTTP-Methode: {method}. Erlaubt: {', '.join(sorted(allowed_methods))}"
             )
 
         validated = self._validate_url(url)
@@ -931,9 +972,7 @@ class WebTools:
         # Body-Größe limitieren
         max_body = self._http_request_max_body
         if body and len(body) > max_body:
-            raise WebError(
-                f"Request-Body zu groß: {len(body)} Bytes (max {max_body} Bytes)"
-            )
+            raise WebError(f"Request-Body zu groß: {len(body)} Bytes (max {max_body} Bytes)")
 
         # Timeout: Default aus Config, clampen auf 1-120
         if timeout_seconds == 30:
@@ -943,6 +982,7 @@ class WebTools:
         # Rate-Limiting
         if self._http_request_rate_limit > 0:
             import anyio
+
             now = time.monotonic()
             elapsed = now - self._http_request_last_call
             if elapsed < self._http_request_rate_limit:
@@ -1503,5 +1543,8 @@ def register_web_tools(
         },
     )
 
-    log.info("web_tools_registered", tools=["web_search", "web_news_search", "web_fetch", "search_and_read", "http_request"])
+    log.info(
+        "web_tools_registered",
+        tools=["web_search", "web_news_search", "web_fetch", "search_and_read", "http_request"],
+    )
     return web

@@ -334,9 +334,7 @@ class TestTelegramSend:
         ch = TelegramChannel(token="t")
         ch._app = MagicMock()
         # First call with Markdown fails, second without succeeds
-        ch._app.bot.send_message = AsyncMock(
-            side_effect=[Exception("Bad markdown"), None]
-        )
+        ch._app.bot.send_message = AsyncMock(side_effect=[Exception("Bad markdown"), None])
 
         from jarvis.models import OutgoingMessage
 

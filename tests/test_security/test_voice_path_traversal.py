@@ -31,24 +31,27 @@ from jarvis.security.sanitizer import (
 class TestValidVoiceNames:
     """Stellt sicher, dass alle gaengigen Piper-Voice-Namen akzeptiert werden."""
 
-    @pytest.mark.parametrize("voice", [
-        "de_DE-thorsten-high",
-        "de_DE-thorsten-medium",
-        "de_DE-thorsten_emotional-medium",
-        "de_DE-pavoque-low",
-        "de_DE-karlsson-low",
-        "de_DE-kerstin-low",
-        "de_DE-ramona-low",
-        "de_DE-eva_k-x_low",
-        "en_US-lessac-low",
-        "en_US-lessac-medium",
-        "en_US-lessac-high",
-        "en_GB-northern_english_male-medium",
-        "fr_FR-upmc-medium",
-        "es_ES-davefx-medium",
-        "zh_CN-huayan-medium",
-        "ja_JP-tsukuyomi-medium",
-    ])
+    @pytest.mark.parametrize(
+        "voice",
+        [
+            "de_DE-thorsten-high",
+            "de_DE-thorsten-medium",
+            "de_DE-thorsten_emotional-medium",
+            "de_DE-pavoque-low",
+            "de_DE-karlsson-low",
+            "de_DE-kerstin-low",
+            "de_DE-ramona-low",
+            "de_DE-eva_k-x_low",
+            "en_US-lessac-low",
+            "en_US-lessac-medium",
+            "en_US-lessac-high",
+            "en_GB-northern_english_male-medium",
+            "fr_FR-upmc-medium",
+            "es_ES-davefx-medium",
+            "zh_CN-huayan-medium",
+            "ja_JP-tsukuyomi-medium",
+        ],
+    )
     def test_valid_piper_voices(self, voice: str) -> None:
         assert validate_voice_name(voice) == voice
 
@@ -73,30 +76,36 @@ class TestValidVoiceNames:
 class TestPathTraversalBlocked:
     """Stellt sicher, dass Path-Traversal-Versuche blockiert werden."""
 
-    @pytest.mark.parametrize("voice", [
-        "../../../../etc/passwd",
-        "../../../etc/shadow",
-        "..\\..\\..\\windows\\system32\\config\\sam",
-        "..\\..\\..\\..\\etc\\passwd",
-        "../secret",
-        "..\\secret",
-        "voices/../../../etc/passwd",
-        "..",
-        "../",
-        "..\\",
-    ])
+    @pytest.mark.parametrize(
+        "voice",
+        [
+            "../../../../etc/passwd",
+            "../../../etc/shadow",
+            "..\\..\\..\\windows\\system32\\config\\sam",
+            "..\\..\\..\\..\\etc\\passwd",
+            "../secret",
+            "..\\secret",
+            "voices/../../../etc/passwd",
+            "..",
+            "../",
+            "..\\",
+        ],
+    )
     def test_directory_traversal(self, voice: str) -> None:
         with pytest.raises(ValueError, match=r"(?:path separator|traversal|invalid)"):
             validate_voice_name(voice)
 
-    @pytest.mark.parametrize("voice", [
-        "/etc/passwd",
-        "/tmp/evil",
-        "\\windows\\system32\\cmd.exe",
-        "C:\\Windows\\System32\\cmd.exe",
-        "voices/evil",
-        "sub\\dir",
-    ])
+    @pytest.mark.parametrize(
+        "voice",
+        [
+            "/etc/passwd",
+            "/tmp/evil",
+            "\\windows\\system32\\cmd.exe",
+            "C:\\Windows\\System32\\cmd.exe",
+            "voices/evil",
+            "sub\\dir",
+        ],
+    )
     def test_path_separators(self, voice: str) -> None:
         with pytest.raises(ValueError, match="path separator"):
             validate_voice_name(voice)
@@ -126,45 +135,51 @@ class TestMaliciousInputsBlocked:
         name = "a" * 128
         assert validate_voice_name(name) == name
 
-    @pytest.mark.parametrize("voice", [
-        " space",
-        "tab\there",
-        "new\nline",
-        "carriage\rreturn",
-        "semi;colon",
-        "pipe|char",
-        "ampersand&char",
-        "dollar$var",
-        "backtick`cmd`",
-        "paren(test)",
-        "bracket[test]",
-        "brace{test}",
-        "angle<test>",
-        "quote'test",
-        'dquote"test',
-        "hash#test",
-        "percent%test",
-        "at@test",
-        "excl!test",
-        "star*glob",
-        "question?mark",
-        "tilde~home",
-        "equal=sign",
-        "plus+sign",
-        "comma,sep",
-        "colon:drive",
-    ])
+    @pytest.mark.parametrize(
+        "voice",
+        [
+            " space",
+            "tab\there",
+            "new\nline",
+            "carriage\rreturn",
+            "semi;colon",
+            "pipe|char",
+            "ampersand&char",
+            "dollar$var",
+            "backtick`cmd`",
+            "paren(test)",
+            "bracket[test]",
+            "brace{test}",
+            "angle<test>",
+            "quote'test",
+            'dquote"test',
+            "hash#test",
+            "percent%test",
+            "at@test",
+            "excl!test",
+            "star*glob",
+            "question?mark",
+            "tilde~home",
+            "equal=sign",
+            "plus+sign",
+            "comma,sep",
+            "colon:drive",
+        ],
+    )
     def test_special_chars_blocked(self, voice: str) -> None:
         with pytest.raises(ValueError):
             validate_voice_name(voice)
 
-    @pytest.mark.parametrize("voice", [
-        "voïce",
-        "stimme-schön",
-        "голос",
-        "声音",
-        "صوت",
-    ])
+    @pytest.mark.parametrize(
+        "voice",
+        [
+            "voïce",
+            "stimme-schön",
+            "голос",
+            "声音",
+            "صوت",
+        ],
+    )
     def test_unicode_blocked(self, voice: str) -> None:
         with pytest.raises(ValueError, match="invalid characters"):
             validate_voice_name(voice)
@@ -230,15 +245,19 @@ class TestMediaTTSPathTraversal:
     @pytest.fixture
     def pipeline(self, tmp_path: Path):
         from jarvis.mcp.media import MediaPipeline
+
         return MediaPipeline(workspace_dir=tmp_path)
 
-    @pytest.mark.parametrize("voice", [
-        "../../../../etc/passwd",
-        "../../../etc/shadow",
-        "..\\..\\windows\\system32",
-        "/etc/passwd",
-        "test/../../etc/passwd",
-    ])
+    @pytest.mark.parametrize(
+        "voice",
+        [
+            "../../../../etc/passwd",
+            "../../../etc/shadow",
+            "..\\..\\windows\\system32",
+            "/etc/passwd",
+            "test/../../etc/passwd",
+        ],
+    )
     async def test_traversal_rejected(self, pipeline, voice: str) -> None:
         result = await pipeline.text_to_speech("Hallo Welt", voice=voice)
         assert not result.success
@@ -270,14 +289,18 @@ class TestVoiceWSBridgePathTraversal:
     @pytest.fixture
     def handler(self, tmp_path: Path):
         from jarvis.channels.voice_ws_bridge import VoiceMessageHandler
+
         return VoiceMessageHandler(workspace_dir=tmp_path)
 
-    @pytest.mark.parametrize("voice", [
-        "../../../../etc/passwd",
-        "../../../etc/shadow",
-        "/etc/passwd",
-        "..\\..\\windows\\system32",
-    ])
+    @pytest.mark.parametrize(
+        "voice",
+        [
+            "../../../../etc/passwd",
+            "../../../etc/shadow",
+            "/etc/passwd",
+            "..\\..\\windows\\system32",
+        ],
+    )
     async def test_traversal_returns_none(self, handler, voice: str) -> None:
         result = await handler.synthesize_response("Hallo", voice=voice)
         assert result is None

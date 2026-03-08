@@ -134,7 +134,9 @@ class WorkspaceGuard:
         for other_id, other_policy in self._policies.items():
             if other_id != agent_id and self._is_subpath(resolved, other_policy.base_dir.resolve()):
                 self._record_violation(
-                    agent_id, target_path, mode,
+                    agent_id,
+                    target_path,
+                    mode,
                     f"cross_agent_access_blocked:{other_id}",
                 )
                 return False
@@ -185,16 +187,18 @@ class WorkspaceGuard:
         mode: str,
         reason: str,
     ) -> None:
-        self._violations.append({
-            "agent_id": agent_id,
-            "path": str(path),
-            "mode": mode,
-            "reason": reason,
-            "timestamp": time.time(),
-        })
+        self._violations.append(
+            {
+                "agent_id": agent_id,
+                "path": str(path),
+                "mode": mode,
+                "reason": reason,
+                "timestamp": time.time(),
+            }
+        )
         # Evict oldest if over limit
         if len(self._violations) > self.MAX_VIOLATIONS:
-            self._violations = self._violations[-self.MAX_VIOLATIONS:]
+            self._violations = self._violations[-self.MAX_VIOLATIONS :]
         log.warning(
             "workspace_violation",
             agent_id=agent_id,
@@ -465,7 +469,8 @@ class MultiUserIsolation:
         if not quota:
             return True  # Kein Quota → erlaubt
         return self._rate_limiter.check_and_consume(
-            agent_id, quota.max_requests_per_minute,
+            agent_id,
+            quota.max_requests_per_minute,
         )
 
     def consume_tokens(self, agent_id: str, tokens: int) -> bool:

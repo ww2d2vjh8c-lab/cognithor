@@ -180,7 +180,9 @@ class TestTeamsOnTurn:
         handler.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_on_message_calls_handler(self, teams_ch: TeamsChannel, handler: AsyncMock) -> None:
+    async def test_on_message_calls_handler(
+        self, teams_ch: TeamsChannel, handler: AsyncMock
+    ) -> None:
         teams_ch._handler = handler
         ctx = _make_turn_context(text="Frage")
 
@@ -207,7 +209,9 @@ class TestTeamsOnTurn:
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_on_message_strips_bot_mention(self, teams_ch: TeamsChannel, handler: AsyncMock) -> None:
+    async def test_on_message_strips_bot_mention(
+        self, teams_ch: TeamsChannel, handler: AsyncMock
+    ) -> None:
         """Bot-Mention wird aus Text entfernt."""
         teams_ch._handler = handler
         teams_ch._app_id = "bot-app-id"
@@ -278,7 +282,9 @@ class TestTeamsOnTurn:
         ctx.send_activity.assert_called()
 
     @pytest.mark.asyncio
-    async def test_on_message_saves_session(self, teams_ch: TeamsChannel, handler: AsyncMock) -> None:
+    async def test_on_message_saves_session(
+        self, teams_ch: TeamsChannel, handler: AsyncMock
+    ) -> None:
         """Session-Store wird aktualisiert."""
         mock_store = MagicMock()
         teams_ch._session_store = mock_store

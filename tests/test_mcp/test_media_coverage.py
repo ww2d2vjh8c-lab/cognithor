@@ -344,9 +344,7 @@ class TestRegisterMediaTools:
     def test_tool_names(self) -> None:
         mock_client = MagicMock()
         register_media_tools(mock_client)
-        registered = [
-            call.args[0] for call in mock_client.register_builtin_handler.call_args_list
-        ]
+        registered = [call.args[0] for call in mock_client.register_builtin_handler.call_args_list]
         assert "media_transcribe_audio" in registered
         assert "analyze_document" in registered
         assert "document_export" in registered

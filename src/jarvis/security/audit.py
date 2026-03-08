@@ -42,9 +42,13 @@ _CREDENTIAL_PATTERNS: list[re.Pattern[str]] = [
     # AWS Access Key IDs
     re.compile(r"(AKIA)[A-Z0-9]{12,}"),
     # Private keys (PEM)
-    re.compile(r"(-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----)[\s\S]*?(-----END)", re.DOTALL),
+    re.compile(
+        r"(-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----)[\s\S]*?(-----END)", re.DOTALL
+    ),
     # Generic long hex/base64 secrets (>32 chars after key-like prefix)
-    re.compile(r"((?:key|token|secret|credential)\s*[:=]\s*['\"]?)[a-zA-Z0-9+/=_\-]{32,}", re.IGNORECASE),
+    re.compile(
+        r"((?:key|token|secret|credential)\s*[:=]\s*['\"]?)[a-zA-Z0-9+/=_\-]{32,}", re.IGNORECASE
+    ),
 ]
 
 

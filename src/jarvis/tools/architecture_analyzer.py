@@ -68,10 +68,7 @@ class ArchitectureAnalyzer:
             imports = self._extract_imports(py_file)
 
             # Nur interne Imports tracken
-            internal_imports = {
-                imp for imp in imports
-                if imp.startswith(self._base_package + ".")
-            }
+            internal_imports = {imp for imp in imports if imp.startswith(self._base_package + ".")}
             self._import_graph[module_name] = internal_imports
             count += 1
 

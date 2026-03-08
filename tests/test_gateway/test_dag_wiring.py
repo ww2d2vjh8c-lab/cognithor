@@ -41,6 +41,7 @@ class TestDAGEngineInitialized:
         # If the import succeeded, it should be an instance
         if result["dag_workflow_engine"] is not None:
             from jarvis.core.workflow_engine import WorkflowEngine
+
             assert isinstance(result["dag_workflow_engine"], WorkflowEngine)
 
 

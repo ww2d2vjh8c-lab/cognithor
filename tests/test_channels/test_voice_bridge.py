@@ -81,7 +81,9 @@ class TestBridgeInit:
         bridge = VoiceWebSocketBridge(workspace_dir=tmp_path)
         mock_model = MagicMock()
 
-        with patch("jarvis.channels.voice_bridge.WhisperModel", return_value=mock_model, create=True):
+        with patch(
+            "jarvis.channels.voice_bridge.WhisperModel", return_value=mock_model, create=True
+        ):
             # Manuell initialisieren ohne echten Import
             bridge._stt_engine = mock_model
             assert bridge._stt_engine is not None
@@ -127,7 +129,9 @@ class TestBridgeMessageHandling:
         assert bridge.active_sessions == 0
 
     @pytest.mark.asyncio
-    async def test_audio_chunk_adds_data(self, bridge: VoiceWebSocketBridge, send_fn: AsyncMock) -> None:
+    async def test_audio_chunk_adds_data(
+        self, bridge: VoiceWebSocketBridge, send_fn: AsyncMock
+    ) -> None:
         await bridge.handle_ws_message(
             "session_1",
             {"type": "audio_start", "format": "webm"},
@@ -157,7 +161,9 @@ class TestBridgeMessageHandling:
         assert "Keine Audio-Daten" in send_fn.call_args[0][0]["error"]
 
     @pytest.mark.asyncio
-    async def test_audio_stop_too_short(self, bridge: VoiceWebSocketBridge, send_fn: AsyncMock) -> None:
+    async def test_audio_stop_too_short(
+        self, bridge: VoiceWebSocketBridge, send_fn: AsyncMock
+    ) -> None:
         """Sehr kurze Aufnahmen werden verworfen."""
         await bridge.handle_ws_message(
             "session_1",

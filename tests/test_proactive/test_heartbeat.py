@@ -77,7 +77,8 @@ class TestProactiveTask:
     def test_duration(self) -> None:
         now = datetime.now(timezone.utc)
         task = ProactiveTask(
-            task_id="t1", event_type=EventType.CALENDAR_PREP,
+            task_id="t1",
+            event_type=EventType.CALENDAR_PREP,
             started_at=now.isoformat(),
             completed_at=(now + timedelta(seconds=5)).isoformat(),
         )
@@ -132,11 +133,13 @@ class TestEventSource:
 
     def test_manual_trigger(self) -> None:
         source = EventSource()
-        source.inject_trigger(EventTrigger(
-            event_type=EventType.CUSTOM,
-            payload={"key": "value"},
-            source="test",
-        ))
+        source.inject_trigger(
+            EventTrigger(
+                event_type=EventType.CUSTOM,
+                payload={"key": "value"},
+                source="test",
+            )
+        )
         triggers = source.check({})  # Keine configs nötig
         assert len(triggers) == 1
         assert triggers[0].event_type == EventType.CUSTOM
@@ -293,7 +296,8 @@ class TestHeartbeatScheduler:
 
     @pytest.mark.asyncio
     async def test_tick_creates_and_processes_tasks(
-        self, scheduler: HeartbeatScheduler,
+        self,
+        scheduler: HeartbeatScheduler,
     ) -> None:
         scheduler.configure(
             EventType.EMAIL_TRIAGE,
@@ -316,7 +320,8 @@ class TestHeartbeatScheduler:
 
     @pytest.mark.asyncio
     async def test_tick_no_handler_skips(
-        self, scheduler: HeartbeatScheduler,
+        self,
+        scheduler: HeartbeatScheduler,
     ) -> None:
         scheduler.configure(
             EventType.EMAIL_TRIAGE,
@@ -331,7 +336,8 @@ class TestHeartbeatScheduler:
 
     @pytest.mark.asyncio
     async def test_tick_approval_mode(
-        self, scheduler: HeartbeatScheduler,
+        self,
+        scheduler: HeartbeatScheduler,
     ) -> None:
         scheduler.configure(
             EventType.EMAIL_TRIAGE,
@@ -351,7 +357,8 @@ class TestHeartbeatScheduler:
 
     @pytest.mark.asyncio
     async def test_handler_error_retries(
-        self, scheduler: HeartbeatScheduler,
+        self,
+        scheduler: HeartbeatScheduler,
     ) -> None:
         scheduler.configure(
             EventType.EMAIL_TRIAGE,

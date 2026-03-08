@@ -90,7 +90,9 @@ class TestSlackIncoming:
         assert incoming.metadata["channel_id"] == "C12345"
 
     @pytest.mark.asyncio
-    async def test_on_message_responds_in_thread(self, slack: SlackChannel, handler: AsyncMock) -> None:
+    async def test_on_message_responds_in_thread(
+        self, slack: SlackChannel, handler: AsyncMock
+    ) -> None:
         """Antwort wird im gleichen Thread gesendet."""
         slack._handler = handler
         slack._client = AsyncMock()
@@ -126,7 +128,13 @@ class TestSlackIncoming:
         slack._handler = handler
         slack._bot_user_id = "U_BOT"
 
-        event = {"user": "U_OTHER_BOT", "bot_id": "B123", "text": "ping", "channel": "C12345", "ts": "1"}
+        event = {
+            "user": "U_OTHER_BOT",
+            "bot_id": "B123",
+            "text": "ping",
+            "channel": "C12345",
+            "ts": "1",
+        }
         await slack._on_message(event)
 
         handler.assert_not_called()
@@ -175,16 +183,15 @@ class TestSlackSend:
         msg = OutgoingMessage(channel="slack", text="Hello", session_id="s1")
         await slack.send(msg)
 
-        slack._client.chat_postMessage.assert_called_once_with(
-            channel="C12345", text="Hello"
-        )
+        slack._client.chat_postMessage.assert_called_once_with(channel="C12345", text="Hello")
 
     @pytest.mark.asyncio
     async def test_send_to_metadata_channel(self, slack: SlackChannel) -> None:
         """Metadata-Channel überschreibt default_channel."""
         slack._client = AsyncMock()
         msg = OutgoingMessage(
-            channel="slack", text="Hi",
+            channel="slack",
+            text="Hi",
             session_id="s1",
             metadata={"channel_id": "C99999"},
         )
@@ -198,7 +205,8 @@ class TestSlackSend:
         """Thread-TS wird an chat.postMessage übergeben."""
         slack._client = AsyncMock()
         msg = OutgoingMessage(
-            channel="slack", text="reply",
+            channel="slack",
+            text="reply",
             session_id="s1",
             metadata={"thread_ts": "100.0"},
         )

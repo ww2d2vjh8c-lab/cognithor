@@ -34,7 +34,8 @@ class ToolDefinition:
         return {
             "name": self.name,
             "description": self.description,
-            "inputSchema": self.input_schema or {
+            "inputSchema": self.input_schema
+            or {
                 "type": "object",
                 "properties": {},
             },

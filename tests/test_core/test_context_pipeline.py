@@ -136,7 +136,9 @@ class TestMemoryInjection:
     """Memory-Ergebnisse landen in wm.injected_memories."""
 
     @pytest.mark.asyncio
-    async def test_memory_results_injected(self, pipeline: ContextPipeline, wm: WorkingMemory) -> None:
+    async def test_memory_results_injected(
+        self, pipeline: ContextPipeline, wm: WorkingMemory
+    ) -> None:
         results = [
             _make_search_result("Projekt Alpha hat Deadline am 15.03", 0.8),
             _make_search_result("Alpha Budget: 50k EUR", 0.6),
@@ -153,7 +155,9 @@ class TestMemoryInjection:
 
     @pytest.mark.asyncio
     async def test_memory_search_called_with_correct_params(
-        self, pipeline: ContextPipeline, wm: WorkingMemory,
+        self,
+        pipeline: ContextPipeline,
+        wm: WorkingMemory,
     ) -> None:
         mm = _make_memory_manager()
         pipeline.set_memory_manager(mm)
@@ -170,7 +174,9 @@ class TestVaultInjection:
     """Vault-Snippets landen in wm.injected_procedures."""
 
     @pytest.mark.asyncio
-    async def test_vault_results_injected(self, pipeline: ContextPipeline, wm: WorkingMemory) -> None:
+    async def test_vault_results_injected(
+        self, pipeline: ContextPipeline, wm: WorkingMemory
+    ) -> None:
         vt = _make_vault_tools("## Tesla Q4 Ergebnisse\nUmsatz: 25 Mrd USD")
         pipeline.set_vault_tools(vt)
 
@@ -182,7 +188,9 @@ class TestVaultInjection:
         assert "Tesla Q4" in wm.injected_procedures[0]
 
     @pytest.mark.asyncio
-    async def test_vault_keine_treffer_ignored(self, pipeline: ContextPipeline, wm: WorkingMemory) -> None:
+    async def test_vault_keine_treffer_ignored(
+        self, pipeline: ContextPipeline, wm: WorkingMemory
+    ) -> None:
         vt = _make_vault_tools("Keine Treffer für 'xyz' gefunden.")
         pipeline.set_vault_tools(vt)
 
@@ -265,7 +273,9 @@ class TestProceduresSlotPreserved:
 
     @pytest.mark.asyncio
     async def test_existing_procedures_preserved(
-        self, pipeline: ContextPipeline, wm: WorkingMemory,
+        self,
+        pipeline: ContextPipeline,
+        wm: WorkingMemory,
     ) -> None:
         # Simuliere: Skill hat bereits 2 Procedures injiziert
         wm.injected_procedures = ["Skill Step 1", "Skill Step 2"]
@@ -286,7 +296,9 @@ class TestProceduresSlotPreserved:
 
     @pytest.mark.asyncio
     async def test_one_procedure_allows_insert(
-        self, pipeline: ContextPipeline, wm: WorkingMemory,
+        self,
+        pipeline: ContextPipeline,
+        wm: WorkingMemory,
     ) -> None:
         # Nur 1 Skill-Procedure → Slot frei für Kontext
         wm.injected_procedures = ["Skill Step 1"]
@@ -343,7 +355,9 @@ class TestDurationTracking:
         assert ctx.duration_ms >= 0.0
 
     @pytest.mark.asyncio
-    async def test_smalltalk_duration_measured(self, pipeline: ContextPipeline, wm: WorkingMemory) -> None:
+    async def test_smalltalk_duration_measured(
+        self, pipeline: ContextPipeline, wm: WorkingMemory
+    ) -> None:
         ctx = await pipeline.enrich("Hallo", wm)
         assert ctx.skipped is True
         assert ctx.duration_ms >= 0.0
@@ -354,7 +368,9 @@ class TestMemorySearchError:
 
     @pytest.mark.asyncio
     async def test_memory_exception_returns_empty(
-        self, pipeline: ContextPipeline, wm: WorkingMemory,
+        self,
+        pipeline: ContextPipeline,
+        wm: WorkingMemory,
     ) -> None:
         mm = MagicMock()
         mm.search_memory_sync.side_effect = RuntimeError("BM25 index corrupt")
@@ -374,7 +390,9 @@ class TestVaultSearchError:
 
     @pytest.mark.asyncio
     async def test_vault_exception_returns_empty(
-        self, pipeline: ContextPipeline, wm: WorkingMemory,
+        self,
+        pipeline: ContextPipeline,
+        wm: WorkingMemory,
     ) -> None:
         vt = AsyncMock()
         vt.vault_search = AsyncMock(side_effect=RuntimeError("Vault not found"))

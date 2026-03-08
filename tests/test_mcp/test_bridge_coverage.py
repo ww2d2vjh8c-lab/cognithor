@@ -213,7 +213,8 @@ class TestLoadServerConfig:
         cfg_dir.mkdir(parents=True, exist_ok=True)
         cfg_file = cfg_dir / "config.yaml"
         cfg_file.write_text(
-            "server_mode:\n  mode: invalid_mode\n", encoding="utf-8",
+            "server_mode:\n  mode: invalid_mode\n",
+            encoding="utf-8",
         )
         config.mcp_config_file = cfg_file
         cfg = bridge._load_server_config()

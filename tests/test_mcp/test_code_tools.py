@@ -84,15 +84,14 @@ class TestRunPython:
     @pytest.mark.asyncio()
     async def test_workspace_confinement(self, code_tools: CodeTools) -> None:
         """Arbeitsverzeichnis außerhalb Workspace wird abgelehnt."""
-        result = await code_tools.run_python(
-            'print("test")', working_dir="/tmp/evil"
-        )
+        result = await code_tools.run_python('print("test")', working_dir="/tmp/evil")
         assert "Zugriff verweigert" in result
 
     @pytest.mark.asyncio()
     async def test_temp_file_cleanup(self, code_tools: CodeTools, config: JarvisConfig) -> None:
         """Temp-Datei wird nach Ausführung gelöscht."""
         import os
+
         workspace = config.workspace_dir
         before = set(os.listdir(workspace)) if workspace.exists() else set()
         await code_tools.run_python('print("cleanup test")')
@@ -154,7 +153,9 @@ class TestAnalyzeCode:
 
     @pytest.mark.asyncio()
     async def test_file_analysis(
-        self, code_tools: CodeTools, config: JarvisConfig,
+        self,
+        code_tools: CodeTools,
+        config: JarvisConfig,
     ) -> None:
         """Datei-basierte Analyse funktioniert."""
         test_file = config.workspace_dir / "test_analyze.py"
@@ -185,8 +186,7 @@ class TestRegistration:
         assert mock_client.register_builtin_handler.call_count == 2
 
         registered_names = [
-            call.args[0]
-            for call in mock_client.register_builtin_handler.call_args_list
+            call.args[0] for call in mock_client.register_builtin_handler.call_args_list
         ]
         assert "run_python" in registered_names
         assert "analyze_code" in registered_names
@@ -212,7 +212,11 @@ class TestCodeSizeLimits:
         huge_code = "x = 1\n" * (MAX_CODE_SIZE // 6 + 1)
         assert len(huge_code.encode("utf-8")) > MAX_CODE_SIZE
         result = await code_tools.run_python(huge_code)
-        assert "zu gross" in result.lower() or "too large" in result.lower() or "gross" in result.lower()
+        assert (
+            "zu gross" in result.lower()
+            or "too large" in result.lower()
+            or "gross" in result.lower()
+        )
 
     @pytest.mark.asyncio()
     async def test_run_python_within_limit(self, code_tools: CodeTools) -> None:

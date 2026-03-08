@@ -112,6 +112,7 @@ class CliChannel(Channel):
             except Exception as exc:
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = f"Ein Fehler ist aufgetreten: {exc}"

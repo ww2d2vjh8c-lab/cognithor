@@ -223,6 +223,7 @@ class CodeTools:
         else:
             # Inline-Code: Manuell parsen
             import ast
+
             try:
                 ast.parse(source)
             except SyntaxError as e:

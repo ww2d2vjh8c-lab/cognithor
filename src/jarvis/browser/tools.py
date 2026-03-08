@@ -68,7 +68,7 @@ def register_browser_use_tools(
     mcp_client.register_tool(
         name="browser_navigate",
         description="Navigiert zu einer URL und analysiert die Seite. "
-                    "Gibt Seitenstruktur zurück: Titel, Links, Buttons, Inputs, Formulare.",
+        "Gibt Seitenstruktur zurück: Titel, Links, Buttons, Inputs, Formulare.",
         parameters={"url": {"type": "string", "description": "Die zu ladende URL"}},
         handler=_navigate,
     )
@@ -93,7 +93,10 @@ def register_browser_use_tools(
         description="Klickt auf ein Element. Entweder per CSS-Selector oder Beschreibung.",
         parameters={
             "selector": {"type": "string", "description": "CSS-Selector (optional)"},
-            "description": {"type": "string", "description": "Element-Beschreibung (z.B. 'Login-Button')"},
+            "description": {
+                "type": "string",
+                "description": "Element-Beschreibung (z.B. 'Login-Button')",
+            },
         },
         handler=_click,
     )
@@ -126,10 +129,12 @@ def register_browser_use_tools(
         if not data:
             return json.dumps({"error": "data required (field_name: value)"})
         results = await agent.fill_form(data, submit=submit)
-        return json.dumps({
-            "filled": len(results),
-            "results": [r.to_dict() for r in results],
-        })
+        return json.dumps(
+            {
+                "filled": len(results),
+                "results": [r.to_dict() for r in results],
+            }
+        )
 
     mcp_client.register_tool(
         name="browser_fill_form",
@@ -147,11 +152,13 @@ def register_browser_use_tools(
         full = params.get("full_page", False)
         result = await agent.screenshot(full_page=full)
         if result.success:
-            return json.dumps({
-                "success": True,
-                "screenshot_b64": result.screenshot_b64[:100] + "...",
-                "full_data_length": len(result.screenshot_b64),
-            })
+            return json.dumps(
+                {
+                    "success": True,
+                    "screenshot_b64": result.screenshot_b64[:100] + "...",
+                    "full_data_length": len(result.screenshot_b64),
+                }
+            )
         return json.dumps(result.to_dict())
 
     mcp_client.register_tool(
@@ -195,10 +202,13 @@ def register_browser_use_tools(
 
     async def _analyze(params: dict[str, Any]) -> str:
         state = await agent.analyze_page()
-        return json.dumps({
-            "summary": state.to_summary(max_text=2000),
-            "stats": state.to_dict(),
-        }, ensure_ascii=False)
+        return json.dumps(
+            {
+                "summary": state.to_summary(max_text=2000),
+                "stats": state.to_dict(),
+            },
+            ensure_ascii=False,
+        )
 
     mcp_client.register_tool(
         name="browser_analyze",
@@ -211,9 +221,15 @@ def register_browser_use_tools(
 
     _MAX_JS_LENGTH = 50_000
     _JS_BLOCKLIST = [
-        "eval(", "Function(", "require(", "import(",
-        "fetch(", "XMLHttpRequest", "child_process",
-        "fs.", "process.exit",
+        "eval(",
+        "Function(",
+        "require(",
+        "import(",
+        "fetch(",
+        "XMLHttpRequest",
+        "child_process",
+        "fs.",
+        "process.exit",
     ]
 
     async def _execute_js(params: dict[str, Any]) -> str:
@@ -249,10 +265,12 @@ def register_browser_use_tools(
             result = agent.switch_tab(params.get("index", 0))
             return json.dumps(result.to_dict())
         elif action == "list":
-            return json.dumps({
-                "tab_count": agent.page_count,
-                "active_tab": agent._active_page_idx,
-            })
+            return json.dumps(
+                {
+                    "tab_count": agent.page_count,
+                    "active_tab": agent._active_page_idx,
+                }
+            )
         return json.dumps({"error": f"Unknown tab action: {action}"})
 
     mcp_client.register_tool(
@@ -291,7 +309,9 @@ def register_browser_use_tools(
                 return json.dumps({"error": "Browser not available."})
 
         if agent._vision is None or not getattr(agent._vision, "is_enabled", False):
-            return json.dumps({"error": "Vision nicht aktiviert. Setze vision_model in der Config."})
+            return json.dumps(
+                {"error": "Vision nicht aktiviert. Setze vision_model in der Config."}
+            )
 
         result = await agent.analyze_page_with_vision(prompt)
         return json.dumps(result, ensure_ascii=False)
@@ -299,7 +319,7 @@ def register_browser_use_tools(
     mcp_client.register_tool(
         name="browser_vision_analyze",
         description="Screenshot der Seite + KI-Vision-Analyse. "
-                    "Kombiniert DOM-Analyse mit visueller Beschreibung.",
+        "Kombiniert DOM-Analyse mit visueller Beschreibung.",
         parameters={
             "prompt": {"type": "string", "description": "Optionaler Analyse-Prompt"},
         },
@@ -319,7 +339,9 @@ def register_browser_use_tools(
                 return json.dumps({"error": "Browser not available."})
 
         if agent._vision is None or not getattr(agent._vision, "is_enabled", False):
-            return json.dumps({"error": "Vision nicht aktiviert. Setze vision_model in der Config."})
+            return json.dumps(
+                {"error": "Vision nicht aktiviert. Setze vision_model in der Config."}
+            )
 
         result = await agent.find_and_click_with_vision(description)
         return json.dumps(result.to_dict())
@@ -327,9 +349,12 @@ def register_browser_use_tools(
     mcp_client.register_tool(
         name="browser_vision_find",
         description="Element per Beschreibung finden (Text-Match + Vision-Fallback). "
-                    "Klickt das Element wenn gefunden.",
+        "Klickt das Element wenn gefunden.",
         parameters={
-            "description": {"type": "string", "description": "Beschreibung des Elements (z.B. 'blauer Login-Button')"},
+            "description": {
+                "type": "string",
+                "description": "Beschreibung des Elements (z.B. 'blauer Login-Button')",
+            },
         },
         handler=_vision_find,
     )
@@ -360,16 +385,19 @@ def register_browser_use_tools(
             except Exception:
                 pass
 
-        return json.dumps({
-            "success": True,
-            "description": description or "(Vision nicht verfügbar)",
-            "screenshot_b64_length": len(result.screenshot_b64),
-        }, ensure_ascii=False)
+        return json.dumps(
+            {
+                "success": True,
+                "description": description or "(Vision nicht verfügbar)",
+                "screenshot_b64_length": len(result.screenshot_b64),
+            },
+            ensure_ascii=False,
+        )
 
     mcp_client.register_tool(
         name="browser_vision_screenshot",
         description="Screenshot mit KI-Beschreibung statt rohem Base64. "
-                    "Gibt eine textuelle Beschreibung des Screenshots zurück.",
+        "Gibt eine textuelle Beschreibung des Screenshots zurück.",
         parameters={
             "full_page": {"type": "boolean", "description": "Ganze Seite oder nur Viewport?"},
         },

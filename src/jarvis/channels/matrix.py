@@ -129,8 +129,7 @@ class MatrixChannel(Channel):
             from nio import AsyncClient, LoginResponse, MatrixRoom, RoomMessageText
         except ImportError:
             logger.error(
-                "matrix-nio nicht installiert. "
-                "Installiere mit: pip install 'matrix-nio[e2e]'"
+                "matrix-nio nicht installiert. Installiere mit: pip install 'matrix-nio[e2e]'"
             )
             return
 
@@ -141,6 +140,7 @@ class MatrixChannel(Channel):
         _olm_available = False
         try:
             import olm  # noqa: F401
+
             _olm_available = True
         except ImportError:
             pass
@@ -186,6 +186,7 @@ class MatrixChannel(Channel):
         # Whisper laden
         try:
             from faster_whisper import WhisperModel
+
             self._whisper = WhisperModel("base", device="auto", compute_type="int8")
             logger.info("Matrix: faster-whisper geladen")
         except ImportError:
@@ -197,6 +198,7 @@ class MatrixChannel(Channel):
         # Reaction-Callback fuer Approvals
         try:
             from nio import UnknownEvent
+
             self._client.add_event_callback(self._on_reaction, UnknownEvent)
         except ImportError:
             logger.debug("Matrix: UnknownEvent nicht verfuegbar, Reaction-Approvals deaktiviert")
@@ -204,6 +206,7 @@ class MatrixChannel(Channel):
         # Invite-Callback: Auto-Join
         try:
             from nio import InviteMemberEvent
+
             self._client.add_event_callback(self._on_invite, InviteMemberEvent)
         except ImportError:
             pass
@@ -319,6 +322,7 @@ class MatrixChannel(Channel):
                 logger.error("Matrix: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."

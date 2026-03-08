@@ -186,7 +186,8 @@ class TestFix2ModelNotFound404:
 
         mock_ollama = AsyncMock(spec=OllamaClient)
         mock_ollama.chat.side_effect = OllamaError(
-            "Modell 'qwen3:32b' nicht gefunden", status_code=404,
+            "Modell 'qwen3:32b' nicht gefunden",
+            status_code=404,
         )
 
         mock_router = MagicMock(spec=ModelRouter)
@@ -344,8 +345,7 @@ class TestFix5DocsWindowsPath:
         # Must appear as a non-comment line (not just "# or: python -m jarvis")
         lines = content.splitlines()
         prominent_lines = [
-            l for l in lines
-            if "python -m jarvis" in l and not l.strip().startswith("#")
+            l for l in lines if "python -m jarvis" in l and not l.strip().startswith("#")
         ]
         assert len(prominent_lines) >= 1, "python -m jarvis must be prominent, not just a comment"
 

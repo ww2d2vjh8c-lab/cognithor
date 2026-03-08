@@ -109,9 +109,7 @@ class TestLoading:
 
         dir2 = tmp_path / "dir2"
         dir2.mkdir()
-        (dir2 / "skill-b.md").write_text(
-            "---\nname: skill-b\ntrigger_keywords: [beta]\n---\n# B\n"
-        )
+        (dir2 / "skill-b.md").write_text("---\nname: skill-b\ntrigger_keywords: [beta]\n---\n# B\n")
 
         reg = SkillRegistry()
         count = reg.load_from_directories([dir1, dir2])

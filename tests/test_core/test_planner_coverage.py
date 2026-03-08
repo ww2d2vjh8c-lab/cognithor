@@ -20,9 +20,9 @@ def config(tmp_path) -> JarvisConfig:
 
 def _mock_ollama(response_content: str) -> AsyncMock:
     mock = AsyncMock()
-    mock.chat = AsyncMock(return_value={
-        "message": {"role": "assistant", "content": response_content}
-    })
+    mock.chat = AsyncMock(
+        return_value={"message": {"role": "assistant", "content": response_content}}
+    )
     mock.is_available = AsyncMock(return_value=True)
     return mock
 
@@ -43,7 +43,7 @@ class TestPlannerEdgeCases:
     @pytest.mark.asyncio
     async def test_plan_with_think_tags(self, config: JarvisConfig) -> None:
         """LLM returns response with <think> tags (qwen3 behavior)."""
-        content = '<think>Let me think about this...</think>\nDas ist eine einfache Frage.'
+        content = "<think>Let me think about this...</think>\nDas ist eine einfache Frage."
         ollama = _mock_ollama(content)
         planner = Planner(config, ollama, _mock_router())
         wm = WorkingMemory(session_id="test")
@@ -74,7 +74,7 @@ class TestPlannerEdgeCases:
     @pytest.mark.asyncio
     async def test_plan_invalid_json(self, config: JarvisConfig) -> None:
         """LLM returns invalid JSON -- should fallback to direct response."""
-        content = 'Das ist keine JSON-Antwort sondern normaler Text.'
+        content = "Das ist keine JSON-Antwort sondern normaler Text."
         ollama = _mock_ollama(content)
         planner = Planner(config, ollama, _mock_router())
         wm = WorkingMemory(session_id="test")
@@ -111,12 +111,13 @@ class TestPlannerEdgeCases:
 class TestPlannerReplan:
     @pytest.mark.asyncio
     async def test_replan_after_tool_results(self, config: JarvisConfig) -> None:
-        content = 'Die Antwort basierend auf den Tool-Ergebnissen ist: 42.'
+        content = "Die Antwort basierend auf den Tool-Ergebnissen ist: 42."
         ollama = _mock_ollama(content)
         planner = Planner(config, ollama, _mock_router())
         wm = WorkingMemory(session_id="test")
 
         from jarvis.models import ToolResult
+
         results = [ToolResult(tool_name="calc", content="42", is_error=False)]
 
         plan = await planner.replan(
@@ -141,6 +142,7 @@ class TestFormulateResponse:
         planner = Planner(config, ollama, _mock_router())
 
         from jarvis.models import ToolResult
+
         results = [ToolResult(tool_name="web_search", content="Python ist toll", is_error=False)]
         wm = WorkingMemory(session_id="test")
 
@@ -232,26 +234,28 @@ class TestPlannerToolCalls:
     async def test_plan_with_native_tool_calls(self, config: JarvisConfig) -> None:
         """Response has tool_calls (not just text) -> should parse them correctly."""
         ollama = AsyncMock()
-        ollama.chat = AsyncMock(return_value={
-            "message": {
-                "role": "assistant",
-                "content": "",
-                "tool_calls": [
-                    {
-                        "function": {
-                            "name": "read_file",
-                            "arguments": {"path": "/tmp/test.txt"},
-                        }
-                    },
-                    {
-                        "function": {
-                            "name": "write_file",
-                            "arguments": {"path": "/tmp/out.txt", "content": "hello"},
-                        }
-                    },
-                ],
+        ollama.chat = AsyncMock(
+            return_value={
+                "message": {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                        {
+                            "function": {
+                                "name": "read_file",
+                                "arguments": {"path": "/tmp/test.txt"},
+                            }
+                        },
+                        {
+                            "function": {
+                                "name": "write_file",
+                                "arguments": {"path": "/tmp/out.txt", "content": "hello"},
+                            }
+                        },
+                    ],
+                }
             }
-        })
+        )
         planner = Planner(config, ollama, _mock_router())
         wm = WorkingMemory(session_id="test")
 
@@ -321,7 +325,11 @@ class TestReplanExtended:
         assert isinstance(plan, ActionPlan)
         # The LLM was called with both results in the prompt
         call_args = ollama.chat.call_args
-        messages = call_args[1].get("messages") or call_args[0][1] if call_args[0] else call_args[1]["messages"]
+        messages = (
+            call_args[1].get("messages") or call_args[0][1]
+            if call_args[0]
+            else call_args[1]["messages"]
+        )
         # At least one message should mention both tool names
         all_content = " ".join(m["content"] for m in messages)
         assert "read_file" in all_content
@@ -366,7 +374,9 @@ class TestFormulateResponseExtended:
         planner = Planner(config, ollama, _mock_router())
         wm = WorkingMemory(session_id="test")
         results = [
-            ToolResult(tool_name="web_search", content="Python ist eine Programmiersprache", is_error=False),
+            ToolResult(
+                tool_name="web_search", content="Python ist eine Programmiersprache", is_error=False
+            ),
         ]
 
         response = await planner.formulate_response(
@@ -378,9 +388,15 @@ class TestFormulateResponseExtended:
         assert len(response) > 0
         # Verify the search-specific prompt path was used
         call_args = ollama.chat.call_args
-        messages = call_args[1].get("messages") or call_args[0][1] if call_args[0] else call_args[1]["messages"]
+        messages = (
+            call_args[1].get("messages") or call_args[0][1]
+            if call_args[0]
+            else call_args[1]["messages"]
+        )
         system_msg = messages[0]["content"]
-        assert "VERALTET" in system_msg  # search-specific system prompt mentions training data being outdated
+        assert (
+            "VERALTET" in system_msg
+        )  # search-specific system prompt mentions training data being outdated
 
     @pytest.mark.asyncio
     async def test_formulate_with_non_search_results(self, config: JarvisConfig) -> None:
@@ -403,7 +419,11 @@ class TestFormulateResponseExtended:
         assert isinstance(response, str)
         # Verify the normal prompt path was used
         call_args = ollama.chat.call_args
-        messages = call_args[1].get("messages") or call_args[0][1] if call_args[0] else call_args[1]["messages"]
+        messages = (
+            call_args[1].get("messages") or call_args[0][1]
+            if call_args[0]
+            else call_args[1]["messages"]
+        )
         system_msg = messages[0]["content"]
         # Normal path says "Tool-Ergebnisse", not the aggressive search prompt
         assert "Tool-Ergebnisse" in system_msg
@@ -428,9 +448,7 @@ class TestFormulateResponseExtended:
         assert isinstance(response, str)
         # Nach Retry-Logik: Rohergebnisse als Fallback oder Fehlermeldung
         assert (
-            "Ergebnisse" in response
-            or "nicht zusammenfassen" in response
-            or "erneut" in response
+            "Ergebnisse" in response or "nicht zusammenfassen" in response or "erneut" in response
         )
 
     @pytest.mark.asyncio
@@ -452,7 +470,11 @@ class TestFormulateResponseExtended:
         assert isinstance(response, str)
         # Verify core_memory_text was injected into messages
         call_args = ollama.chat.call_args
-        messages = call_args[1].get("messages") or call_args[0][1] if call_args[0] else call_args[1]["messages"]
+        messages = (
+            call_args[1].get("messages") or call_args[0][1]
+            if call_args[0]
+            else call_args[1]["messages"]
+        )
         # There should be a system message containing the core memory text
         core_msgs = [m for m in messages if m["role"] == "system" and "Alexander" in m["content"]]
         assert len(core_msgs) >= 1
@@ -572,9 +594,7 @@ class TestLoadPromptFromFile:
         ollama = _mock_ollama("test")
         planner = Planner(config, ollama, _mock_router())
 
-        result = planner._load_prompt_from_file(
-            "NONEXISTENT_PROMPT.md", "the fallback value"
-        )
+        result = planner._load_prompt_from_file("NONEXISTENT_PROMPT.md", "the fallback value")
         assert result == "the fallback value"
 
     def test_reload_prompts(self, config: JarvisConfig) -> None:
@@ -612,6 +632,7 @@ class TestSanitizeJsonEscapes:
         assert r"\\d" in result
         # The result should now be valid JSON
         import json
+
         parsed = json.loads(result)
         assert "regex" in parsed
 
@@ -668,7 +689,12 @@ class TestFormatResults:
 
         results = [
             ToolResult(tool_name="read_file", content="file content here", is_error=False),
-            ToolResult(tool_name="exec_command", content="", is_error=True, error_message="permission denied"),
+            ToolResult(
+                tool_name="exec_command",
+                content="",
+                is_error=True,
+                error_message="permission denied",
+            ),
         ]
         formatted = planner._format_results(results)
 

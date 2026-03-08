@@ -82,7 +82,9 @@ class TestSummarizeDay:
         assert "Task" in result
 
     @pytest.mark.asyncio
-    async def test_episode_without_outcome(self, summarizer: EpisodicSummarizer, store: MagicMock) -> None:
+    async def test_episode_without_outcome(
+        self, summarizer: EpisodicSummarizer, store: MagicMock
+    ) -> None:
         ep = MagicMock()
         ep.success_score = 0.0
         ep.topic = "Failed Task"

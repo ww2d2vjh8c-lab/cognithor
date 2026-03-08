@@ -28,32 +28,28 @@ class TestDownloadHasHashVerification:
         import jarvis.__main__ as main_mod
 
         source = inspect.getsource(main_mod)
-        dl_section = source[source.index("_download_piper_voice"):]
-        dl_end = dl_section.index("log.info(\"cc_tts_endpoint_registered\")")
+        dl_section = source[source.index("_download_piper_voice") :]
+        dl_end = dl_section.index('log.info("cc_tts_endpoint_registered")')
         dl_source = dl_section[:dl_end]
-        assert "hashlib" in dl_source, (
-            "_download_piper_voice muss hashlib verwenden"
-        )
+        assert "hashlib" in dl_source, "_download_piper_voice muss hashlib verwenden"
 
     def test_download_function_computes_sha256(self) -> None:
         """_download_piper_voice muss SHA-256 berechnen."""
         import jarvis.__main__ as main_mod
 
         source = inspect.getsource(main_mod)
-        dl_section = source[source.index("_download_piper_voice"):]
-        dl_end = dl_section.index("log.info(\"cc_tts_endpoint_registered\")")
+        dl_section = source[source.index("_download_piper_voice") :]
+        dl_end = dl_section.index('log.info("cc_tts_endpoint_registered")')
         dl_source = dl_section[:dl_end]
-        assert "sha256" in dl_source.lower(), (
-            "_download_piper_voice muss SHA-256 berechnen"
-        )
+        assert "sha256" in dl_source.lower(), "_download_piper_voice muss SHA-256 berechnen"
 
     def test_download_calls_verify(self) -> None:
         """_download_piper_voice muss _verify_voice_hash aufrufen."""
         import jarvis.__main__ as main_mod
 
         source = inspect.getsource(main_mod)
-        dl_section = source[source.index("_download_piper_voice"):]
-        dl_end = dl_section.index("log.info(\"cc_tts_endpoint_registered\")")
+        dl_section = source[source.index("_download_piper_voice") :]
+        dl_end = dl_section.index('log.info("cc_tts_endpoint_registered")')
         dl_source = dl_section[:dl_end]
         assert "_verify_voice_hash" in dl_source, (
             "_download_piper_voice muss _verify_voice_hash aufrufen"
@@ -64,8 +60,8 @@ class TestDownloadHasHashVerification:
         import jarvis.__main__ as main_mod
 
         source = inspect.getsource(main_mod)
-        dl_section = source[source.index("_download_piper_voice"):]
-        dl_end = dl_section.index("log.info(\"cc_tts_endpoint_registered\")")
+        dl_section = source[source.index("_download_piper_voice") :]
+        dl_end = dl_section.index('log.info("cc_tts_endpoint_registered")')
         dl_source = dl_section[:dl_end]
         assert "sha256=file_hash" in dl_source or "sha256=" in dl_source, (
             "Download-Log muss den SHA-256 Hash enthalten"
@@ -140,7 +136,7 @@ class TestVerifyVoiceHashLogic:
         import jarvis.__main__ as main_mod
 
         source = inspect.getsource(main_mod)
-        verify_section = source[source.index("def _verify_voice_hash"):]
+        verify_section = source[source.index("def _verify_voice_hash") :]
         verify_end = verify_section.index("\n                async def")
         verify_source = verify_section[:verify_end]
         assert "raise ValueError" in verify_source or "raise" in verify_source, (

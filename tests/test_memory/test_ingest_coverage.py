@@ -24,15 +24,19 @@ from jarvis.memory.ingest import (
 class TestIngestResult:
     def test_success_summary(self) -> None:
         r = IngestResult(
-            file_path="/test.md", file_name="test.md",
-            success=True, chunks_created=5, text_length=1000,
+            file_path="/test.md",
+            file_name="test.md",
+            success=True,
+            chunks_created=5,
+            text_length=1000,
         )
         assert "test.md" in r.summary
         assert "5 Chunks" in r.summary
 
     def test_error_summary(self) -> None:
         r = IngestResult(
-            file_path="/test.md", file_name="test.md",
+            file_path="/test.md",
+            file_name="test.md",
             error="Format unknown",
         )
         assert "test.md" in r.summary
@@ -111,7 +115,9 @@ class TestTextExtractor:
             pytest.skip("bs4 not installed")
 
     @pytest.mark.asyncio
-    async def test_extract_pdf_no_pipeline_no_fitz(self, extractor: TextExtractor, tmp_path: Path) -> None:
+    async def test_extract_pdf_no_pipeline_no_fitz(
+        self, extractor: TextExtractor, tmp_path: Path
+    ) -> None:
         f = tmp_path / "doc.pdf"
         f.write_bytes(b"%PDF-1.4")
         with patch.dict("sys.modules", {"fitz": None}):
@@ -119,7 +125,9 @@ class TestTextExtractor:
                 await extractor.extract(f)
 
     @pytest.mark.asyncio
-    async def test_extract_docx_no_pipeline_no_docx(self, extractor: TextExtractor, tmp_path: Path) -> None:
+    async def test_extract_docx_no_pipeline_no_docx(
+        self, extractor: TextExtractor, tmp_path: Path
+    ) -> None:
         f = tmp_path / "doc.docx"
         f.write_bytes(b"PK")
         with patch.dict("sys.modules", {"docx": None}):
@@ -169,7 +177,9 @@ class TestIngestPipeline:
         assert "nicht gefunden" in result.error
 
     @pytest.mark.asyncio
-    async def test_ingest_unsupported_format(self, pipeline: IngestPipeline, ingest_config: IngestConfig) -> None:
+    async def test_ingest_unsupported_format(
+        self, pipeline: IngestPipeline, ingest_config: IngestConfig
+    ) -> None:
         f = ingest_config.watch_dir / "test.xyz"
         f.write_text("data", encoding="utf-8")
         result = await pipeline.ingest_file(f)
@@ -177,7 +187,9 @@ class TestIngestPipeline:
         assert "Nicht unterstützt" in result.error
 
     @pytest.mark.asyncio
-    async def test_ingest_too_large(self, pipeline: IngestPipeline, ingest_config: IngestConfig) -> None:
+    async def test_ingest_too_large(
+        self, pipeline: IngestPipeline, ingest_config: IngestConfig
+    ) -> None:
         ingest_config.max_file_size_bytes = 10
         f = ingest_config.watch_dir / "big.txt"
         f.write_text("x" * 100, encoding="utf-8")
@@ -186,7 +198,9 @@ class TestIngestPipeline:
         assert "zu groß" in result.error
 
     @pytest.mark.asyncio
-    async def test_ingest_duplicate(self, pipeline: IngestPipeline, ingest_config: IngestConfig) -> None:
+    async def test_ingest_duplicate(
+        self, pipeline: IngestPipeline, ingest_config: IngestConfig
+    ) -> None:
         f = ingest_config.watch_dir / "dup.md"
         f.write_text("content", encoding="utf-8")
         content_hash = IngestPipeline._file_hash(f)
@@ -196,7 +210,9 @@ class TestIngestPipeline:
         assert "Bereits verarbeitet" in result.error
 
     @pytest.mark.asyncio
-    async def test_ingest_success_no_memory(self, pipeline: IngestPipeline, ingest_config: IngestConfig) -> None:
+    async def test_ingest_success_no_memory(
+        self, pipeline: IngestPipeline, ingest_config: IngestConfig
+    ) -> None:
         f = ingest_config.watch_dir / "test.md"
         f.write_text("# Hello World\nContent here.", encoding="utf-8")
         result = await pipeline.ingest_file(f)
@@ -204,7 +220,9 @@ class TestIngestPipeline:
         assert result.chunks_created >= 1
 
     @pytest.mark.asyncio
-    async def test_ingest_success_with_memory(self, pipeline: IngestPipeline, ingest_config: IngestConfig) -> None:
+    async def test_ingest_success_with_memory(
+        self, pipeline: IngestPipeline, ingest_config: IngestConfig
+    ) -> None:
         mock_memory = MagicMock()
         mock_memory.index_text.return_value = 3
         pipeline._memory = mock_memory
@@ -216,7 +234,9 @@ class TestIngestPipeline:
         assert result.chunks_created == 3
 
     @pytest.mark.asyncio
-    async def test_ingest_empty_text(self, pipeline: IngestPipeline, ingest_config: IngestConfig) -> None:
+    async def test_ingest_empty_text(
+        self, pipeline: IngestPipeline, ingest_config: IngestConfig
+    ) -> None:
         f = ingest_config.watch_dir / "empty.md"
         f.write_text("   ", encoding="utf-8")
         result = await pipeline.ingest_file(f)
@@ -224,7 +244,9 @@ class TestIngestPipeline:
         assert "Kein Text" in result.error
 
     @pytest.mark.asyncio
-    async def test_ingest_extraction_error(self, pipeline: IngestPipeline, ingest_config: IngestConfig) -> None:
+    async def test_ingest_extraction_error(
+        self, pipeline: IngestPipeline, ingest_config: IngestConfig
+    ) -> None:
         f = ingest_config.watch_dir / "bad.md"
         f.write_text("content", encoding="utf-8")
         pipeline._extractor.extract = AsyncMock(side_effect=RuntimeError("extract fail"))
@@ -238,7 +260,9 @@ class TestIngestPipeline:
         assert results == []
 
     @pytest.mark.asyncio
-    async def test_scan_and_ingest_with_files(self, pipeline: IngestPipeline, ingest_config: IngestConfig) -> None:
+    async def test_scan_and_ingest_with_files(
+        self, pipeline: IngestPipeline, ingest_config: IngestConfig
+    ) -> None:
         (ingest_config.watch_dir / "a.md").write_text("# A", encoding="utf-8")
         (ingest_config.watch_dir / "b.txt").write_text("B content", encoding="utf-8")
         results = await pipeline.scan_and_ingest()

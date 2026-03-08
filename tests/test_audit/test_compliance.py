@@ -31,40 +31,96 @@ from jarvis.audit.compliance import (
 class TestDecisionLog:
     def test_log_and_count(self) -> None:
         log = DecisionLog()
-        log.log(DecisionRecord(
-            decision_id="d1", agent_id="coder", timestamp="2025-01-01T00:00:00Z",
-            action="execute_tool", reasoning="User requested code execution",
-        ))
+        log.log(
+            DecisionRecord(
+                decision_id="d1",
+                agent_id="coder",
+                timestamp="2025-01-01T00:00:00Z",
+                action="execute_tool",
+                reasoning="User requested code execution",
+            )
+        )
         assert log.count == 1
 
     def test_query_by_agent(self) -> None:
         log = DecisionLog()
-        log.log(DecisionRecord(decision_id="d1", agent_id="coder", timestamp="2025-01-01T00:00:00Z", action="code", reasoning="r"))
-        log.log(DecisionRecord(decision_id="d2", agent_id="researcher", timestamp="2025-01-01T00:00:00Z", action="search", reasoning="r"))
+        log.log(
+            DecisionRecord(
+                decision_id="d1",
+                agent_id="coder",
+                timestamp="2025-01-01T00:00:00Z",
+                action="code",
+                reasoning="r",
+            )
+        )
+        log.log(
+            DecisionRecord(
+                decision_id="d2",
+                agent_id="researcher",
+                timestamp="2025-01-01T00:00:00Z",
+                action="search",
+                reasoning="r",
+            )
+        )
         results = log.query(agent_id="coder")
         assert len(results) == 1
         assert results[0].agent_id == "coder"
 
     def test_query_by_risk_flags(self) -> None:
         log = DecisionLog()
-        log.log(DecisionRecord(decision_id="d1", agent_id="a", timestamp="t", action="a", reasoning="r", risk_flags=["high_cost"]))
-        log.log(DecisionRecord(decision_id="d2", agent_id="a", timestamp="t", action="a", reasoning="r"))
+        log.log(
+            DecisionRecord(
+                decision_id="d1",
+                agent_id="a",
+                timestamp="t",
+                action="a",
+                reasoning="r",
+                risk_flags=["high_cost"],
+            )
+        )
+        log.log(
+            DecisionRecord(decision_id="d2", agent_id="a", timestamp="t", action="a", reasoning="r")
+        )
         flagged = log.flagged_decisions()
         assert len(flagged) == 1
 
     def test_approval_rate(self) -> None:
         log = DecisionLog()
-        log.log(DecisionRecord(decision_id="d1", agent_id="a", timestamp="t", action="a", reasoning="r", human_approved=True))
-        log.log(DecisionRecord(decision_id="d2", agent_id="a", timestamp="t", action="a", reasoning="r", human_approved=False))
+        log.log(
+            DecisionRecord(
+                decision_id="d1",
+                agent_id="a",
+                timestamp="t",
+                action="a",
+                reasoning="r",
+                human_approved=True,
+            )
+        )
+        log.log(
+            DecisionRecord(
+                decision_id="d2",
+                agent_id="a",
+                timestamp="t",
+                action="a",
+                reasoning="r",
+                human_approved=False,
+            )
+        )
         assert log.approval_rate() == 50.0
 
     def test_stats(self) -> None:
         log = DecisionLog()
         for i in range(5):
-            log.log(DecisionRecord(
-                decision_id=f"d{i}", agent_id=f"agent_{i%2}", timestamp="t",
-                action="act", reasoning="r", confidence=0.8,
-            ))
+            log.log(
+                DecisionRecord(
+                    decision_id=f"d{i}",
+                    agent_id=f"agent_{i % 2}",
+                    timestamp="t",
+                    action="act",
+                    reasoning="r",
+                    confidence=0.8,
+                )
+            )
         stats = log.stats()
         assert stats["total_decisions"] == 5
         assert stats["unique_agents"] == 2
@@ -73,7 +129,11 @@ class TestDecisionLog:
     def test_max_entries(self) -> None:
         log = DecisionLog(max_entries=5)
         for i in range(10):
-            log.log(DecisionRecord(decision_id=f"d{i}", agent_id="a", timestamp="t", action="a", reasoning="r"))
+            log.log(
+                DecisionRecord(
+                    decision_id=f"d{i}", agent_id="a", timestamp="t", action="a", reasoning="r"
+                )
+            )
         assert log.count == 5
 
 
@@ -181,7 +241,11 @@ class TestReportExporter:
 class TestRemediationTracker:
     def test_add_and_count(self) -> None:
         tracker = RemediationTracker()
-        tracker.add(RemediationItem(item_id="r1", check_id="EUAIA-12.1", title="Fix Logs", description="desc"))
+        tracker.add(
+            RemediationItem(
+                item_id="r1", check_id="EUAIA-12.1", title="Fix Logs", description="desc"
+            )
+        )
         assert tracker.count == 1
 
     def test_resolve(self) -> None:
@@ -204,7 +268,15 @@ class TestRemediationTracker:
 
     def test_overdue_items(self) -> None:
         tracker = RemediationTracker()
-        tracker.add(RemediationItem(item_id="r1", check_id="c1", title="Fix", description="d", due_date="2024-01-01T00:00:00Z"))
+        tracker.add(
+            RemediationItem(
+                item_id="r1",
+                check_id="c1",
+                title="Fix",
+                description="d",
+                due_date="2024-01-01T00:00:00Z",
+            )
+        )
         overdue = tracker.overdue_items(reference_date="2025-01-01T00:00:00Z")
         assert len(overdue) == 1
 

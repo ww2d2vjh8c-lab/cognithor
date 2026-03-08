@@ -222,17 +222,21 @@ class TestOpenAIBackend:
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "choices": [{
-                "message": {
-                    "content": None,
-                    "tool_calls": [{
-                        "function": {
-                            "name": "search",
-                            "arguments": '{"query": "test"}',
-                        },
-                    }],
-                },
-            }],
+            "choices": [
+                {
+                    "message": {
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "function": {
+                                    "name": "search",
+                                    "arguments": '{"query": "test"}',
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
             "usage": {"prompt_tokens": 5, "completion_tokens": 3, "total_tokens": 8},
         }
 
@@ -393,7 +397,10 @@ class TestAnthropicBackend:
         b._client = mock_client
 
         multimodal_content = [
-            {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "abc"}},
+            {
+                "type": "image",
+                "source": {"type": "base64", "media_type": "image/png", "data": "abc"},
+            },
             {"type": "text", "text": "Was siehst du?"},
         ]
         await b.chat(
@@ -404,7 +411,9 @@ class TestAnthropicBackend:
         call_args = mock_client.post.call_args
         payload = call_args.kwargs.get("json") or call_args[1].get("json")
         user_msg = payload["messages"][0]
-        assert isinstance(user_msg["content"], list), "Content-Array darf nicht stringifiziert werden"
+        assert isinstance(user_msg["content"], list), (
+            "Content-Array darf nicht stringifiziert werden"
+        )
         assert user_msg["content"][0]["type"] == "image"
 
     @pytest.mark.asyncio
@@ -491,10 +500,16 @@ class TestAnthropicBackend:
         messages = [
             {"role": "user", "content": "Hallo"},
             {"role": "assistant", "content": "Hi! Wie kann ich helfen?"},
-            {"role": "user", "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "abc"}},
-                {"type": "text", "text": "Was zeigt dieses Bild?"},
-            ]},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {"type": "base64", "media_type": "image/png", "data": "abc"},
+                    },
+                    {"type": "text", "text": "Was zeigt dieses Bild?"},
+                ],
+            },
         ]
         await b.chat("claude-sonnet-4-20250514", messages)
 
@@ -741,10 +756,13 @@ class TestGeminiBackend:
     def test_system_message_from_list(self) -> None:
         """System-Messages mit Content-Arrays werden korrekt extrahiert."""
         messages = [
-            {"role": "system", "content": [
-                {"type": "text", "text": "Du bist Jarvis."},
-                {"type": "text", "text": "Sei hilfsbereit."},
-            ]},
+            {
+                "role": "system",
+                "content": [
+                    {"type": "text", "text": "Du bist Jarvis."},
+                    {"type": "text", "text": "Sei hilfsbereit."},
+                ],
+            },
             {"role": "user", "content": "Hi"},
         ]
         system_text, contents = GeminiBackend._convert_messages(messages)
@@ -760,12 +778,14 @@ class TestGeminiBackend:
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "candidates": [{
-                "content": {
-                    "parts": [{"text": "Hallo Welt!"}],
-                    "role": "model",
-                },
-            }],
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [{"text": "Hallo Welt!"}],
+                        "role": "model",
+                    },
+                }
+            ],
             "usageMetadata": {
                 "promptTokenCount": 10,
                 "candidatesTokenCount": 5,
@@ -850,14 +870,16 @@ class TestGeminiBackend:
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "candidates": [{
-                "content": {
-                    "parts": [
-                        {"functionCall": {"name": "web_search", "args": {"query": "Wetter"}}},
-                    ],
-                    "role": "model",
-                },
-            }],
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {"functionCall": {"name": "web_search", "args": {"query": "Wetter"}}},
+                        ],
+                        "role": "model",
+                    },
+                }
+            ],
             "usageMetadata": {
                 "promptTokenCount": 10,
                 "candidatesTokenCount": 5,

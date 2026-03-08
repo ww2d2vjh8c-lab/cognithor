@@ -55,6 +55,7 @@ class TestPluginManifest:
 
     def test_verify_checksum_valid(self) -> None:
         import hashlib
+
         content = b"hello world"
         checksum = hashlib.sha256(content).hexdigest()
         m = PluginManifest(name="t", version="1.0", checksum=checksum)
@@ -99,7 +100,9 @@ class TestInstallResult:
         assert r.success is False
 
     def test_to_dict(self) -> None:
-        r = InstallResult(plugin="x", version="1.0", status=InstallStatus.INSTALLED, warnings=["unsigned"])
+        r = InstallResult(
+            plugin="x", version="1.0", status=InstallStatus.INSTALLED, warnings=["unsigned"]
+        )
         d = r.to_dict()
         assert d["success"] is True
         assert d["warnings"] == ["unsigned"]
@@ -119,22 +122,26 @@ class TestDependencyResolver:
 
     def test_linear_dependencies(self) -> None:
         resolver = DependencyResolver()
-        resolver.set_available([
-            PluginManifest(name="a", version="1.0", dependencies=["b"]),
-            PluginManifest(name="b", version="1.0", dependencies=["c"]),
-            PluginManifest(name="c", version="1.0"),
-        ])
+        resolver.set_available(
+            [
+                PluginManifest(name="a", version="1.0", dependencies=["b"]),
+                PluginManifest(name="b", version="1.0", dependencies=["c"]),
+                PluginManifest(name="c", version="1.0"),
+            ]
+        )
         order = resolver.resolve("a")
         assert order == ["c", "b", "a"]
 
     def test_diamond_dependencies(self) -> None:
         resolver = DependencyResolver()
-        resolver.set_available([
-            PluginManifest(name="a", version="1.0", dependencies=["b", "c"]),
-            PluginManifest(name="b", version="1.0", dependencies=["d"]),
-            PluginManifest(name="c", version="1.0", dependencies=["d"]),
-            PluginManifest(name="d", version="1.0"),
-        ])
+        resolver.set_available(
+            [
+                PluginManifest(name="a", version="1.0", dependencies=["b", "c"]),
+                PluginManifest(name="b", version="1.0", dependencies=["d"]),
+                PluginManifest(name="c", version="1.0", dependencies=["d"]),
+                PluginManifest(name="d", version="1.0"),
+            ]
+        )
         order = resolver.resolve("a")
         assert order.index("d") < order.index("b")
         assert order.index("d") < order.index("c")
@@ -142,20 +149,24 @@ class TestDependencyResolver:
 
     def test_circular_dependency(self) -> None:
         resolver = DependencyResolver()
-        resolver.set_available([
-            PluginManifest(name="a", version="1.0", dependencies=["b"]),
-            PluginManifest(name="b", version="1.0", dependencies=["a"]),
-        ])
+        resolver.set_available(
+            [
+                PluginManifest(name="a", version="1.0", dependencies=["b"]),
+                PluginManifest(name="b", version="1.0", dependencies=["a"]),
+            ]
+        )
         with pytest.raises(ValueError, match="Circular"):
             resolver.resolve("a")
 
     def test_find_missing(self) -> None:
         resolver = DependencyResolver()
-        resolver.set_available([
-            PluginManifest(name="a", version="1.0", dependencies=["b", "c"]),
-            PluginManifest(name="b", version="1.0"),
-            PluginManifest(name="c", version="1.0"),
-        ])
+        resolver.set_available(
+            [
+                PluginManifest(name="a", version="1.0", dependencies=["b", "c"]),
+                PluginManifest(name="b", version="1.0"),
+                PluginManifest(name="c", version="1.0"),
+            ]
+        )
         missing = resolver.find_missing("a", installed={"b"})
         assert missing == ["c"]
 
@@ -174,19 +185,23 @@ class TestRemoteRegistryInstall:
     def _make_registry(self, tmp_path: Path) -> RemoteRegistry:
         skills = tmp_path / "skills"
         reg = RemoteRegistry(skills)
-        reg.register_remote(PluginManifest(
-            name="weather",
-            version="1.0.0",
-            description="Weather forecast skill",
-            tags=["weather"],
-        ))
-        reg.register_remote(PluginManifest(
-            name="calendar",
-            version="2.0.0",
-            description="Calendar management",
-            category="productivity",
-            tags=["calendar", "schedule"],
-        ))
+        reg.register_remote(
+            PluginManifest(
+                name="weather",
+                version="1.0.0",
+                description="Weather forecast skill",
+                tags=["weather"],
+            )
+        )
+        reg.register_remote(
+            PluginManifest(
+                name="calendar",
+                version="2.0.0",
+                description="Calendar management",
+                category="productivity",
+                tags=["calendar", "schedule"],
+            )
+        )
         return reg
 
     def test_install_plugin(self, tmp_path: Path) -> None:
@@ -215,11 +230,13 @@ class TestRemoteRegistryInstall:
 
     def test_install_checksum_failure(self, tmp_path: Path) -> None:
         reg = RemoteRegistry(tmp_path / "skills")
-        reg.register_remote(PluginManifest(
-            name="bad",
-            version="1.0",
-            checksum="wrong_checksum",
-        ))
+        reg.register_remote(
+            PluginManifest(
+                name="bad",
+                version="1.0",
+                checksum="wrong_checksum",
+            )
+        )
         result = reg.install("bad", content="some content")
         assert result.status == InstallStatus.FAILED
         assert "Checksum" in result.message

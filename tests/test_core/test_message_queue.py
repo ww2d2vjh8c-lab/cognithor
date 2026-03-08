@@ -167,9 +167,7 @@ class TestRetryAndDLQ:
         assert stats["completed"] == 1
         assert stats["pending"] == 0
 
-    async def test_fail_requeues_with_retries_remaining(
-        self, queue: DurableMessageQueue
-    ) -> None:
+    async def test_fail_requeues_with_retries_remaining(self, queue: DurableMessageQueue) -> None:
         """Fehler mit verbleibenden Retries: zurück in die Queue."""
         msg_id = await queue.enqueue({"text": "flaky"})
         await queue.dequeue()
@@ -195,7 +193,7 @@ class TestRetryAndDLQ:
         for i in range(3):
             queued = await queue.dequeue()
             assert queued is not None
-            await queue.fail(msg_id, f"Error #{i+1}")
+            await queue.fail(msg_id, f"Error #{i + 1}")
 
         stats = await queue.get_stats()
         assert stats["dead"] == 1
@@ -224,9 +222,7 @@ class TestRetryAndDLQ:
 
     async def test_retry_count_increments(self, queue: DurableMessageQueue) -> None:
         """Retry-Zähler wird korrekt hochgezählt."""
-        queue_with_5 = DurableMessageQueue(
-            queue._db_path.parent / "retry5.db", max_retries=5
-        )
+        queue_with_5 = DurableMessageQueue(queue._db_path.parent / "retry5.db", max_retries=5)
         try:
             msg_id = await queue_with_5.enqueue({"text": "retry-test"})
 
@@ -273,9 +269,7 @@ class TestCleanup:
         depth = await queue.get_depth()
         assert depth == 1
 
-    async def test_cleanup_removes_expired_dead(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_cleanup_removes_expired_dead(self, tmp_path: Path) -> None:
         """Cleanup entfernt abgelaufene Dead-Letter-Nachrichten."""
         # Queue mit sehr kurzer TTL
         q = DurableMessageQueue(tmp_path / "ttl.db", max_retries=1, ttl_hours=0)
@@ -287,6 +281,7 @@ class TestCleanup:
             # Da ttl_hours=0 ist alles sofort "abgelaufen"
             # Wir müssen das created_at manuell in die Vergangenheit setzen
             import time
+
             past = time.time() - 3600  # 1 Stunde zurück
             q.conn.execute(
                 "UPDATE message_queue SET created_at = ? WHERE id = ?",
@@ -414,10 +409,7 @@ class TestConcurrentAccess:
 
     async def test_concurrent_enqueue(self, queue: DurableMessageQueue) -> None:
         """Mehrere gleichzeitige Enqueue-Aufrufe sind sicher."""
-        tasks = [
-            queue.enqueue({"text": f"msg-{i}"})
-            for i in range(20)
-        ]
+        tasks = [queue.enqueue({"text": f"msg-{i}"}) for i in range(20)]
         ids = await asyncio.gather(*tasks)
 
         assert len(ids) == 20
@@ -426,9 +418,7 @@ class TestConcurrentAccess:
         depth = await queue.get_depth()
         assert depth == 20
 
-    async def test_concurrent_dequeue_no_duplicates(
-        self, queue: DurableMessageQueue
-    ) -> None:
+    async def test_concurrent_dequeue_no_duplicates(self, queue: DurableMessageQueue) -> None:
         """Gleichzeitige Dequeues liefern nie die gleiche Nachricht."""
         # 10 Nachrichten einfügen
         for i in range(10):
@@ -442,9 +432,7 @@ class TestConcurrentAccess:
         received_ids = [r.id for r in results if r is not None]
         assert len(received_ids) == len(set(received_ids))
 
-    async def test_concurrent_enqueue_dequeue(
-        self, queue: DurableMessageQueue
-    ) -> None:
+    async def test_concurrent_enqueue_dequeue(self, queue: DurableMessageQueue) -> None:
         """Gleichzeitiges Enqueue und Dequeue ist sicher."""
 
         async def producer(n: int) -> list[str]:
@@ -464,9 +452,7 @@ class TestConcurrentAccess:
             return ids
 
         # Produzent und Konsument parallel laufen lassen
-        produced, consumed = await asyncio.gather(
-            producer(10), consumer(5)
-        )
+        produced, consumed = await asyncio.gather(producer(10), consumer(5))
 
         # Alle produzierten IDs sollten einzigartig sein
         assert len(set(produced)) == 10

@@ -88,12 +88,14 @@ class AgentCard:
     icon_url: str = ""
 
     # Capabilities
-    capabilities: list[str] = field(default_factory=lambda: [
-        "tools",
-        "resources",
-        "prompts",
-        "sampling",
-    ])
+    capabilities: list[str] = field(
+        default_factory=lambda: [
+            "tools",
+            "resources",
+            "prompts",
+            "sampling",
+        ]
+    )
 
     # Skills
     skills: list[AgentSkill] = field(default_factory=list)
@@ -110,13 +112,15 @@ class AgentCard:
     )
 
     # Metadata
-    tags: list[str] = field(default_factory=lambda: [
-        "local-first",
-        "privacy",
-        "german",
-        "insurance",
-        "multi-agent",
-    ])
+    tags: list[str] = field(
+        default_factory=lambda: [
+            "local-first",
+            "privacy",
+            "german",
+            "insurance",
+            "multi-agent",
+        ]
+    )
     languages: list[str] = field(default_factory=lambda: ["de", "en"])
     created_at: str = ""
     updated_at: str = ""
@@ -295,7 +299,13 @@ class DiscoveryManager:
                 "name": "Browser-Automatisierung",
                 "description": "Headless-Browser: Navigation, Screenshots, Formulare",
                 "tags": ["browser", "automation", "playwright"],
-                "tools": ["browse_url", "browse_screenshot", "browse_click", "browse_fill", "browse_execute_js"],
+                "tools": [
+                    "browse_url",
+                    "browse_screenshot",
+                    "browse_click",
+                    "browse_fill",
+                    "browse_execute_js",
+                ],
             },
             "memory_system": {
                 "name": "Gedächtnissystem",
@@ -313,7 +323,12 @@ class DiscoveryManager:
                 "name": "Medienverarbeitung",
                 "description": "Audio-Transkription, Bild-Analyse, Dokumenten-Extraktion, TTS",
                 "tags": ["media", "audio", "image", "ocr"],
-                "tools": ["media_transcribe_audio", "media_analyze_image", "media_extract_text", "media_tts"],
+                "tools": [
+                    "media_transcribe_audio",
+                    "media_analyze_image",
+                    "media_extract_text",
+                    "media_tts",
+                ],
             },
         }
 
@@ -322,13 +337,15 @@ class DiscoveryManager:
         for skill_id, group in skill_groups.items():
             matching_tools = [t for t in group["tools"] if t in tool_set]
             if matching_tools:
-                skills.append(AgentSkill(
-                    id=skill_id,
-                    name=group["name"],
-                    description=group["description"],
-                    tags=group["tags"],
-                    examples=matching_tools[:3],
-                ))
+                skills.append(
+                    AgentSkill(
+                        id=skill_id,
+                        name=group["name"],
+                        description=group["description"],
+                        tags=group["tags"],
+                        examples=matching_tools[:3],
+                    )
+                )
 
         return skills
 

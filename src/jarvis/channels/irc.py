@@ -89,13 +89,17 @@ class IRCChannel(Channel):
         try:
             if self._use_ssl:
                 import ssl as ssl_mod
+
                 ssl_ctx = ssl_mod.create_default_context()
                 self._reader, self._writer = await asyncio.open_connection(
-                    self._server, self._port, ssl=ssl_ctx,
+                    self._server,
+                    self._port,
+                    ssl=ssl_ctx,
                 )
             else:
                 self._reader, self._writer = await asyncio.open_connection(
-                    self._server, self._port,
+                    self._server,
+                    self._port,
                 )
         except Exception as exc:
             logger.error("IRC Verbindung fehlgeschlagen: %s", exc)
@@ -110,8 +114,7 @@ class IRCChannel(Channel):
         # Receive-Loop starten
         self._running = True
         self._recv_task = asyncio.get_running_loop().create_task(self._receive_loop())
-        logger.info("IRCChannel gestartet: %s:%d als %s",
-                     self._server, self._port, self._nick)
+        logger.info("IRCChannel gestartet: %s:%d als %s", self._server, self._port, self._nick)
 
     async def _send_raw(self, line: str) -> None:
         """Sendet eine rohe IRC-Zeile."""
@@ -201,7 +204,7 @@ class IRCChannel(Channel):
 
         # Nick-Prefix entfernen
         if not is_private:
-            text = text[len(self._nick):].lstrip(":,").strip()
+            text = text[len(self._nick) :].lstrip(":,").strip()
 
         reply_target = nick if is_private else target
 
@@ -238,6 +241,7 @@ class IRCChannel(Channel):
                 logger.error("IRC: Handler-Fehler: %s", exc)
                 try:
                     from jarvis.utils.error_messages import classify_error_for_user
+
                     friendly = classify_error_for_user(exc)
                 except Exception:
                     friendly = "Ein Fehler ist bei der Verarbeitung aufgetreten."
@@ -246,6 +250,7 @@ class IRCChannel(Channel):
     async def _send_message(self, target: str, text: str) -> None:
         """Sendet eine Nachricht mit Flood Protection und Message-Splitting."""
         import time
+
         now = time.monotonic()
         elapsed = now - self._last_msg_time
         if elapsed < _MIN_MSG_INTERVAL:
@@ -291,7 +296,10 @@ class IRCChannel(Channel):
         await self._send_message(target, message.text)
 
     async def request_approval(
-        self, session_id: str, action: PlannedAction, reason: str,
+        self,
+        session_id: str,
+        action: PlannedAction,
+        reason: str,
     ) -> bool:
         """IRC: Textbasierte Approval via ja/nein-Antwort."""
         reply_target = self._channels[0] if self._channels else None
@@ -325,6 +333,8 @@ class IRCChannel(Channel):
             if text.strip():
                 await self.send(
                     OutgoingMessage(
-                        channel=self.name, text=text, session_id=session_id,
+                        channel=self.name,
+                        text=text,
+                        session_id=session_id,
                     )
                 )

@@ -351,6 +351,7 @@ class Planner:
 
         # Circuit Breaker für LLM-Calls (#42 Optimierung)
         from jarvis.utils.circuit_breaker import CircuitBreaker
+
         self._llm_circuit_breaker = CircuitBreaker(
             name="planner_llm",
             failure_threshold=5,
@@ -360,11 +361,14 @@ class Planner:
 
         # Prompts von Disk laden (mit Fallback auf hardcoded Konstanten)
         self._system_prompt_template = self._load_prompt_from_file(
-            "SYSTEM_PROMPT.md", SYSTEM_PROMPT)
+            "SYSTEM_PROMPT.md", SYSTEM_PROMPT
+        )
         self._replan_prompt_template = self._load_prompt_from_file(
-            "REPLAN_PROMPT.md", REPLAN_PROMPT, fallback_txt="REPLAN_PROMPT.txt")
+            "REPLAN_PROMPT.md", REPLAN_PROMPT, fallback_txt="REPLAN_PROMPT.txt"
+        )
         self._escalation_prompt_template = self._load_prompt_from_file(
-            "ESCALATION_PROMPT.md", ESCALATION_PROMPT, fallback_txt="ESCALATION_PROMPT.txt")
+            "ESCALATION_PROMPT.md", ESCALATION_PROMPT, fallback_txt="ESCALATION_PROMPT.txt"
+        )
 
     def _load_prompt_from_file(self, filename: str, fallback: str, fallback_txt: str = "") -> str:
         """Lädt einen Prompt von Disk (.md bevorzugt, .txt als Migration-Fallback)."""
@@ -389,11 +393,14 @@ class Planner:
     def reload_prompts(self) -> None:
         """Lädt alle Prompt-Templates neu von Disk."""
         self._system_prompt_template = self._load_prompt_from_file(
-            "SYSTEM_PROMPT.md", SYSTEM_PROMPT)
+            "SYSTEM_PROMPT.md", SYSTEM_PROMPT
+        )
         self._replan_prompt_template = self._load_prompt_from_file(
-            "REPLAN_PROMPT.md", REPLAN_PROMPT, fallback_txt="REPLAN_PROMPT.txt")
+            "REPLAN_PROMPT.md", REPLAN_PROMPT, fallback_txt="REPLAN_PROMPT.txt"
+        )
         self._escalation_prompt_template = self._load_prompt_from_file(
-            "ESCALATION_PROMPT.md", ESCALATION_PROMPT, fallback_txt="ESCALATION_PROMPT.txt")
+            "ESCALATION_PROMPT.md", ESCALATION_PROMPT, fallback_txt="ESCALATION_PROMPT.txt"
+        )
         log.info("planner_prompts_reloaded")
 
     def _record_cost(self, response: dict[str, Any], model: str, session_id: str = "") -> None:
@@ -449,13 +456,16 @@ class Planner:
         _plan_start = time.monotonic()
         try:
             from jarvis.utils.circuit_breaker import CircuitBreakerOpen
+
             response = await self._llm_circuit_breaker.call(
                 self._ollama.chat(
                     model=model,
                     messages=messages,
                     temperature=model_config.get("temperature", 0.7),
                     top_p=model_config.get("top_p", 0.9),
-                    options={"num_predict": getattr(self._config.planner, "response_token_budget", 3000)},
+                    options={
+                        "num_predict": getattr(self._config.planner, "response_token_budget", 3000)
+                    },
                 )
             )
         except CircuitBreakerOpen as exc:
@@ -476,8 +486,10 @@ class Planner:
             log.error("planner_llm_error", error=str(exc), status_code=exc.status_code)
             if self._audit_logger:
                 self._audit_logger.log_tool_call(
-                    "llm_plan", {"model": model, "goal": user_message[:100]},
-                    result=f"ERROR: {exc}", success=False,
+                    "llm_plan",
+                    {"model": model, "goal": user_message[:100]},
+                    result=f"ERROR: {exc}",
+                    success=False,
                     duration_ms=float(_plan_ms),
                 )
             # Specific message for model-not-found (404)
@@ -508,8 +520,10 @@ class Planner:
         self._record_cost(response, model, session_id=working_memory.session_id)
         if self._audit_logger:
             self._audit_logger.log_tool_call(
-                "llm_plan", {"model": model, "goal": user_message[:100]},
-                result=f"OK ({_plan_ms}ms)", success=True,
+                "llm_plan",
+                {"model": model, "goal": user_message[:100]},
+                result=f"OK ({_plan_ms}ms)",
+                success=True,
                 duration_ms=float(_plan_ms),
             )
 
@@ -569,7 +583,9 @@ class Planner:
                     messages=messages,
                     temperature=model_config.get("temperature", 0.7),
                     top_p=model_config.get("top_p", 0.9),
-                    options={"num_predict": getattr(self._config.planner, "response_token_budget", 3000)},
+                    options={
+                        "num_predict": getattr(self._config.planner, "response_token_budget", 3000)
+                    },
                 )
                 break
             except OllamaError as exc:
@@ -606,13 +622,19 @@ class Planner:
 
         messages = [
             {"role": "system", "content": "Du bist Jarvis. Erkläre höflich auf Deutsch."},
-            {"role": "user", "content": self._escalation_prompt_template.format(tool=tool, reason=reason)},
+            {
+                "role": "user",
+                "content": self._escalation_prompt_template.format(tool=tool, reason=reason),
+            },
         ]
 
         try:
             response = await self._ollama.chat(
-                model=model, messages=messages,
-                options={"num_predict": getattr(self._config.planner, "response_token_budget", 3000)},
+                model=model,
+                messages=messages,
+                options={
+                    "num_predict": getattr(self._config.planner, "response_token_budget", 3000)
+                },
             )
             self._record_cost(response, model, session_id=working_memory.session_id)
             content: str = response.get("message", {}).get("content", "")
@@ -650,7 +672,10 @@ class Planner:
             # Extrahiere den tatsächlichen Such-Content für die Antwort
             search_content_parts = []
             for r in results:
-                if r.tool_name in ("web_search", "web_news_search", "search_and_read", "web_fetch") and r.success:
+                if (
+                    r.tool_name in ("web_search", "web_news_search", "search_and_read", "web_fetch")
+                    and r.success
+                ):
                     search_content_parts.append(r.content[:5000])
             search_content_block = "\n\n".join(search_content_parts)
 
@@ -685,6 +710,7 @@ class Planner:
 
         # Aktuelles Datum/Uhrzeit für korrekte zeitliche Bezüge
         from datetime import datetime
+
         now = datetime.now()
         current_dt = now.strftime("%A, %d. %B %Y, %H:%M Uhr")
         date_line = f"\nHeutiges Datum und Uhrzeit: {current_dt}\n"
@@ -732,15 +758,15 @@ class Planner:
                 content: str = response.get("message", {}).get("content", "")
                 return content
             except OllamaError as exc:
-                log.warning("formulate_response_llm_error", error=str(exc), attempt=_fmt_attempt + 1)
+                log.warning(
+                    "formulate_response_llm_error", error=str(exc), attempt=_fmt_attempt + 1
+                )
                 if _fmt_attempt == 0:
                     await asyncio.sleep(1.0)  # Retry nach kurzer Pause
                     continue
                 # Zweiter Fehlschlag: Ergebnisse als Fallback direkt zurueckgeben
                 raw_results = "\n".join(
-                    f"[{r.tool_name}] {r.content[:300]}"
-                    for r in results
-                    if r.success
+                    f"[{r.tool_name}] {r.content[:300]}" for r in results if r.success
                 )
                 if raw_results:
                     return f"Hier sind die Ergebnisse (Zusammenfassung fehlgeschlagen):\n\n{raw_results}"
@@ -809,7 +835,9 @@ class Planner:
                         f"{proc[:3000]}"
                     )
                 else:
-                    context_parts.append(f"### Relevante Prozedur (folge diesem Ablauf!)\n{proc[:600]}")
+                    context_parts.append(
+                        f"### Relevante Prozedur (folge diesem Ablauf!)\n{proc[:600]}"
+                    )
 
         # Causal-Learning-Vorschlaege (wenn verfuegbar)
         if self._causal_analyzer is not None:
@@ -834,9 +862,7 @@ class Planner:
                         parts.append(f"Staerken: {', '.join(cap.strengths[:3])}")
                     if cap.weaknesses:
                         parts.append(f"Schwaechen: {', '.join(cap.weaknesses[:3])}")
-                    context_parts.append(
-                        "### Selbsteinschaetzung\n" + " | ".join(parts)
-                    )
+                    context_parts.append("### Selbsteinschaetzung\n" + " | ".join(parts))
             except Exception:
                 pass
 
@@ -844,6 +870,7 @@ class Planner:
 
         # Aktuelles Datum und Uhrzeit
         from datetime import datetime
+
         now = datetime.now()
         current_datetime = now.strftime("%A, %d. %B %Y, %H:%M Uhr")
 
@@ -859,7 +886,8 @@ class Planner:
         if self._prompt_evolution is not None:
             try:
                 version_id, template = self._prompt_evolution.get_active_version(
-                    "system_prompt", getattr(working_memory, "session_id", None) or "default",
+                    "system_prompt",
+                    getattr(working_memory, "session_id", None) or "default",
                 )
                 self._current_prompt_version_id = version_id
                 return template.format(
@@ -934,7 +962,7 @@ class Planner:
         # Negative Lookahead: Backslash gefolgt von etwas das KEIN gültiges Escape ist
         return re.sub(
             r'\\(?!["\\/bfnrtu])',
-            r'\\\\',
+            r"\\\\",
             json_str,
         )
 
@@ -1078,11 +1106,18 @@ class Planner:
         )
 
     # Tools deren Ergebnisse mehr Kontext brauchen (größeres Content-Limit)
-    _HIGH_CONTEXT_TOOLS: frozenset[str] = frozenset({
-        "web_search", "web_news_search", "search_and_read", "web_fetch",
-        "media_analyze_image", "media_extract_text",
-        "analyze_code", "run_python",
-    })
+    _HIGH_CONTEXT_TOOLS: frozenset[str] = frozenset(
+        {
+            "web_search",
+            "web_news_search",
+            "search_and_read",
+            "web_fetch",
+            "media_analyze_image",
+            "media_extract_text",
+            "analyze_code",
+            "run_python",
+        }
+    )
 
     def _format_results(self, results: list[ToolResult]) -> str:
         """Formatiert Tool-Ergebnisse als lesbaren Text."""

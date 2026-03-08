@@ -25,6 +25,7 @@ def config(tmp_path) -> JarvisConfig:
 class TestPrintBanner:
     def test_banner_ollama(self, config: JarvisConfig, capsys) -> None:
         from jarvis.__main__ import _print_banner
+
         _print_banner(config, api_host="127.0.0.1", api_port=8741)
         captured = capsys.readouterr()
         assert "COGNITHOR" in captured.out
@@ -33,6 +34,7 @@ class TestPrintBanner:
 
     def test_banner_lmstudio(self, config: JarvisConfig, capsys) -> None:
         from jarvis.__main__ import _print_banner
+
         config.llm_backend_type = "lmstudio"
         config.lmstudio_base_url = "http://localhost:1234"
         _print_banner(config, api_host="0.0.0.0", api_port=9000)
@@ -41,6 +43,7 @@ class TestPrintBanner:
 
     def test_banner_other_backend(self, config: JarvisConfig, capsys) -> None:
         from jarvis.__main__ import _print_banner
+
         config.llm_backend_type = "openai"
         _print_banner(config, api_host="127.0.0.1", api_port=8741)
         captured = capsys.readouterr()
@@ -48,6 +51,7 @@ class TestPrintBanner:
 
     def test_banner_with_ssl(self, config: JarvisConfig, capsys) -> None:
         from jarvis.__main__ import _print_banner
+
         config.security.ssl_certfile = "/path/to/cert.pem"
         config.security.ssl_keyfile = "/path/to/key.pem"
         _print_banner(config, api_host="127.0.0.1", api_port=8741)
@@ -63,6 +67,7 @@ class TestPrintBanner:
 class TestParseArgs:
     def test_parse_no_args(self) -> None:
         from jarvis.__main__ import parse_args
+
         with patch("sys.argv", ["cognithor"]):
             args = parse_args()
             assert args.config is None
@@ -72,36 +77,42 @@ class TestParseArgs:
 
     def test_parse_init_only(self) -> None:
         from jarvis.__main__ import parse_args
+
         with patch("sys.argv", ["cognithor", "--init-only"]):
             args = parse_args()
             assert args.init_only is True
 
     def test_parse_no_cli(self) -> None:
         from jarvis.__main__ import parse_args
+
         with patch("sys.argv", ["cognithor", "--no-cli"]):
             args = parse_args()
             assert args.no_cli is True
 
     def test_parse_api_port(self) -> None:
         from jarvis.__main__ import parse_args
+
         with patch("sys.argv", ["cognithor", "--api-port", "9999"]):
             args = parse_args()
             assert args.api_port == 9999
 
     def test_parse_api_host(self) -> None:
         from jarvis.__main__ import parse_args
+
         with patch("sys.argv", ["cognithor", "--api-host", "0.0.0.0"]):
             args = parse_args()
             assert args.api_host == "0.0.0.0"
 
     def test_parse_log_level(self) -> None:
         from jarvis.__main__ import parse_args
+
         with patch("sys.argv", ["cognithor", "--log-level", "DEBUG"]):
             args = parse_args()
             assert args.log_level == "DEBUG"
 
     def test_parse_config_path(self, tmp_path) -> None:
         from jarvis.__main__ import parse_args
+
         cfg_file = tmp_path / "custom.yaml"
         with patch("sys.argv", ["cognithor", "--config", str(cfg_file)]):
             args = parse_args()

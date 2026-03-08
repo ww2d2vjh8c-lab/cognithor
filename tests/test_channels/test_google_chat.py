@@ -109,7 +109,9 @@ class TestGoogleChatChannel:
         ch._http_client = MagicMock()
         ch._credentials = MagicMock()
         msg = OutgoingMessage(
-            channel="google_chat", text="Test", session_id="s1",
+            channel="google_chat",
+            text="Test",
+            session_id="s1",
             metadata={},
         )
         await ch.send(msg)  # Should warn, not raise

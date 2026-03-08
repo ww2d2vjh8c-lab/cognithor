@@ -57,9 +57,7 @@ class TestPeerNode:
 
     def test_stale_detection(self) -> None:
         peer = PeerNode(peer_id="old")
-        peer.last_seen = (
-            datetime.now(timezone.utc) - timedelta(hours=2)
-        ).isoformat()
+        peer.last_seen = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
         assert peer.is_stale
 
 
@@ -111,9 +109,7 @@ class TestPeerRegistry:
 
     def test_cleanup_stale(self, registry: PeerRegistry) -> None:
         old_peer = PeerNode(peer_id="old")
-        old_peer.last_seen = (
-            datetime.now(timezone.utc) - timedelta(hours=5)
-        ).isoformat()
+        old_peer.last_seen = (datetime.now(timezone.utc) - timedelta(hours=5)).isoformat()
         registry._peers["old"] = old_peer
 
         registry.register(PeerNode(peer_id="fresh"))
@@ -126,9 +122,7 @@ class TestPeerRegistry:
         for i in range(5):
             p = PeerNode(peer_id=f"p{i}")
             if i < 2:
-                p.last_seen = (
-                    datetime.now(timezone.utc) - timedelta(hours=3)
-                ).isoformat()
+                p.last_seen = (datetime.now(timezone.utc) - timedelta(hours=3)).isoformat()
             registry.register(p)
 
         assert registry.peer_count <= 5
@@ -147,28 +141,36 @@ class TestSkillIndex:
         idx = SkillIndex()
 
         m1 = SkillManifest(
-            name="bu_vergleich", version="1.0.0",
+            name="bu_vergleich",
+            version="1.0.0",
             description="BU-Tarifvergleich für Versicherungen",
             author="Alexander",
             trigger_keywords=["BU", "Berufsunfähigkeit", "Tarif"],
             category="insurance",
         )
-        idx.publish(IndexEntry(
-            package_id="bu_vergleich@1.0.0:abc",
-            manifest=m1, publisher_id="peer_1",
-        ))
+        idx.publish(
+            IndexEntry(
+                package_id="bu_vergleich@1.0.0:abc",
+                manifest=m1,
+                publisher_id="peer_1",
+            )
+        )
 
         m2 = SkillManifest(
-            name="web_scraper", version="2.0.0",
+            name="web_scraper",
+            version="2.0.0",
             description="Webseiten-Scraping",
             author="Dev",
             trigger_keywords=["scrape", "website", "crawl"],
             category="tools",
         )
-        idx.publish(IndexEntry(
-            package_id="web_scraper@2.0.0:def",
-            manifest=m2, publisher_id="peer_2",
-        ))
+        idx.publish(
+            IndexEntry(
+                package_id="web_scraper@2.0.0:def",
+                manifest=m2,
+                publisher_id="peer_2",
+            )
+        )
 
         return idx
 
@@ -200,14 +202,19 @@ class TestSkillIndex:
     def test_get_versions(self, index: SkillIndex) -> None:
         # Zweite Version hinzufügen
         m = SkillManifest(
-            name="bu_vergleich", version="1.1.0",
-            description="Update", author="Alexander",
+            name="bu_vergleich",
+            version="1.1.0",
+            description="Update",
+            author="Alexander",
             category="insurance",
         )
-        index.publish(IndexEntry(
-            package_id="bu_vergleich@1.1.0:xyz",
-            manifest=m, publisher_id="peer_1",
-        ))
+        index.publish(
+            IndexEntry(
+                package_id="bu_vergleich@1.1.0:xyz",
+                manifest=m,
+                publisher_id="peer_1",
+            )
+        )
 
         versions = index.get_versions("bu_vergleich")
         assert len(versions) == 2
@@ -228,14 +235,17 @@ class TestSkillIndex:
 
     def test_merge_from(self, index: SkillIndex) -> None:
         m = SkillManifest(
-            name="new_skill", version="1.0.0",
-            description="Neuer Skill", author="Remote",
+            name="new_skill",
+            version="1.0.0",
+            description="Neuer Skill",
+            author="Remote",
             category="tools",
         )
         remote_entries = [
             IndexEntry(
                 package_id="new_skill@1.0.0:ghi",
-                manifest=m, publisher_id="peer_3",
+                manifest=m,
+                publisher_id="peer_3",
             ),
         ]
 
@@ -246,14 +256,17 @@ class TestSkillIndex:
     def test_merge_deduplicate(self, index: SkillIndex) -> None:
         # Gleichen Entry nochmal mergen
         m = SkillManifest(
-            name="bu_vergleich", version="1.0.0",
-            description="Duplikat", author="Alexander",
+            name="bu_vergleich",
+            version="1.0.0",
+            description="Duplikat",
+            author="Alexander",
             category="insurance",
         )
         duplicate = [
             IndexEntry(
                 package_id="bu_vergleich@1.0.0:abc",
-                manifest=m, publisher_id="peer_1",
+                manifest=m,
+                publisher_id="peer_1",
             ),
         ]
         new_count = index.merge_from(duplicate)
@@ -359,8 +372,11 @@ class TestSubscriptionFeed:
         entry = IndexEntry(
             package_id="new_bu@1.0:abc",
             manifest=SkillManifest(
-                name="new_bu", version="1.0.0",
-                description="Neue BU", author="a", category="insurance",
+                name="new_bu",
+                version="1.0.0",
+                description="Neue BU",
+                author="a",
+                category="insurance",
             ),
             publisher_id="peer_2",
         )
@@ -374,8 +390,11 @@ class TestSubscriptionFeed:
         entry = IndexEntry(
             package_id="pkg@1.0:abc",
             manifest=SkillManifest(
-                name="pkg", version="1.0.0",
-                description="x", author="a", category="insurance",
+                name="pkg",
+                version="1.0.0",
+                description="x",
+                author="a",
+                category="insurance",
             ),
             publisher_id="peer_2",
         )
@@ -388,8 +407,10 @@ class TestSubscriptionFeed:
         entry = IndexEntry(
             package_id="bu_new@1.0:abc",
             manifest=SkillManifest(
-                name="bu_new", version="1.0.0",
-                description="x", author="a",
+                name="bu_new",
+                version="1.0.0",
+                description="x",
+                author="a",
                 trigger_keywords=["BU", "Tarif"],
             ),
             publisher_id="peer_2",
@@ -403,7 +424,10 @@ class TestSubscriptionFeed:
         entry = IndexEntry(
             package_id="pkg@1.0:abc",
             manifest=SkillManifest(
-                name="pkg", version="1.0.0", description="x", author="a",
+                name="pkg",
+                version="1.0.0",
+                description="x",
+                author="a",
             ),
             publisher_id="trusted_dev",
         )
@@ -424,8 +448,11 @@ class TestSubscriptionFeed:
         entry = IndexEntry(
             package_id="x@1.0:abc",
             manifest=SkillManifest(
-                name="xxx", version="1.0.0", description="x",
-                author="a", category="test",
+                name="xxx",
+                version="1.0.0",
+                description="x",
+                author="a",
+                category="test",
             ),
             publisher_id="p",
         )
@@ -456,8 +483,10 @@ class TestSkillExchange:
 
     def test_publish(self, exchange: SkillExchange) -> None:
         manifest = SkillManifest(
-            name="my_skill", version="1.0.0",
-            description="Ein toller Skill", author="Alexander",
+            name="my_skill",
+            version="1.0.0",
+            description="Ein toller Skill",
+            author="Alexander",
             trigger_keywords=["toll"],
             category="general",
         )
@@ -468,8 +497,10 @@ class TestSkillExchange:
 
     def test_search_after_publish(self, exchange: SkillExchange) -> None:
         manifest = SkillManifest(
-            name="bu_helper", version="1.0.0",
-            description="BU-Hilfe", author="Alexander",
+            name="bu_helper",
+            version="1.0.0",
+            description="BU-Hilfe",
+            author="Alexander",
             trigger_keywords=["BU", "Berufsunfähigkeit"],
             category="insurance",
         )
@@ -481,8 +512,10 @@ class TestSkillExchange:
 
     def test_install_after_publish(self, exchange: SkillExchange) -> None:
         manifest = SkillManifest(
-            name="installable", version="1.0.0",
-            description="Installierbar", author="a",
+            name="installable",
+            version="1.0.0",
+            description="Installierbar",
+            author="a",
         )
         pkg = exchange.publish(manifest, "x = 42")
         assert pkg is not None
@@ -493,8 +526,10 @@ class TestSkillExchange:
 
     def test_install_quarantined_blocked(self, exchange: SkillExchange) -> None:
         manifest = SkillManifest(
-            name="quarantined_pkg", version="1.0.0",
-            description="Böse", author="a",
+            name="quarantined_pkg",
+            version="1.0.0",
+            description="Böse",
+            author="a",
         )
         pkg = exchange.publish(manifest, "x = 1")
         exchange.report_malware(pkg.package_id)
@@ -505,8 +540,10 @@ class TestSkillExchange:
 
     def test_feedback_updates_reputation(self, exchange: SkillExchange) -> None:
         manifest = SkillManifest(
-            name="rated_skill", version="1.0.0",
-            description="Bewertbar", author="a",
+            name="rated_skill",
+            version="1.0.0",
+            description="Bewertbar",
+            author="a",
         )
         pkg = exchange.publish(manifest, "x = 1")
 
@@ -520,8 +557,10 @@ class TestSkillExchange:
 
     def test_malware_report_quarantines(self, exchange: SkillExchange) -> None:
         manifest = SkillManifest(
-            name="evil_skill", version="1.0.0",
-            description="Böser Skill", author="Hacker",
+            name="evil_skill",
+            version="1.0.0",
+            description="Böser Skill",
+            author="Hacker",
         )
         pkg = exchange.publish(manifest, "x = 1")
         exchange.report_malware(pkg.package_id)
@@ -530,12 +569,18 @@ class TestSkillExchange:
 
     def test_search_filters_quarantined(self, exchange: SkillExchange) -> None:
         m1 = SkillManifest(
-            name="good_skill", version="1.0.0",
-            description="Gut", author="a", category="test",
+            name="good_skill",
+            version="1.0.0",
+            description="Gut",
+            author="a",
+            category="test",
         )
         m2 = SkillManifest(
-            name="bad_skill", version="1.0.0",
-            description="Schlecht", author="a", category="test",
+            name="bad_skill",
+            version="1.0.0",
+            description="Schlecht",
+            author="a",
+            category="test",
         )
         exchange.publish(m1, "x = 1")
         pkg2 = exchange.publish(m2, "y = 2")
@@ -552,8 +597,10 @@ class TestSkillExchange:
 
         # Ex1 publiziert
         m = SkillManifest(
-            name="shared_skill", version="1.0.0",
-            description="Geteilt", author="a",
+            name="shared_skill",
+            version="1.0.0",
+            description="Geteilt",
+            author="a",
         )
         ex1.publish(m, "x = 1")
 
@@ -567,8 +614,10 @@ class TestSkillExchange:
         exchange.subscriptions.subscribe("local", category="insurance")
 
         manifest = SkillManifest(
-            name="bu_auto", version="1.0.0",
-            description="Auto BU", author="a",
+            name="bu_auto",
+            version="1.0.0",
+            description="Auto BU",
+            author="a",
             category="insurance",
         )
         exchange.publish(manifest, "x = 1")
@@ -585,8 +634,10 @@ class TestSkillExchange:
 
     def test_publish_dangerous_rejected(self, exchange: SkillExchange) -> None:
         manifest = SkillManifest(
-            name="dangerous_pub", version="1.0.0",
-            description="Böse", author="a",
+            name="dangerous_pub",
+            version="1.0.0",
+            description="Böse",
+            author="a",
         )
         pkg = exchange.publish(manifest, "eval('evil')")
         assert pkg is None  # Wird vom CodeAnalyzer blockiert

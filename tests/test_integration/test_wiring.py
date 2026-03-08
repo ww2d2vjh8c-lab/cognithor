@@ -71,18 +71,23 @@ class TestExecutorRuntimeMonitorIntegration:
 
     @pytest.mark.asyncio
     async def test_executor_blocks_system_dir_access(
-        self, mock_config: Any, mock_mcp_client: Any,
-        runtime_monitor: RuntimeMonitor, audit_logger: AuditLogger,
+        self,
+        mock_config: Any,
+        mock_mcp_client: Any,
+        runtime_monitor: RuntimeMonitor,
+        audit_logger: AuditLogger,
     ) -> None:
         """Executor blockiert /etc-Zugriff via RuntimeMonitor."""
         executor = Executor(
-            mock_config, mock_mcp_client,
+            mock_config,
+            mock_mcp_client,
             runtime_monitor=runtime_monitor,
             audit_logger=audit_logger,
         )
 
         result = await executor._execute_single(
-            "file_write", {"path": "/etc/passwd", "content": "hacked"},
+            "file_write",
+            {"path": "/etc/passwd", "content": "hacked"},
         )
 
         # Blockiert
@@ -100,18 +105,23 @@ class TestExecutorRuntimeMonitorIntegration:
 
     @pytest.mark.asyncio
     async def test_executor_allows_safe_call(
-        self, mock_config: Any, mock_mcp_client: Any,
-        runtime_monitor: RuntimeMonitor, audit_logger: AuditLogger,
+        self,
+        mock_config: Any,
+        mock_mcp_client: Any,
+        runtime_monitor: RuntimeMonitor,
+        audit_logger: AuditLogger,
     ) -> None:
         """Executor erlaubt sichere Tool-Calls und loggt sie."""
         executor = Executor(
-            mock_config, mock_mcp_client,
+            mock_config,
+            mock_mcp_client,
             runtime_monitor=runtime_monitor,
             audit_logger=audit_logger,
         )
 
         result = await executor._execute_single(
-            "memory_search", {"query": "BU-Tarif"},
+            "memory_search",
+            {"query": "BU-Tarif"},
         )
 
         assert result.success
@@ -125,12 +135,16 @@ class TestExecutorRuntimeMonitorIntegration:
 
     @pytest.mark.asyncio
     async def test_executor_logs_agent_name(
-        self, mock_config: Any, mock_mcp_client: Any,
-        runtime_monitor: RuntimeMonitor, audit_logger: AuditLogger,
+        self,
+        mock_config: Any,
+        mock_mcp_client: Any,
+        runtime_monitor: RuntimeMonitor,
+        audit_logger: AuditLogger,
     ) -> None:
         """Executor propagiert Agent-Namen korrekt an AuditLogger."""
         executor = Executor(
-            mock_config, mock_mcp_client,
+            mock_config,
+            mock_mcp_client,
             runtime_monitor=runtime_monitor,
             audit_logger=audit_logger,
         )
@@ -146,12 +160,16 @@ class TestExecutorRuntimeMonitorIntegration:
 
     @pytest.mark.asyncio
     async def test_executor_credential_warning_still_allows(
-        self, mock_config: Any, mock_mcp_client: Any,
-        runtime_monitor: RuntimeMonitor, audit_logger: AuditLogger,
+        self,
+        mock_config: Any,
+        mock_mcp_client: Any,
+        runtime_monitor: RuntimeMonitor,
+        audit_logger: AuditLogger,
     ) -> None:
         """RuntimeMonitor WARNT bei Credentials, blockiert aber nicht."""
         executor = Executor(
-            mock_config, mock_mcp_client,
+            mock_config,
+            mock_mcp_client,
             runtime_monitor=runtime_monitor,
             audit_logger=audit_logger,
         )
@@ -176,11 +194,14 @@ class TestExecutorGatekeeperAudit:
 
     @pytest.mark.asyncio
     async def test_gatekeeper_block_is_audited(
-        self, mock_config: Any, mock_mcp_client: Any,
+        self,
+        mock_config: Any,
+        mock_mcp_client: Any,
         audit_logger: AuditLogger,
     ) -> None:
         executor = Executor(
-            mock_config, mock_mcp_client,
+            mock_config,
+            mock_mcp_client,
             audit_logger=audit_logger,
         )
 
@@ -221,13 +242,19 @@ class TestAgentRouterAuditIntegration:
         router.initialize()
 
         # Agenten hinzufügen
-        router.add_agent(AgentProfile(
-            name="coder", display_name="Coder",
-            can_delegate_to=["researcher"],
-        ))
-        router.add_agent(AgentProfile(
-            name="researcher", display_name="Researcher",
-        ))
+        router.add_agent(
+            AgentProfile(
+                name="coder",
+                display_name="Coder",
+                can_delegate_to=["researcher"],
+            )
+        )
+        router.add_agent(
+            AgentProfile(
+                name="researcher",
+                display_name="Researcher",
+            )
+        )
 
         request = router.create_delegation("coder", "researcher", task="Recherche XYZ")
         assert request is not None
@@ -323,11 +350,15 @@ class TestAuditSanitizingInChain:
 
     @pytest.mark.asyncio
     async def test_credentials_redacted_in_audit(
-        self, mock_config: Any, mock_mcp_client: Any,
-        runtime_monitor: RuntimeMonitor, audit_logger: AuditLogger,
+        self,
+        mock_config: Any,
+        mock_mcp_client: Any,
+        runtime_monitor: RuntimeMonitor,
+        audit_logger: AuditLogger,
     ) -> None:
         executor = Executor(
-            mock_config, mock_mcp_client,
+            mock_config,
+            mock_mcp_client,
             runtime_monitor=runtime_monitor,
             audit_logger=audit_logger,
         )
@@ -355,11 +386,15 @@ class TestEndToEndSecurityAudit:
 
     @pytest.mark.asyncio
     async def test_blocked_call_appears_in_summary(
-        self, mock_config: Any, mock_mcp_client: Any,
-        runtime_monitor: RuntimeMonitor, audit_logger: AuditLogger,
+        self,
+        mock_config: Any,
+        mock_mcp_client: Any,
+        runtime_monitor: RuntimeMonitor,
+        audit_logger: AuditLogger,
     ) -> None:
         executor = Executor(
-            mock_config, mock_mcp_client,
+            mock_config,
+            mock_mcp_client,
             runtime_monitor=runtime_monitor,
             audit_logger=audit_logger,
         )
@@ -382,11 +417,16 @@ class TestEndToEndSecurityAudit:
 
     @pytest.mark.asyncio
     async def test_export_includes_blocked_events(
-        self, mock_config: Any, mock_mcp_client: Any, tmp_path: Path,
-        runtime_monitor: RuntimeMonitor, audit_logger: AuditLogger,
+        self,
+        mock_config: Any,
+        mock_mcp_client: Any,
+        tmp_path: Path,
+        runtime_monitor: RuntimeMonitor,
+        audit_logger: AuditLogger,
     ) -> None:
         executor = Executor(
-            mock_config, mock_mcp_client,
+            mock_config,
+            mock_mcp_client,
             runtime_monitor=runtime_monitor,
             audit_logger=audit_logger,
         )

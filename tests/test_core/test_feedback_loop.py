@@ -43,7 +43,9 @@ class TestPlannerCapabilityProfile:
         model_router.select_model.return_value = "test-model"
         model_router.get_model_config.return_value = {"temperature": 0.7, "top_p": 0.9}
         return Planner(
-            config, ollama, model_router,
+            config,
+            ollama,
+            model_router,
             task_profiler=task_profiler,
         )
 
@@ -118,14 +120,18 @@ class TestPlannerCapabilityProfile:
 class TestReflectorRewardCalculator:
     """Tests fuer Reflector mit RewardCalculator."""
 
-    def _make_reflector(self, reward_calculator=None, causal_analyzer=None, episodic_store=None) -> Reflector:
+    def _make_reflector(
+        self, reward_calculator=None, causal_analyzer=None, episodic_store=None
+    ) -> Reflector:
         config = MagicMock()
         ollama = MagicMock()
         model_router = MagicMock()
         model_router.select_model.return_value = "test-model"
         model_router.get_model_config.return_value = {"temperature": 0.3, "top_p": 0.9}
         return Reflector(
-            config, ollama, model_router,
+            config,
+            ollama,
+            model_router,
             reward_calculator=reward_calculator,
             causal_analyzer=causal_analyzer,
             episodic_store=episodic_store,
@@ -138,7 +144,10 @@ class TestReflectorRewardCalculator:
         ]
         plan = ActionPlan(
             goal="Test goal",
-            steps=[PlannedAction(tool="read_file", params={}), PlannedAction(tool="write_file", params={})],
+            steps=[
+                PlannedAction(tool="read_file", params={}),
+                PlannedAction(tool="write_file", params={}),
+            ],
         )
         return AgentResult(
             response="Done",
@@ -162,9 +171,11 @@ class TestReflectorRewardCalculator:
         )
 
         # Mock the LLM call to return a valid reflection JSON
-        reflector._ollama.chat = AsyncMock(return_value={
-            "message": {"content": '{"success_score": 0.8, "evaluation": "Gut"}'},
-        })
+        reflector._ollama.chat = AsyncMock(
+            return_value={
+                "message": {"content": '{"success_score": 0.8, "evaluation": "Gut"}'},
+            }
+        )
 
         session = SessionContext(user_id="u1", channel="test")
         wm = WorkingMemory(session_id=session.session_id)
@@ -176,7 +187,9 @@ class TestReflectorRewardCalculator:
         # which differs from the raw success_score (0.8) due to composite calculation
         if causal.record_sequence.called:
             call_kwargs = causal.record_sequence.call_args
-            recorded_score = call_kwargs.kwargs.get("success_score") or call_kwargs[1].get("success_score", None)
+            recorded_score = call_kwargs.kwargs.get("success_score") or call_kwargs[1].get(
+                "success_score", None
+            )
             # Reward score should be different from simple 0.8
             # (composite includes error, efficiency, speed components)
             assert recorded_score is not None
@@ -213,9 +226,13 @@ class TestReflectorRewardCalculator:
             episodic_store=episodic,
         )
 
-        reflector._ollama.chat = AsyncMock(return_value={
-            "message": {"content": '{"success_score": 0.7, "evaluation": "OK", "session_summary": {"goal": "Test", "outcome": "Done", "tools_used": ["read_file"]}}'},
-        })
+        reflector._ollama.chat = AsyncMock(
+            return_value={
+                "message": {
+                    "content": '{"success_score": 0.7, "evaluation": "OK", "session_summary": {"goal": "Test", "outcome": "Done", "tools_used": ["read_file"]}}'
+                },
+            }
+        )
 
         session = SessionContext(user_id="u1", channel="test")
         wm = WorkingMemory(session_id=session.session_id)

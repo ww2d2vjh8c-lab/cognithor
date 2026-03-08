@@ -189,8 +189,11 @@ class IncidentTracker:
         return False
 
     def open_incidents(self) -> list[SecurityIncident]:
-        return [i for i in self._incidents.values()
-                if i.status not in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED)]
+        return [
+            i
+            for i in self._incidents.values()
+            if i.status not in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED)
+        ]
 
     def by_severity(self, severity: IncidentSeverity) -> list[SecurityIncident]:
         return [i for i in self._incidents.values() if i.severity == severity]
@@ -209,7 +212,11 @@ class IncidentTracker:
         incidents = list(self._incidents.values())
         return {
             "total": len(incidents),
-            "open": sum(1 for i in incidents if i.status not in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED)),
+            "open": sum(
+                1
+                for i in incidents
+                if i.status not in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED)
+            ),
             "resolved": sum(1 for i in incidents if i.status == IncidentStatus.RESOLVED),
             "by_severity": {
                 sev.value: sum(1 for i in incidents if i.severity == sev)
@@ -267,7 +274,8 @@ class SecurityMetrics:
         if total == 0:
             return 100.0
         resolved = sum(
-            1 for i in self._tracker.all_incidents()
+            1
+            for i in self._tracker.all_incidents()
             if i.status in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED)
         )
         return resolved / total * 100
@@ -280,7 +288,8 @@ class SecurityMetrics:
         try:
             times = [
                 calendar.timegm(time.strptime(i.detected_at, "%Y-%m-%dT%H:%M:%SZ"))
-                for i in incidents if i.detected_at
+                for i in incidents
+                if i.detected_at
             ]
             if len(times) < 2:
                 return float(len(times))
@@ -460,7 +469,11 @@ class PostureScorer:
     ) -> dict[str, Any]:
         # Normalisiere alle Faktoren auf 0-100
         f_resolution = min(100, resolution_rate)
-        f_mttr = 100.0 if mttr_seconds == 0 else max(0, 100 - (mttr_seconds / self._mttr_threshold * 100))
+        f_mttr = (
+            100.0
+            if mttr_seconds == 0
+            else max(0, 100 - (mttr_seconds / self._mttr_threshold * 100))
+        )
         f_team = (team_roles_filled / max(1, team_roles_total)) * 100
         f_pipeline = min(100, pipeline_pass_rate)
         f_compliance = min(100, compliance_score)
@@ -474,11 +487,15 @@ class PostureScorer:
         )
 
         level = (
-            "excellent" if total >= 90 else
-            "good" if total >= 70 else
-            "moderate" if total >= 50 else
-            "poor" if total >= 30 else
-            "critical"
+            "excellent"
+            if total >= 90
+            else "good"
+            if total >= 70
+            else "moderate"
+            if total >= 50
+            else "poor"
+            if total >= 30
+            else "critical"
         )
 
         return {

@@ -62,9 +62,12 @@ class GraphEngine:
         result = await engine.run(graph, state)
     """
 
-    def __init__(self, state_manager: StateManager | None = None,
-                 max_iterations: int = MAX_ITERATIONS,
-                 max_nodes: int = MAX_NODES_PER_EXECUTION) -> None:
+    def __init__(
+        self,
+        state_manager: StateManager | None = None,
+        max_iterations: int = MAX_ITERATIONS,
+        max_nodes: int = MAX_NODES_PER_EXECUTION,
+    ) -> None:
         self._state_mgr = state_manager or StateManager()
         self._max_iterations = max_iterations
         self._max_nodes = max_nodes
@@ -74,8 +77,9 @@ class GraphEngine:
 
     # ── Main Execution ───────────────────────────────────────────
 
-    async def run(self, graph: GraphDefinition, initial_state: GraphState,
-                  *, execution_id: str = "") -> ExecutionRecord:
+    async def run(
+        self, graph: GraphDefinition, initial_state: GraphState, *, execution_id: str = ""
+    ) -> ExecutionRecord:
         """Führt einen Graphen vollständig aus.
 
         Args:
@@ -114,7 +118,9 @@ class GraphEngine:
                 visit_count[current_node] = visit_count.get(current_node, 0) + 1
                 if visit_count[current_node] > self._max_iterations:
                     record.status = ExecutionStatus.FAILED
-                    record.error = f"Max iterations ({self._max_iterations}) exceeded at node '{current_node}'"
+                    record.error = (
+                        f"Max iterations ({self._max_iterations}) exceeded at node '{current_node}'"
+                    )
                     break
 
                 # Global node limit
@@ -133,15 +139,21 @@ class GraphEngine:
                 # Checkpoint before
                 if node.checkpoint_before:
                     self._state_mgr.create_checkpoint(
-                        record.execution_id, graph.name,
-                        current_node, state, record.node_results,
+                        record.execution_id,
+                        graph.name,
+                        current_node,
+                        state,
+                        record.node_results,
                     )
 
                 # HITL: Pausieren
                 if node.node_type == NodeType.HITL:
                     cp = self._state_mgr.create_checkpoint(
-                        record.execution_id, graph.name,
-                        current_node, state, record.node_results,
+                        record.execution_id,
+                        graph.name,
+                        current_node,
+                        state,
+                        record.node_results,
                         status=ExecutionStatus.PAUSED,
                     )
                     record.status = ExecutionStatus.PAUSED
@@ -204,14 +216,15 @@ class GraphEngine:
                 # Checkpoint after
                 if node.checkpoint_after:
                     self._state_mgr.create_checkpoint(
-                        record.execution_id, graph.name,
-                        current_node, state, record.node_results,
+                        record.execution_id,
+                        graph.name,
+                        current_node,
+                        state,
+                        record.node_results,
                     )
 
                 # Nächsten Node bestimmen
-                current_node = self._resolve_next_node(
-                    graph, current_node, result, state
-                )
+                current_node = self._resolve_next_node(graph, current_node, result, state)
 
             # Abschluss
             if record.status == ExecutionStatus.RUNNING:
@@ -233,13 +246,15 @@ class GraphEngine:
 
     # ── Streaming Execution ──────────────────────────────────────
 
-    async def run_stream(self, graph: GraphDefinition,
-                         initial_state: GraphState) -> AsyncIterator[NodeResult]:
+    async def run_stream(
+        self, graph: GraphDefinition, initial_state: GraphState
+    ) -> AsyncIterator[NodeResult]:
         """Führt Graph aus und yielded NodeResults in Echtzeit."""
         errors = graph.validate()
         if errors:
             yield NodeResult(
-                node_name="__validation__", status=NodeStatus.FAILED,
+                node_name="__validation__",
+                status=NodeStatus.FAILED,
                 error=f"Validation: {'; '.join(errors)}",
             )
             return
@@ -253,26 +268,34 @@ class GraphEngine:
         while current_node and current_node != END:
             visit_count[current_node] = visit_count.get(current_node, 0) + 1
             if visit_count[current_node] > self._max_iterations:
-                yield NodeResult(node_name=current_node, status=NodeStatus.FAILED,
-                                 error="Max iterations exceeded")
+                yield NodeResult(
+                    node_name=current_node,
+                    status=NodeStatus.FAILED,
+                    error="Max iterations exceeded",
+                )
                 return
 
             nodes_executed += 1
             if nodes_executed > self._max_nodes:
-                yield NodeResult(node_name=current_node, status=NodeStatus.FAILED,
-                                 error="Max nodes exceeded")
+                yield NodeResult(
+                    node_name=current_node, status=NodeStatus.FAILED, error="Max nodes exceeded"
+                )
                 return
 
             node = graph.get_node(current_node)
             if node is None:
-                yield NodeResult(node_name=current_node, status=NodeStatus.FAILED,
-                                 error="Node not found")
+                yield NodeResult(
+                    node_name=current_node, status=NodeStatus.FAILED, error="Node not found"
+                )
                 return
 
             if node.node_type == NodeType.HITL:
                 self._state_mgr.create_checkpoint(
-                    record.execution_id, graph.name,
-                    current_node, state, record.node_results,
+                    record.execution_id,
+                    graph.name,
+                    current_node,
+                    state,
+                    record.node_results,
                     status=ExecutionStatus.PAUSED,
                 )
                 if node.handler:
@@ -280,8 +303,11 @@ class GraphEngine:
                     if result.state_after:
                         state = result.state_after
                     yield result
-                yield NodeResult(node_name=current_node, status=NodeStatus.COMPLETED,
-                                 router_decision="__paused__")
+                yield NodeResult(
+                    node_name=current_node,
+                    status=NodeStatus.COMPLETED,
+                    router_decision="__paused__",
+                )
                 return
 
             result = await self._execute_node(node, state)
@@ -302,10 +328,13 @@ class GraphEngine:
 
     # ── Resume from Checkpoint ───────────────────────────────────
 
-    async def resume(self, graph: GraphDefinition,
-                     checkpoint_id: str = "",
-                     execution_id: str = "",
-                     resume_input: dict[str, Any] | None = None) -> ExecutionRecord:
+    async def resume(
+        self,
+        graph: GraphDefinition,
+        checkpoint_id: str = "",
+        execution_id: str = "",
+        resume_input: dict[str, Any] | None = None,
+    ) -> ExecutionRecord:
         """Setzt eine pausierte Execution fort.
 
         Args:
@@ -341,7 +370,8 @@ class GraphEngine:
         node = graph.get_node(current_node)
         if node and node.node_type == NodeType.HITL:
             next_node = self._resolve_next_node(
-                graph, current_node,
+                graph,
+                current_node,
                 NodeResult(node_name=current_node, status=NodeStatus.COMPLETED),
                 state,
             )
@@ -385,8 +415,11 @@ class GraphEngine:
 
                 if node.node_type == NodeType.HITL:
                     cp = self._state_mgr.create_checkpoint(
-                        record.execution_id, local_graph.name,
-                        current_node, state, record.node_results,
+                        record.execution_id,
+                        local_graph.name,
+                        current_node,
+                        state,
+                        record.node_results,
                         status=ExecutionStatus.PAUSED,
                     )
                     record.status = ExecutionStatus.PAUSED
@@ -428,8 +461,7 @@ class GraphEngine:
 
     # ── Parallel Execution ───────────────────────────────────────
 
-    async def _execute_parallel(self, nodes: list[Node],
-                                 state: GraphState) -> list[NodeResult]:
+    async def _execute_parallel(self, nodes: list[Node], state: GraphState) -> list[NodeResult]:
         """Führt mehrere Nodes parallel aus."""
         tasks = [self._execute_node(node, state.copy()) for node in nodes]
         return list(await asyncio.gather(*tasks))
@@ -445,14 +477,16 @@ class GraphEngine:
             try:
                 if node.node_type == NodeType.PASSTHROUGH:
                     return NodeResult(
-                        node_name=node.name, status=NodeStatus.COMPLETED,
+                        node_name=node.name,
+                        status=NodeStatus.COMPLETED,
                         state_after=state,
                         duration_ms=int((time.monotonic() - start) * 1000),
                     )
 
                 if node.handler is None:
                     return NodeResult(
-                        node_name=node.name, status=NodeStatus.COMPLETED,
+                        node_name=node.name,
+                        status=NodeStatus.COMPLETED,
                         state_after=state,
                         duration_ms=int((time.monotonic() - start) * 1000),
                     )
@@ -467,8 +501,10 @@ class GraphEngine:
                 if node.node_type == NodeType.ROUTER:
                     if isinstance(result_state, str):
                         return NodeResult(
-                            node_name=node.name, status=NodeStatus.COMPLETED,
-                            state_after=state, router_decision=result_state,
+                            node_name=node.name,
+                            status=NodeStatus.COMPLETED,
+                            state_after=state,
+                            router_decision=result_state,
                             duration_ms=int((time.monotonic() - start) * 1000),
                             retry_attempts=attempt,
                         )
@@ -476,8 +512,10 @@ class GraphEngine:
                         # Router kann auch State modifizieren und Decision im State hinterlegen
                         decision = result_state.get("__router_decision__", "")
                         return NodeResult(
-                            node_name=node.name, status=NodeStatus.COMPLETED,
-                            state_after=result_state, router_decision=decision,
+                            node_name=node.name,
+                            status=NodeStatus.COMPLETED,
+                            state_after=result_state,
+                            router_decision=decision,
                             duration_ms=int((time.monotonic() - start) * 1000),
                             retry_attempts=attempt,
                         )
@@ -485,7 +523,8 @@ class GraphEngine:
                 # Normal: Ergebnis ist GraphState
                 if isinstance(result_state, GraphState):
                     return NodeResult(
-                        node_name=node.name, status=NodeStatus.COMPLETED,
+                        node_name=node.name,
+                        status=NodeStatus.COMPLETED,
                         state_after=result_state,
                         duration_ms=int((time.monotonic() - start) * 1000),
                         retry_attempts=attempt,
@@ -494,14 +533,16 @@ class GraphEngine:
                     new_state = state.copy()
                     new_state.update(result_state)
                     return NodeResult(
-                        node_name=node.name, status=NodeStatus.COMPLETED,
+                        node_name=node.name,
+                        status=NodeStatus.COMPLETED,
                         state_after=new_state,
                         duration_ms=int((time.monotonic() - start) * 1000),
                         retry_attempts=attempt,
                     )
                 else:
                     return NodeResult(
-                        node_name=node.name, status=NodeStatus.COMPLETED,
+                        node_name=node.name,
+                        status=NodeStatus.COMPLETED,
                         state_after=state,
                         duration_ms=int((time.monotonic() - start) * 1000),
                         retry_attempts=attempt,
@@ -517,7 +558,8 @@ class GraphEngine:
                 await asyncio.sleep(node.retry_delay_seconds)
 
         return NodeResult(
-            node_name=node.name, status=NodeStatus.FAILED,
+            node_name=node.name,
+            status=NodeStatus.FAILED,
             error=last_error,
             duration_ms=int((time.monotonic() - start) * 1000),
             retry_attempts=node.retry_count,
@@ -525,8 +567,9 @@ class GraphEngine:
 
     # ── Edge Resolution ──────────────────────────────────────────
 
-    def _resolve_next_node(self, graph: GraphDefinition, current: str,
-                           result: NodeResult, state: GraphState) -> str:
+    def _resolve_next_node(
+        self, graph: GraphDefinition, current: str, result: NodeResult, state: GraphState
+    ) -> str:
         """Bestimmt den nächsten Node basierend auf Edges."""
         outgoing = graph.get_outgoing_edges(current)
         if not outgoing:

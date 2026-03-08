@@ -25,6 +25,7 @@ from jarvis.config_manager import ConfigManager
 # ConfigManager: Lesen
 # ===========================================================================
 
+
 class TestConfigManagerRead:
     def test_read_returns_dict(self, tmp_path: Path) -> None:
         config = JarvisConfig(jarvis_home=tmp_path / ".jarvis")
@@ -85,6 +86,7 @@ class TestConfigManagerRead:
 # ===========================================================================
 # ConfigManager: Schreiben
 # ===========================================================================
+
 
 class TestConfigManagerUpdate:
     def test_update_section_planner(self, tmp_path: Path) -> None:
@@ -168,6 +170,7 @@ class TestConfigManagerUpdate:
 # ConfigManager: Persistenz
 # ===========================================================================
 
+
 class TestConfigManagerPersistence:
     def test_save_creates_file(self, tmp_path: Path) -> None:
         config = JarvisConfig(jarvis_home=tmp_path / ".jarvis")
@@ -224,6 +227,7 @@ class TestConfigManagerPersistence:
 # ConfigManager: Metadaten
 # ===========================================================================
 
+
 class TestConfigManagerMeta:
     def test_editable_sections(self) -> None:
         sections = ConfigManager.editable_sections()
@@ -247,6 +251,7 @@ class TestConfigManagerMeta:
 # Config API Routes (Unit-Tests ohne HTTP)
 # ===========================================================================
 
+
 class TestConfigRoutes:
     """Testet die Route-Funktionen direkt (ohne FastAPI-Server)."""
 
@@ -265,33 +270,39 @@ class TestConfigRoutes:
                 def deco(func: Any) -> Any:
                     handlers[f"GET {path}"] = func
                     return func
+
                 return deco
 
             def patch(self, path: str, **kwargs: Any) -> Any:
                 def deco(func: Any) -> Any:
                     handlers[f"PATCH {path}"] = func
                     return func
+
                 return deco
 
             def post(self, path: str, **kwargs: Any) -> Any:
                 def deco(func: Any) -> Any:
                     handlers[f"POST {path}"] = func
                     return func
+
                 return deco
 
             def delete(self, path: str, **kwargs: Any) -> Any:
                 def deco(func: Any) -> Any:
                     handlers[f"DELETE {path}"] = func
                     return func
+
                 return deco
 
             def put(self, path: str, **kwargs: Any) -> Any:
                 def deco(func: Any) -> Any:
                     handlers[f"PUT {path}"] = func
                     return func
+
                 return deco
 
         from jarvis.channels.config_routes import create_config_routes
+
         create_config_routes(MockApp(), mgr)
         return handlers
 
@@ -316,30 +327,39 @@ class TestConfigRoutes:
 
     @pytest.mark.asyncio()
     async def test_update_config_section(
-        self, routes: dict[str, Any], mgr: ConfigManager, tmp_path: Path,
+        self,
+        routes: dict[str, Any],
+        mgr: ConfigManager,
+        tmp_path: Path,
     ) -> None:
         # Save-Pfad setzen damit save() nicht fehlschlägt
         mgr._config_path = tmp_path / ".jarvis" / "config.yaml"
         mgr._config_path.parent.mkdir(parents=True, exist_ok=True)
 
         result = await routes["PATCH /api/v1/config/{section}"](
-            section="planner", values={"temperature": 0.3},
+            section="planner",
+            values={"temperature": 0.3},
         )
         assert result["status"] == "ok"
         assert mgr.config.planner.temperature == 0.3
 
     @pytest.mark.asyncio()
     async def test_update_config_invalid_section(
-        self, routes: dict[str, Any],
+        self,
+        routes: dict[str, Any],
     ) -> None:
         result = await routes["PATCH /api/v1/config/{section}"](
-            section="version", values={"value": "2.0"},
+            section="version",
+            values={"value": "2.0"},
         )
         assert result["status"] == 400
 
     @pytest.mark.asyncio()
     async def test_reload_config(
-        self, routes: dict[str, Any], mgr: ConfigManager, tmp_path: Path,
+        self,
+        routes: dict[str, Any],
+        mgr: ConfigManager,
+        tmp_path: Path,
     ) -> None:
         config_path = tmp_path / ".jarvis" / "config.yaml"
         config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -368,7 +388,10 @@ class TestConfigRoutes:
 
     @pytest.mark.asyncio()
     async def test_apply_preset(
-        self, routes: dict[str, Any], mgr: ConfigManager, tmp_path: Path,
+        self,
+        routes: dict[str, Any],
+        mgr: ConfigManager,
+        tmp_path: Path,
     ) -> None:
         mgr._config_path = tmp_path / ".jarvis" / "config.yaml"
         mgr._config_path.parent.mkdir(parents=True, exist_ok=True)

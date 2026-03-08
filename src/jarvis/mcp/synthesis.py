@@ -64,7 +64,9 @@ class KnowledgeSynthesizer:
         # Limits aus Config lesen (mit sicheren Defaults)
         _synth = getattr(config, "synthesis", None)
         self._max_source_chars: int = getattr(_synth, "max_source_chars", _DEFAULT_MAX_SOURCE_CHARS)
-        self._max_context_chars: int = getattr(_synth, "max_context_chars", _DEFAULT_MAX_CONTEXT_CHARS)
+        self._max_context_chars: int = getattr(
+            _synth, "max_context_chars", _DEFAULT_MAX_CONTEXT_CHARS
+        )
 
     # ── Dependency Injection ─────────────────────────────────────────
 
@@ -149,7 +151,9 @@ class KnowledgeSynthesizer:
                     if entity_result and "Keine Entität" not in entity_result:
                         entity_parts.append(entity_result)
                 if entity_parts:
-                    sources["entities"] = _truncate("\n\n".join(entity_parts), self._max_source_chars)
+                    sources["entities"] = _truncate(
+                        "\n\n".join(entity_parts), self._max_source_chars
+                    )
                     log.info("synthesis_entities_found", topic=topic[:50], count=len(entity_parts))
             except Exception as exc:
                 log.debug("synthesis_entity_error", error=str(exc))
@@ -181,7 +185,9 @@ class KnowledgeSynthesizer:
         if include_web and self._web_tools:
             try:
                 web_result = await self._web_tools.search_and_read(
-                    topic, num_results=web_results, cross_check=True,
+                    topic,
+                    num_results=web_results,
+                    cross_check=True,
                 )
                 if web_result and "Keine" not in web_result[:30]:
                     sources["web"] = _truncate(web_result, self._max_source_chars * 2)
@@ -211,7 +217,7 @@ class KnowledgeSynthesizer:
 
         # Gesamtgröße begrenzen
         if len(combined) > self._max_context_chars:
-            combined = combined[:self._max_context_chars] + "\n\n[... Kontext gekürzt]"
+            combined = combined[: self._max_context_chars] + "\n\n[... Kontext gekürzt]"
 
         return combined
 
@@ -260,15 +266,12 @@ class KnowledgeSynthesizer:
 
         if not sources:
             return (
-                f"Keine Informationen zu '{topic}' gefunden — "
-                "weder in Memory, Vault noch im Web."
+                f"Keine Informationen zu '{topic}' gefunden — weder in Memory, Vault noch im Web."
             )
 
         # 2. Kontext formatieren
         context = self._format_source_context(sources)
-        source_summary = ", ".join(
-            f"{k} ({len(v)} Zeichen)" for k, v in sources.items()
-        )
+        source_summary = ", ".join(f"{k} ({len(v)} Zeichen)" for k, v in sources.items())
 
         # 3. Synthese-Prompt bauen
         prompt = _build_synthesis_prompt(topic, context, depth, language, list(sources.keys()))
@@ -283,10 +286,7 @@ class KnowledgeSynthesizer:
         # 5. Metadaten anhängen
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
         footer = (
-            f"\n\n---\n"
-            f"*Synthese erstellt: {now}*\n"
-            f"*Quellen: {source_summary}*\n"
-            f"*Tiefe: {depth}*"
+            f"\n\n---\n*Synthese erstellt: {now}*\n*Quellen: {source_summary}*\n*Tiefe: {depth}*"
         )
         result = synthesis + footer
 
@@ -335,7 +335,9 @@ class KnowledgeSynthesizer:
 
         # Gespeichertes Wissen sammeln (ohne Web)
         stored_sources = await self._gather_sources(
-            topic, include_web=False, include_episodes=True,
+            topic,
+            include_web=False,
+            include_episodes=True,
         )
 
         if not stored_sources:
@@ -343,8 +345,12 @@ class KnowledgeSynthesizer:
 
         # Aktuelles Web-Wissen sammeln
         web_sources = await self._gather_sources(
-            topic, include_memory=False, include_vault=False,
-            include_episodes=False, include_web=True, web_results=4,
+            topic,
+            include_memory=False,
+            include_vault=False,
+            include_episodes=False,
+            include_web=True,
+            web_results=4,
         )
 
         if not web_sources:
@@ -390,7 +396,9 @@ class KnowledgeSynthesizer:
             return "Fehler: Kein Thema angegeben."
 
         sources = await self._gather_sources(
-            topic, include_web=True, web_results=4,
+            topic,
+            include_web=True,
+            web_results=4,
         )
 
         if not sources:
@@ -435,10 +443,14 @@ class KnowledgeSynthesizer:
 
         # Nur gespeichertes Wissen — kein Web, um Lücken zu finden
         sources = await self._gather_sources(
-            topic, include_web=False, include_episodes=True,
+            topic,
+            include_web=False,
+            include_episodes=True,
         )
 
-        context = self._format_source_context(sources) if sources else "KEINE INFORMATIONEN VORHANDEN."
+        context = (
+            self._format_source_context(sources) if sources else "KEINE INFORMATIONEN VORHANDEN."
+        )
 
         prompt = _build_gaps_prompt(topic, context, language)
 
@@ -673,7 +685,7 @@ def _truncate(text: str, max_chars: int) -> str:
     truncated = text[:max_chars]
     last_period = truncated.rfind(".")
     if last_period > max_chars * 0.5:
-        truncated = truncated[:last_period + 1]
+        truncated = truncated[: last_period + 1]
     return truncated + f"\n[... gekürzt: {len(truncated)}/{original_len} Zeichen]"
 
 
@@ -682,21 +694,103 @@ def _extract_keywords(text: str) -> list[str]:
 
     Filtert Stoppwörter und gibt die relevantesten Begriffe zurück.
     """
-    stop_words = frozenset({
-        "der", "die", "das", "ein", "eine", "und", "oder", "aber", "in",
-        "von", "zu", "mit", "auf", "für", "an", "bei", "nach", "über",
-        "aus", "wie", "was", "wer", "wo", "wann", "warum", "ist", "sind",
-        "hat", "haben", "wird", "werden", "kann", "können", "nicht", "auch",
-        "noch", "schon", "nur", "als", "wenn", "so", "doch", "ich", "du",
-        "er", "sie", "es", "wir", "ihr", "mein", "dein", "sein", "dem",
-        "den", "des", "einem", "einen", "einer", "the", "a", "an", "is",
-        "are", "was", "were", "be", "been", "to", "of", "in", "for", "on",
-        "with", "at", "by", "from", "about", "how", "what", "which", "who",
-        "when", "where", "why", "and", "or", "but", "not", "this", "that",
-    })
+    stop_words = frozenset(
+        {
+            "der",
+            "die",
+            "das",
+            "ein",
+            "eine",
+            "und",
+            "oder",
+            "aber",
+            "in",
+            "von",
+            "zu",
+            "mit",
+            "auf",
+            "für",
+            "an",
+            "bei",
+            "nach",
+            "über",
+            "aus",
+            "wie",
+            "was",
+            "wer",
+            "wo",
+            "wann",
+            "warum",
+            "ist",
+            "sind",
+            "hat",
+            "haben",
+            "wird",
+            "werden",
+            "kann",
+            "können",
+            "nicht",
+            "auch",
+            "noch",
+            "schon",
+            "nur",
+            "als",
+            "wenn",
+            "so",
+            "doch",
+            "ich",
+            "du",
+            "er",
+            "sie",
+            "es",
+            "wir",
+            "ihr",
+            "mein",
+            "dein",
+            "sein",
+            "dem",
+            "den",
+            "des",
+            "einem",
+            "einen",
+            "einer",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "about",
+            "how",
+            "what",
+            "which",
+            "who",
+            "when",
+            "where",
+            "why",
+            "and",
+            "or",
+            "but",
+            "not",
+            "this",
+            "that",
+        }
+    )
 
     # Wörter extrahieren, Satzzeichen entfernen
-    words = re.findall(r'\b[a-zA-ZäöüÄÖÜß]{3,}\b', text)
+    words = re.findall(r"\b[a-zA-ZäöüÄÖÜß]{3,}\b", text)
     # Stoppwörter filtern, Duplikate entfernen, Reihenfolge beibehalten
     seen: set[str] = set()
     keywords: list[str] = []
@@ -865,6 +959,11 @@ def register_synthesis_tools(
 
     log.info(
         "synthesis_tools_registered",
-        tools=["knowledge_synthesize", "knowledge_contradictions", "knowledge_timeline", "knowledge_gaps"],
+        tools=[
+            "knowledge_synthesize",
+            "knowledge_contradictions",
+            "knowledge_timeline",
+            "knowledge_gaps",
+        ],
     )
     return synth

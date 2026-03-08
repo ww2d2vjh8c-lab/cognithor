@@ -91,11 +91,11 @@ class WizardStepType(Enum):
     TEXT = "text"
     NUMBER = "number"
     BOOLEAN = "boolean"
-    SELECT = "select"          # Dropdown
+    SELECT = "select"  # Dropdown
     MULTI_SELECT = "multi_select"
-    CRON = "cron"              # Cron-Expression
-    KEY_VALUE = "key_value"    # Schlüssel-Wert-Paare
-    CONFIRM = "confirm"        # Zusammenfassung + Bestätigung
+    CRON = "cron"  # Cron-Expression
+    KEY_VALUE = "key_value"  # Schlüssel-Wert-Paare
+    CONFIRM = "confirm"  # Zusammenfassung + Bestätigung
 
 
 @dataclass
@@ -106,13 +106,13 @@ class WizardStep:
     title: str
     description: str
     field_type: WizardStepType
-    field_name: str            # Konfig-Schlüssel
+    field_name: str  # Konfig-Schlüssel
     required: bool = True
     default: Any = None
     options: list[dict[str, str]] = field(default_factory=list)
     validation_hint: str = ""  # z.B. "1-1440"
     tooltip: str = ""
-    depends_on: str = ""       # Step-ID von der dieser abhängt
+    depends_on: str = ""  # Step-ID von der dieser abhängt
 
     def validate(self, value: Any) -> tuple[bool, str]:
         """Validiert die Eingabe für diesen Schritt."""
@@ -172,7 +172,7 @@ class WizardResult:
 
     wizard_type: str
     values: dict[str, Any]
-    config_patch: dict[str, Any]   # Generierte Konfiguration
+    config_patch: dict[str, Any]  # Generierte Konfiguration
     warnings: list[str] = field(default_factory=list)
     valid: bool = True
 
@@ -524,13 +524,17 @@ class BindingWizard(BaseWizard):
         valid, errors = self.validate_all(values)
 
         config_patch = {
-            "bindings": [{
-                "name": values.get("name", ""),
-                "target_agent": values.get("target_agent", "jarvis"),
-                "channels": values.get("channels", []),
-                "command_prefixes": [values["command_prefix"]] if values.get("command_prefix") else [],
-                "regex_pattern": values.get("regex_pattern", ""),
-            }],
+            "bindings": [
+                {
+                    "name": values.get("name", ""),
+                    "target_agent": values.get("target_agent", "jarvis"),
+                    "channels": values.get("channels", []),
+                    "command_prefixes": [values["command_prefix"]]
+                    if values.get("command_prefix")
+                    else [],
+                    "regex_pattern": values.get("regex_pattern", ""),
+                }
+            ],
         }
 
         return WizardResult(
@@ -676,19 +680,23 @@ class AgentWizard(BaseWizard):
             "standard": {"network": "allow", "max_memory_mb": 512, "max_processes": 64},
             "full": {"network": "allow", "max_memory_mb": 8192, "max_processes": 256},
         }
-        profile = sandbox_profiles.get(values.get("sandbox_profile", "standard"), sandbox_profiles["standard"])
+        profile = sandbox_profiles.get(
+            values.get("sandbox_profile", "standard"), sandbox_profiles["standard"]
+        )
 
         config_patch = {
-            "agents": [{
-                "name": values.get("name", ""),
-                "system_prompt": values.get("system_prompt", ""),
-                "preferred_model": values.get("preferred_model", ""),
-                "allowed_tools": values.get("allowed_tools"),
-                "sandbox_network": profile["network"],
-                "sandbox_max_memory_mb": profile["max_memory_mb"],
-                "sandbox_max_processes": profile["max_processes"],
-                "can_delegate_to": values.get("can_delegate_to", []),
-            }],
+            "agents": [
+                {
+                    "name": values.get("name", ""),
+                    "system_prompt": values.get("system_prompt", ""),
+                    "preferred_model": values.get("preferred_model", ""),
+                    "allowed_tools": values.get("allowed_tools"),
+                    "sandbox_network": profile["network"],
+                    "sandbox_max_memory_mb": profile["max_memory_mb"],
+                    "sandbox_max_processes": profile["max_processes"],
+                    "can_delegate_to": values.get("can_delegate_to", []),
+                }
+            ],
         }
 
         return WizardResult(
@@ -708,19 +716,19 @@ class AgentWizard(BaseWizard):
 class UserRole(Enum):
     """Benutzerrollen für das Admin-Dashboard."""
 
-    OWNER = "owner"         # Voller Zugriff, kann alles
-    ADMIN = "admin"         # Kann Konfiguration ändern
-    OPERATOR = "operator"   # Kann Monitoring sehen, Agents steuern
-    USER = "user"           # Kann eigene Agents und Tasks sehen
-    VIEWER = "viewer"       # Nur Lesezugriff
+    OWNER = "owner"  # Voller Zugriff, kann alles
+    ADMIN = "admin"  # Kann Konfiguration ändern
+    OPERATOR = "operator"  # Kann Monitoring sehen, Agents steuern
+    USER = "user"  # Kann eigene Agents und Tasks sehen
+    VIEWER = "viewer"  # Nur Lesezugriff
 
 
 @dataclass
 class Permission:
     """Eine einzelne Berechtigung."""
 
-    resource: str    # z.B. "config", "agents", "skills", "monitoring"
-    action: str      # z.B. "read", "write", "delete", "execute"
+    resource: str  # z.B. "config", "agents", "skills", "monitoring"
+    action: str  # z.B. "read", "write", "delete", "execute"
 
     @property
     def key(self) -> str:
@@ -730,31 +738,48 @@ class Permission:
 # Vordefinierte Berechtigungen pro Rolle
 ROLE_PERMISSIONS: dict[UserRole, list[Permission]] = {
     UserRole.OWNER: [
-        Permission("config", "read"), Permission("config", "write"), Permission("config", "delete"),
-        Permission("agents", "read"), Permission("agents", "write"), Permission("agents", "delete"),
-        Permission("skills", "read"), Permission("skills", "write"), Permission("skills", "delete"),
-        Permission("monitoring", "read"), Permission("monitoring", "write"),
-        Permission("users", "read"), Permission("users", "write"), Permission("users", "delete"),
-        Permission("credentials", "read"), Permission("credentials", "write"),
+        Permission("config", "read"),
+        Permission("config", "write"),
+        Permission("config", "delete"),
+        Permission("agents", "read"),
+        Permission("agents", "write"),
+        Permission("agents", "delete"),
+        Permission("skills", "read"),
+        Permission("skills", "write"),
+        Permission("skills", "delete"),
+        Permission("monitoring", "read"),
+        Permission("monitoring", "write"),
+        Permission("users", "read"),
+        Permission("users", "write"),
+        Permission("users", "delete"),
+        Permission("credentials", "read"),
+        Permission("credentials", "write"),
         Permission("audit", "read"),
     ],
     UserRole.ADMIN: [
-        Permission("config", "read"), Permission("config", "write"),
-        Permission("agents", "read"), Permission("agents", "write"),
-        Permission("skills", "read"), Permission("skills", "write"),
-        Permission("monitoring", "read"), Permission("monitoring", "write"),
-        Permission("credentials", "read"), Permission("credentials", "write"),
+        Permission("config", "read"),
+        Permission("config", "write"),
+        Permission("agents", "read"),
+        Permission("agents", "write"),
+        Permission("skills", "read"),
+        Permission("skills", "write"),
+        Permission("monitoring", "read"),
+        Permission("monitoring", "write"),
+        Permission("credentials", "read"),
+        Permission("credentials", "write"),
         Permission("audit", "read"),
     ],
     UserRole.OPERATOR: [
         Permission("config", "read"),
-        Permission("agents", "read"), Permission("agents", "execute"),
+        Permission("agents", "read"),
+        Permission("agents", "execute"),
         Permission("skills", "read"),
         Permission("monitoring", "read"),
         Permission("audit", "read"),
     ],
     UserRole.USER: [
-        Permission("agents", "read"), Permission("agents", "execute"),
+        Permission("agents", "read"),
+        Permission("agents", "execute"),
         Permission("skills", "read"),
         Permission("monitoring", "read"),
     ],

@@ -3,6 +3,7 @@
 Testet: __init__ mit Config, Webhook-Verifizierung, HMAC-Signatur-Validierung,
 Nachrichten-Parsing, Hilfsmethoden.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -92,6 +93,7 @@ class TestWebhookVerification:
 
         with patch.dict("sys.modules", {"aiohttp": MagicMock(), "aiohttp.web": MagicMock()}):
             from aiohttp import web
+
             with patch.object(web, "Response") as MockResponse:
                 MockResponse.return_value = MagicMock()
                 result = await wa._handle_verification(request)
@@ -112,6 +114,7 @@ class TestWebhookVerification:
 
         with patch.dict("sys.modules", {"aiohttp": MagicMock(), "aiohttp.web": MagicMock()}):
             from aiohttp import web
+
             with patch.object(web, "Response") as MockResponse:
                 MockResponse.return_value = MagicMock()
                 result = await wa._handle_verification(request)
@@ -128,9 +131,7 @@ class TestHMACValidation:
     def test_valid_signature(self, wa: WhatsAppChannel) -> None:
         """Korrekte Signatur mit app_secret wird akzeptiert."""
         payload = b'{"test": "data"}'
-        expected = hmac_mod.new(
-            b"test-app-secret", payload, hashlib.sha256
-        ).hexdigest()
+        expected = hmac_mod.new(b"test-app-secret", payload, hashlib.sha256).hexdigest()
         sig_header = f"sha256={expected}"
 
         assert wa._verify_signature(payload, sig_header) is True
@@ -214,5 +215,6 @@ class TestWhatsAppLifecycle:
         """Senden ohne _running ist ein No-Op."""
         wa._running = False
         from jarvis.models import OutgoingMessage
+
         msg = OutgoingMessage(channel="whatsapp", text="test", session_id="s1")
         await wa.send(msg)  # Should not raise

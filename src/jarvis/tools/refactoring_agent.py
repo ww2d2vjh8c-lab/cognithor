@@ -99,28 +99,32 @@ class RefactoringAgent:
         issues: list[dict[str, Any]] = []
 
         for smell in report.code_smells:
-            issues.append({
-                "type": "code_smell",
-                "subtype": smell.smell_type,
-                "severity": smell.severity,
-                "file": smell.file_path,
-                "line": smell.line,
-                "message": smell.message,
-                "suggestion": smell.suggestion,
-                "sort_key": severity_order.get(smell.severity, 9),
-            })
+            issues.append(
+                {
+                    "type": "code_smell",
+                    "subtype": smell.smell_type,
+                    "severity": smell.severity,
+                    "file": smell.file_path,
+                    "line": smell.line,
+                    "message": smell.message,
+                    "suggestion": smell.suggestion,
+                    "sort_key": severity_order.get(smell.severity, 9),
+                }
+            )
 
         for finding in report.architecture_findings:
-            issues.append({
-                "type": "architecture",
-                "subtype": finding.finding_type,
-                "severity": finding.severity,
-                "file": "",
-                "line": 0,
-                "message": finding.message,
-                "suggestion": "",
-                "sort_key": severity_order.get(finding.severity, 9),
-            })
+            issues.append(
+                {
+                    "type": "architecture",
+                    "subtype": finding.finding_type,
+                    "severity": finding.severity,
+                    "file": "",
+                    "line": 0,
+                    "message": finding.message,
+                    "suggestion": "",
+                    "sort_key": severity_order.get(finding.severity, 9),
+                }
+            )
 
         issues.sort(key=lambda x: x["sort_key"])
         return issues[:n]
@@ -143,5 +147,5 @@ if __name__ == "__main__":
     print(f"\nTop Issues:")
     for issue in agent.get_priority_issues(report):
         print(f"  [{issue['severity']}] {issue['subtype']}: {issue['message']}")
-        if issue['suggestion']:
+        if issue["suggestion"]:
             print(f"    → {issue['suggestion']}")

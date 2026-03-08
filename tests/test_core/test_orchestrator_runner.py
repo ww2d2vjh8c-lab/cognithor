@@ -44,6 +44,7 @@ class TestRunnerMessage:
             nonlocal captured_msg
             captured_msg = msg
             from jarvis.models import OutgoingMessage
+
             return OutgoingMessage(channel="sub_agent", user_id="test", text="done")
 
         # Build a runner like the gateway does
@@ -80,6 +81,7 @@ class TestRunnerMessage:
     @pytest.mark.asyncio
     async def test_runner_timeout_returns_error(self) -> None:
         """Timeout → AgentResult(success=False)."""
+
         async def slow_handle(msg):
             await asyncio.sleep(10)
 

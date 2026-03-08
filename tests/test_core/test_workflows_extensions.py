@@ -1,11 +1,11 @@
 """Tests: Workflows, Ecosystem Policy (Punkte 6, 8) + ML-Extensions & i18n (Punkt 4).
 
-  - WorkflowTemplate: Built-in Templates
-  - WorkflowEngine: Start, Advance, Pause, Cancel
-  - TemplateLibrary: Suche, Kategorien
-  - EcosystemPolicy: Badge-Vergabe, Mindestanforderungen
-  - ModelExtensionRegistry: Modell-Registrierung, Auswahl
-  - I18nManager: Übersetzungen, Fallback
+- WorkflowTemplate: Built-in Templates
+- WorkflowEngine: Start, Advance, Pause, Cancel
+- TemplateLibrary: Suche, Kategorien
+- EcosystemPolicy: Badge-Vergabe, Mindestanforderungen
+- ModelExtensionRegistry: Modell-Registrierung, Auswahl
+- I18nManager: Übersetzungen, Fallback
 """
 
 from __future__ import annotations
@@ -184,10 +184,15 @@ class TestEcosystemPolicy:
         policy = EcosystemPolicy()
         badge = policy.evaluate_skill(
             "skill-a",
-            has_signature=True, has_sandbox=True, has_license=True,
-            has_network_control=True, passed_static_analysis=True,
-            passed_code_review=True, passed_pentest=True,
-            has_audit_trail=True, has_input_validation=True,
+            has_signature=True,
+            has_sandbox=True,
+            has_license=True,
+            has_network_control=True,
+            passed_static_analysis=True,
+            passed_code_review=True,
+            passed_pentest=True,
+            has_audit_trail=True,
+            has_input_validation=True,
             is_dsgvo_compliant=True,
         )
         assert badge.tier == SecurityTier.TRUSTED
@@ -202,15 +207,18 @@ class TestEcosystemPolicy:
         policy = EcosystemPolicy()
         badge = policy.evaluate_skill(
             "skill-c",
-            has_signature=True, has_network_control=True,
-            has_sandbox=True, has_license=True,
+            has_signature=True,
+            has_network_control=True,
+            has_sandbox=True,
+            has_license=True,
         )
         assert badge.tier == SecurityTier.COMMUNITY
 
     def test_meets_minimum_default(self) -> None:
         policy = EcosystemPolicy()
-        policy.evaluate_skill("good", has_signature=True, has_network_control=True,
-                              has_sandbox=True, has_license=True)
+        policy.evaluate_skill(
+            "good", has_signature=True, has_network_control=True, has_sandbox=True, has_license=True
+        )
         policy.evaluate_skill("bad")
         assert policy.meets_minimum("good") is True
         assert policy.meets_minimum("bad") is False
@@ -249,29 +257,35 @@ class TestEcosystemPolicy:
 class TestModelExtensionRegistry:
     def _make_registry(self) -> ModelExtensionRegistry:
         reg = ModelExtensionRegistry()
-        reg.register(ModelDefinition(
-            model_id="llama3-8b",
-            display_name="Llama 3 8B",
-            provider=ModelProvider.LOCAL,
-            capabilities={ModelCapability.CHAT, ModelCapability.COMPLETION},
-            languages=["en", "de"],
-            is_default=True,
-        ))
-        reg.register(ModelDefinition(
-            model_id="bge-m3",
-            display_name="BGE-M3 Embeddings",
-            provider=ModelProvider.LOCAL,
-            capabilities={ModelCapability.EMBEDDING},
-            languages=["en", "de", "fr"],
-        ))
-        reg.register(ModelDefinition(
-            model_id="claude-sonnet",
-            display_name="Claude Sonnet",
-            provider=ModelProvider.ANTHROPIC,
-            capabilities={ModelCapability.CHAT, ModelCapability.CODE_GENERATION},
-            languages=["en", "de", "fr", "es"],
-            cost_per_1k_tokens=0.003,
-        ))
+        reg.register(
+            ModelDefinition(
+                model_id="llama3-8b",
+                display_name="Llama 3 8B",
+                provider=ModelProvider.LOCAL,
+                capabilities={ModelCapability.CHAT, ModelCapability.COMPLETION},
+                languages=["en", "de"],
+                is_default=True,
+            )
+        )
+        reg.register(
+            ModelDefinition(
+                model_id="bge-m3",
+                display_name="BGE-M3 Embeddings",
+                provider=ModelProvider.LOCAL,
+                capabilities={ModelCapability.EMBEDDING},
+                languages=["en", "de", "fr"],
+            )
+        )
+        reg.register(
+            ModelDefinition(
+                model_id="claude-sonnet",
+                display_name="Claude Sonnet",
+                provider=ModelProvider.ANTHROPIC,
+                capabilities={ModelCapability.CHAT, ModelCapability.CODE_GENERATION},
+                languages=["en", "de", "fr", "es"],
+                cost_per_1k_tokens=0.003,
+            )
+        )
         return reg
 
     def test_register_and_get(self) -> None:
@@ -370,11 +384,13 @@ class TestI18nManager:
 
     def test_add_custom_bundle(self) -> None:
         i18n = I18nManager()
-        i18n.add_bundle(TranslationBundle(
-            locale="ja",
-            name="日本語",
-            strings={"common.save": "保存"},
-        ))
+        i18n.add_bundle(
+            TranslationBundle(
+                locale="ja",
+                name="日本語",
+                strings={"common.save": "保存"},
+            )
+        )
         assert i18n.t("common.save", locale="ja") == "保存"
 
     def test_change_default_locale(self) -> None:

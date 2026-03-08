@@ -85,6 +85,7 @@ def _friendly_tool_name(tool: str) -> str:
 
 # ── Error Classification ────────────────────────────────────────
 
+
 def classify_error_for_user(exc: BaseException) -> str:
     """Classifies an exception into a user-friendly error message.
 
@@ -108,10 +109,8 @@ def classify_error_for_user(exc: BaseException) -> str:
             )
         if "nicht erreichbar" in exc_str.lower() or "connect" in exc_str.lower():
             return _t(
-                "Das Sprachmodell (Ollama) ist nicht erreichbar. "
-                "Bitte starte Ollama: ollama serve",
-                "The language model (Ollama) is not reachable. "
-                "Please start Ollama: ollama serve",
+                "Das Sprachmodell (Ollama) ist nicht erreichbar. Bitte starte Ollama: ollama serve",
+                "The language model (Ollama) is not reachable. Please start Ollama: ollama serve",
             )
 
     if exc_type in ("TimeoutError", "asyncio.TimeoutError") or "timeout" in exc_str.lower():
@@ -123,12 +122,14 @@ def classify_error_for_user(exc: BaseException) -> str:
             "service. Please try again in a moment.",
         )
 
-    if exc_type in ("ConnectionError", "ConnectError", "OSError") or "connection" in exc_str.lower():
+    if (
+        exc_type in ("ConnectionError", "ConnectError", "OSError")
+        or "connection" in exc_str.lower()
+    ):
         return _t(
             "Es gab ein Verbindungsproblem. "
             "Bitte prüfe deine Internetverbindung und versuch es erneut.",
-            "There was a connection problem. "
-            "Please check your internet connection and try again.",
+            "There was a connection problem. Please check your internet connection and try again.",
         )
 
     if exc_type in ("PermissionError", "AuthenticationError") or "permission" in exc_str.lower():
@@ -143,8 +144,7 @@ def classify_error_for_user(exc: BaseException) -> str:
         return _t(
             "Die angeforderte Datei oder Ressource wurde nicht gefunden. "
             "Bitte prüfe den Pfad und versuch es erneut.",
-            "The requested file or resource was not found. "
-            "Please check the path and try again.",
+            "The requested file or resource was not found. Please check the path and try again.",
         )
 
     if "rate limit" in exc_str.lower() or "429" in exc_str:
@@ -157,10 +157,8 @@ def classify_error_for_user(exc: BaseException) -> str:
 
     if "memory" in exc_str.lower() or exc_type == "MemoryError":
         return _t(
-            "Es ist ein Speicherproblem aufgetreten. "
-            "Bitte versuch es mit einer kleineren Anfrage.",
-            "A memory problem occurred. "
-            "Please try again with a smaller request.",
+            "Es ist ein Speicherproblem aufgetreten. Bitte versuch es mit einer kleineren Anfrage.",
+            "A memory problem occurred. Please try again with a smaller request.",
         )
 
     # Generic fallback -- still friendlier than raw exception
@@ -176,6 +174,7 @@ def classify_error_for_user(exc: BaseException) -> str:
 
 # ── Gatekeeper Block Messages ───────────────────────────────────
 
+
 def gatekeeper_block_message(tool: str, reason: str) -> str:
     """Creates a user-friendly message when the Gatekeeper blocks an action.
 
@@ -184,16 +183,17 @@ def gatekeeper_block_message(tool: str, reason: str) -> str:
     """
     friendly = _friendly_tool_name(tool)
     return _t(
-        f"Ich wollte \"{friendly}\" ausführen, aber das wurde aus Sicherheitsgründen "
+        f'Ich wollte "{friendly}" ausführen, aber das wurde aus Sicherheitsgründen '
         f"blockiert: {reason}\n"
         f"Du kannst mir die Berechtigung erteilen oder eine alternative Vorgehensweise vorschlagen.",
-        f"I wanted to execute \"{friendly}\", but it was blocked for security reasons: "
+        f'I wanted to execute "{friendly}", but it was blocked for security reasons: '
         f"{reason}\n"
         f"You can grant me permission or suggest an alternative approach.",
     )
 
 
 # ── Retry Exhausted Messages ────────────────────────────────────
+
 
 def retry_exhausted_message(tool: str, attempts: int, error: str) -> str:
     """Creates a user-friendly message when all retries are exhausted."""
@@ -223,16 +223,17 @@ def retry_exhausted_message(tool: str, attempts: int, error: str) -> str:
         )
 
     return _t(
-        f"Ich habe \"{friendly}\" {attempts}-mal versucht, aber es hat leider nicht geklappt. "
+        f'Ich habe "{friendly}" {attempts}-mal versucht, aber es hat leider nicht geklappt. '
         f"{cause} "
         f"Ich versuche einen anderen Ansatz oder du kannst mir helfen, das Problem zu lösen.",
-        f"I tried \"{friendly}\" {attempts} times, but it didn't work. "
+        f'I tried "{friendly}" {attempts} times, but it didn\'t work. '
         f"{cause} "
         f"I'll try a different approach, or you can help me resolve the issue.",
     )
 
 
 # ── All-Blocked Message ─────────────────────────────────────────
+
 
 def all_actions_blocked_message(
     steps: list,
@@ -244,9 +245,13 @@ def all_actions_blocked_message(
         friendly = _friendly_tool_name(step.tool)
         reasons.append(f"- {friendly}: {decision.reason}")
 
-    reasons_text = "\n".join(reasons) if reasons else _t(
-        "Keine Details verfügbar.",
-        "No details available.",
+    reasons_text = (
+        "\n".join(reasons)
+        if reasons
+        else _t(
+            "Keine Details verfügbar.",
+            "No details available.",
+        )
     )
     return _t(
         "Ich konnte keinen meiner geplanten Schritte ausführen, da sie alle "

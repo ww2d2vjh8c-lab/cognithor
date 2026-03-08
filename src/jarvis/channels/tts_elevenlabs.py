@@ -228,9 +228,7 @@ class ElevenLabsTTS:
 
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
-                async with client.stream(
-                    "POST", url, headers=headers, json=payload
-                ) as response:
+                async with client.stream("POST", url, headers=headers, json=payload) as response:
                     if response.status_code != 200:
                         body = await response.aread()
                         log.error(

@@ -271,7 +271,9 @@ class TestRunInstall:
         assert ok is False
         assert "boom" in msg
 
-    @patch("jarvis.utils.installer.subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 600))
+    @patch(
+        "jarvis.utils.installer.subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 600)
+    )
     @patch("jarvis.utils.installer.detect_installer")
     def test_timeout(self, mock_det: MagicMock, _run: MagicMock) -> None:
         pip_info = InstallerInfo(InstallerBackend.PIP, "pip", "24.0")

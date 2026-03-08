@@ -34,10 +34,7 @@ class TestNoHardcodedTmpPaths:
         config = SecurityConfig()
         tmp = tempfile.gettempdir()
         # Mindestens ein Pfad muss das System-Temp-Verzeichnis enthalten
-        assert any(
-            tmp in p or str(Path(tmp)) in p
-            for p in config.allowed_paths
-        ), (
+        assert any(tmp in p or str(Path(tmp)) in p for p in config.allowed_paths), (
             f"SecurityConfig.allowed_paths enthaelt kein plattform-temp: "
             f"{config.allowed_paths} (erwartet: {tmp})"
         )
@@ -48,10 +45,7 @@ class TestNoHardcodedTmpPaths:
 
         config = SandboxConfig()
         tmp = tempfile.gettempdir()
-        assert any(
-            tmp in p or str(Path(tmp)) in p
-            for p in config.allowed_paths
-        ), (
+        assert any(tmp in p or str(Path(tmp)) in p for p in config.allowed_paths), (
             f"SandboxConfig.allowed_paths enthaelt kein plattform-temp: "
             f"{config.allowed_paths} (erwartet: {tmp})"
         )
@@ -64,7 +58,10 @@ class TestNoHardcodedTmpPaths:
         sec = SecurityConfig()
         sb = SandboxConfig()
 
-        for paths_list, name in [(sec.allowed_paths, "SecurityConfig"), (sb.allowed_paths, "SandboxConfig")]:
+        for paths_list, name in [
+            (sec.allowed_paths, "SecurityConfig"),
+            (sb.allowed_paths, "SandboxConfig"),
+        ]:
             for p in paths_list:
                 # Auf Windows darf /tmp/jarvis/ nicht vorkommen;
                 # Auf Linux ist es nur OK wenn es tatsaechlich dem tempdir entspricht
@@ -422,8 +419,7 @@ class TestNoHardcodedUnixPaths:
                         violations.append(f"{pyfile.name}:{i}: {stripped}")
 
         assert not violations, (
-            "Hardcodiertes '/tmp/jarvis' in Default-Werten gefunden:\n"
-            + "\n".join(violations)
+            "Hardcodiertes '/tmp/jarvis' in Default-Werten gefunden:\n" + "\n".join(violations)
         )
 
     def test_source_path_split_not_used(self):

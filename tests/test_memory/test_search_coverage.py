@@ -69,12 +69,15 @@ def mock_embeddings() -> MagicMock:
 @pytest.fixture
 def mock_config() -> MagicMock:
     from jarvis.config import MemoryConfig
+
     cfg = MemoryConfig()
     return cfg
 
 
 @pytest.fixture
-def hybrid_search(mock_index: MagicMock, mock_embeddings: MagicMock, mock_config: MagicMock) -> HybridSearch:
+def hybrid_search(
+    mock_index: MagicMock, mock_embeddings: MagicMock, mock_config: MagicMock
+) -> HybridSearch:
     return HybridSearch(mock_index, mock_embeddings, mock_config)
 
 
@@ -122,15 +125,22 @@ class TestSearch:
     @pytest.mark.asyncio
     async def test_bm25_only(self, hybrid_search: HybridSearch, mock_index: MagicMock) -> None:
         from jarvis.models import Chunk, MemoryTier
+
         chunk = Chunk(
-            id="c1", text="hello", source_path="test", content_hash="h1",
-            memory_tier=MemoryTier.SEMANTIC, timestamp=datetime.now(),
+            id="c1",
+            text="hello",
+            source_path="test",
+            content_hash="h1",
+            memory_tier=MemoryTier.SEMANTIC,
+            timestamp=datetime.now(),
         )
         mock_index.search_bm25.return_value = [("c1", 5.0)]
         mock_index.get_chunks_by_ids.return_value = {"c1": chunk}
 
         results = await hybrid_search.search(
-            "hello", enable_vector=False, enable_graph=False,
+            "hello",
+            enable_vector=False,
+            enable_graph=False,
         )
         assert len(results) == 1
         assert results[0].bm25_score == 1.0
@@ -138,15 +148,22 @@ class TestSearch:
     @pytest.mark.asyncio
     async def test_core_no_decay(self, hybrid_search: HybridSearch, mock_index: MagicMock) -> None:
         from jarvis.models import Chunk, MemoryTier
+
         chunk = Chunk(
-            id="c1", text="core", source_path="CORE.md", content_hash="h1",
-            memory_tier=MemoryTier.CORE, timestamp=datetime.now() - timedelta(days=365),
+            id="c1",
+            text="core",
+            source_path="CORE.md",
+            content_hash="h1",
+            memory_tier=MemoryTier.CORE,
+            timestamp=datetime.now() - timedelta(days=365),
         )
         mock_index.search_bm25.return_value = [("c1", 1.0)]
         mock_index.get_chunks_by_ids.return_value = {"c1": chunk}
 
         results = await hybrid_search.search(
-            "core", enable_vector=False, enable_graph=False,
+            "core",
+            enable_vector=False,
+            enable_graph=False,
         )
         assert len(results) == 1
         assert results[0].recency_factor == 1.0
@@ -160,9 +177,14 @@ class TestSearchBm25Only:
 
     def test_with_results(self, hybrid_search: HybridSearch, mock_index: MagicMock) -> None:
         from jarvis.models import Chunk, MemoryTier
+
         chunk = Chunk(
-            id="c1", text="hello", source_path="test", content_hash="h1",
-            memory_tier=MemoryTier.SEMANTIC, timestamp=datetime.now(),
+            id="c1",
+            text="hello",
+            source_path="test",
+            content_hash="h1",
+            memory_tier=MemoryTier.SEMANTIC,
+            timestamp=datetime.now(),
         )
         mock_index.search_bm25.return_value = [("c1", 3.0)]
         mock_index.get_chunks_by_ids.return_value = {"c1": chunk}

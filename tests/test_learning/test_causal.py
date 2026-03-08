@@ -24,7 +24,9 @@ class TestCausalAnalyzer:
         # Record same pattern multiple times
         for i in range(5):
             self.analyzer.record_sequence(
-                f"s{i}", ["read_file", "exec_command", "write_file"], 0.8,
+                f"s{i}",
+                ["read_file", "exec_command", "write_file"],
+                0.8,
             )
         scores = self.analyzer.get_sequence_scores(min_occurrences=3)
         assert len(scores) > 0
@@ -54,7 +56,9 @@ class TestCausalAnalyzer:
         # Create clear pattern: read_file -> exec_command -> write_file
         for i in range(10):
             self.analyzer.record_sequence(
-                f"s{i}", ["read_file", "exec_command", "write_file"], 0.9,
+                f"s{i}",
+                ["read_file", "exec_command", "write_file"],
+                0.9,
             )
 
         suggestions = self.analyzer.suggest_tools(["read_file", "exec_command"])
@@ -72,7 +76,9 @@ class TestCausalAnalyzer:
         # Patterns that start differently but end with exec_command -> write_file
         for i in range(10):
             self.analyzer.record_sequence(
-                f"s{i}", ["search_memory", "exec_command", "write_file"], 0.8,
+                f"s{i}",
+                ["search_memory", "exec_command", "write_file"],
+                0.8,
             )
 
         # Current sequence doesn't match exactly, but last tool matches
@@ -82,7 +88,9 @@ class TestCausalAnalyzer:
     def test_confidence_calculation(self):
         for i in range(10):
             self.analyzer.record_sequence(
-                f"s{i}", ["a", "b", "c"], 0.8,
+                f"s{i}",
+                ["a", "b", "c"],
+                0.8,
             )
 
         scores = self.analyzer.get_sequence_scores(min_occurrences=3)
@@ -93,7 +101,9 @@ class TestCausalAnalyzer:
     def test_three_tool_subsequences(self):
         for i in range(5):
             self.analyzer.record_sequence(
-                f"s{i}", ["a", "b", "c", "d"], 0.7,
+                f"s{i}",
+                ["a", "b", "c", "d"],
+                0.7,
             )
 
         scores = self.analyzer.get_sequence_scores(min_occurrences=3, max_subseq_len=3)

@@ -29,9 +29,15 @@ class TestBuildSafeEnv:
     def test_no_api_keys(self) -> None:
         """Sensitive Variablen duerfen nicht durchsickern."""
         sensitive_vars = [
-            "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "AWS_SECRET_ACCESS_KEY",
-            "GITHUB_TOKEN", "SLACK_TOKEN", "TELEGRAM_BOT_TOKEN",
-            "DATABASE_URL", "JARVIS_SECRET", "MASTER_SECRET",
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "AWS_SECRET_ACCESS_KEY",
+            "GITHUB_TOKEN",
+            "SLACK_TOKEN",
+            "TELEGRAM_BOT_TOKEN",
+            "DATABASE_URL",
+            "JARVIS_SECRET",
+            "MASTER_SECRET",
         ]
         # Setze temporaer sensitive Vars
         original = {}
@@ -41,9 +47,7 @@ class TestBuildSafeEnv:
         try:
             env = SkillTester._build_safe_env()
             for var in sensitive_vars:
-                assert var not in env, (
-                    f"Sensitive Variable {var} darf nicht im safe env sein"
-                )
+                assert var not in env, f"Sensitive Variable {var} darf nicht im safe env sein"
         finally:
             for var in sensitive_vars:
                 if original[var] is None:
@@ -54,9 +58,7 @@ class TestBuildSafeEnv:
     def test_limited_keys_count(self) -> None:
         """Das safe env sollte nur wenige Keys enthalten (nicht das gesamte os.environ)."""
         env = SkillTester._build_safe_env()
-        assert len(env) <= 10, (
-            f"Safe env hat zu viele Keys ({len(env)}), sollte minimal sein"
-        )
+        assert len(env) <= 10, f"Safe env hat zu viele Keys ({len(env)}), sollte minimal sein"
         # Muss deutlich weniger als os.environ haben
         assert len(env) < len(os.environ)
 
@@ -97,9 +99,7 @@ class TestSubprocessInvocation:
             mock_run.assert_called_once()
             call_kwargs = mock_run.call_args
             # env= muss gesetzt sein
-            assert "env" in call_kwargs.kwargs, (
-                "subprocess.run() muss env= erhalten"
-            )
+            assert "env" in call_kwargs.kwargs, "subprocess.run() muss env= erhalten"
             passed_env = call_kwargs.kwargs["env"]
             assert isinstance(passed_env, dict)
             assert len(passed_env) < len(os.environ), (

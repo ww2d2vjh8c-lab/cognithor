@@ -130,7 +130,9 @@ class CanvasTools:
             return {"error": f"Unbekanntes Canvas-Tool: {tool_name}"}
 
     async def _handle_push(
-        self, arguments: dict[str, Any], session_id: str,
+        self,
+        arguments: dict[str, Any],
+        session_id: str,
     ) -> dict[str, Any]:
         """Verarbeitet canvas_push."""
         html = arguments.get("html", "")
@@ -158,7 +160,9 @@ class CanvasTools:
         return {"success": True, "html": "", "message": "Canvas ist leer"}
 
     async def _handle_eval(
-        self, arguments: dict[str, Any], session_id: str,
+        self,
+        arguments: dict[str, Any],
+        session_id: str,
     ) -> dict[str, Any]:
         """Verarbeitet canvas_eval."""
         js = arguments.get("js", "")

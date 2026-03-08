@@ -176,7 +176,8 @@ class MarketplaceStore:
         """Lazy-initialisiert die DB-Verbindung und Schema."""
         if self._conn is None:
             self._conn = sqlite3.connect(
-                str(self._db_path), check_same_thread=False,
+                str(self._db_path),
+                check_same_thread=False,
             )
             self._conn.row_factory = sqlite3.Row
             self._conn.execute("PRAGMA journal_mode=WAL")
@@ -307,8 +308,7 @@ class MarketplaceStore:
 
         if min_rating > 0:
             conditions.append(
-                "CASE WHEN rating_count > 0 "
-                "THEN rating_sum / rating_count ELSE 0.0 END >= ?"
+                "CASE WHEN rating_count > 0 THEN rating_sum / rating_count ELSE 0.0 END >= ?"
             )
             params.append(min_rating)
 
@@ -457,7 +457,10 @@ class MarketplaceStore:
     # ------------------------------------------------------------------
 
     def update_reputation(
-        self, peer_id: str, delta: float, reason: str = "",
+        self,
+        peer_id: str,
+        delta: float,
+        reason: str = "",
     ) -> float:
         """Aktualisiert den Reputation-Score eines Peers.
 
@@ -508,7 +511,10 @@ class MarketplaceStore:
     # ------------------------------------------------------------------
 
     def record_install(
-        self, package_id: str, version: str = "", user_id: str = "",
+        self,
+        package_id: str,
+        version: str = "",
+        user_id: str = "",
     ) -> None:
         """Zeichnet eine Installation auf."""
         self.conn.execute(
@@ -521,7 +527,9 @@ class MarketplaceStore:
         self.conn.commit()
 
     def get_install_history(
-        self, user_id: str, limit: int = 50,
+        self,
+        user_id: str,
+        limit: int = 50,
     ) -> list[dict]:
         """Gibt die Installations-Historie eines Users zurueck."""
         rows = self.conn.execute(
@@ -628,9 +636,7 @@ class MarketplaceStore:
         c = self._conn
 
         # source-Spalte hinzufuegen (idempotent check)
-        cols = {
-            r[1] for r in c.execute("PRAGMA table_info(listings)").fetchall()
-        }
+        cols = {r[1] for r in c.execute("PRAGMA table_info(listings)").fetchall()}
         if "source" not in cols:
             try:
                 c.executescript(_MIGRATION_COMMUNITY)

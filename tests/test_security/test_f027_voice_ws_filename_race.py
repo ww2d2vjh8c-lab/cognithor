@@ -76,12 +76,14 @@ class TestConcurrencySafety:
     def test_uuid_produces_unique_names(self) -> None:
         """uuid4().hex[:12] erzeugt verschiedene Werte."""
         import uuid
+
         names = {uuid.uuid4().hex[:12] for _ in range(100)}
         assert len(names) == 100
 
     def test_filename_collision_probability(self) -> None:
         """12 Hex-Zeichen = 48 Bit Entropie — kollisionssicher."""
         import uuid
+
         # 12 Hex-Zeichen = 2^48 Moeglichkeiten
         sample = uuid.uuid4().hex[:12]
         assert len(sample) == 12
@@ -119,6 +121,7 @@ class TestSourceLevelChecks:
     def test_uuid_imported(self) -> None:
         """uuid Modul wird importiert."""
         import jarvis.channels.voice_ws_bridge as mod
+
         source = inspect.getsource(mod)
         assert "import uuid" in source
 

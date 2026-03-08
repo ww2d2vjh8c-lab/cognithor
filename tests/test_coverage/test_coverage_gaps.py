@@ -776,6 +776,7 @@ class TestModelRouter:
     def _reset_coding_override(self):
         """Reset ContextVar before/after each test to prevent cross-test contamination."""
         from jarvis.core.model_router import _coding_override_var
+
         _coding_override_var.set(None)
         yield
         _coding_override_var.set(None)

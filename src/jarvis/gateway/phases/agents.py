@@ -37,6 +37,7 @@ def declare_agents_attrs(config: Any) -> PhaseResult:
     # Phase 8: Per-Agent Heartbeat-Scheduler
     try:
         from jarvis.core.agent_heartbeat import AgentHeartbeatScheduler
+
         result["agent_heartbeat"] = AgentHeartbeatScheduler()
     except Exception:
         log.debug("agent_heartbeat_init_skipped", exc_info=True)
@@ -44,6 +45,7 @@ def declare_agents_attrs(config: Any) -> PhaseResult:
     # Phase 8b: Multi-Agent Orchestrator
     try:
         from jarvis.core.orchestrator import Orchestrator
+
         result["orchestrator"] = Orchestrator()
     except Exception:
         log.debug("orchestrator_init_skipped", exc_info=True)
@@ -51,6 +53,7 @@ def declare_agents_attrs(config: Any) -> PhaseResult:
     # Phase 9: Slash-Commands + Interaction-State
     try:
         from jarvis.channels.commands import CommandRegistry, InteractionStore
+
         result["command_registry"] = CommandRegistry()
         result["interaction_store"] = InteractionStore()
     except Exception:
@@ -110,6 +113,7 @@ async def init_agents(
         # Skill-Management-Tools registrieren (create_skill, list_skills)
         try:
             from jarvis.mcp.skill_tools import register_skill_tools
+
             register_skill_tools(mcp_client, skill_registry, skill_dirs)
         except Exception as exc_tools:
             log.warning("skill_tools_registration_failed", error=str(exc_tools))
@@ -122,7 +126,8 @@ async def init_agents(
     agents_config = jarvis_home / "config" / "agents.yaml"
     if agents_config.exists():
         agent_router = AgentRouter.from_yaml(
-            agents_config, audit_logger=audit_logger,
+            agents_config,
+            audit_logger=audit_logger,
         )
     else:
         agent_router = AgentRouter(audit_logger=audit_logger)

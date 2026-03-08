@@ -66,9 +66,13 @@ class Gatekeeper:
     """
 
     # Tools die auch im OFFLINE-Modus Netzwerkzugriff haben duerfen (Recherche)
-    _OFFLINE_ALLOWED_NETWORK_TOOLS: frozenset[str] = frozenset({
-        "web_search", "web_fetch", "fetch_url",
-    })
+    _OFFLINE_ALLOWED_NETWORK_TOOLS: frozenset[str] = frozenset(
+        {
+            "web_search",
+            "web_fetch",
+            "fetch_url",
+        }
+    )
 
     def __init__(
         self,
@@ -106,6 +110,7 @@ class Gatekeeper:
         self._capability_matrix: Any = None
         try:
             from jarvis.security.capabilities import CapabilityMatrix
+
             self._capability_matrix = CapabilityMatrix()
         except Exception:
             pass
@@ -114,6 +119,7 @@ class Gatekeeper:
         self._tool_enforcer: Any = None
         try:
             from jarvis.skills.community.tool_enforcer import ToolEnforcer
+
             self._tool_enforcer = ToolEnforcer()
         except Exception:
             pass
@@ -306,6 +312,7 @@ class Gatekeeper:
                 spec = self._capability_matrix.get_spec(action.tool)
                 if spec is not None:
                     from jarvis.security.capabilities import STANDARD as _std_profile
+
                     violations = self._capability_matrix.get_violations(action.tool, _std_profile)
                     if violations:
                         decision = GateDecision(
@@ -615,7 +622,10 @@ class Gatekeeper:
         (re.compile(r"\bsubprocess\.Popen\s*\(", re.IGNORECASE), "subprocess.Popen()"),
         (re.compile(r"\bsubprocess\.call\s*\(", re.IGNORECASE), "subprocess.call()"),
         (re.compile(r"\bsubprocess\.getoutput\s*\(", re.IGNORECASE), "subprocess.getoutput()"),
-        (re.compile(r"\bsubprocess\.getstatusoutput\s*\(", re.IGNORECASE), "subprocess.getstatusoutput()"),
+        (
+            re.compile(r"\bsubprocess\.getstatusoutput\s*\(", re.IGNORECASE),
+            "subprocess.getstatusoutput()",
+        ),
         # shutil destructive operations
         (re.compile(r"\bshutil\.rmtree\s*\(", re.IGNORECASE), "shutil.rmtree()"),
         (re.compile(r"\bshutil\.move\s*\(", re.IGNORECASE), "shutil.move()"),
@@ -629,7 +639,10 @@ class Gatekeeper:
         (re.compile(r"\bctypes\.", re.IGNORECASE), "ctypes"),
         # Network access (raw socket — urllib/aiohttp/requests sind erlaubt)
         (re.compile(r"\bsocket\.socket\s*\(", re.IGNORECASE), "socket.socket()"),
-        (re.compile(r"\bsocket\.create_connection\s*\(", re.IGNORECASE), "socket.create_connection()"),
+        (
+            re.compile(r"\bsocket\.create_connection\s*\(", re.IGNORECASE),
+            "socket.create_connection()",
+        ),
         # pathlib file deletion
         (re.compile(r"\.unlink\s*\(", re.IGNORECASE), "Path.unlink()"),
         # open() with write/append/create modes — match mode argument, not filename
@@ -775,7 +788,7 @@ class Gatekeeper:
         # Ältere Policy-Dateien nutzen "params.command:" statt "params: command:"
         for key in list(match_data.keys()):
             if key.startswith("params.") and key != "params":
-                param_name = key[len("params."):]
+                param_name = key[len("params.") :]
                 criteria = match_data[key]
                 if isinstance(criteria, dict):
                     params_match[param_name] = PolicyParamMatch(**criteria)

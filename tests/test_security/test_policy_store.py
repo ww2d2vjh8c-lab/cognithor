@@ -30,7 +30,9 @@ def _write_policy(path: Path, rules: list[dict[str, Any]]) -> None:
     )
 
 
-def _simple_rule(name: str, action: str = "ALLOW", tool: str = "*", priority: int = 0) -> dict[str, Any]:
+def _simple_rule(
+    name: str, action: str = "ALLOW", tool: str = "*", priority: int = 0
+) -> dict[str, Any]:
     return {
         "name": name,
         "action": action,
@@ -47,7 +49,13 @@ def _simple_rule(name: str, action: str = "ALLOW", tool: str = "*", priority: in
 
 class TestPolicyVersion:
     def test_round_trip(self) -> None:
-        pv = PolicyVersion(version=1, timestamp="2026-03-04T10:00:00Z", author="user", description="initial", rule_count=5)
+        pv = PolicyVersion(
+            version=1,
+            timestamp="2026-03-04T10:00:00Z",
+            author="user",
+            description="initial",
+            rule_count=5,
+        )
         d = pv.to_dict()
         pv2 = PolicyVersion.from_dict(d)
         assert pv2.version == 1
@@ -99,7 +107,8 @@ class TestLoadRules:
         pol_dir = tmp_path / "policies"
         pol_dir.mkdir(parents=True)
         (pol_dir / "default.yaml").write_text(
-            yaml.dump({"not_rules": []}), encoding="utf-8",
+            yaml.dump({"not_rules": []}),
+            encoding="utf-8",
         )
         store = PolicyStore(pol_dir)
         assert store.load_rules() == []
@@ -252,10 +261,12 @@ class TestDiffVersions:
 class TestValidateRules:
     def test_valid_rules(self, tmp_path: Path) -> None:
         store = PolicyStore(tmp_path / "policies")
-        errors = store.validate_rules([
-            _simple_rule("r1", action="ALLOW"),
-            _simple_rule("r2", action="BLOCK"),
-        ])
+        errors = store.validate_rules(
+            [
+                _simple_rule("r1", action="ALLOW"),
+                _simple_rule("r2", action="BLOCK"),
+            ]
+        )
         assert errors == []
 
     def test_missing_name(self, tmp_path: Path) -> None:
@@ -265,10 +276,12 @@ class TestValidateRules:
 
     def test_duplicate_names(self, tmp_path: Path) -> None:
         store = PolicyStore(tmp_path / "policies")
-        errors = store.validate_rules([
-            _simple_rule("same"),
-            _simple_rule("same"),
-        ])
+        errors = store.validate_rules(
+            [
+                _simple_rule("same"),
+                _simple_rule("same"),
+            ]
+        )
         assert any("duplicate" in e for e in errors)
 
     def test_invalid_action(self, tmp_path: Path) -> None:
@@ -278,16 +291,28 @@ class TestValidateRules:
 
     def test_invalid_priority(self, tmp_path: Path) -> None:
         store = PolicyStore(tmp_path / "policies")
-        errors = store.validate_rules([{
-            "name": "r1", "action": "ALLOW", "priority": -1,
-        }])
+        errors = store.validate_rules(
+            [
+                {
+                    "name": "r1",
+                    "action": "ALLOW",
+                    "priority": -1,
+                }
+            ]
+        )
         assert any("priority" in e for e in errors)
 
     def test_match_must_be_dict(self, tmp_path: Path) -> None:
         store = PolicyStore(tmp_path / "policies")
-        errors = store.validate_rules([{
-            "name": "r1", "action": "ALLOW", "match": "bad",
-        }])
+        errors = store.validate_rules(
+            [
+                {
+                    "name": "r1",
+                    "action": "ALLOW",
+                    "match": "bad",
+                }
+            ]
+        )
         assert any("must be a dict" in e for e in errors)
 
     def test_not_a_dict(self, tmp_path: Path) -> None:
@@ -341,10 +366,13 @@ class TestSimulation:
         decision.policy_name = ""
         gatekeeper.evaluate.return_value = decision
 
-        results = store.simulate_batch(gatekeeper, [
-            {"tool": "read_file", "params": {"path": "/a"}},
-            {"tool": "write_file", "params": {"path": "/b"}},
-        ])
+        results = store.simulate_batch(
+            gatekeeper,
+            [
+                {"tool": "read_file", "params": {"path": "/a"}},
+                {"tool": "write_file", "params": {"path": "/b"}},
+            ],
+        )
         assert len(results) == 2
         assert all(r["simulation"] for r in results)
 

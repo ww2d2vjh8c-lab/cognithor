@@ -30,8 +30,7 @@ class TestMaxEntriesLimit:
         detector = DuplicateDetector()
         n = detector.MAX_ENTRIES + 100
         entries = [
-            MemoryEntry(entry_id=f"e{i}", content=f"unique content number {i}")
-            for i in range(n)
+            MemoryEntry(entry_id=f"e{i}", content=f"unique content number {i}") for i in range(n)
         ]
         # Sollte nicht explodieren, sondern schnell zurueckkehren
         start = time.monotonic()
@@ -157,8 +156,12 @@ class TestFunctionalCorrectness:
         entries = [
             MemoryEntry(entry_id="a1", content="the cat sat on the mat"),
             MemoryEntry(entry_id="a2", content="the cat sat on the mat"),
-            MemoryEntry(entry_id="b1", content="python is great for data science and machine learning"),
-            MemoryEntry(entry_id="b2", content="python is great for data science and machine learning"),
+            MemoryEntry(
+                entry_id="b1", content="python is great for data science and machine learning"
+            ),
+            MemoryEntry(
+                entry_id="b2", content="python is great for data science and machine learning"
+            ),
             MemoryEntry(entry_id="c1", content="unique entry with no duplicate"),
         ]
         groups = detector.detect(entries)
@@ -183,7 +186,9 @@ class TestPerformance:
         """1000 einzigartige Entries muessen in unter 5 Sekunden verarbeitet werden."""
         detector = DuplicateDetector()
         entries = [
-            MemoryEntry(entry_id=f"e{i}", content=f"unique content number {i} with extra words {i*7}")
+            MemoryEntry(
+                entry_id=f"e{i}", content=f"unique content number {i} with extra words {i * 7}"
+            )
             for i in range(1000)
         ]
         start = time.monotonic()
@@ -197,8 +202,12 @@ class TestPerformance:
         detector = DuplicateDetector()
         entries = []
         for i in range(250):
-            entries.append(MemoryEntry(entry_id=f"orig{i}", content=f"the entry about topic {i} is important"))
-            entries.append(MemoryEntry(entry_id=f"dup{i}", content=f"the entry about topic {i} is important"))
+            entries.append(
+                MemoryEntry(entry_id=f"orig{i}", content=f"the entry about topic {i} is important")
+            )
+            entries.append(
+                MemoryEntry(entry_id=f"dup{i}", content=f"the entry about topic {i} is important")
+            )
         start = time.monotonic()
         groups = detector.detect(entries)
         elapsed = time.monotonic() - start

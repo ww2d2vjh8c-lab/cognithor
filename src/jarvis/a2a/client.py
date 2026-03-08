@@ -32,8 +32,9 @@ log = get_logger(__name__)
 class RemoteAgent:
     """Ein bekannter Remote-Agent."""
 
-    def __init__(self, endpoint: str, card: A2AAgentCard | None = None,
-                 auth_token: str = "") -> None:
+    def __init__(
+        self, endpoint: str, card: A2AAgentCard | None = None, auth_token: str = ""
+    ) -> None:
         self.endpoint = endpoint.rstrip("/")
         self.card = card
         self.auth_token = auth_token
@@ -62,9 +63,12 @@ class RemoteAgent:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "endpoint": self.endpoint, "name": self.name,
-            "discovered_at": self.discovered_at, "last_contact": self.last_contact,
-            "request_count": self.request_count, "error_count": self.error_count,
+            "endpoint": self.endpoint,
+            "name": self.name,
+            "discovered_at": self.discovered_at,
+            "last_contact": self.last_contact,
+            "request_count": self.request_count,
+            "error_count": self.error_count,
             "has_card": self.card is not None,
             "supports_streaming": self.supports_streaming,
             "skills": [s.id for s in self.card.skills] if self.card and self.card.skills else [],
@@ -81,8 +85,9 @@ class A2AClient:
 
     # ── Remote Agent Management ──────────────────────────────────
 
-    def register_remote(self, endpoint: str, auth_token: str = "",
-                        card: A2AAgentCard | None = None) -> RemoteAgent:
+    def register_remote(
+        self, endpoint: str, auth_token: str = "", card: A2AAgentCard | None = None
+    ) -> RemoteAgent:
         agent = RemoteAgent(endpoint=endpoint, card=card, auth_token=auth_token)
         agent.discovered_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         self._remotes[agent.endpoint] = agent
@@ -103,12 +108,14 @@ class A2AClient:
         return list(self._remotes.values())
 
     def find_by_skill(self, skill_id: str) -> list[RemoteAgent]:
-        return [a for a in self._remotes.values()
-                if a.card and a.card.skills and any(s.id == skill_id for s in a.card.skills)]
+        return [
+            a
+            for a in self._remotes.values()
+            if a.card and a.card.skills and any(s.id == skill_id for s in a.card.skills)
+        ]
 
     def find_by_tag(self, tag: str) -> list[RemoteAgent]:
-        return [a for a in self._remotes.values()
-                if a.card and tag in a.card.tags]
+        return [a for a in self._remotes.values() if a.card and tag in a.card.tags]
 
     # ── Discovery ────────────────────────────────────────────────
 
@@ -117,6 +124,7 @@ class A2AClient:
         card_url = f"{endpoint}/.well-known/agent.json"
         try:
             import httpx
+
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.get(card_url)
                 response.raise_for_status()
@@ -125,12 +133,19 @@ class A2AClient:
             card = A2AAgentCard.from_dict(data)
             if endpoint in self._remotes:
                 self._remotes[endpoint].card = card
-                self._remotes[endpoint].last_contact = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                self._remotes[endpoint].last_contact = time.strftime(
+                    "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
+                )
             else:
                 self.register_remote(endpoint, card=card)
 
-            log.info("a2a_agent_discovered", endpoint=endpoint, name=card.name,
-                     skills=len(card.skills), version=card.protocol_version)
+            log.info(
+                "a2a_agent_discovered",
+                endpoint=endpoint,
+                name=card.name,
+                skills=len(card.skills),
+                version=card.protocol_version,
+            )
             return card
         except ImportError:
             log.warning("a2a_httpx_not_installed")
@@ -142,8 +157,12 @@ class A2AClient:
     # ── Task Operations (RC v1.0) ────────────────────────────────
 
     async def send_message(
-        self, endpoint: str, text: str = "", message: Message | None = None,
-        task_id: str | None = None, context_id: str | None = None,
+        self,
+        endpoint: str,
+        text: str = "",
+        message: Message | None = None,
+        task_id: str | None = None,
+        context_id: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> Task | None:
         """message/send -- Nachricht senden / Task erstellen (RC v1.0)."""
@@ -166,16 +185,20 @@ class A2AClient:
     async def send_task(self, endpoint: str, text: str = "", **kwargs: Any) -> Task | None:
         return await self.send_message(endpoint, text=text, **kwargs)
 
-    async def get_task(self, endpoint: str, task_id: str,
-                       history_length: int = 0) -> Task | None:
+    async def get_task(self, endpoint: str, task_id: str, history_length: int = 0) -> Task | None:
         params: dict[str, Any] = {"id": task_id}
         if history_length > 0:
             params["historyLength"] = history_length
         result = await self._jsonrpc_call(endpoint.rstrip("/"), "tasks/get", params)
         return self._parse_task_response(result) if result else None
 
-    async def list_tasks(self, endpoint: str, context_id: str | None = None,
-                         state: str | None = None, limit: int = 50) -> list[Task]:
+    async def list_tasks(
+        self,
+        endpoint: str,
+        context_id: str | None = None,
+        state: str | None = None,
+        limit: int = 50,
+    ) -> list[Task]:
         """tasks/list -- Tasks auflisten (RC v1.0)."""
         params: dict[str, Any] = {"limit": limit}
         if context_id:
@@ -205,7 +228,10 @@ class A2AClient:
     # ── Streaming (RC v1.0) ──────────────────────────────────────
 
     async def send_message_stream(
-        self, endpoint: str, text: str = "", message: Message | None = None,
+        self,
+        endpoint: str,
+        text: str = "",
+        message: Message | None = None,
         context_id: str | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
         """message/stream -- Streaming-Nachricht mit SSE-Events."""
@@ -218,8 +244,10 @@ class A2AClient:
             params["contextId"] = context_id
 
         body = {
-            "jsonrpc": "2.0", "id": self._next_id(),
-            "method": "message/stream", "params": params,
+            "jsonrpc": "2.0",
+            "id": self._next_id(),
+            "method": "message/stream",
+            "params": params,
         }
 
         remote = self._remotes.get(endpoint)
@@ -228,10 +256,13 @@ class A2AClient:
 
         try:
             import httpx
+
             async with httpx.AsyncClient(timeout=120.0) as client:
                 async with client.stream(
-                    "POST", f"{endpoint}/a2a/stream",
-                    json=body, headers=headers,
+                    "POST",
+                    f"{endpoint}/a2a/stream",
+                    json=body,
+                    headers=headers,
                 ) as response:
                     async for line in response.aiter_lines():
                         if line.startswith("data: "):
@@ -247,10 +278,14 @@ class A2AClient:
 
     # ── Local Dispatch ───────────────────────────────────────────
 
-    async def send_task_local(self, server: Any, text: str = "",
-                              message: Message | None = None,
-                              task_id: str | None = None,
-                              context_id: str | None = None) -> Task | None:
+    async def send_task_local(
+        self,
+        server: Any,
+        text: str = "",
+        message: Message | None = None,
+        task_id: str | None = None,
+        context_id: str | None = None,
+    ) -> Task | None:
         if message is None:
             message = Message(role=MessageRole.USER, parts=[TextPart(text=text)])
 
@@ -281,13 +316,16 @@ class A2AClient:
             headers["Authorization"] = f"Bearer {remote.auth_token}"
         return headers
 
-    async def _jsonrpc_call(self, endpoint: str, method: str,
-                            params: dict[str, Any]) -> dict[str, Any] | None:
+    async def _jsonrpc_call(
+        self, endpoint: str, method: str, params: dict[str, Any]
+    ) -> dict[str, Any] | None:
         self._total_requests += 1
         url = f"{endpoint}/a2a"
         body = {
-            "jsonrpc": "2.0", "id": self._next_id(),
-            "method": method, "params": params,
+            "jsonrpc": "2.0",
+            "id": self._next_id(),
+            "method": method,
+            "params": params,
         }
 
         remote = self._remotes.get(endpoint)
@@ -295,6 +333,7 @@ class A2AClient:
 
         try:
             import httpx
+
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(url, json=body, headers=headers)
                 response.raise_for_status()
@@ -334,9 +373,11 @@ class A2AClient:
                 status_msg = Message.from_dict(status_data["message"])
 
             task = Task(
-                id=task_id, context_id=context_id,
-                status=TaskStatus(state=state, message=status_msg,
-                                  timestamp=status_data.get("timestamp", "")),
+                id=task_id,
+                context_id=context_id,
+                status=TaskStatus(
+                    state=state, message=status_msg, timestamp=status_data.get("timestamp", "")
+                ),
                 metadata=data.get("metadata", {}),
             )
             for m in data.get("messages", []):

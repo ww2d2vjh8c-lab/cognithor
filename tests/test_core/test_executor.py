@@ -241,6 +241,7 @@ class TestAgentContext:
 
     def test_set_and_clear(self, executor: Executor) -> None:
         from jarvis.core.executor import _agent_workspace_var, _agent_sandbox_var
+
         executor.set_agent_context(
             workspace_dir="/tmp/agent/coder",
             sandbox_overrides={"network": "block", "timeout": 120},
@@ -320,7 +321,9 @@ class TestAgentContext:
 
 class TestParallelExecution:
     @pytest.mark.asyncio
-    async def test_parallel_independent_actions(self, executor: Executor, mock_mcp: AsyncMock) -> None:
+    async def test_parallel_independent_actions(
+        self, executor: Executor, mock_mcp: AsyncMock
+    ) -> None:
         """3 unabhängige Aktionen werden alle ausgeführt."""
         actions = [
             PlannedAction(tool="read_file", params={"path": "/a"}),
@@ -339,7 +342,7 @@ class TestParallelExecution:
     async def test_parallel_wave_execution(self, executor: Executor, mock_mcp: AsyncMock) -> None:
         """A→(B,C)→D: B+C parallel nach A, D nach B+C."""
         actions = [
-            PlannedAction(tool="read_file", params={"path": "/a"}),           # 0: A
+            PlannedAction(tool="read_file", params={"path": "/a"}),  # 0: A
             PlannedAction(tool="read_file", params={"path": "/b"}, depends_on=[0]),  # 1: B
             PlannedAction(tool="read_file", params={"path": "/c"}, depends_on=[0]),  # 2: C
             PlannedAction(tool="write_file", params={"path": "/d"}, depends_on=[1, 2]),  # 3: D
@@ -353,11 +356,15 @@ class TestParallelExecution:
         assert mock_mcp.call_tool.call_count == 4
 
     @pytest.mark.asyncio
-    async def test_parallel_blocked_dep_allows_downstream(self, executor: Executor, mock_mcp: AsyncMock) -> None:
+    async def test_parallel_blocked_dep_allows_downstream(
+        self, executor: Executor, mock_mcp: AsyncMock
+    ) -> None:
         """A blockiert → B (depends_on=[0]) läuft trotzdem (blocked = completed für DAG)."""
         actions = [
             PlannedAction(tool="exec_command", params={"command": "rm -rf /"}),  # 0: blocked
-            PlannedAction(tool="read_file", params={"path": "/b"}, depends_on=[0]),  # 1: depends on 0
+            PlannedAction(
+                tool="read_file", params={"path": "/b"}, depends_on=[0]
+            ),  # 1: depends on 0
         ]
         decisions = [_block_decision(actions[0]), _allow_decision(actions[1])]
 
@@ -369,7 +376,9 @@ class TestParallelExecution:
         assert results[1].success  # Dependent runs because blocked counts as completed
 
     @pytest.mark.asyncio
-    async def test_parallel_gatekeeper_block_in_wave(self, executor: Executor, mock_mcp: AsyncMock) -> None:
+    async def test_parallel_gatekeeper_block_in_wave(
+        self, executor: Executor, mock_mcp: AsyncMock
+    ) -> None:
         """Blocked Action in Wave als GatekeeperBlock, andere laufen weiter."""
         actions = [
             PlannedAction(tool="read_file", params={"path": "/a"}),
@@ -391,7 +400,9 @@ class TestParallelExecution:
         assert results[2].success
 
     @pytest.mark.asyncio
-    async def test_parallel_backwards_compatible(self, executor: Executor, mock_mcp: AsyncMock) -> None:
+    async def test_parallel_backwards_compatible(
+        self, executor: Executor, mock_mcp: AsyncMock
+    ) -> None:
         """Lineare Deps → identisches Verhalten wie sequentiell."""
         actions = [
             PlannedAction(tool="read_file", params={"path": "/a"}),

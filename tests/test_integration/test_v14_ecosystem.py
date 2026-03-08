@@ -197,8 +197,12 @@ from jarvis.core.installer import (
 class TestHardwareDetector:
     def test_from_specs(self) -> None:
         hw = HardwareDetector.from_specs(
-            cpu="Ryzen 9950X3D", cores=16, ram_gb=64,
-            gpu_name="RTX 5090", vram_gb=32, disk_gb=1000,
+            cpu="Ryzen 9950X3D",
+            cores=16,
+            ram_gb=64,
+            gpu_name="RTX 5090",
+            vram_gb=32,
+            disk_gb=1000,
         )
         assert hw.tier == "power"
         assert hw.gpu.cuda_available
@@ -276,7 +280,9 @@ class TestSetupWizard:
 
     def test_step_by_step(self) -> None:
         wiz = SetupWizard()
-        hw = wiz.step_hardware(HardwareDetector.from_specs(cores=8, ram_gb=32, gpu_name="RTX 4070", vram_gb=12))
+        hw = wiz.step_hardware(
+            HardwareDetector.from_specs(cores=8, ram_gb=32, gpu_name="RTX 4070", vram_gb=12)
+        )
         assert hw.tier == "standard"
         recs = wiz.step_model()
         assert len(recs) > 0
@@ -292,10 +298,15 @@ class TestSetupWizard:
 
     def test_power_setup(self) -> None:
         wiz = SetupWizard()
-        wiz.step_hardware(HardwareDetector.from_specs(
-            cpu="Ryzen 9950X3D", cores=16, ram_gb=64,
-            gpu_name="RTX 5090", vram_gb=32,
-        ))
+        wiz.step_hardware(
+            HardwareDetector.from_specs(
+                cpu="Ryzen 9950X3D",
+                cores=16,
+                ram_gb=64,
+                gpu_name="RTX 5090",
+                vram_gb=32,
+            )
+        )
         wiz.step_model()
         preset = wiz.step_preset()
         assert preset.level == PresetLevel.POWER
@@ -399,8 +410,9 @@ class TestCloudFallback:
         assert not cf.should_fallback(10000, 95)
 
     def test_enabled_triggers(self) -> None:
-        cfg = FallbackConfig(enabled=True, provider=CloudProvider.ANTHROPIC, model="haiku",
-                             trigger_latency_ms=3000)
+        cfg = FallbackConfig(
+            enabled=True, provider=CloudProvider.ANTHROPIC, model="haiku", trigger_latency_ms=3000
+        )
         cf = CloudFallback(cfg)
         assert cf.should_fallback(5000, 50)
 

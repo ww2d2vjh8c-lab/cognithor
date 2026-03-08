@@ -80,9 +80,7 @@ class TestTranscribeVoiceMessageExtMap:
         handler._media = mock_media
 
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
-            result = await handler.transcribe_voice_message(
-                audio_b64, audio_type="audio/ogg"
-            )
+            result = await handler.transcribe_voice_message(audio_b64, audio_type="audio/ogg")
 
         assert result == "OGG result"
 
@@ -99,9 +97,7 @@ class TestTranscribeVoiceMessageExtMap:
         handler._media = mock_media
 
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
-            result = await handler.transcribe_voice_message(
-                audio_b64, audio_type="audio/mp3"
-            )
+            result = await handler.transcribe_voice_message(audio_b64, audio_type="audio/mp3")
 
         assert result == "MP3 result"
 
@@ -118,9 +114,7 @@ class TestTranscribeVoiceMessageExtMap:
         handler._media = mock_media
 
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
-            result = await handler.transcribe_voice_message(
-                audio_b64, audio_type="audio/mpeg"
-            )
+            result = await handler.transcribe_voice_message(audio_b64, audio_type="audio/mpeg")
 
         assert result == "MPEG result"
 
@@ -137,9 +131,7 @@ class TestTranscribeVoiceMessageExtMap:
         handler._media = mock_media
 
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
-            result = await handler.transcribe_voice_message(
-                audio_b64, audio_type="audio/mp4"
-            )
+            result = await handler.transcribe_voice_message(audio_b64, audio_type="audio/mp4")
 
         assert result == "M4A result"
 
@@ -156,9 +148,7 @@ class TestTranscribeVoiceMessageExtMap:
         handler._media = mock_media
 
         # No ffmpeg mock needed since wav doesn't trigger conversion
-        result = await handler.transcribe_voice_message(
-            audio_b64, audio_type="audio/wav"
-        )
+        result = await handler.transcribe_voice_message(audio_b64, audio_type="audio/wav")
 
         assert result == "WAV result"
 
@@ -175,9 +165,7 @@ class TestTranscribeVoiceMessageExtMap:
         handler._media = mock_media
 
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
-            result = await handler.transcribe_voice_message(
-                audio_b64, audio_type="audio/unknown"
-            )
+            result = await handler.transcribe_voice_message(audio_b64, audio_type="audio/unknown")
 
         assert result == "Unknown type"
 
@@ -196,12 +184,14 @@ class TestHandleWSVoiceMessageEdgeCases:
         handler._media = mock_media
 
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
-            result = await handler.handle_ws_voice_message({
-                "type": "voice_message",
-                "audio_base64": audio_b64,
-                "audio_type": "audio/webm",
-                "language": "en",
-            })
+            result = await handler.handle_ws_voice_message(
+                {
+                    "type": "voice_message",
+                    "audio_base64": audio_b64,
+                    "audio_type": "audio/webm",
+                    "language": "en",
+                }
+            )
 
         assert result["type"] == "voice_transcription"
         assert result["text"] == "English result"

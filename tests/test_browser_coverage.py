@@ -2,6 +2,7 @@
 
 All Playwright interactions are mocked (no real browser needed).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -147,7 +148,9 @@ class TestBrowserAgentActions:
     async def test_navigate_success(self):
         agent = _make_running_agent()
         agent._analyzer = MagicMock()
-        agent._analyzer.analyze = AsyncMock(return_value=PageState(url="https://example.com", is_loaded=True))
+        agent._analyzer.analyze = AsyncMock(
+            return_value=PageState(url="https://example.com", is_loaded=True)
+        )
         agent._analyzer.detect_cookie_banner = AsyncMock(return_value={"found": False})
 
         state = await agent.navigate("https://example.com")
@@ -438,7 +441,9 @@ class TestBrowserAgentExtraction:
     @pytest.mark.asyncio
     async def test_extract_links(self):
         agent = _make_running_agent()
-        link = ElementInfo(selector="a", element_type=ElementType.LINK, text="Link", href="https://example.com")
+        link = ElementInfo(
+            selector="a", element_type=ElementType.LINK, text="Link", href="https://example.com"
+        )
         agent._analyzer = MagicMock()
         agent._analyzer.analyze = AsyncMock(return_value=PageState(links=[link]))
         links = await agent.extract_links()
@@ -478,7 +483,7 @@ class TestBrowserAgentForms:
                 FormField(name="email", field_type="email", selector="#email"),
                 FormField(name="country", field_type="select", selector="#country"),
             ],
-            submit_selector="#submit"
+            submit_selector="#submit",
         )
         agent._analyzer = MagicMock()
         agent._analyzer.analyze = AsyncMock(return_value=PageState(forms=[form]))
@@ -511,7 +516,9 @@ class TestBrowserAgentWorkflow:
         workflow = BrowserWorkflow(
             name="test",
             steps=[
-                BrowserAction(action_type=ActionType.NAVIGATE, params={"url": "https://example.com"}),
+                BrowserAction(
+                    action_type=ActionType.NAVIGATE, params={"url": "https://example.com"}
+                ),
                 BrowserAction(action_type=ActionType.CLICK, params={"selector": "#btn"}),
             ],
         )

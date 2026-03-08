@@ -86,11 +86,23 @@ def build_vision_message(
 
 
 # Alle OpenAI-kompatiblen Backends die das image_url Format unterstützen
-_OPENAI_VISION_BACKENDS = frozenset({
-    "openai", "lmstudio", "groq", "together", "deepseek",
-    "mistral", "openrouter", "xai", "cerebras", "github",
-    "bedrock", "huggingface", "moonshot",
-})
+_OPENAI_VISION_BACKENDS = frozenset(
+    {
+        "openai",
+        "lmstudio",
+        "groq",
+        "together",
+        "deepseek",
+        "mistral",
+        "openrouter",
+        "xai",
+        "cerebras",
+        "github",
+        "bedrock",
+        "huggingface",
+        "moonshot",
+    }
+)
 
 
 def format_for_backend(message: MultimodalMessage, backend_type: str) -> dict[str, Any]:
@@ -120,14 +132,16 @@ def _format_anthropic(message: MultimodalMessage) -> dict[str, Any]:
     """Anthropic-Format: content-Array mit image/text Blöcken."""
     content: list[dict[str, Any]] = []
     for img in message.images:
-        content.append({
-            "type": "image",
-            "source": {
-                "type": "base64",
-                "media_type": img.media_type.value,
-                "data": img.data_b64,
-            },
-        })
+        content.append(
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": img.media_type.value,
+                    "data": img.data_b64,
+                },
+            }
+        )
     if message.text:
         content.append({"type": "text", "text": message.text})
     return {"role": message.role, "content": content}
@@ -138,10 +152,12 @@ def _format_openai(message: MultimodalMessage) -> dict[str, Any]:
     content: list[dict[str, Any]] = []
     for img in message.images:
         data_url = f"data:{img.media_type.value};base64,{img.data_b64}"
-        content.append({
-            "type": "image_url",
-            "image_url": {"url": data_url},
-        })
+        content.append(
+            {
+                "type": "image_url",
+                "image_url": {"url": data_url},
+            }
+        )
     if message.text:
         content.append({"type": "text", "text": message.text})
     return {"role": message.role, "content": content}

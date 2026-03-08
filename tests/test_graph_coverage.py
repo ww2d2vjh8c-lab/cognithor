@@ -1,4 +1,5 @@
 """Tests for graph/engine.py, graph/state.py, graph/types.py -- Coverage boost."""
+
 from __future__ import annotations
 
 import asyncio
@@ -342,6 +343,7 @@ class TestGraphEngineRun:
     @pytest.mark.asyncio
     async def test_run_dict_return(self):
         """Handler returning dict should merge into state."""
+
         async def handler(state):
             return {"new_key": "value"}
 
@@ -381,8 +383,9 @@ class TestGraphEngineRun:
             return state
 
         g = GraphDefinition(name="cp")
-        g.add_node(Node(name="step1", handler=handler,
-                        checkpoint_before=True, checkpoint_after=True))
+        g.add_node(
+            Node(name="step1", handler=handler, checkpoint_before=True, checkpoint_after=True)
+        )
         g.add_edge(Edge(source="step1", target=END))
         g.entry_point = "step1"
         engine = GraphEngine()
@@ -399,6 +402,7 @@ class TestGraphEngineRun:
     @pytest.mark.asyncio
     async def test_run_cancellation(self):
         """CancelledError should result in CANCELED status."""
+
         async def slow_handler(state):
             await asyncio.sleep(100)
             return state
@@ -439,6 +443,7 @@ class TestGraphEngineRouter:
     @pytest.mark.asyncio
     async def test_router_state_decision(self):
         """Router returning GraphState with __router_decision__."""
+
         async def router(state):
             state["__router_decision__"] = "b"
             return state
@@ -453,13 +458,21 @@ class TestGraphEngineRouter:
     @pytest.mark.asyncio
     async def test_router_no_match_fallback_direct(self):
         """Router decision doesn't match any conditional edge -> fallback to DIRECT."""
+
         async def router(state):
             return "nonexistent"
 
         g = GraphDefinition(name="fallback")
         g.add_node(Node(name="router", node_type=NodeType.ROUTER, handler=router))
         g.add_node(Node(name="default_node"))
-        g.add_edge(Edge(source="router", target="default_node", edge_type=EdgeType.CONDITIONAL, condition="a"))
+        g.add_edge(
+            Edge(
+                source="router",
+                target="default_node",
+                edge_type=EdgeType.CONDITIONAL,
+                condition="a",
+            )
+        )
         g.add_edge(Edge(source="router", target="default_node", edge_type=EdgeType.DIRECT))
         g.add_edge(Edge(source="default_node", target=END))
         g.entry_point = "router"
@@ -470,13 +483,21 @@ class TestGraphEngineRouter:
     @pytest.mark.asyncio
     async def test_router_default_wildcard(self):
         """Router with __default__ edge."""
+
         async def router(state):
             return "unknown"
 
         g = GraphDefinition(name="wildcard")
         g.add_node(Node(name="router", node_type=NodeType.ROUTER, handler=router))
         g.add_node(Node(name="fallback"))
-        g.add_edge(Edge(source="router", target="fallback", edge_type=EdgeType.CONDITIONAL, condition="__default__"))
+        g.add_edge(
+            Edge(
+                source="router",
+                target="fallback",
+                edge_type=EdgeType.CONDITIONAL,
+                condition="__default__",
+            )
+        )
         g.add_edge(Edge(source="fallback", target=END))
         g.entry_point = "router"
         engine = GraphEngine()
@@ -693,6 +714,7 @@ class TestGraphEngineResume:
     @pytest.mark.asyncio
     async def test_resume_from_checkpoint(self):
         """Pause at HITL, then resume."""
+
         async def step_after(state):
             state["resumed"] = True
             return state
@@ -750,6 +772,7 @@ class TestGraphEngineResume:
     @pytest.mark.asyncio
     async def test_resume_with_exception(self):
         """Resume with a handler that raises."""
+
         async def crash(state):
             raise RuntimeError("resume crash")
 
@@ -801,8 +824,7 @@ class TestGraphEngineNodeExecution:
             return state
 
         g = GraphDefinition(name="retry")
-        g.add_node(Node(name="flaky", handler=flaky,
-                        retry_count=3, retry_delay_seconds=0.01))
+        g.add_node(Node(name="flaky", handler=flaky, retry_count=3, retry_delay_seconds=0.01))
         g.add_edge(Edge(source="flaky", target=END))
         g.entry_point = "flaky"
         engine = GraphEngine()
@@ -813,6 +835,7 @@ class TestGraphEngineNodeExecution:
     @pytest.mark.asyncio
     async def test_node_returns_non_state(self):
         """Handler returning neither GraphState nor dict."""
+
         async def handler(state):
             return 42
 
@@ -1022,8 +1045,9 @@ class TestStateManager:
 
 class TestTypeSerialization:
     def test_checkpoint_to_dict_from_dict(self):
-        cp = Checkpoint(execution_id="e1", graph_name="g", current_node="n1",
-                        state={"a": 1}, history=[])
+        cp = Checkpoint(
+            execution_id="e1", graph_name="g", current_node="n1", state={"a": 1}, history=[]
+        )
         d = cp.to_dict()
         cp2 = Checkpoint.from_dict(d)
         assert cp2.execution_id == "e1"
@@ -1051,8 +1075,9 @@ class TestTypeSerialization:
         assert d["graph_name"] == "test"
 
     def test_node_result_to_dict(self):
-        nr = NodeResult(node_name="n1", status=NodeStatus.COMPLETED,
-                        router_decision="go", retry_attempts=2)
+        nr = NodeResult(
+            node_name="n1", status=NodeStatus.COMPLETED, router_decision="go", retry_attempts=2
+        )
         d = nr.to_dict()
         assert d["router_decision"] == "go"
         assert d["retries"] == 2

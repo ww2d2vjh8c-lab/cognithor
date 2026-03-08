@@ -300,7 +300,10 @@ class TestReviews:
     def test_save_and_get_review(self, populated_store: MarketplaceStore) -> None:
         """Review speichern und laden."""
         review_id = populated_store.save_review(
-            "bu_calc", "user1", 5, "Ausgezeichnetes Tool!",
+            "bu_calc",
+            "user1",
+            5,
+            "Ausgezeichnetes Tool!",
         )
         assert review_id.startswith("review_")
 
@@ -689,6 +692,7 @@ class TestAPI:
             pytest.skip("FastAPI Router nicht verfuegbar")
 
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(skills_api.router)
         self.client = TestClient(app)
@@ -712,7 +716,8 @@ class TestAPI:
     def test_search_with_category(self) -> None:
         """GET /api/v1/skills/search?category=versicherung."""
         resp = self.client.get(
-            "/api/v1/skills/search", params={"category": "versicherung"},
+            "/api/v1/skills/search",
+            params={"category": "versicherung"},
         )
         assert resp.status_code == 200
         data = resp.json()

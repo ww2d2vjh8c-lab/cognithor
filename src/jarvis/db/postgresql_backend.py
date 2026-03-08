@@ -10,6 +10,7 @@ Besonderheiten:
   - SERIAL statt AUTOINCREMENT
   - %s Platzhalter statt ?
 """
+
 from __future__ import annotations
 
 import logging
@@ -36,11 +37,15 @@ class PostgreSQLBackend:
         # psycopg.conninfo.make_conninfo escapes special chars in values
         try:
             from psycopg.conninfo import make_conninfo
-            self._conninfo = make_conninfo(host=host, port=port, dbname=dbname, user=user, password=password)
+
+            self._conninfo = make_conninfo(
+                host=host, port=port, dbname=dbname, user=user, password=password
+            )
         except ImportError:
             # Fallback: manually escape values (single quotes in libpq conninfo)
             def _esc(v: str) -> str:
                 return v.replace("\\", "\\\\").replace("'", "\\'")
+
             self._conninfo = (
                 f"host='{_esc(host)}' port={int(port)} dbname='{_esc(dbname)}' "
                 f"user='{_esc(user)}' password='{_esc(password)}'"
@@ -53,6 +58,7 @@ class PostgreSQLBackend:
         if self._pool is None:
             try:
                 from psycopg_pool import AsyncConnectionPool
+
                 self._pool = AsyncConnectionPool(
                     conninfo=self._conninfo,
                     min_size=self._pool_min,
@@ -60,7 +66,9 @@ class PostgreSQLBackend:
                     open=False,
                 )
                 await self._pool.open()
-                logger.info("PostgreSQL Connection Pool gestartet (%d-%d)", self._pool_min, self._pool_max)
+                logger.info(
+                    "PostgreSQL Connection Pool gestartet (%d-%d)", self._pool_min, self._pool_max
+                )
 
                 # pgvector Extension aktivieren
                 async with self._pool.connection() as conn:

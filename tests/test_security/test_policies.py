@@ -307,9 +307,7 @@ class TestEdgeCases:
             params={},
             rationale="test",
         )
-        violations = strict_engine.validate_action_for_agent(
-            AgentType.WORKER, action, "sess_1"
-        )
+        violations = strict_engine.validate_action_for_agent(AgentType.WORKER, action, "sess_1")
         rules = [v.rule for v in violations]
         assert "tool_not_allowed" in rules
         assert "max_iterations_exceeded" in rules

@@ -222,9 +222,7 @@ class TestSandboxExecutor:
         assert result.timed_out is True
 
     def test_decode_and_truncate_normal(self) -> None:
-        stdout, stderr, truncated = SandboxExecutor._decode_and_truncate(
-            b"hello", b"world"
-        )
+        stdout, stderr, truncated = SandboxExecutor._decode_and_truncate(b"hello", b"world")
         assert stdout == "hello"
         assert stderr == "world"
         assert truncated is False
@@ -241,6 +239,6 @@ class TestSandboxExecutor:
         assert truncated is False
 
     def test_decode_latin1_fallback(self) -> None:
-        bad_utf8 = bytes([0xff, 0xfe, 0x41])
+        bad_utf8 = bytes([0xFF, 0xFE, 0x41])
         stdout, stderr, truncated = SandboxExecutor._decode_and_truncate(bad_utf8, b"")
         assert len(stdout) > 0

@@ -203,7 +203,9 @@ class TestEntityExtraction:
         assert org.confidence > 0.5  # Boosted
 
     def test_single_word_lower_confidence(self) -> None:
-        result = self.extractor.extract("Tensorflow wurde für das Training verwendet und funktioniert gut.")
+        result = self.extractor.extract(
+            "Tensorflow wurde für das Training verwendet und funktioniert gut."
+        )
         if any(e.name == "Tensorflow" for e in result.entities):
             entity = next(e for e in result.entities if e.name == "Tensorflow")
             assert entity.confidence <= 0.5  # Single word, lower confidence
@@ -244,7 +246,9 @@ class TestRelationExtraction:
             assert RelationType.WORKS_AT in rel_types
 
     def test_structural_leitet(self) -> None:
-        result = self.extractor.extract("Herr Müller leitet die Abteilung Forschung und Entwicklung.")
+        result = self.extractor.extract(
+            "Herr Müller leitet die Abteilung Forschung und Entwicklung."
+        )
         rel_types = [r.relation_type for r in result.relations]
         if result.relations:
             assert RelationType.MANAGES in rel_types
@@ -283,7 +287,9 @@ class TestEntityClassification:
         assert entity.entity_type == "location"
 
     def test_product_classification(self) -> None:
-        result = self.extractor.extract("Die neue Version von Kubernetes wird morgen veröffentlicht.")
+        result = self.extractor.extract(
+            "Die neue Version von Kubernetes wird morgen veröffentlicht."
+        )
         # Classification depends on context heuristics — just verify entity found
         names = [e.name for e in result.entities]
         assert "Kubernetes" in names

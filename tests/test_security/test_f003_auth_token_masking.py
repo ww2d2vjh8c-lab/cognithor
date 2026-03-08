@@ -21,7 +21,10 @@ def _setup_app_with_mcp_file(mcp_data: dict) -> tuple:
     from tests.test_channels.test_config_routes import FakeApp
 
     tmpfile = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False, encoding="utf-8",
+        mode="w",
+        suffix=".yaml",
+        delete=False,
+        encoding="utf-8",
     )
     yaml.dump(mcp_data, tmpfile, default_flow_style=False)
     tmpfile.close()
@@ -40,14 +43,16 @@ def _setup_app_with_mcp_file(mcp_data: dict) -> tuple:
 @pytest.mark.asyncio
 async def test_auth_token_masked_in_get_response() -> None:
     """GET /api/v1/mcp-servers muss auth_token als '***' maskieren."""
-    app, tmp = _setup_app_with_mcp_file({
-        "server_mode": {
-            "mode": "enabled",
-            "auth_token": "sk-super-secret-token-12345",
-            "require_auth": True,
-        },
-        "servers": {},
-    })
+    app, tmp = _setup_app_with_mcp_file(
+        {
+            "server_mode": {
+                "mode": "enabled",
+                "auth_token": "sk-super-secret-token-12345",
+                "require_auth": True,
+            },
+            "servers": {},
+        }
+    )
     try:
         handler = app.routes["GET /api/v1/mcp-servers"]
         result = await handler()
@@ -66,10 +71,12 @@ async def test_auth_token_masked_in_get_response() -> None:
 @pytest.mark.asyncio
 async def test_empty_auth_token_stays_empty() -> None:
     """Leeres auth_token wird nicht als '***' maskiert."""
-    app, tmp = _setup_app_with_mcp_file({
-        "server_mode": {"mode": "disabled", "auth_token": ""},
-        "servers": {},
-    })
+    app, tmp = _setup_app_with_mcp_file(
+        {
+            "server_mode": {"mode": "disabled", "auth_token": ""},
+            "servers": {},
+        }
+    )
     try:
         handler = app.routes["GET /api/v1/mcp-servers"]
         result = await handler()
@@ -81,10 +88,12 @@ async def test_empty_auth_token_stays_empty() -> None:
 @pytest.mark.asyncio
 async def test_missing_auth_token_stays_empty() -> None:
     """Fehlendes auth_token ergibt leeren String, nicht '***'."""
-    app, tmp = _setup_app_with_mcp_file({
-        "server_mode": {"mode": "disabled"},
-        "servers": {},
-    })
+    app, tmp = _setup_app_with_mcp_file(
+        {
+            "server_mode": {"mode": "disabled"},
+            "servers": {},
+        }
+    )
     try:
         handler = app.routes["GET /api/v1/mcp-servers"]
         result = await handler()
@@ -96,17 +105,21 @@ async def test_missing_auth_token_stays_empty() -> None:
 @pytest.mark.asyncio
 async def test_put_still_accepts_plaintext_token() -> None:
     """PUT /api/v1/mcp-servers muss auth_token im Klartext akzeptieren und speichern."""
-    app, tmp = _setup_app_with_mcp_file({
-        "server_mode": {},
-        "servers": {},
-    })
+    app, tmp = _setup_app_with_mcp_file(
+        {
+            "server_mode": {},
+            "servers": {},
+        }
+    )
     try:
         handler = app.routes["PUT /api/v1/mcp-servers"]
         request = MagicMock()
-        request.json = AsyncMock(return_value={
-            "auth_token": "new-secret-token",
-            "mode": "enabled",
-        })
+        request.json = AsyncMock(
+            return_value={
+                "auth_token": "new-secret-token",
+                "mode": "enabled",
+            }
+        )
         result = await handler(request=request)
         assert result["status"] == "ok"
 

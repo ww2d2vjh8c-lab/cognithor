@@ -25,18 +25,21 @@ from jarvis.core.sentiment import (
 class TestFrustratedPatterns:
     """Tests für Frustrations-Erkennung."""
 
-    @pytest.mark.parametrize("text", [
-        "Das funktioniert nicht!",
-        "Es geht schon wieder nicht",
-        "Das klappt einfach nicht",
-        "Warum geht das nicht?",
-        "Das nervt mich total",
-        "Ich bin frustriert",
-        "Immer noch nicht gefixt",
-        "Ich habe es schon 5 mal versucht",
-        "Verdammt, schon wieder!",
-        "Warum funktioniert das nicht???!!!",
-    ])
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Das funktioniert nicht!",
+            "Es geht schon wieder nicht",
+            "Das klappt einfach nicht",
+            "Warum geht das nicht?",
+            "Das nervt mich total",
+            "Ich bin frustriert",
+            "Immer noch nicht gefixt",
+            "Ich habe es schon 5 mal versucht",
+            "Verdammt, schon wieder!",
+            "Warum funktioniert das nicht???!!!",
+        ],
+    )
     def test_frustrated_detected(self, text: str) -> None:
         result = detect_sentiment(text)
         assert result.sentiment == Sentiment.FRUSTRATED
@@ -51,15 +54,18 @@ class TestFrustratedPatterns:
 class TestUrgentPatterns:
     """Tests für Dringlichkeits-Erkennung."""
 
-    @pytest.mark.parametrize("text", [
-        "Das ist dringend",
-        "Ich brauche das sofort",
-        "So schnell wie möglich bitte",
-        "Muss jetzt erledigt werden",
-        "Zeitkritisch!",
-        "Das ist ein Notfall",
-        "Brauche das jetzt schnell",
-    ])
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Das ist dringend",
+            "Ich brauche das sofort",
+            "So schnell wie möglich bitte",
+            "Muss jetzt erledigt werden",
+            "Zeitkritisch!",
+            "Das ist ein Notfall",
+            "Brauche das jetzt schnell",
+        ],
+    )
     def test_urgent_detected(self, text: str) -> None:
         result = detect_sentiment(text)
         assert result.sentiment == Sentiment.URGENT
@@ -69,15 +75,18 @@ class TestUrgentPatterns:
 class TestConfusedPatterns:
     """Tests für Verwirrung-Erkennung."""
 
-    @pytest.mark.parametrize("text", [
-        "Ich verstehe das nicht",
-        "Was meinst du damit?",
-        "Ich bin verwirrt",
-        "Kannst du das nochmal erklären?",
-        "Hä?",
-        "Was soll das heißen?",
-        "Ich weiß nicht wie das geht",
-    ])
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Ich verstehe das nicht",
+            "Was meinst du damit?",
+            "Ich bin verwirrt",
+            "Kannst du das nochmal erklären?",
+            "Hä?",
+            "Was soll das heißen?",
+            "Ich weiß nicht wie das geht",
+        ],
+    )
     def test_confused_detected(self, text: str) -> None:
         result = detect_sentiment(text)
         assert result.sentiment == Sentiment.CONFUSED
@@ -87,15 +96,18 @@ class TestConfusedPatterns:
 class TestPositivePatterns:
     """Tests für Positive-Erkennung."""
 
-    @pytest.mark.parametrize("text", [
-        "Danke!",
-        "Super gemacht!",
-        "Das hat geklappt!",
-        "Perfekt, genau so!",
-        "Cool, danke dir!",
-        "Vielen Dank für die Hilfe",
-        "Gut gemacht!",
-    ])
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Danke!",
+            "Super gemacht!",
+            "Das hat geklappt!",
+            "Perfekt, genau so!",
+            "Cool, danke dir!",
+            "Vielen Dank für die Hilfe",
+            "Gut gemacht!",
+        ],
+    )
     def test_positive_detected(self, text: str) -> None:
         result = detect_sentiment(text)
         assert result.sentiment == Sentiment.POSITIVE
@@ -105,13 +117,16 @@ class TestPositivePatterns:
 class TestNeutral:
     """Tests für neutrale Nachrichten."""
 
-    @pytest.mark.parametrize("text", [
-        "Erstelle eine Datei",
-        "Wie ist das Wetter?",
-        "Suche nach Python-Tutorials",
-        "Was ist eine API?",
-        "Öffne die Einstellungen",
-    ])
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Erstelle eine Datei",
+            "Wie ist das Wetter?",
+            "Suche nach Python-Tutorials",
+            "Was ist eine API?",
+            "Öffne die Einstellungen",
+        ],
+    )
     def test_neutral_detected(self, text: str) -> None:
         result = detect_sentiment(text)
         assert result.sentiment == Sentiment.NEUTRAL

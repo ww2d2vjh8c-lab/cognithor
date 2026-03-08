@@ -23,6 +23,7 @@ A2A_VERSION_HEADER = "A2A-Version"
 
 # ── Parts ────────────────────────────────────────────────────────
 
+
 class PartType(str, Enum):
     TEXT = "text"
     FILE = "file"
@@ -85,8 +86,10 @@ def part_from_dict(p: dict[str, Any]) -> Part:
     elif ptype == "file":
         f = p.get("file", {})
         return FilePart(
-            name=f.get("name", ""), mime_type=f.get("mimeType", "application/octet-stream"),
-            uri=f.get("uri", ""), data=f.get("bytes", ""),
+            name=f.get("name", ""),
+            mime_type=f.get("mimeType", "application/octet-stream"),
+            uri=f.get("uri", ""),
+            data=f.get("bytes", ""),
         )
     elif ptype == "data":
         return DataPart(data=p.get("data", {}), metadata=p.get("metadata", {}))
@@ -94,6 +97,7 @@ def part_from_dict(p: dict[str, Any]) -> Part:
 
 
 # ── Task States ──────────────────────────────────────────────────
+
 
 class TaskState(str, Enum):
     SUBMITTED = "submitted"
@@ -107,20 +111,38 @@ class TaskState(str, Enum):
 
     @property
     def is_terminal(self) -> bool:
-        return self in (TaskState.COMPLETED, TaskState.FAILED,
-                        TaskState.CANCELED, TaskState.REJECTED)
+        return self in (
+            TaskState.COMPLETED,
+            TaskState.FAILED,
+            TaskState.CANCELED,
+            TaskState.REJECTED,
+        )
 
     @property
     def is_active(self) -> bool:
-        return self in (TaskState.SUBMITTED, TaskState.WORKING,
-                        TaskState.INPUT_REQUIRED, TaskState.AUTH_REQUIRED)
+        return self in (
+            TaskState.SUBMITTED,
+            TaskState.WORKING,
+            TaskState.INPUT_REQUIRED,
+            TaskState.AUTH_REQUIRED,
+        )
 
 
 VALID_TRANSITIONS: dict[TaskState, set[TaskState]] = {
-    TaskState.SUBMITTED: {TaskState.WORKING, TaskState.FAILED, TaskState.CANCELED,
-                          TaskState.REJECTED, TaskState.AUTH_REQUIRED},
-    TaskState.WORKING: {TaskState.COMPLETED, TaskState.FAILED, TaskState.CANCELED,
-                        TaskState.INPUT_REQUIRED, TaskState.REJECTED},
+    TaskState.SUBMITTED: {
+        TaskState.WORKING,
+        TaskState.FAILED,
+        TaskState.CANCELED,
+        TaskState.REJECTED,
+        TaskState.AUTH_REQUIRED,
+    },
+    TaskState.WORKING: {
+        TaskState.COMPLETED,
+        TaskState.FAILED,
+        TaskState.CANCELED,
+        TaskState.INPUT_REQUIRED,
+        TaskState.REJECTED,
+    },
     TaskState.INPUT_REQUIRED: {TaskState.WORKING, TaskState.FAILED, TaskState.CANCELED},
     TaskState.AUTH_REQUIRED: {TaskState.WORKING, TaskState.FAILED, TaskState.CANCELED},
     TaskState.COMPLETED: set(),
@@ -135,6 +157,7 @@ def is_valid_transition(from_state: TaskState, to_state: TaskState) -> bool:
 
 
 # ── Messages ─────────────────────────────────────────────────────
+
 
 class MessageRole(str, Enum):
     USER = "user"
@@ -193,6 +216,7 @@ class Message:
 
 # ── Artifacts ────────────────────────────────────────────────────
 
+
 @dataclass
 class Artifact:
     parts: list[Part] = field(default_factory=list)
@@ -234,6 +258,7 @@ class Artifact:
 
 # ── Task ─────────────────────────────────────────────────────────
 
+
 @dataclass
 class TaskStatus:
     state: TaskState
@@ -263,7 +288,8 @@ class Task:
 
     def to_dict(self) -> dict[str, Any]:
         r: dict[str, Any] = {
-            "id": self.id, "contextId": self.context_id,
+            "id": self.id,
+            "contextId": self.context_id,
             "status": self.status.to_dict(),
         }
         if self.messages:
@@ -296,8 +322,12 @@ class Task:
         return self.status.state.is_active
 
     @classmethod
-    def create(cls, task_id: str | None = None, context_id: str | None = None,
-               message: Message | None = None) -> Task:
+    def create(
+        cls,
+        task_id: str | None = None,
+        context_id: str | None = None,
+        message: Message | None = None,
+    ) -> Task:
         task = cls(
             id=task_id or uuid.uuid4().hex[:16],
             context_id=context_id or uuid.uuid4().hex[:16],
@@ -310,6 +340,7 @@ class Task:
 
 # ── Streaming Events (RC v1.0) ───────────────────────────────────
 
+
 @dataclass
 class TaskStatusUpdateEvent:
     task_id: str
@@ -319,12 +350,15 @@ class TaskStatusUpdateEvent:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "taskId": self.task_id, "contextId": self.context_id,
-            "status": self.status.to_dict(), "final": self.final,
+            "taskId": self.task_id,
+            "contextId": self.context_id,
+            "status": self.status.to_dict(),
+            "final": self.final,
         }
 
     def to_sse(self) -> str:
         import json
+
         return f"event: status\ndata: {json.dumps(self.to_dict())}\n\n"
 
 
@@ -337,16 +371,20 @@ class TaskArtifactUpdateEvent:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "taskId": self.task_id, "contextId": self.context_id,
-            "artifact": self.artifact.to_dict(), "lastChunk": self.last_chunk,
+            "taskId": self.task_id,
+            "contextId": self.context_id,
+            "artifact": self.artifact.to_dict(),
+            "lastChunk": self.last_chunk,
         }
 
     def to_sse(self) -> str:
         import json
+
         return f"event: artifact\ndata: {json.dumps(self.to_dict())}\n\n"
 
 
 # ── Push Notification Config (RC v1.0) ───────────────────────────
+
 
 @dataclass
 class PushNotificationAuth:
@@ -371,7 +409,9 @@ class PushNotificationConfig:
 
     def to_dict(self) -> dict[str, Any]:
         r: dict[str, Any] = {
-            "taskId": self.task_id, "url": self.url, "configId": self.config_id,
+            "taskId": self.task_id,
+            "url": self.url,
+            "configId": self.config_id,
         }
         if self.authentication:
             r["authentication"] = self.authentication.to_dict()
@@ -381,6 +421,7 @@ class PushNotificationConfig:
 
 
 # ── Agent Card (RC v1.0) ─────────────────────────────────────────
+
 
 @dataclass
 class A2ASkill:
@@ -460,14 +501,20 @@ class A2AAgentCard:
     skills: list[A2ASkill] = field(default_factory=list)
     interfaces: list[A2AInterface] = field(default_factory=list)
     security_schemes: list[A2ASecurityScheme] = field(default_factory=list)
-    default_input_modes: list[str] = field(default_factory=lambda: ["text/plain", "application/json"])
-    default_output_modes: list[str] = field(default_factory=lambda: ["text/plain", "application/json"])
+    default_input_modes: list[str] = field(
+        default_factory=lambda: ["text/plain", "application/json"]
+    )
+    default_output_modes: list[str] = field(
+        default_factory=lambda: ["text/plain", "application/json"]
+    )
     tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         card: dict[str, Any] = {
-            "name": self.name, "description": self.description,
-            "version": self.version, "protocolVersion": self.protocol_version,
+            "name": self.name,
+            "description": self.description,
+            "version": self.version,
+            "protocolVersion": self.protocol_version,
             "provider": self.provider.to_dict(),
             "capabilities": self.capabilities.to_dict(),
         }
@@ -478,7 +525,9 @@ class A2AAgentCard:
         if self.interfaces:
             card["interfaces"] = [i.to_dict() for i in self.interfaces]
         if self.security_schemes:
-            card["securitySchemes"] = {f"scheme_{i}": s.to_dict() for i, s in enumerate(self.security_schemes)}
+            card["securitySchemes"] = {
+                f"scheme_{i}": s.to_dict() for i, s in enumerate(self.security_schemes)
+            }
         card["defaultInputModes"] = self.default_input_modes
         card["defaultOutputModes"] = self.default_output_modes
         if self.tags:
@@ -487,25 +536,42 @@ class A2AAgentCard:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> A2AAgentCard:
-        skills = [A2ASkill(id=s.get("id", ""), name=s.get("name", ""),
-                           description=s.get("description", ""), tags=s.get("tags", []),
-                           examples=s.get("examples", [])) for s in data.get("skills", [])]
-        interfaces = [A2AInterface(protocol=i.get("protocol", "jsonrpc"), url=i.get("url", ""),
-                                   content_type=i.get("contentType", A2A_CONTENT_TYPE))
-                      for i in data.get("interfaces", [])]
+        skills = [
+            A2ASkill(
+                id=s.get("id", ""),
+                name=s.get("name", ""),
+                description=s.get("description", ""),
+                tags=s.get("tags", []),
+                examples=s.get("examples", []),
+            )
+            for s in data.get("skills", [])
+        ]
+        interfaces = [
+            A2AInterface(
+                protocol=i.get("protocol", "jsonrpc"),
+                url=i.get("url", ""),
+                content_type=i.get("contentType", A2A_CONTENT_TYPE),
+            )
+            for i in data.get("interfaces", [])
+        ]
         prov = data.get("provider", {})
         cap = data.get("capabilities", {})
         return cls(
-            name=data.get("name", "Unknown"), description=data.get("description", ""),
-            url=data.get("url", ""), version=data.get("version", ""),
+            name=data.get("name", "Unknown"),
+            description=data.get("description", ""),
+            url=data.get("url", ""),
+            version=data.get("version", ""),
             protocol_version=data.get("protocolVersion", A2A_PROTOCOL_VERSION),
-            provider=A2AProvider(organization=prov.get("organization", ""), url=prov.get("url", "")),
+            provider=A2AProvider(
+                organization=prov.get("organization", ""), url=prov.get("url", "")
+            ),
             capabilities=A2AAgentCapabilities(
                 streaming=cap.get("streaming", False),
                 push_notifications=cap.get("pushNotifications", False),
                 state_transition_history=cap.get("stateTransitionHistory", True),
             ),
-            skills=skills, interfaces=interfaces,
+            skills=skills,
+            interfaces=interfaces,
             default_input_modes=data.get("defaultInputModes", ["text/plain"]),
             default_output_modes=data.get("defaultOutputModes", ["text/plain"]),
             tags=data.get("tags", []),
@@ -514,8 +580,10 @@ class A2AAgentCard:
 
 # ── A2A Error Codes (RC v1.0) ────────────────────────────────────
 
+
 class A2AErrorCode:
     """Standard A2A + JSON-RPC error codes."""
+
     PARSE_ERROR = -32700
     INVALID_REQUEST = -32600
     METHOD_NOT_FOUND = -32601

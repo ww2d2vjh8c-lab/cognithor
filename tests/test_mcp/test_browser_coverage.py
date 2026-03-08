@@ -261,10 +261,12 @@ class TestGetPageInfo:
         mock_page = AsyncMock()
         mock_page.title = AsyncMock(return_value="Test")
         mock_page.url = "https://example.com"
-        mock_page.evaluate = AsyncMock(side_effect=[
-            [{"text": "Home", "href": "https://example.com/"}],
-            [{"tag": "input", "type": "text", "name": "q", "id": "search", "text": ""}],
-        ])
+        mock_page.evaluate = AsyncMock(
+            side_effect=[
+                [{"text": "Home", "href": "https://example.com/"}],
+                [{"tag": "input", "type": "text", "name": "q", "id": "search", "text": ""}],
+            ]
+        )
         tool._page = mock_page
         result = await tool.get_page_info()
         assert result.success
@@ -305,9 +307,7 @@ class TestRegisterBrowserTools:
     def test_tool_names(self) -> None:
         mock_client = MagicMock()
         register_browser_tools(mock_client)
-        registered = [
-            call.args[0] for call in mock_client.register_builtin_handler.call_args_list
-        ]
+        registered = [call.args[0] for call in mock_client.register_builtin_handler.call_args_list]
         assert "browse_url" in registered
         assert "browse_screenshot" in registered
         assert "browse_click" in registered

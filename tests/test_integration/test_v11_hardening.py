@@ -30,8 +30,12 @@ from jarvis.security.hardening import (
 class TestSecurityGate:
     def test_allow_clean(self) -> None:
         gate = SecurityGate()
-        r = gate.evaluate(critical_findings=0, high_findings=0, pass_rate=95,
-                         stages_run=["adversarial_fuzzing", "dependency_scan"])
+        r = gate.evaluate(
+            critical_findings=0,
+            high_findings=0,
+            pass_rate=95,
+            stages_run=["adversarial_fuzzing", "dependency_scan"],
+        )
         assert r.decision == GateDecision.ALLOW
 
     def test_block_critical(self) -> None:
@@ -60,7 +64,9 @@ class TestSecurityGate:
         assert r.decision == GateDecision.WARN
 
     def test_custom_policy(self) -> None:
-        policy = GatePolicy(max_critical_findings=5, require_fuzzing=False, block_on_unscanned=False)
+        policy = GatePolicy(
+            max_critical_findings=5, require_fuzzing=False, block_on_unscanned=False
+        )
         gate = SecurityGate(policy)
         r = gate.evaluate(critical_findings=3, stages_run=[])
         assert r.decision != GateDecision.BLOCK
@@ -139,10 +145,12 @@ class TestCredentialScanner:
 
     def test_scan_files(self) -> None:
         scanner = CredentialScanner()
-        results = scanner.scan_files({
-            "a.py": "x = 1",
-            "b.py": 'password = "secret123"',
-        })
+        results = scanner.scan_files(
+            {
+                "a.py": "x = 1",
+                "b.py": 'password = "secret123"',
+            }
+        )
         assert "b.py" in results
         assert "a.py" not in results
 
@@ -174,7 +182,9 @@ class TestWebhookNotifier:
 
     def test_disabled(self) -> None:
         notifier = WebhookNotifier()
-        notifier.add_webhook(WebhookConfig("https://example.com/hook", ["critical_finding"], enabled=False))
+        notifier.add_webhook(
+            WebhookConfig("https://example.com/hook", ["critical_finding"], enabled=False)
+        )
         sent = notifier.notify("critical_finding", {})
         assert sent == 0
 
@@ -192,6 +202,7 @@ class TestScanScheduler:
 
     def test_add_remove(self) -> None:
         from jarvis.security.hardening import ScheduledScan
+
         s = ScanScheduler(load_defaults=False)
         s.add(ScheduledScan("custom", "Custom", "0 * * * *", ["prompt_injection"]))
         assert s.count == 1
@@ -272,21 +283,27 @@ class TestComplianceDocManager:
 
     def test_generate_technical(self) -> None:
         dm = ComplianceDocManager()
-        doc = dm.generate_technical_doc("Jarvis", {
-            "purpose": "Agent-System",
-            "version": "10.0",
-            "test_count": 3200,
-        })
+        doc = dm.generate_technical_doc(
+            "Jarvis",
+            {
+                "purpose": "Agent-System",
+                "version": "10.0",
+                "test_count": 3200,
+            },
+        )
         assert "1_system_description" in doc.content
         assert doc.content["3_development_process"]["testing"] == 3200
 
     def test_generate_incident(self) -> None:
         dm = ComplianceDocManager()
-        doc = dm.generate_incident_report("Jarvis", {
-            "id": "INC-001",
-            "severity": "critical",
-            "description": "Prompt-Injection erkannt",
-        })
+        doc = dm.generate_incident_report(
+            "Jarvis",
+            {
+                "id": "INC-001",
+                "severity": "critical",
+                "description": "Prompt-Injection erkannt",
+            },
+        )
         assert doc.doc_type == DocumentType.INCIDENT_REPORT
 
     def test_by_type(self) -> None:

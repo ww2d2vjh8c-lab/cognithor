@@ -387,8 +387,7 @@ class TrustedCircle:
     def pending_reviews(self) -> list[CuratedSkill]:
         """Skills die noch Reviews brauchen."""
         return [
-            s for s in self.curated_skills.values()
-            if not s.is_approved and s.rejection_count == 0
+            s for s in self.curated_skills.values() if not s.is_approved and s.rejection_count == 0
         ]
 
 
@@ -631,9 +630,7 @@ class CircleManager:
         public: bool = False,
     ) -> CuratedCollection:
         """Erstellt eine kuratierte Sammlung."""
-        collection_id = hashlib.sha256(
-            f"col:{name}:{maintainer_id}".encode()
-        ).hexdigest()[:12]
+        collection_id = hashlib.sha256(f"col:{name}:{maintainer_id}".encode()).hexdigest()[:12]
 
         collection = CuratedCollection(
             collection_id=collection_id,
@@ -660,10 +657,13 @@ class CircleManager:
         """Sucht in Sammlungen nach Name, Beschreibung oder Tags."""
         query_lower = query.lower()
         return [
-            c for c in self._collections.values()
-            if (query_lower in c.name.lower()
+            c
+            for c in self._collections.values()
+            if (
+                query_lower in c.name.lower()
                 or query_lower in c.description.lower()
-                or any(query_lower in t.lower() for t in c.tags))
+                or any(query_lower in t.lower() for t in c.tags)
+            )
         ]
 
     # ── Statistiken ──────────────────────────────────────────────
@@ -672,9 +672,7 @@ class CircleManager:
         """Ecosystem-Statistiken."""
         total_members = sum(c.member_count for c in self._circles.values())
         total_curated = sum(len(c.curated_skills) for c in self._circles.values())
-        total_approved = sum(
-            len(c.approved_skills()) for c in self._circles.values()
-        )
+        total_approved = sum(len(c.approved_skills()) for c in self._circles.values())
 
         return {
             "circles": len(self._circles),

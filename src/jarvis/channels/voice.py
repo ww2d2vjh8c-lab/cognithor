@@ -408,6 +408,7 @@ class VADDetector:
             # Integrity-Check: Model-State-Dict hashen
             if self.SILERO_MODEL_HASH:
                 import hashlib
+
                 state_bytes = str(sorted(self._model.state_dict().keys())).encode()
                 for key, param in sorted(self._model.state_dict().items()):
                     state_bytes += param.cpu().numpy().tobytes()

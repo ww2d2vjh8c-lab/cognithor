@@ -155,7 +155,9 @@ class TestTalkModeLoop:
 
     @pytest.mark.asyncio
     async def test_loop_with_confirmation_beep(
-        self, voice_channel: MagicMock, wake_detector: MagicMock,
+        self,
+        voice_channel: MagicMock,
+        wake_detector: MagicMock,
     ) -> None:
         tm = TalkMode(voice_channel, wake_detector, confirmation_beep=True)
         tm._active = True

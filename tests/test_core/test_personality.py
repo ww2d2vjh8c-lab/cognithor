@@ -24,15 +24,25 @@ def default_engine() -> PersonalityEngine:
 
 @pytest.fixture()
 def warm_engine() -> PersonalityEngine:
-    config = PersonalityConfig(warmth=0.9, humor=0.7, success_celebration=True,
-                                follow_up_questions=True, greeting_enabled=True)
+    config = PersonalityConfig(
+        warmth=0.9,
+        humor=0.7,
+        success_celebration=True,
+        follow_up_questions=True,
+        greeting_enabled=True,
+    )
     return PersonalityEngine(config)
 
 
 @pytest.fixture()
 def cold_engine() -> PersonalityEngine:
-    config = PersonalityConfig(warmth=0.0, humor=0.0, success_celebration=False,
-                                follow_up_questions=False, greeting_enabled=False)
+    config = PersonalityConfig(
+        warmth=0.0,
+        humor=0.0,
+        success_celebration=False,
+        follow_up_questions=False,
+        greeting_enabled=False,
+    )
     return PersonalityEngine(config)
 
 

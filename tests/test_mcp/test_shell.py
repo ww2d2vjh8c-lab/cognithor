@@ -51,6 +51,7 @@ def _path_in_result(expected_path: Path, result: str) -> bool:
             return True
     return False
 
+
 # =============================================================================
 # Fixtures
 # =============================================================================
@@ -133,7 +134,9 @@ class TestWorkingDirectory:
         assert _path_in_result(custom_dir, result)
 
     @pytest.mark.asyncio
-    async def test_working_dir_created_if_missing(self, shell: ShellTools, config: JarvisConfig) -> None:
+    async def test_working_dir_created_if_missing(
+        self, shell: ShellTools, config: JarvisConfig
+    ) -> None:
         """Fehlendes Working Directory wird automatisch erstellt (inside workspace)."""
         new_dir = config.workspace_dir / "auto_created"
         assert not new_dir.exists()
@@ -141,7 +144,9 @@ class TestWorkingDirectory:
         assert new_dir.exists()
 
     @pytest.mark.asyncio
-    async def test_working_dir_outside_workspace_rejected(self, shell: ShellTools, tmp_path: Path) -> None:
+    async def test_working_dir_outside_workspace_rejected(
+        self, shell: ShellTools, tmp_path: Path
+    ) -> None:
         """Arbeitsverzeichnis ausserhalb Workspace wird abgelehnt."""
         outside_dir = tmp_path / "outside"
         outside_dir.mkdir()

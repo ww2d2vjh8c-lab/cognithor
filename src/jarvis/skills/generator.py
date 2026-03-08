@@ -36,11 +36,24 @@ from jarvis.utils.logging import get_logger
 log = get_logger(__name__)
 
 # Standard-Pakete fuer generierte Skills
-DEFAULT_ALLOWED_PACKAGES = frozenset({
-    "json", "re", "math", "datetime", "collections",
-    "itertools", "functools", "pathlib", "textwrap",
-    "hashlib", "csv", "io", "string", "dataclasses",
-})
+DEFAULT_ALLOWED_PACKAGES = frozenset(
+    {
+        "json",
+        "re",
+        "math",
+        "datetime",
+        "collections",
+        "itertools",
+        "functools",
+        "pathlib",
+        "textwrap",
+        "hashlib",
+        "csv",
+        "io",
+        "string",
+        "dataclasses",
+    }
+)
 
 # Gap-Erkennung: Mindestanzahl Vorkommen bevor generiert wird
 DEFAULT_GAP_THRESHOLD = 2
@@ -325,7 +338,8 @@ class GapDetector:
             Priorisierte Liste von Gaps (höchste Priorität zuerst).
         """
         actionable = [
-            gap for gap in self._gaps.values()
+            gap
+            for gap in self._gaps.values()
             if gap.frequency >= self._gap_threshold
             or gap.gap_type == SkillGapType.USER_REQUEST  # Sofort handeln
         ]
@@ -350,14 +364,14 @@ class GapDetector:
     ) -> SkillGap:
         """Erstellt oder aktualisiert eine Gap."""
         # Kontext begrenzen
-        context = context[:self.MAX_CONTEXT_LENGTH]
+        context = context[: self.MAX_CONTEXT_LENGTH]
 
         if gap_id in self._gaps:
             gap = self._gaps[gap_id]
             gap.frequency += 1
             gap.last_seen = datetime.now(timezone.utc).isoformat()
             if context and context != gap.context:
-                gap.context = context[:self.MAX_CONTEXT_LENGTH]
+                gap.context = context[: self.MAX_CONTEXT_LENGTH]
             log.debug("gap_updated", id=gap_id, frequency=gap.frequency)
         else:
             # Eviction: bei Ueberlauf niedrigste Prioritaet entfernen
@@ -641,14 +655,25 @@ class SkillGenerator:
 
                 manifest = SkillManifest(
                     name=skill.module_name,
-                    version=str(skill.version) if "." in str(skill.version) else f"{skill.version}.0.0",
+                    version=str(skill.version)
+                    if "." in str(skill.version)
+                    else f"{skill.version}.0.0",
                     description=skill.description[:200] if skill.description else skill.name,
                     author="jarvis-autogen",
-                    trigger_keywords=list(skill.gap.trigger_examples) if hasattr(skill, "gap") and skill.gap and hasattr(skill.gap, "trigger_examples") else [],
-                    category=skill.gap.gap_type.value if hasattr(skill, "gap") and skill.gap and hasattr(skill.gap, "gap_type") else "general",
+                    trigger_keywords=list(skill.gap.trigger_examples)
+                    if hasattr(skill, "gap")
+                    and skill.gap
+                    and hasattr(skill.gap, "trigger_examples")
+                    else [],
+                    category=skill.gap.gap_type.value
+                    if hasattr(skill, "gap") and skill.gap and hasattr(skill.gap, "gap_type")
+                    else "general",
                 )
                 package = self._package_builder.build(
-                    manifest, skill.code, skill.test_code, skill.skill_markdown,
+                    manifest,
+                    skill.code,
+                    skill.test_code,
+                    skill.skill_markdown,
                 )
                 pkg_path = self._packages_dir / f"{package.package_id}.jarvis-skill"
                 pkg_path.write_bytes(package.to_bytes())
@@ -766,7 +791,7 @@ class SkillGenerator:
                     errors=skill.test_errors[:2],
                 )
                 error_context = f"\n\nFehler im vorherigen Versuch:\n{skill.test_output[:300]}"
-                gap.context = (gap.context + error_context)[:GapDetector.MAX_CONTEXT_LENGTH]
+                gap.context = (gap.context + error_context)[: GapDetector.MAX_CONTEXT_LENGTH]
                 skill = await self.generate(gap)
 
         if skill.test_passed:
@@ -813,7 +838,9 @@ class SkillGenerator:
     @staticmethod
     def _escape_for_string(text: str) -> str:
         """Escapes text for safe embedding in Python string literals."""
-        return text.replace("\\", "\\\\").replace('"', '\\"').replace("'", "\\'").replace("\n", "\\n")
+        return (
+            text.replace("\\", "\\\\").replace('"', '\\"').replace("'", "\\'").replace("\n", "\\n")
+        )
 
     def _generate_stub(self, gap: SkillGap) -> str:
         """Generiert einen Code-Stub wenn kein LLM verfügbar ist."""
@@ -887,7 +914,7 @@ class SkillGenerator:
             name: {safe_name}
             description: "{safe_desc}"
             category: auto_generated
-            trigger_keywords: [{safe_name.replace('_', ', ')}]
+            trigger_keywords: [{safe_name.replace("_", ", ")}]
             tools_required: [{tools}]
             enabled: true
             auto_generated: true
@@ -922,6 +949,7 @@ class SkillGenerator:
         """Extrahiert Python-Code aus LLM-Antwort (mit/ohne Markdown-Fences)."""
         # Suche nach ```python ... ``` Block
         import re
+
         match = re.search(r"```python\s*\n(.*?)```", text, re.DOTALL)
         if match:
             return match.group(1).strip()

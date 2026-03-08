@@ -198,7 +198,8 @@ class TestSignalSend:
         signal_ch._running = True
         with patch.object(signal_ch, "_send_text", new_callable=AsyncMock) as send:
             msg = OutgoingMessage(
-                channel="signal", text="Hi",
+                channel="signal",
+                text="Hi",
                 session_id="unknown",
                 metadata={"phone_number": "+491234567"},
             )
@@ -233,38 +234,50 @@ class TestSignalIncoming:
         await signal_ch._process_webhook_payload({"envelope": {}})  # Kein Crash
 
     @pytest.mark.asyncio
-    async def test_process_payload_blocked_number(self, signal_ch: SignalChannel, handler: AsyncMock) -> None:
+    async def test_process_payload_blocked_number(
+        self, signal_ch: SignalChannel, handler: AsyncMock
+    ) -> None:
         signal_ch._handler = handler
-        await signal_ch._process_webhook_payload({
-            "envelope": {
-                "sourceNumber": "+490000000",
-                "dataMessage": {"message": "hi"},
-            },
-        })
+        await signal_ch._process_webhook_payload(
+            {
+                "envelope": {
+                    "sourceNumber": "+490000000",
+                    "dataMessage": {"message": "hi"},
+                },
+            }
+        )
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_payload_no_data_msg(self, signal_ch: SignalChannel, handler: AsyncMock) -> None:
+    async def test_process_payload_no_data_msg(
+        self, signal_ch: SignalChannel, handler: AsyncMock
+    ) -> None:
         signal_ch._handler = handler
-        await signal_ch._process_webhook_payload({
-            "envelope": {"sourceNumber": "+491234567"},
-        })
+        await signal_ch._process_webhook_payload(
+            {
+                "envelope": {"sourceNumber": "+491234567"},
+            }
+        )
         handler.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_payload_text_message(self, signal_ch: SignalChannel, handler: AsyncMock) -> None:
+    async def test_process_payload_text_message(
+        self, signal_ch: SignalChannel, handler: AsyncMock
+    ) -> None:
         signal_ch._handler = handler
         with patch.object(signal_ch, "_send_text", new_callable=AsyncMock):
-            await signal_ch._process_webhook_payload({
-                "envelope": {
-                    "sourceNumber": "+491234567",
-                    "sourceName": "Alex",
-                    "dataMessage": {
-                        "message": "Hallo Signal",
-                        "timestamp": 12345,
+            await signal_ch._process_webhook_payload(
+                {
+                    "envelope": {
+                        "sourceNumber": "+491234567",
+                        "sourceName": "Alex",
+                        "dataMessage": {
+                            "message": "Hallo Signal",
+                            "timestamp": 12345,
+                        },
                     },
-                },
-            })
+                }
+            )
         handler.assert_called_once()
         incoming: IncomingMessage = handler.call_args[0][0]
         assert incoming.text == "Hallo Signal"
@@ -272,31 +285,41 @@ class TestSignalIncoming:
         assert incoming.metadata["phone_number"] == "+491234567"
 
     @pytest.mark.asyncio
-    async def test_process_payload_empty_text_with_attachment(self, signal_ch: SignalChannel, handler: AsyncMock) -> None:
+    async def test_process_payload_empty_text_with_attachment(
+        self, signal_ch: SignalChannel, handler: AsyncMock
+    ) -> None:
         signal_ch._handler = handler
         with patch.object(signal_ch, "_send_text", new_callable=AsyncMock):
-            await signal_ch._process_webhook_payload({
-                "envelope": {
-                    "sourceNumber": "+491234567",
-                    "dataMessage": {
-                        "message": "",
-                        "attachments": [{"id": "att1", "contentType": "image/png", "filename": "photo.png"}],
+            await signal_ch._process_webhook_payload(
+                {
+                    "envelope": {
+                        "sourceNumber": "+491234567",
+                        "dataMessage": {
+                            "message": "",
+                            "attachments": [
+                                {"id": "att1", "contentType": "image/png", "filename": "photo.png"}
+                            ],
+                        },
                     },
-                },
-            })
+                }
+            )
         handler.assert_called_once()
         incoming: IncomingMessage = handler.call_args[0][0]
         assert "Attachment" in incoming.text
 
     @pytest.mark.asyncio
-    async def test_process_payload_empty_text_no_attachment(self, signal_ch: SignalChannel, handler: AsyncMock) -> None:
+    async def test_process_payload_empty_text_no_attachment(
+        self, signal_ch: SignalChannel, handler: AsyncMock
+    ) -> None:
         signal_ch._handler = handler
-        await signal_ch._process_webhook_payload({
-            "envelope": {
-                "sourceNumber": "+491234567",
-                "dataMessage": {"message": ""},
-            },
-        })
+        await signal_ch._process_webhook_payload(
+            {
+                "envelope": {
+                    "sourceNumber": "+491234567",
+                    "dataMessage": {"message": ""},
+                },
+            }
+        )
         handler.assert_not_called()
 
     @pytest.mark.asyncio
@@ -308,15 +331,17 @@ class TestSignalIncoming:
         signal_ch._pending_approvals["sess-appr"] = future
 
         with patch.object(signal_ch, "_send_text", new_callable=AsyncMock):
-            await signal_ch._process_webhook_payload({
-                "envelope": {
-                    "sourceNumber": "+491234567",
-                    "dataMessage": {
-                        "message": "ja",
-                        "quote": {"text": "Genehmigung erforderlich - Tool: xyz"},
+            await signal_ch._process_webhook_payload(
+                {
+                    "envelope": {
+                        "sourceNumber": "+491234567",
+                        "dataMessage": {
+                            "message": "ja",
+                            "quote": {"text": "Genehmigung erforderlich - Tool: xyz"},
+                        },
                     },
-                },
-            })
+                }
+            )
         assert future.done()
         assert future.result() is True
 
@@ -325,17 +350,21 @@ class TestSignalIncoming:
         handler = AsyncMock(side_effect=RuntimeError("Boom"))
         signal_ch._handler = handler
         with patch.object(signal_ch, "_send_text", new_callable=AsyncMock) as send:
-            await signal_ch._process_webhook_payload({
-                "envelope": {
-                    "sourceNumber": "+491234567",
-                    "dataMessage": {"message": "crash"},
-                },
-            })
+            await signal_ch._process_webhook_payload(
+                {
+                    "envelope": {
+                        "sourceNumber": "+491234567",
+                        "dataMessage": {"message": "crash"},
+                    },
+                }
+            )
             # Fehlermeldung gesendet
             assert send.call_count >= 1
 
     @pytest.mark.asyncio
-    async def test_process_with_voice_transcription(self, signal_ch: SignalChannel, handler: AsyncMock) -> None:
+    async def test_process_with_voice_transcription(
+        self, signal_ch: SignalChannel, handler: AsyncMock
+    ) -> None:
         signal_ch._handler = handler
         mock_whisper = MagicMock()
         mock_segments = [MagicMock(text="Transkription")]
@@ -350,15 +379,23 @@ class TestSignalIncoming:
         signal_ch._http = mock_http
 
         with patch.object(signal_ch, "_send_text", new_callable=AsyncMock):
-            await signal_ch._process_webhook_payload({
-                "envelope": {
-                    "sourceNumber": "+491234567",
-                    "dataMessage": {
-                        "message": "",
-                        "attachments": [{"id": "voice1", "contentType": "audio/ogg", "filename": "voice.ogg"}],
+            await signal_ch._process_webhook_payload(
+                {
+                    "envelope": {
+                        "sourceNumber": "+491234567",
+                        "dataMessage": {
+                            "message": "",
+                            "attachments": [
+                                {
+                                    "id": "voice1",
+                                    "contentType": "audio/ogg",
+                                    "filename": "voice.ogg",
+                                }
+                            ],
+                        },
                     },
-                },
-            })
+                }
+            )
 
         handler.assert_called_once()
         incoming: IncomingMessage = handler.call_args[0][0]

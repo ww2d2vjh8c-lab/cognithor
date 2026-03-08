@@ -30,11 +30,13 @@ log = get_logger(__name__)
 
 # ── Notification Record ──────────────────────────────────────────
 
+
 class NotificationRecord:
     """Record einer gesendeten Notification."""
 
-    def __init__(self, channel_type: str, request_id: str,
-                 message: str, success: bool, error: str = "") -> None:
+    def __init__(
+        self, channel_type: str, request_id: str, message: str, success: bool, error: str = ""
+    ) -> None:
         self.channel_type = channel_type
         self.request_id = request_id
         self.message = message
@@ -56,6 +58,7 @@ class NotificationRecord:
 
 # ── Notifier ─────────────────────────────────────────────────────
 
+
 class HITLNotifier:
     """Multi-Channel-Notification-System für HITL-Requests."""
 
@@ -69,8 +72,7 @@ class HITLNotifier:
 
     # ── Registration ─────────────────────────────────────────────
 
-    def register_callback(self, name: str,
-                          handler: Callable[..., Awaitable[None]]) -> None:
+    def register_callback(self, name: str, handler: Callable[..., Awaitable[None]]) -> None:
         """Registriert einen benannten Callback."""
         self._callbacks[name] = handler
 
@@ -83,8 +85,9 @@ class HITLNotifier:
 
     # ── Send Notifications ───────────────────────────────────────
 
-    async def notify_new_request(self, request: ApprovalRequest,
-                                  channels: list[NotificationChannel] | None = None) -> int:
+    async def notify_new_request(
+        self, request: ApprovalRequest, channels: list[NotificationChannel] | None = None
+    ) -> int:
         """Benachrichtigt über eine neue Approval-Anfrage."""
         channels = channels or request.config.notifications
         if not channels:
@@ -101,8 +104,9 @@ class HITLNotifier:
 
         return sent
 
-    async def notify_reminder(self, request: ApprovalRequest,
-                               channels: list[NotificationChannel] | None = None) -> int:
+    async def notify_reminder(
+        self, request: ApprovalRequest, channels: list[NotificationChannel] | None = None
+    ) -> int:
         """Sendet Erinnerung für ausstehende Approval."""
         channels = channels or request.config.notifications
         if not channels:
@@ -119,9 +123,12 @@ class HITLNotifier:
 
         return sent
 
-    async def notify_resolved(self, request: ApprovalRequest,
-                               response: ApprovalResponse,
-                               channels: list[NotificationChannel] | None = None) -> int:
+    async def notify_resolved(
+        self,
+        request: ApprovalRequest,
+        response: ApprovalResponse,
+        channels: list[NotificationChannel] | None = None,
+    ) -> int:
         """Benachrichtigt über aufgelöste Approval."""
         channels = channels or request.config.notifications
         if not channels:
@@ -132,16 +139,18 @@ class HITLNotifier:
         for channel in channels:
             if not channel.enabled:
                 continue
-            message = self._render_message(channel, request, "resolved",
-                                            extra={"decision": response.decision.value})
+            message = self._render_message(
+                channel, request, "resolved", extra={"decision": response.decision.value}
+            )
             success = await self._send(channel, request.request_id, message, payload)
             if success:
                 sent += 1
 
         return sent
 
-    async def notify_escalated(self, request: ApprovalRequest,
-                                channels: list[NotificationChannel] | None = None) -> int:
+    async def notify_escalated(
+        self, request: ApprovalRequest, channels: list[NotificationChannel] | None = None
+    ) -> int:
         """Benachrichtigt über Eskalation."""
         channels = channels or request.config.notifications
         if not channels:
@@ -160,8 +169,9 @@ class HITLNotifier:
 
     # ── Internal Send ────────────────────────────────────────────
 
-    async def _send(self, channel: NotificationChannel, request_id: str,
-                    message: str, payload: dict[str, Any]) -> bool:
+    async def _send(
+        self, channel: NotificationChannel, request_id: str, message: str, payload: dict[str, Any]
+    ) -> bool:
         """Sendet eine Notification über den angegebenen Kanal."""
         try:
             success = False
@@ -171,12 +181,14 @@ class HITLNotifier:
                 success = True
 
             elif channel.channel_type == NotificationType.IN_APP:
-                self._in_app_queue.append({
-                    "request_id": request_id,
-                    "message": message,
-                    "payload": payload,
-                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                })
+                self._in_app_queue.append(
+                    {
+                        "request_id": request_id,
+                        "message": message,
+                        "payload": payload,
+                        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    }
+                )
                 success = True
 
             elif channel.channel_type == NotificationType.CALLBACK:
@@ -197,12 +209,14 @@ class HITLNotifier:
                     success = True  # Graceful: Kein Handler = OK
 
             elif channel.channel_type == NotificationType.EMAIL:
-                log.info("hitl_email_notification",
-                         to=channel.endpoint, request_id=request_id)
+                log.info("hitl_email_notification", to=channel.endpoint, request_id=request_id)
                 success = True  # Placeholder
 
             record = NotificationRecord(
-                channel.channel_type.value, request_id, message, success,
+                channel.channel_type.value,
+                request_id,
+                message,
+                success,
             )
             self._history.append(record)
             self._total_sent += 1
@@ -211,19 +225,27 @@ class HITLNotifier:
         except Exception as exc:
             self._total_errors += 1
             record = NotificationRecord(
-                channel.channel_type.value, request_id, message,
-                False, str(exc),
+                channel.channel_type.value,
+                request_id,
+                message,
+                False,
+                str(exc),
             )
             self._history.append(record)
-            log.warning("hitl_notification_error",
-                        channel=channel.channel_type.value, error=str(exc))
+            log.warning(
+                "hitl_notification_error", channel=channel.channel_type.value, error=str(exc)
+            )
             return False
 
     # ── Message Rendering ────────────────────────────────────────
 
-    def _render_message(self, channel: NotificationChannel,
-                        request: ApprovalRequest, event: str,
-                        extra: dict[str, str] | None = None) -> str:
+    def _render_message(
+        self,
+        channel: NotificationChannel,
+        request: ApprovalRequest,
+        event: str,
+        extra: dict[str, str] | None = None,
+    ) -> str:
         """Rendert eine Notification-Nachricht."""
         if channel.template:
             msg = channel.template

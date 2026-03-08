@@ -21,13 +21,19 @@ def mock_code_detector() -> MagicMock:
     detector = MagicMock()
     detector.analyze_directory.return_value = [
         CodeSmell(
-            file_path="test.py", line=10, smell_type="long_function",
-            severity="warning", message="Function foo is 60 lines",
+            file_path="test.py",
+            line=10,
+            smell_type="long_function",
+            severity="warning",
+            message="Function foo is 60 lines",
             suggestion="Split into smaller functions",
         ),
         CodeSmell(
-            file_path="test.py", line=50, smell_type="deep_nesting",
-            severity="warning", message="Function bar has nesting 5",
+            file_path="test.py",
+            line=50,
+            smell_type="deep_nesting",
+            severity="warning",
+            message="Function bar has nesting 5",
         ),
     ]
     return detector
@@ -172,19 +178,28 @@ class TestGetPriorityIssues:
             ),
         )
         report = RefactoringReport(
-            code_smells=[], architecture_findings=[],
-            summary="Empty", total_files_analyzed=0,
+            code_smells=[],
+            architecture_findings=[],
+            summary="Empty",
+            total_files_analyzed=0,
         )
         issues = agent.get_priority_issues(report)
         assert issues == []
 
-    def test_unknown_severity_gets_high_sort_key(self, agent: RefactoringAgent, src_dir: Path) -> None:
+    def test_unknown_severity_gets_high_sort_key(
+        self, agent: RefactoringAgent, src_dir: Path
+    ) -> None:
         report = agent.run_analysis(src_dir)
         # Add a smell with unknown severity
-        report.code_smells.append(CodeSmell(
-            file_path="x.py", line=1, smell_type="unknown",
-            severity="unknown", message="test",
-        ))
+        report.code_smells.append(
+            CodeSmell(
+                file_path="x.py",
+                line=1,
+                smell_type="unknown",
+                severity="unknown",
+                message="test",
+            )
+        )
         issues = agent.get_priority_issues(report)
         unknown = [i for i in issues if i["severity"] == "unknown"]
         assert len(unknown) == 1

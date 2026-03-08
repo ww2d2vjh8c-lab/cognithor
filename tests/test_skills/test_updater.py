@@ -103,25 +103,34 @@ class TestSkillUpdater:
         assert len(updater.auto_installable_updates()) == 1
 
     def test_security_update_auto(self) -> None:
-        updater = SkillUpdater(UpdatePolicy(
-            strategy=UpdateStrategy.NOTIFY, auto_security_updates=True,
-        ))
+        updater = SkillUpdater(
+            UpdatePolicy(
+                strategy=UpdateStrategy.NOTIFY,
+                auto_security_updates=True,
+            )
+        )
         updater.register_installed("a", "1.0.0")
         updater.check_update("a", "1.0.1", severity=UpdateSeverity.CRITICAL, signature_valid=True)
         assert len(updater.auto_installable_updates()) == 1
 
     def test_blocked_package_not_auto(self) -> None:
-        updater = SkillUpdater(UpdatePolicy(
-            strategy=UpdateStrategy.AUTO_ALL, blocked_packages=["a"],
-        ))
+        updater = SkillUpdater(
+            UpdatePolicy(
+                strategy=UpdateStrategy.AUTO_ALL,
+                blocked_packages=["a"],
+            )
+        )
         updater.register_installed("a", "1.0.0")
         updater.check_update("a", "1.1.0", signature_valid=True)
         assert len(updater.auto_installable_updates()) == 0
 
     def test_unsigned_not_auto(self) -> None:
-        updater = SkillUpdater(UpdatePolicy(
-            strategy=UpdateStrategy.AUTO_ALL, require_signature=True,
-        ))
+        updater = SkillUpdater(
+            UpdatePolicy(
+                strategy=UpdateStrategy.AUTO_ALL,
+                require_signature=True,
+            )
+        )
         updater.register_installed("a", "1.0.0")
         updater.check_update("a", "1.1.0", signature_valid=False)
         assert len(updater.auto_installable_updates()) == 0

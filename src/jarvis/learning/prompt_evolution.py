@@ -152,11 +152,14 @@ class PromptEvolutionEngine:
             (vid, template_name, template_text, now, is_active),
         )
         self._conn.commit()
-        logger.info("prompt_version_registered", template=template_name, version=vid,
-                     active=bool(is_active))
+        logger.info(
+            "prompt_version_registered", template=template_name, version=vid, active=bool(is_active)
+        )
         return vid
 
-    def get_active_version(self, template_name: str, session_id: str = "default") -> tuple[str, str]:
+    def get_active_version(
+        self, template_name: str, session_id: str = "default"
+    ) -> tuple[str, str]:
         """Get the prompt version to use for this session.
 
         If an A/B test is running, deterministically assigns the session to
@@ -240,9 +243,7 @@ class PromptEvolutionEngine:
             "SELECT COUNT(*) FROM ab_tests WHERE status = 'running'",
         ).fetchone()[0]
         if running_count >= self._max_concurrent_tests:
-            raise ValueError(
-                f"Max concurrent tests ({self._max_concurrent_tests}) reached"
-            )
+            raise ValueError(f"Max concurrent tests ({self._max_concurrent_tests}) reached")
 
         now = datetime.now(timezone.utc).isoformat()
         cursor = self._conn.execute(
@@ -252,8 +253,13 @@ class PromptEvolutionEngine:
         )
         self._conn.commit()
         test_id = cursor.lastrowid
-        logger.info("ab_test_started", test_id=test_id, template=template_name,
-                     a=version_a_id, b=version_b_id)
+        logger.info(
+            "ab_test_started",
+            test_id=test_id,
+            template=template_name,
+            a=version_a_id,
+            b=version_b_id,
+        )
         return test_id
 
     def evaluate_test(self, test_id: int) -> str | None:
@@ -262,22 +268,25 @@ class PromptEvolutionEngine:
         Returns the winner version_id, or None if not enough data or no
         significant difference.
         """
-        test = self._conn.execute(
-            "SELECT * FROM ab_tests WHERE id = ?", (test_id,)
-        ).fetchone()
+        test = self._conn.execute("SELECT * FROM ab_tests WHERE id = ?", (test_id,)).fetchone()
         if test is None:
             raise ValueError(f"A/B test {test_id} not found")
 
-        if test["sessions_a"] < self.MIN_SESSIONS_PER_ARM or \
-           test["sessions_b"] < self.MIN_SESSIONS_PER_ARM:
+        if (
+            test["sessions_a"] < self.MIN_SESSIONS_PER_ARM
+            or test["sessions_b"] < self.MIN_SESSIONS_PER_ARM
+        ):
             return None  # Not enough data
 
         diff = abs(test["avg_reward_a"] - test["avg_reward_b"])
         if diff < self.SIGNIFICANCE_THRESHOLD:
             return None  # No significant difference
 
-        winner_id = test["version_a_id"] if test["avg_reward_a"] >= test["avg_reward_b"] \
+        winner_id = (
+            test["version_a_id"]
+            if test["avg_reward_a"] >= test["avg_reward_b"]
             else test["version_b_id"]
+        )
 
         now = datetime.now(timezone.utc).isoformat()
         self._conn.execute(

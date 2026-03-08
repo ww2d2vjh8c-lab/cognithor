@@ -77,9 +77,7 @@ class TestTranscribeVoiceMessage:
         audio_b64 = base64.b64encode(b"\x00" * 50).decode()
 
         mock_media = MagicMock()
-        mock_media.transcribe_audio = AsyncMock(
-            return_value=MediaResult(success=True, text="   ")
-        )
+        mock_media.transcribe_audio = AsyncMock(return_value=MediaResult(success=True, text="   "))
         bridge._media = mock_media
 
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
@@ -195,11 +193,13 @@ class TestHandleWSVoiceMessage:
         bridge._media = mock_media
 
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
-            result = await bridge.handle_ws_voice_message({
-                "type": "voice_message",
-                "audio_base64": audio_b64,
-                "audio_type": "audio/webm",
-            })
+            result = await bridge.handle_ws_voice_message(
+                {
+                    "type": "voice_message",
+                    "audio_base64": audio_b64,
+                    "audio_type": "audio/webm",
+                }
+            )
 
         assert result["type"] == "voice_transcription"
         assert result["text"] == "Test Nachricht"
@@ -211,16 +211,16 @@ class TestHandleWSVoiceMessage:
         audio_b64 = base64.b64encode(b"\x00" * 50).decode()
 
         mock_media = MagicMock()
-        mock_media.transcribe_audio = AsyncMock(
-            return_value=MediaResult(success=True, text="")
-        )
+        mock_media.transcribe_audio = AsyncMock(return_value=MediaResult(success=True, text=""))
         bridge._media = mock_media
 
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
-            result = await bridge.handle_ws_voice_message({
-                "type": "voice_message",
-                "audio_base64": audio_b64,
-            })
+            result = await bridge.handle_ws_voice_message(
+                {
+                    "type": "voice_message",
+                    "audio_base64": audio_b64,
+                }
+            )
 
         assert result["type"] == "voice_transcription"
         assert result["text"] == ""

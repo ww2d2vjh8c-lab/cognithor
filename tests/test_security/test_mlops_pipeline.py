@@ -253,10 +253,15 @@ class TestCIIntegration:
         )
         # Manually add critical finding to test blocking
         if run.stages:
-            run.stages[0].findings.append(Finding(
-                finding_id="TEST-CRIT", stage="test", severity="critical",
-                title="Test Critical", description="Test",
-            ))
+            run.stages[0].findings.append(
+                Finding(
+                    finding_id="TEST-CRIT",
+                    stage="test",
+                    severity="critical",
+                    title="Test Critical",
+                    description="Test",
+                )
+            )
         ci = CIIntegration(pipeline, CIConfig(block_on_critical=True))
         gate = ci.pre_deploy_gate(run)
         assert gate["blocked"] is True

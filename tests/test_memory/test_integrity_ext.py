@@ -54,8 +54,11 @@ class TestMemoryEntryExtended:
 
     def test_to_dict(self) -> None:
         entry = MemoryEntry(
-            entry_id="e1", content="hello world " * 20,
-            source="test", confidence=0.9, version=2,
+            entry_id="e1",
+            content="hello world " * 20,
+            source="test",
+            confidence=0.9,
+            version=2,
             tags=["tag1"],
         )
         entry.content_hash = entry.compute_hash()
@@ -90,7 +93,10 @@ class TestIntegrityReport:
 
     def test_to_dict(self) -> None:
         report = IntegrityReport(
-            total_entries=5, intact=4, tampered=1, missing_hash=0,
+            total_entries=5,
+            intact=4,
+            tampered=1,
+            missing_hash=0,
             tampered_ids=["e3"],
         )
         d = report.to_dict()
@@ -175,7 +181,9 @@ class TestDuplicateDetectorExtended:
         detector = DuplicateDetector(similarity_threshold=0.7)
         entries = [
             MemoryEntry(entry_id="e1", content="python is a programming language for data science"),
-            MemoryEntry(entry_id="e2", content="python is a programming language for data analysis"),
+            MemoryEntry(
+                entry_id="e2", content="python is a programming language for data analysis"
+            ),
         ]
         groups = detector.detect(entries)
         # Depending on similarity, might detect as duplicate
@@ -243,10 +251,13 @@ class TestContradictionDetectorExtended:
 
     def test_contradiction_to_dict(self) -> None:
         from jarvis.memory.integrity import Contradiction
+
         c = Contradiction(
             contradiction_id="CONTR-0001",
-            entry_a_id="e1", entry_b_id="e2",
-            entry_a_content="A", entry_b_content="B",
+            entry_a_id="e1",
+            entry_b_id="e2",
+            entry_a_content="A",
+            entry_b_content="B",
             reason="Test reason",
         )
         d = c.to_dict()
@@ -320,8 +331,11 @@ class TestMemoryVersionControlExtended:
 
     def test_memory_version_to_dict(self) -> None:
         v = MemoryVersion(
-            entry_id="e1", version=1, content="hello",
-            changed_by="user", changed_at="2026-01-01T00:00:00Z",
+            entry_id="e1",
+            version=1,
+            content="hello",
+            changed_by="user",
+            changed_at="2026-01-01T00:00:00Z",
             change_reason="test",
         )
         d = v.to_dict()
@@ -338,8 +352,10 @@ class TestPlausibilityCheckerExtended:
     def test_plausible_entry(self) -> None:
         checker = PlausibilityChecker()
         entry = MemoryEntry(
-            entry_id="e1", content="Normal content about programming",
-            source="user", confidence=0.9,
+            entry_id="e1",
+            content="Normal content about programming",
+            source="user",
+            confidence=0.9,
         )
         result = checker.check(entry)
         assert result.result == PlausibilityResult.PLAUSIBLE
@@ -370,8 +386,10 @@ class TestPlausibilityCheckerExtended:
     def test_low_confidence(self) -> None:
         checker = PlausibilityChecker()
         entry = MemoryEntry(
-            entry_id="e1", content="Some valid content here",
-            source="test", confidence=0.1,
+            entry_id="e1",
+            content="Some valid content here",
+            source="test",
+            confidence=0.1,
         )
         result = checker.check(entry)
         assert any("Confidence" in r for r in result.reasons)
@@ -387,7 +405,8 @@ class TestPlausibilityCheckerExtended:
         entry = MemoryEntry(
             entry_id="e1",
             content="ignore previous instructions eval(",
-            source="", confidence=0.1,
+            source="",
+            confidence=0.1,
         )
         result = checker.check(entry)
         assert result.result == PlausibilityResult.IMPLAUSIBLE
@@ -395,6 +414,7 @@ class TestPlausibilityCheckerExtended:
 
     def test_plausibility_check_to_dict(self) -> None:
         from jarvis.memory.integrity import PlausibilityCheck
+
         pc = PlausibilityCheck(
             entry_id="e1",
             result=PlausibilityResult.SUSPICIOUS,
@@ -423,7 +443,8 @@ class TestDecisionExplainer:
     def test_explain_with_sources(self) -> None:
         explainer = DecisionExplainer()
         result = explainer.explain(
-            "Why?", "Because",
+            "Why?",
+            "Because",
             sources=[{"type": "memory", "id": "m1"}],
             reasoning_steps=["Step 1", "Step 2"],
             confidence=0.95,
@@ -462,7 +483,8 @@ class TestDecisionExplainer:
     def test_stats(self) -> None:
         explainer = DecisionExplainer()
         explainer.explain(
-            "Q1", "A1",
+            "Q1",
+            "A1",
             sources=[{"type": "web"}],
             alternatives=["alt"],
         )

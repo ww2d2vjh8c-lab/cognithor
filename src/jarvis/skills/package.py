@@ -275,7 +275,9 @@ class PackageSigner:
         import hmac as hmac_mod
 
         sig = hmac_mod.new(
-            self._key.encode(), content, hashlib.sha256,
+            self._key.encode(),
+            content,
+            hashlib.sha256,
         ).hexdigest()
 
         return PackageSignature(
@@ -301,7 +303,9 @@ class PackageSigner:
             return False
 
         expected = hmac_mod.new(
-            self._key.encode(), content, hashlib.sha256,
+            self._key.encode(),
+            content,
+            hashlib.sha256,
         ).hexdigest()
 
         return hmac_mod.compare_digest(expected, signature.signature)
@@ -400,9 +404,7 @@ class CodeAnalyzer:
 
         # Code-Länge prüfen
         if lines > self._max_lines:
-            suspicious.append(
-                f"Code hat {lines} Zeilen (>{self._max_lines} -- ungewöhnlich lang)"
-            )
+            suspicious.append(f"Code hat {lines} Zeilen (>{self._max_lines} -- ungewöhnlich lang)")
 
         # Kommentare und Strings entfernen für zuverlässigere Analyse
         clean_code = self._strip_comments_and_strings(code)
@@ -457,20 +459,20 @@ class CodeAnalyzer:
 
         # Netzwerk-Code ohne Permission
         if not manifest.network_allowed and re.search(
-            r"\b(?:requests|httpx|urllib|aiohttp)\b", code,
+            r"\b(?:requests|httpx|urllib|aiohttp)\b",
+            code,
         ):
             findings.append(
-                "Code referenziert Netzwerk-Bibliotheken, "
-                "aber network_allowed=False im Manifest"
+                "Code referenziert Netzwerk-Bibliotheken, aber network_allowed=False im Manifest"
             )
 
         # Datei-Schreiben ohne Permission
         if "file_write" not in perms and re.search(
-            r"\bopen\s*\([^)]*['\"]w", code,
+            r"\bopen\s*\([^)]*['\"]w",
+            code,
         ):
             findings.append(
-                "Code öffnet Dateien zum Schreiben, "
-                "aber file_write nicht in Permissions"
+                "Code öffnet Dateien zum Schreiben, aber file_write nicht in Permissions"
             )
 
         return findings
@@ -548,20 +550,28 @@ class SkillPackage:
 
             # Signatur
             if self.signature:
-                sig_data = json.dumps({
-                    "signer_id": self.signature.signer_id,
-                    "signature": self.signature.signature,
-                    "algorithm": self.signature.algorithm,
-                    "timestamp": self.signature.timestamp,
-                }).encode()
+                sig_data = json.dumps(
+                    {
+                        "signer_id": self.signature.signer_id,
+                        "signature": self.signature.signature,
+                        "algorithm": self.signature.algorithm,
+                        "timestamp": self.signature.timestamp,
+                    }
+                ).encode()
                 self._add_bytes_to_tar(tar, "signature.json", sig_data)
 
         return buf.getvalue()
 
     # Allowed file names inside a skill package (zip-slip protection)
-    _ALLOWED_MEMBERS = frozenset({
-        "manifest.json", "skill.py", "test_skill.py", "skill.md", "signature.json",
-    })
+    _ALLOWED_MEMBERS = frozenset(
+        {
+            "manifest.json",
+            "skill.py",
+            "test_skill.py",
+            "skill.md",
+            "signature.json",
+        }
+    )
 
     @classmethod
     def from_bytes(cls, data: bytes) -> SkillPackage:
@@ -581,9 +591,7 @@ class SkillPackage:
                     )
                     continue
                 if ".." in member.name or member.name.startswith("/"):
-                    raise ValueError(
-                        f"Pfad-Traversal erkannt im Paket: {member.name}"
-                    )
+                    raise ValueError(f"Pfad-Traversal erkannt im Paket: {member.name}")
                 if member.size > max_member_size:
                     raise ValueError(
                         f"Paket-Mitglied zu gross: {member.name} ({member.size:,} > {max_member_size:,} Bytes)"
@@ -717,7 +725,9 @@ class PackageBuilder:
 
         logger.info(
             "Paket erstellt: %s (hash=%s, signiert=%s)",
-            package.package_id, content_hash[:8], package.is_signed,
+            package.package_id,
+            content_hash[:8],
+            package.is_signed,
         )
         return package
 
@@ -811,9 +821,7 @@ class PackageInstaller:
         # 2. Signatur-Integrität
         if package.is_signed and self._signer:
             signable = (
-                package.manifest.name
-                + package.manifest.version
-                + package.content_hash
+                package.manifest.name + package.manifest.version + package.content_hash
             ).encode()
             if not self._signer.verify(signable, package.signature):
                 return InstallResult(
@@ -861,7 +869,9 @@ class PackageInstaller:
         self._installed[package.manifest.name] = package
 
         logger.info(
-            "Paket installiert: %s → %s", pkg_id, skill_dir,
+            "Paket installiert: %s → %s",
+            pkg_id,
+            skill_dir,
         )
         return InstallResult(
             success=True,

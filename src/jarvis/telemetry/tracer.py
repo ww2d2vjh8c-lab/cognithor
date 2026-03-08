@@ -46,6 +46,7 @@ _current_span: contextvars.ContextVar[Span | None] = contextvars.ContextVar(
 
 # ── Sampler ──────────────────────────────────────────────────────
 
+
 class Sampler:
     """Basis-Sampler -- entscheidet ob ein Trace aufgezeichnet wird."""
 
@@ -55,11 +56,13 @@ class Sampler:
 
 class AlwaysOnSampler(Sampler):
     """Zeichnet jeden Trace auf."""
+
     pass
 
 
 class AlwaysOffSampler(Sampler):
     """Zeichnet keinen Trace auf."""
+
     def should_sample(self, trace_id: str, name: str) -> bool:
         return False
 
@@ -98,6 +101,7 @@ class RateBasedSampler(Sampler):
 
 # ── Span Processor ───────────────────────────────────────────────
 
+
 class SpanProcessor:
     """Verarbeitet Spans nach Abschluss."""
 
@@ -132,8 +136,10 @@ class ConsoleProcessor(SpanProcessor):
     """Gibt Spans auf der Konsole aus."""
 
     def on_end(self, span: Span) -> None:
-        status = "OK" if span.status_code == StatusCode.OK else (
-            "ERROR" if span.status_code == StatusCode.ERROR else "UNSET"
+        status = (
+            "OK"
+            if span.status_code == StatusCode.OK
+            else ("ERROR" if span.status_code == StatusCode.ERROR else "UNSET")
         )
         log.info(
             "span_ended",
@@ -148,9 +154,12 @@ class ConsoleProcessor(SpanProcessor):
 class BatchProcessor(SpanProcessor):
     """Sammelt Spans und exportiert sie in Batches."""
 
-    def __init__(self, exporter: SpanExporter | None = None,
-                 max_batch_size: int = 100,
-                 flush_interval_seconds: float = 5.0) -> None:
+    def __init__(
+        self,
+        exporter: SpanExporter | None = None,
+        max_batch_size: int = 100,
+        flush_interval_seconds: float = 5.0,
+    ) -> None:
         self._exporter = exporter
         self._batch: list[Span] = []
         self._max_batch = max_batch_size
@@ -160,8 +169,7 @@ class BatchProcessor(SpanProcessor):
     def on_end(self, span: Span) -> None:
         self._batch.append(span)
         now = time.monotonic()
-        if (len(self._batch) >= self._max_batch or
-                now - self._last_flush >= self._flush_interval):
+        if len(self._batch) >= self._max_batch or now - self._last_flush >= self._flush_interval:
             self.flush()
 
     def flush(self) -> None:
@@ -175,6 +183,7 @@ class BatchProcessor(SpanProcessor):
 
 
 # ── Span Exporter ────────────────────────────────────────────────
+
 
 class SpanExporter:
     """Basis-Interface für Span-Export."""
@@ -201,6 +210,7 @@ class OTLPJsonExporter(SpanExporter):
             try:
                 import json
                 from pathlib import Path
+
                 path = Path(self._file_path)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "a", encoding="utf-8") as f:
@@ -246,6 +256,7 @@ class OTLPJsonExporter(SpanExporter):
 
 
 # ── TracerProvider ───────────────────────────────────────────────
+
 
 class TracerProvider:
     """Zentrale Instanz für Distributed Tracing.
@@ -369,8 +380,7 @@ class TracerProvider:
         return self._traces.get(trace_id)
 
     def get_recent_traces(self, limit: int = 20) -> list[Trace]:
-        traces = sorted(self._traces.values(),
-                        key=lambda t: t.started_at, reverse=True)
+        traces = sorted(self._traces.values(), key=lambda t: t.started_at, reverse=True)
         return traces[:limit]
 
     def get_current_span(self) -> Span | None:
@@ -414,6 +424,7 @@ class TracerProvider:
 
 
 # ── SpanContextManager ──────────────────────────────────────────
+
 
 class SpanContextManager:
     """Context-Manager für automatisches Span-Lifecycle."""

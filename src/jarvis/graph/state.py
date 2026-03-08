@@ -72,10 +72,12 @@ class StateManager:
         if execution_id in self._executions:
             self._executions[execution_id].checkpoints.append(cp.checkpoint_id)
 
-        log.debug("checkpoint_created",
-                  checkpoint_id=cp.checkpoint_id,
-                  execution_id=execution_id,
-                  node=current_node)
+        log.debug(
+            "checkpoint_created",
+            checkpoint_id=cp.checkpoint_id,
+            execution_id=execution_id,
+            node=current_node,
+        )
         return cp
 
     def get_checkpoint(self, checkpoint_id: str) -> Checkpoint | None:
@@ -86,16 +88,12 @@ class StateManager:
 
     def get_latest_checkpoint(self, execution_id: str) -> Checkpoint | None:
         """Gibt den neuesten Checkpoint einer Execution zurück."""
-        candidates = [
-            cp for cp in self._checkpoints.values()
-            if cp.execution_id == execution_id
-        ]
+        candidates = [cp for cp in self._checkpoints.values() if cp.execution_id == execution_id]
         if not candidates:
             # Auch von Disk laden
             self._load_execution_checkpoints(execution_id)
             candidates = [
-                cp for cp in self._checkpoints.values()
-                if cp.execution_id == execution_id
+                cp for cp in self._checkpoints.values() if cp.execution_id == execution_id
             ]
         if not candidates:
             return None
@@ -112,8 +110,7 @@ class StateManager:
     def list_checkpoints(self, execution_id: str = "") -> list[Checkpoint]:
         """Listet Checkpoints, optional gefiltert nach Execution."""
         if execution_id:
-            return [cp for cp in self._checkpoints.values()
-                    if cp.execution_id == execution_id]
+            return [cp for cp in self._checkpoints.values() if cp.execution_id == execution_id]
         return list(self._checkpoints.values())
 
     # ── State Restore ────────────────────────────────────────────
@@ -140,8 +137,7 @@ class StateManager:
 
     # ── Execution Records ────────────────────────────────────────
 
-    def create_execution(self, graph_name: str,
-                         initial_state: GraphState) -> ExecutionRecord:
+    def create_execution(self, graph_name: str, initial_state: GraphState) -> ExecutionRecord:
         """Erstellt einen neuen Execution-Record."""
         record = ExecutionRecord(
             graph_name=graph_name,
@@ -158,8 +154,9 @@ class StateManager:
     def update_execution(self, record: ExecutionRecord) -> None:
         self._executions[record.execution_id] = record
 
-    def list_executions(self, *, status: ExecutionStatus | None = None,
-                        limit: int = 50) -> list[ExecutionRecord]:
+    def list_executions(
+        self, *, status: ExecutionStatus | None = None, limit: int = 50
+    ) -> list[ExecutionRecord]:
         records = list(self._executions.values())
         if status:
             records = [r for r in records if r.status == status]
@@ -175,6 +172,7 @@ class StateManager:
             return False
         try:
             import os
+
             self._ensure_dir()
             path = self._checkpoint_path(checkpoint_id)
             tmp = path.with_suffix(".tmp")
@@ -234,6 +232,7 @@ class StateManager:
             cp = self._checkpoints[cp_id]
             try:
                 import calendar
+
                 ts = calendar.timegm(time.strptime(cp.created_at, "%Y-%m-%dT%H:%M:%SZ"))
                 if ts < cutoff:
                     self.delete_checkpoint(cp_id)
@@ -244,7 +243,7 @@ class StateManager:
         # Max-Limit
         if len(self._checkpoints) > max_checkpoints:
             sorted_cps = sorted(self._checkpoints.values(), key=lambda c: c.created_at)
-            for cp in sorted_cps[:len(self._checkpoints) - max_checkpoints]:
+            for cp in sorted_cps[: len(self._checkpoints) - max_checkpoints]:
                 self.delete_checkpoint(cp.checkpoint_id)
                 removed += 1
 
@@ -257,7 +256,8 @@ class StateManager:
             "checkpoints": len(self._checkpoints),
             "executions": len(self._executions),
             "active_executions": sum(
-                1 for r in self._executions.values()
+                1
+                for r in self._executions.values()
                 if r.status in (ExecutionStatus.RUNNING, ExecutionStatus.PAUSED)
             ),
             "storage_dir": str(self._storage_dir),

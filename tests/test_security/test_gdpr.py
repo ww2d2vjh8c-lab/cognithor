@@ -86,9 +86,18 @@ class TestDataProcessingRecord:
         rec = DataProcessingRecord(record_id="x")
         d = rec.to_dict()
         expected_keys = {
-            "record_id", "user_id", "timestamp", "category", "purpose",
-            "legal_basis", "tool_name", "data_summary", "data_hash",
-            "retention_days", "third_party", "country",
+            "record_id",
+            "user_id",
+            "timestamp",
+            "category",
+            "purpose",
+            "legal_basis",
+            "tool_name",
+            "data_summary",
+            "data_hash",
+            "retention_days",
+            "third_party",
+            "country",
         }
         assert set(d.keys()) == expected_keys
 
@@ -225,7 +234,14 @@ class TestModelUsageLog:
     def test_usage_summary(self) -> None:
         log = ModelUsageLog()
         log.record("u1", "qwen3:8b", prompt_tokens=100, completion_tokens=50, latency_ms=200.0)
-        log.record("u1", "qwen3:8b", prompt_tokens=80, completion_tokens=40, latency_ms=150.0, contains_pii=True)
+        log.record(
+            "u1",
+            "qwen3:8b",
+            prompt_tokens=80,
+            completion_tokens=40,
+            latency_ms=150.0,
+            contains_pii=True,
+        )
         log.record("u1", "qwen3:32b", prompt_tokens=200, completion_tokens=100, success=False)
         summary = log.usage_summary()
         assert summary["qwen3:8b"]["calls"] == 2
@@ -277,15 +293,21 @@ class TestRetentionEnforcer:
 
     def test_add_policy(self) -> None:
         enforcer = RetentionEnforcer(policies=[])
-        enforcer.add_policy(RetentionPolicy(
-            name="test", category=DataCategory.QUERY, retention_days=7,
-        ))
+        enforcer.add_policy(
+            RetentionPolicy(
+                name="test",
+                category=DataCategory.QUERY,
+                retention_days=7,
+            )
+        )
         assert DataCategory.QUERY in enforcer.policies
 
     def test_find_expired(self) -> None:
-        enforcer = RetentionEnforcer(policies=[
-            RetentionPolicy(name="q", category=DataCategory.QUERY, retention_days=30),
-        ])
+        enforcer = RetentionEnforcer(
+            policies=[
+                RetentionPolicy(name="q", category=DataCategory.QUERY, retention_days=30),
+            ]
+        )
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         old_time = (now - timedelta(days=60)).isoformat()
         new_time = (now - timedelta(days=10)).isoformat()
@@ -299,9 +321,11 @@ class TestRetentionEnforcer:
         assert expired[0][0].record_id == "r1"
 
     def test_immediate_deletion_policy(self) -> None:
-        enforcer = RetentionEnforcer(policies=[
-            RetentionPolicy(name="cred", category=DataCategory.CREDENTIAL, retention_days=0),
-        ])
+        enforcer = RetentionEnforcer(
+            policies=[
+                RetentionPolicy(name="cred", category=DataCategory.CREDENTIAL, retention_days=0),
+            ]
+        )
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         records = [
             DataProcessingRecord(
@@ -314,26 +338,37 @@ class TestRetentionEnforcer:
         assert len(expired) == 1
 
     def test_enforce_deletes(self) -> None:
-        enforcer = RetentionEnforcer(policies=[
-            RetentionPolicy(
-                name="q", category=DataCategory.QUERY,
-                retention_days=30, action=RetentionAction.DELETE,
-            ),
-        ])
+        enforcer = RetentionEnforcer(
+            policies=[
+                RetentionPolicy(
+                    name="q",
+                    category=DataCategory.QUERY,
+                    retention_days=30,
+                    action=RetentionAction.DELETE,
+                ),
+            ]
+        )
         log = DataProcessingLog()
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         old_time = (now - timedelta(days=60)).isoformat()
 
         # Manually insert a record with old timestamp
-        log._records.append(DataProcessingRecord(
-            record_id="r1", user_id="u1", timestamp=old_time,
-            category=DataCategory.QUERY,
-        ))
-        log._records.append(DataProcessingRecord(
-            record_id="r2", user_id="u1",
-            timestamp=now.isoformat(),
-            category=DataCategory.QUERY,
-        ))
+        log._records.append(
+            DataProcessingRecord(
+                record_id="r1",
+                user_id="u1",
+                timestamp=old_time,
+                category=DataCategory.QUERY,
+            )
+        )
+        log._records.append(
+            DataProcessingRecord(
+                record_id="r2",
+                user_id="u1",
+                timestamp=now.isoformat(),
+                category=DataCategory.QUERY,
+            )
+        )
 
         counts = enforcer.enforce(log, now=now)
         assert counts.get("delete", 0) == 1
@@ -341,20 +376,27 @@ class TestRetentionEnforcer:
         assert log.records[0].record_id == "r2"
 
     def test_enforce_anonymize_counted(self) -> None:
-        enforcer = RetentionEnforcer(policies=[
-            RetentionPolicy(
-                name="conv", category=DataCategory.CONVERSATION,
-                retention_days=30, action=RetentionAction.ANONYMIZE,
-            ),
-        ])
+        enforcer = RetentionEnforcer(
+            policies=[
+                RetentionPolicy(
+                    name="conv",
+                    category=DataCategory.CONVERSATION,
+                    retention_days=30,
+                    action=RetentionAction.ANONYMIZE,
+                ),
+            ]
+        )
         log = DataProcessingLog()
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         old_time = (now - timedelta(days=60)).isoformat()
 
-        log._records.append(DataProcessingRecord(
-            record_id="r1", timestamp=old_time,
-            category=DataCategory.CONVERSATION,
-        ))
+        log._records.append(
+            DataProcessingRecord(
+                record_id="r1",
+                timestamp=old_time,
+                category=DataCategory.CONVERSATION,
+            )
+        )
         counts = enforcer.enforce(log, now=now)
         assert counts.get("anonymize", 0) == 1
         # Anonymize doesn't delete
@@ -491,18 +533,26 @@ class TestGDPRComplianceManager:
         assert len(mgr.usage_log.records) == 1
 
     def test_enforce_retention(self) -> None:
-        mgr = GDPRComplianceManager(retention_policies=[
-            RetentionPolicy(
-                name="q", category=DataCategory.QUERY,
-                retention_days=1, action=RetentionAction.DELETE,
-            ),
-        ])
+        mgr = GDPRComplianceManager(
+            retention_policies=[
+                RetentionPolicy(
+                    name="q",
+                    category=DataCategory.QUERY,
+                    retention_days=1,
+                    action=RetentionAction.DELETE,
+                ),
+            ]
+        )
         now = datetime(2026, 3, 5, tzinfo=timezone.utc)
         old_time = (now - timedelta(days=10)).isoformat()
-        mgr.processing_log._records.append(DataProcessingRecord(
-            record_id="r1", user_id="u1", timestamp=old_time,
-            category=DataCategory.QUERY,
-        ))
+        mgr.processing_log._records.append(
+            DataProcessingRecord(
+                record_id="r1",
+                user_id="u1",
+                timestamp=old_time,
+                category=DataCategory.QUERY,
+            )
+        )
         counts = mgr.enforce_retention(now=now)
         assert counts.get("delete", 0) == 1
 

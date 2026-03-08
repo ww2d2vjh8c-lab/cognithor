@@ -138,7 +138,11 @@ class WebUIChannel(Channel):
 
         # TLS-Warning für externe Hosts
         if self._host not in ("127.0.0.1", "localhost", "::1") and not self._ssl_certfile:
-            log.warning("webui_no_tls", host=self._host, message="WARNUNG: WebUI auf externem Host ohne TLS!")
+            log.warning(
+                "webui_no_tls",
+                host=self._host,
+                message="WARNUNG: WebUI auf externem Host ohne TLS!",
+            )
 
         log.info("webui_channel_starting", host=self._host, port=self._port)
 
@@ -359,24 +363,26 @@ class WebUIChannel(Channel):
 
                 if self._api_token:
                     import hmac as _hmac
+
                     try:
                         auth_raw = await asyncio.wait_for(
-                            websocket.receive_text(), timeout=10.0,
+                            websocket.receive_text(),
+                            timeout=10.0,
                         )
                         auth_msg = json.loads(auth_raw)
                         client_token = (
-                            auth_msg.get("token", "")
-                            if auth_msg.get("type") == "auth"
-                            else ""
+                            auth_msg.get("token", "") if auth_msg.get("type") == "auth" else ""
                         )
                     except (asyncio.TimeoutError, Exception):
                         client_token = ""
                     if not _hmac.compare_digest(client_token, self._api_token):
                         try:
-                            await websocket.send_json({
-                                "type": "error",
-                                "error": "Unauthorized",
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "error",
+                                    "error": "Unauthorized",
+                                }
+                            )
                         except Exception:
                             pass
                         await websocket.close(code=4001, reason="Unauthorized")
@@ -413,8 +419,11 @@ class WebUIChannel(Channel):
             if getattr(self, "_config_manager", None) is not None:
                 try:
                     from jarvis.channels.config_routes import create_config_routes
+
                     create_config_routes(
-                        app, self._config_manager, verify_token_dep=Depends(verify_token),
+                        app,
+                        self._config_manager,
+                        verify_token_dep=Depends(verify_token),
                     )
                     log.info("config_routes_registered", source="shared_manager")
                 except Exception as exc:
@@ -443,6 +452,7 @@ class WebUIChannel(Channel):
 
     def _dummy_app(self) -> Any:
         """Return a minimal stand-in for a FastAPI application."""
+
         class DummyApp:
             def __init__(self) -> None:
                 self.title = "Jarvis Web UI (stub)"
@@ -613,19 +623,25 @@ class WebUIChannel(Channel):
         # Geschätzte Dateigrösse prüfen
         estimated_size = len(audio_b64) * 3 // 4
         if estimated_size > MAX_UPLOAD_SIZE:
-            await self._ws_send(ws, {
-                "type": WSMessageType.ERROR,
-                "error": f"Audiodatei zu gross ({estimated_size // 1_048_576} MB, max {MAX_UPLOAD_SIZE // 1_048_576} MB)",
-            })
+            await self._ws_send(
+                ws,
+                {
+                    "type": WSMessageType.ERROR,
+                    "error": f"Audiodatei zu gross ({estimated_size // 1_048_576} MB, max {MAX_UPLOAD_SIZE // 1_048_576} MB)",
+                },
+            )
             return None
 
         # Benachrichtigung: Transkription läuft
-        await self._ws_send(ws, {
-            "type": WSMessageType.TOOL_START,
-            "tool": "voice_transcription",
-            "data": {"status": "Sprachnachricht wird transkribiert..."},
-            "session_id": session_id,
-        })
+        await self._ws_send(
+            ws,
+            {
+                "type": WSMessageType.TOOL_START,
+                "tool": "voice_transcription",
+                "data": {"status": "Sprachnachricht wird transkribiert..."},
+                "session_id": session_id,
+            },
+        )
 
         tmp_path: str | None = None
         wav_path: str | None = None
@@ -642,7 +658,15 @@ class WebUIChannel(Channel):
             wav_path = tmp_path + ".wav"
             try:
                 proc = await asyncio.create_subprocess_exec(
-                    "ffmpeg", "-i", tmp_path, "-ar", "16000", "-ac", "1", "-y", wav_path,
+                    "ffmpeg",
+                    "-i",
+                    tmp_path,
+                    "-ar",
+                    "16000",
+                    "-ac",
+                    "1",
+                    "-y",
+                    wav_path,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
@@ -660,37 +684,51 @@ class WebUIChannel(Channel):
                 result = await pipeline.transcribe_audio(wav_path)
 
                 if result.success and result.text.strip():
-                    log.info("voice_bridge_transcribed", text=result.text[:100], session_id=session_id)
+                    log.info(
+                        "voice_bridge_transcribed", text=result.text[:100], session_id=session_id
+                    )
 
                     # Transkription dem User anzeigen
-                    await self._ws_send(ws, {
-                        "type": WSMessageType.TOOL_RESULT,
-                        "tool": "voice_transcription",
-                        "data": {"transcription": result.text},
-                        "session_id": session_id,
-                    })
+                    await self._ws_send(
+                        ws,
+                        {
+                            "type": WSMessageType.TOOL_RESULT,
+                            "tool": "voice_transcription",
+                            "data": {"transcription": result.text},
+                            "session_id": session_id,
+                        },
+                    )
 
                     return f"🎤 {result.text}"
                 else:
-                    await self._ws_send(ws, {
-                        "type": WSMessageType.ERROR,
-                        "error": result.error or "Keine Sprache erkannt",
-                    })
+                    await self._ws_send(
+                        ws,
+                        {
+                            "type": WSMessageType.ERROR,
+                            "error": result.error or "Keine Sprache erkannt",
+                        },
+                    )
                     return None
 
             except ImportError:
-                await self._ws_send(ws, {
-                    "type": WSMessageType.ERROR,
-                    "error": "faster-whisper nicht installiert. Voice-Transkription nicht verfügbar.",
-                })
+                await self._ws_send(
+                    ws,
+                    {
+                        "type": WSMessageType.ERROR,
+                        "error": "faster-whisper nicht installiert. Voice-Transkription nicht verfügbar.",
+                    },
+                )
                 return None
 
         except Exception as exc:
             log.error("voice_bridge_error", error=str(exc), session_id=session_id)
-            await self._ws_send(ws, {
-                "type": WSMessageType.ERROR,
-                "error": "Voice-Transkription fehlgeschlagen.",
-            })
+            await self._ws_send(
+                ws,
+                {
+                    "type": WSMessageType.ERROR,
+                    "error": "Voice-Transkription fehlgeschlagen.",
+                },
+            )
             return None
         finally:
             # Temporäre Dateien aufräumen
@@ -728,10 +766,13 @@ class WebUIChannel(Channel):
         # Geschätzte Dateigrösse prüfen (Base64 → ~75% Originalgrösse)
         estimated_size = len(file_b64) * 3 // 4
         if estimated_size > MAX_UPLOAD_SIZE:
-            await self._ws_send(ws, {
-                "type": WSMessageType.ERROR,
-                "error": f"Datei zu gross ({estimated_size // 1_048_576} MB, max {MAX_UPLOAD_SIZE // 1_048_576} MB)",
-            })
+            await self._ws_send(
+                ws,
+                {
+                    "type": WSMessageType.ERROR,
+                    "error": f"Datei zu gross ({estimated_size // 1_048_576} MB, max {MAX_UPLOAD_SIZE // 1_048_576} MB)",
+                },
+            )
             return None
 
         try:
@@ -776,10 +817,13 @@ class WebUIChannel(Channel):
 
         except Exception as exc:
             log.error("file_upload_error", error=str(exc))
-            await self._ws_send(ws, {
-                "type": WSMessageType.ERROR,
-                "error": "Datei-Upload fehlgeschlagen.",
-            })
+            await self._ws_send(
+                ws,
+                {
+                    "type": WSMessageType.ERROR,
+                    "error": "Datei-Upload fehlgeschlagen.",
+                },
+            )
             return None
 
     async def _ws_send(self, ws: Any, data: dict[str, Any]) -> None:

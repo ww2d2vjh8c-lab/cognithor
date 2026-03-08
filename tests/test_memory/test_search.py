@@ -70,7 +70,11 @@ def search(index: MemoryIndex, embedding_client: EmbeddingClient) -> HybridSearc
 class TestBM25OnlySearch:
     def test_basic_search(self, search: HybridSearch, index: MemoryIndex):
         chunks = [
-            Chunk(text="Projektplanung Recherche Zusammenfassung", source_path="a.md", content_hash="h1"),
+            Chunk(
+                text="Projektplanung Recherche Zusammenfassung",
+                source_path="a.md",
+                content_hash="h1",
+            ),
             Chunk(text="Haftpflichtversicherung privat", source_path="b.md", content_hash="h2"),
         ]
         index.upsert_chunks(chunks)

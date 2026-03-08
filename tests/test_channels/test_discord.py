@@ -87,7 +87,9 @@ class TestDiscordProperties:
 class TestDiscordIncoming:
     @pytest.mark.asyncio
     async def test_on_message_calls_handler(
-        self, discord_ch: DiscordChannel, handler: AsyncMock,
+        self,
+        discord_ch: DiscordChannel,
+        handler: AsyncMock,
     ) -> None:
         """Nachricht im Ziel-Channel wird an Handler weitergeleitet."""
         discord_ch._handler = handler
@@ -107,7 +109,9 @@ class TestDiscordIncoming:
 
     @pytest.mark.asyncio
     async def test_on_message_responds_in_channel(
-        self, discord_ch: DiscordChannel, handler: AsyncMock,
+        self,
+        discord_ch: DiscordChannel,
+        handler: AsyncMock,
     ) -> None:
         """Antwort wird im gleichen Channel gesendet."""
         discord_ch._handler = handler
@@ -122,7 +126,9 @@ class TestDiscordIncoming:
 
     @pytest.mark.asyncio
     async def test_ignores_own_messages(
-        self, discord_ch: DiscordChannel, handler: AsyncMock,
+        self,
+        discord_ch: DiscordChannel,
+        handler: AsyncMock,
     ) -> None:
         """Bot-eigene Nachrichten werden ignoriert."""
         discord_ch._handler = handler
@@ -138,7 +144,9 @@ class TestDiscordIncoming:
 
     @pytest.mark.asyncio
     async def test_ignores_other_bot_messages(
-        self, discord_ch: DiscordChannel, handler: AsyncMock,
+        self,
+        discord_ch: DiscordChannel,
+        handler: AsyncMock,
     ) -> None:
         """Nachrichten von anderen Bots werden ignoriert."""
         discord_ch._handler = handler
@@ -153,7 +161,9 @@ class TestDiscordIncoming:
 
     @pytest.mark.asyncio
     async def test_strips_mention(
-        self, discord_ch: DiscordChannel, handler: AsyncMock,
+        self,
+        discord_ch: DiscordChannel,
+        handler: AsyncMock,
     ) -> None:
         """Bot-Mention wird aus Text entfernt."""
         discord_ch._handler = handler
@@ -176,7 +186,9 @@ class TestDiscordIncoming:
 
     @pytest.mark.asyncio
     async def test_ignores_messages_in_other_channels(
-        self, discord_ch: DiscordChannel, handler: AsyncMock,
+        self,
+        discord_ch: DiscordChannel,
+        handler: AsyncMock,
     ) -> None:
         """Nachrichten in anderen Channels (ohne Mention) werden ignoriert."""
         discord_ch._handler = handler
@@ -192,7 +204,9 @@ class TestDiscordIncoming:
 
     @pytest.mark.asyncio
     async def test_dm_always_handled(
-        self, discord_ch: DiscordChannel, handler: AsyncMock,
+        self,
+        discord_ch: DiscordChannel,
+        handler: AsyncMock,
     ) -> None:
         """DMs (guild=None) werden immer verarbeitet."""
         discord_ch._handler = handler
@@ -207,7 +221,9 @@ class TestDiscordIncoming:
 
     @pytest.mark.asyncio
     async def test_ignores_empty_messages(
-        self, discord_ch: DiscordChannel, handler: AsyncMock,
+        self,
+        discord_ch: DiscordChannel,
+        handler: AsyncMock,
     ) -> None:
         """Leere Nachrichten werden ignoriert."""
         discord_ch._handler = handler
@@ -221,7 +237,9 @@ class TestDiscordIncoming:
 
     @pytest.mark.asyncio
     async def test_metadata_includes_guild_and_author(
-        self, discord_ch: DiscordChannel, handler: AsyncMock,
+        self,
+        discord_ch: DiscordChannel,
+        handler: AsyncMock,
     ) -> None:
         """Metadata enthält guild_id und author_name."""
         discord_ch._handler = handler
@@ -268,7 +286,8 @@ class TestDiscordSend:
 class TestDiscordApproval:
     @pytest.mark.asyncio
     async def test_approval_returns_false_without_bidirectional(
-        self, discord_ch: DiscordChannel,
+        self,
+        discord_ch: DiscordChannel,
     ) -> None:
         """Ohne Verbindung ist Approval nicht möglich."""
         discord_ch._bidirectional = False

@@ -62,9 +62,7 @@ class PolicyPatcher:
             return True
 
         except Exception:
-            logger.exception(
-                "Failed to apply change for proposal #%d", change.proposal_id
-            )
+            logger.exception("Failed to apply change for proposal #%d", change.proposal_id)
             return False
 
     def rollback_last(self) -> bool:
@@ -158,9 +156,7 @@ class PolicyPatcher:
         return str(backup_path)
 
     @staticmethod
-    def _merge_change(
-        policy_data: dict[str, Any], change: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _merge_change(policy_data: dict[str, Any], change: dict[str, Any]) -> dict[str, Any]:
         """Merge *change* into *policy_data*.
 
         Keys from *change* are written into a top-level ``changes`` list

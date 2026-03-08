@@ -33,7 +33,7 @@ class TestErrorClusterer:
 
     def test_cluster_similar_errors(self):
         for i in range(5):
-            self.clusterer.add_error("TimeoutError", f"timeout after {30+i}s")
+            self.clusterer.add_error("TimeoutError", f"timeout after {30 + i}s")
         clusters = self.clusterer.get_clusters()
         assert len(clusters) == 1
         assert clusters[0]["count"] == 5

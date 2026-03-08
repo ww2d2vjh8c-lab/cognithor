@@ -109,12 +109,14 @@ class TestSlackChannelBidirectional:
             return_value=OutgoingMessage(channel="slack", text="OK", session_id="s1")
         )
 
-        await ch._on_message({
-            "user": "U_USER",
-            "text": "<@U_BOT> Zeig mir den Status",
-            "channel": "C1",
-            "ts": "1.0",
-        })
+        await ch._on_message(
+            {
+                "user": "U_USER",
+                "text": "<@U_BOT> Zeig mir den Status",
+                "channel": "C1",
+                "ts": "1.0",
+            }
+        )
 
         call_arg = ch._handler.call_args[0][0]
         assert call_arg.text == "Zeig mir den Status"
@@ -131,9 +133,7 @@ class TestSlackChannelBidirectional:
         action = PlannedAction(tool="delete_file", params={"path": "/tmp/data"})
 
         # Starte Approval in Background (wird wegen fehlendem Button-Klick timeouten)
-        task = asyncio.create_task(
-            ch.request_approval("sess1", action, "Gefährliche Aktion")
-        )
+        task = asyncio.create_task(ch.request_approval("sess1", action, "Gefährliche Aktion"))
         await asyncio.sleep(0.05)
 
         # Prüfe dass postMessage mit Blocks aufgerufen wurde

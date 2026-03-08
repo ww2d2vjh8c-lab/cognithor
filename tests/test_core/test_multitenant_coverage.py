@@ -112,9 +112,15 @@ class TestTenantManager:
     def test_find_by_email_as_user(self) -> None:
         tm = TenantManager()
         t = tm.create("Corp", "admin@corp.com", TenantPlan.STARTER)  # 5 users max
-        tm.add_user(t.tenant_id, TenantUser(
-            user_id="u2", name="Bob", email="bob@corp.com", role="user",
-        ))
+        tm.add_user(
+            t.tenant_id,
+            TenantUser(
+                user_id="u2",
+                name="Bob",
+                email="bob@corp.com",
+                role="user",
+            ),
+        )
         results = tm.find_by_email("bob@corp.com")
         assert len(results) == 1
 

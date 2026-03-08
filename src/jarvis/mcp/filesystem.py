@@ -28,9 +28,15 @@ if TYPE_CHECKING:
 log = get_logger(__name__)
 
 # Ausgeschlossene Verzeichnisse beim Baum-Listing
-EXCLUDED_DIRECTORIES = frozenset({
-    "node_modules", "__pycache__", ".git", "venv", ".venv",
-})
+EXCLUDED_DIRECTORIES = frozenset(
+    {
+        "node_modules",
+        "__pycache__",
+        ".git",
+        "venv",
+        ".venv",
+    }
+)
 
 # Maximale Eintraege im Verzeichnisbaum (Default)
 _DEFAULT_MAX_TREE_ENTRIES = 200
@@ -56,7 +62,9 @@ class FileSystemTools:
             Path(p).expanduser().resolve() for p in config.security.allowed_paths
         ]
         self._max_tree_entries: int = getattr(
-            getattr(config, 'filesystem', None), 'max_tree_entries', _DEFAULT_MAX_TREE_ENTRIES,
+            getattr(config, "filesystem", None),
+            "max_tree_entries",
+            _DEFAULT_MAX_TREE_ENTRIES,
         )
 
     def _validate_path(self, path_str: str) -> Path:
@@ -267,7 +275,7 @@ class FileSystemTools:
 
         if len(lines) > self._max_tree_entries:
             total = len(lines)
-            lines = lines[:self._max_tree_entries]
+            lines = lines[: self._max_tree_entries]
             lines.append(f"... ({total - self._max_tree_entries} weitere Eintraege)")
 
         return "\n".join(lines)
@@ -295,10 +303,7 @@ class FileSystemTools:
 
         # Versteckte Dateien und bekannte Build-Verzeichnisse ausfiltern
         entries = [
-            e
-            for e in entries
-            if not e.name.startswith(".")
-            and e.name not in EXCLUDED_DIRECTORIES
+            e for e in entries if not e.name.startswith(".") and e.name not in EXCLUDED_DIRECTORIES
         ]
 
         for i, entry in enumerate(entries):

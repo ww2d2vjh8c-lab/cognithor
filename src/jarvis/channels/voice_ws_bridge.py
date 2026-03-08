@@ -135,6 +135,7 @@ class VoiceMessageHandler:
 
         # CWE-22: Validate voice name against path traversal
         from jarvis.security.sanitizer import validate_voice_name
+
         try:
             validate_voice_name(voice)
         except ValueError as exc:
@@ -173,9 +174,12 @@ class VoiceMessageHandler:
         try:
             proc = await asyncio.create_subprocess_exec(
                 "ffmpeg",
-                "-i", str(input_path),
-                "-ar", "16000",
-                "-ac", "1",
+                "-i",
+                str(input_path),
+                "-ar",
+                "16000",
+                "-ac",
+                "1",
                 "-y",
                 str(wav_path),
                 stdout=asyncio.subprocess.PIPE,

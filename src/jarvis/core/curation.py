@@ -150,12 +150,14 @@ class CurationBoard:
         review = self._reviews.get(review_id)
         if not review:
             return False
-        review.comments.append(ReviewComment(
-            author=author,
-            text=text,
-            timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            is_blocking=blocking,
-        ))
+        review.comments.append(
+            ReviewComment(
+                author=author,
+                text=text,
+                timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                is_blocking=blocking,
+            )
+        )
         return True
 
     def add_flag(self, review_id: str, flag: ReviewFlag) -> bool:
@@ -185,10 +187,14 @@ class CurationBoard:
         review.decided_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         review.decision_by = rejected_by
         if reason:
-            review.comments.append(ReviewComment(
-                author=rejected_by, text=f"Abgelehnt: {reason}",
-                timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), is_blocking=True,
-            ))
+            review.comments.append(
+                ReviewComment(
+                    author=rejected_by,
+                    text=f"Abgelehnt: {reason}",
+                    timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    is_blocking=True,
+                )
+            )
         return True
 
     def quarantine(self, review_id: str, by: str) -> bool:
@@ -201,7 +207,11 @@ class CurationBoard:
         return True
 
     def pending_reviews(self) -> list[SkillReview]:
-        return [r for r in self._reviews.values() if r.status in (ReviewStatus.PENDING, ReviewStatus.IN_REVIEW)]
+        return [
+            r
+            for r in self._reviews.values()
+            if r.status in (ReviewStatus.PENDING, ReviewStatus.IN_REVIEW)
+        ]
 
     def flagged_reviews(self) -> list[SkillReview]:
         return [r for r in self._reviews.values() if r.flags]
@@ -228,8 +238,14 @@ class CurationBoard:
             "flagged": sum(1 for r in reviews if r.flags),
             "board_members": len(self._board_members),
             "approval_rate": (
-                round(sum(1 for r in reviews if r.status == ReviewStatus.APPROVED)
-                      / len(reviews) * 100, 1) if reviews else 0
+                round(
+                    sum(1 for r in reviews if r.status == ReviewStatus.APPROVED)
+                    / len(reviews)
+                    * 100,
+                    1,
+                )
+                if reviews
+                else 0
             ),
         }
 
@@ -255,7 +271,7 @@ class DiversityAuditResult:
 
     audit_id: str
     dimension: DiversityDimension
-    score: float            # 0-100 (100 = perfekte Gleichbehandlung)
+    score: float  # 0-100 (100 = perfekte Gleichbehandlung)
     findings: list[str] = field(default_factory=list)
     recommendations: list[str] = field(default_factory=list)
     sample_size: int = 0
@@ -363,8 +379,9 @@ class DiversityAuditor:
             "failed": sum(1 for a in audits if not a.passed),
             "by_dimension": {
                 d.value: round(
-                    sum(a.score for a in audits if a.dimension == d) /
-                    max(sum(1 for a in audits if a.dimension == d), 1), 1
+                    sum(a.score for a in audits if a.dimension == d)
+                    / max(sum(1 for a in audits if a.dimension == d), 1),
+                    1,
                 )
                 for d in DiversityDimension
                 if any(a.dimension == d for a in audits)
@@ -449,7 +466,8 @@ class CrossAgentBudget:
     def _daily_spent(self, agent_id: str) -> float:
         today = time.strftime("%Y-%m-%d", time.gmtime())
         return sum(
-            t.amount_eur for t in self._transfers
+            t.amount_eur
+            for t in self._transfers
             if t.from_agent == agent_id and t.approved and t.timestamp.startswith(today)
         )
 
@@ -486,7 +504,7 @@ class DecisionAlternative:
 
     option_id: str
     description: str
-    confidence: float       # 0-1
+    confidence: float  # 0-1
     pros: list[str] = field(default_factory=list)
     cons: list[str] = field(default_factory=list)
     risk_level: str = "low"  # low, medium, high
