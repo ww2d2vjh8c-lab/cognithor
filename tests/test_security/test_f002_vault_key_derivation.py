@@ -133,11 +133,11 @@ class TestLoadOrCreateMasterSecret:
     def test_loads_existing_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             key_path = os.path.join(tmpdir, "vault_master.key")
-            # Write a known secret
-            known_secret = os.urandom(32)
-            Path(key_path).write_bytes(known_secret)
+            # Write a known key blob
+            known_key_data = os.urandom(32)
+            Path(key_path).write_bytes(known_key_data)
             loaded = _load_or_create_master_secret(key_path)
-            assert loaded == known_secret
+            assert loaded == known_key_data
 
     def test_regenerates_truncated_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
