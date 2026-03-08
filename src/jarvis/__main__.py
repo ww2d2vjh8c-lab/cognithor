@@ -833,14 +833,24 @@ def main() -> None:
 
                     log.info("downloading_piper_voice", voice=voice, url=onnx_url)
 
+                    import os.path as _dl_osp
+
+                    _norm_dest = _dl_osp.normpath(_dl_osp.realpath(str(dest)))
+                    _norm_onnx = _dl_osp.normpath(_dl_osp.join(_norm_dest, f"{voice}.onnx"))
+                    _norm_json_dl = _dl_osp.normpath(_dl_osp.join(_norm_dest, f"{voice}.onnx.json"))
+                    if not _norm_onnx.startswith(
+                        _norm_dest + _dl_osp.sep
+                    ) or not _norm_json_dl.startswith(_norm_dest + _dl_osp.sep):
+                        raise ValueError("Download-Pfad verletzt Verzeichnisgrenzen")
+
                     def _dl() -> None:
-                        urllib.request.urlretrieve(onnx_url, str(dest / f"{voice}.onnx"))
-                        urllib.request.urlretrieve(json_url, str(dest / f"{voice}.onnx.json"))
+                        urllib.request.urlretrieve(onnx_url, _norm_onnx)
+                        urllib.request.urlretrieve(json_url, _norm_json_dl)
 
                     await asyncio.get_running_loop().run_in_executor(None, _dl)
 
                     # Integrity check: SHA-256 verifizieren
-                    onnx_path = dest / f"{voice}.onnx"
+                    onnx_path = Path(_norm_onnx)
                     file_hash = hashlib.sha256(onnx_path.read_bytes()).hexdigest()
                     _verify_voice_hash(voice, file_hash)
 
