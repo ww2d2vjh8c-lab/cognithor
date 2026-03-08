@@ -111,7 +111,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Show installed packages
-        run: pip list --format=columns | head -60
+        run: pip list --format=columns
 
       - name: Run tests
         # test_voice_ws_bridge.py is excluded because it requires system audio
