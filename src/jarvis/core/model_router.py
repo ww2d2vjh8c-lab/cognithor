@@ -507,6 +507,39 @@ class ModelRouter:
 
         return None
 
+    def get_backend_for_task(
+        self,
+        task_type: str = "general",
+        complexity: str = "medium",
+    ) -> str:
+        """Returns the per-task backend override, or empty string for global backend.
+
+        This enables per-role backend routing: e.g. use Anthropic for planning
+        while keeping Ollama for execution.  The ``backend`` field on each
+        ``ModelConfig`` drives this.  An empty string means "use the global
+        llm_backend_type".
+        """
+        match task_type:
+            case "planning" | "reflection":
+                cfg = self._config.models.planner
+            case "code":
+                cfg = (
+                    self._config.models.coder
+                    if complexity == "high"
+                    else self._config.models.coder_fast
+                )
+            case "simple_tool_call" | "summarization":
+                cfg = self._config.models.executor
+            case "embedding":
+                cfg = self._config.models.embedding
+            case _:
+                cfg = (
+                    self._config.models.planner
+                    if complexity != "low"
+                    else self._config.models.executor
+                )
+        return getattr(cfg, "backend", "") or ""
+
     def get_model_config(self, model_name: str) -> dict[str, Any]:
         """Gibt die Konfigurations-Parameter für ein Modell zurück."""
         configs = {

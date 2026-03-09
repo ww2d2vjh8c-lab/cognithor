@@ -561,9 +561,15 @@ class WorkingMemory(BaseModel):
 
 
 class ModelConfig(BaseModel):
-    """Konfiguration eines LLM-Modells. [B§8.1]"""
+    """Konfiguration eines LLM-Modells. [B§8.1]
 
-    name: str  # Ollama-Modellname
+    Per-task backend override: Set ``backend`` to a provider name
+    (e.g. ``"openai"``, ``"anthropic"``) to route this specific role
+    through a different provider than the global ``llm_backend_type``.
+    Leave empty to use the global backend.
+    """
+
+    name: str  # Modellname (provider-spezifisch)
     context_window: int = 32768
     vram_gb: float = 0.0
     strengths: list[str] = Field(default_factory=list)
@@ -571,6 +577,7 @@ class ModelConfig(BaseModel):
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     top_p: float = Field(default=0.9, ge=0.0, le=1.0)
     embedding_dimensions: int = 768  # Vektor-Dimensionen für Embedding-Modelle
+    backend: str = ""  # Per-task backend override (leer = globales Backend)
 
 
 # ============================================================================

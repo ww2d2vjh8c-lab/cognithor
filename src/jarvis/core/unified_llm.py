@@ -43,6 +43,7 @@ class UnifiedLLMClient:
         self,
         ollama_client: OllamaClient | None,
         backend: Any | None = None,
+        config: "JarvisConfig | None" = None,
     ) -> None:
         """Erstellt den unified Client.
 
@@ -50,10 +51,13 @@ class UnifiedLLMClient:
             ollama_client: Optionaler OllamaClient (nur bei Ollama-Modus oder Fallback).
             backend: Optionales LLMBackend aus llm_backend.py.
                      Wenn None und ollama_client vorhanden, wird direkt OllamaClient genutzt.
+            config: JarvisConfig für on-demand per-task backend creation.
         """
         self._ollama = ollama_client
         self._backend = backend
+        self._config = config
         self._backend_type: str = "ollama"
+        self._backend_cache: dict[str, Any] = {}
 
         if backend is not None:
             self._backend_type = getattr(backend, "backend_type", "unknown")
@@ -96,7 +100,63 @@ class UnifiedLLMClient:
             # Ollama-Modus: OllamaClient erstellen
             ollama_client = OllamaClient(config)
 
-        return cls(ollama_client, backend)
+        return cls(ollama_client, backend, config=config)
+
+    # ========================================================================
+    # Per-task backend resolution
+    # ========================================================================
+
+    def _lookup_backend_for_model(self, model: str) -> str:
+        """Check if any ModelConfig.backend is set for the given model name."""
+        if self._config is None:
+            return ""
+        for role in ("planner", "executor", "coder", "coder_fast", "embedding"):
+            cfg = getattr(self._config.models, role, None)
+            if cfg is not None and cfg.name == model:
+                return getattr(cfg, "backend", "") or ""
+        return ""
+
+    def _resolve_backend(self, backend_override: str) -> Any | None:
+        """Returns the LLMBackend for a per-task override, or None for Ollama.
+
+        Backends are lazily created and cached by provider name so that
+        repeated calls for the same provider reuse the connection.
+        """
+        if not backend_override or backend_override == "ollama":
+            return None  # use Ollama path
+
+        # If the override matches the global backend, reuse it
+        if self._backend is not None and backend_override == self._backend_type:
+            return self._backend
+
+        # Lazy-create and cache
+        if backend_override in self._backend_cache:
+            return self._backend_cache[backend_override]
+
+        if self._config is None:
+            log.warning("per_task_backend_no_config", override=backend_override)
+            return self._backend
+
+        try:
+            from jarvis.core.llm_backend import create_backend
+
+            # Temporarily override the backend type in a copy
+            temp_config = self._config.model_copy(update={"llm_backend_type": backend_override})
+            new_backend = create_backend(temp_config)
+            self._backend_cache[backend_override] = new_backend
+            log.info(
+                "per_task_backend_created",
+                provider=backend_override,
+            )
+            return new_backend
+        except Exception as exc:
+            log.warning(
+                "per_task_backend_failed",
+                provider=backend_override,
+                error=str(exc),
+                fallback="global",
+            )
+            return self._backend
 
     # ========================================================================
     # Chat (Hauptmethode -- von Planner/Reflector aufgerufen)
@@ -113,6 +173,7 @@ class UnifiedLLMClient:
         stream: bool = False,
         format_json: bool = False,
         options: dict[str, Any] | None = None,
+        backend_override: str = "",
     ) -> dict[str, Any]:
         """Chat-Completion im Ollama-Response-Format.
 
@@ -129,10 +190,21 @@ class UnifiedLLMClient:
                 "done": true
             }
 
+        Args:
+            backend_override: Per-task backend provider name (e.g. "openai").
+                Empty string uses the global backend.
+
         Raises:
             OllamaError: Bei jedem Backend-Fehler (einheitliche Exception).
         """
-        if self._backend is None:
+        # Resolve per-task backend: explicit override > model-config lookup > global
+        if not backend_override and self._config is not None:
+            backend_override = self._lookup_backend_for_model(model)
+        effective_backend = (
+            self._resolve_backend(backend_override) if backend_override else self._backend
+        )
+
+        if effective_backend is None:
             # Direkt an OllamaClient weiterleiten
             if self._ollama is None:
                 raise OllamaError("Kein LLM-Backend verfügbar (weder API noch Ollama)")
@@ -149,7 +221,7 @@ class UnifiedLLMClient:
 
         # Via LLMBackend
         try:
-            response = await self._backend.chat(
+            response = await effective_backend.chat(
                 model=model,
                 messages=messages,
                 tools=tools,
@@ -182,8 +254,9 @@ class UnifiedLLMClient:
         except Exception as exc:
             # Alle Backend-Fehler als OllamaError wrappen
             # damit Planner/Reflector catch-Blöcke weiter funktionieren
+            bt = backend_override or self._backend_type
             raise OllamaError(
-                f"LLM-Backend-Fehler ({self._backend_type}): {exc}",
+                f"LLM-Backend-Fehler ({bt}): {exc}",
                 status_code=getattr(exc, "status_code", None),
             ) from exc
 

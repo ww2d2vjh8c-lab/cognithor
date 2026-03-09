@@ -102,7 +102,7 @@ class TestBootstrapSkipModels:
 
             output = buf.getvalue()
             assert "ollama pull qwen3:8b" in output
-            assert "ollama pull nomic-embed-text" in output
+            assert "ollama pull qwen3-embedding:0.6b" in output
         finally:
             sys.path.pop(0)
 

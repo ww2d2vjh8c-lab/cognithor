@@ -45,7 +45,7 @@ class TestJarvisConfigDefaults:
         config = JarvisConfig()
         assert config.models.planner.name == "qwen3:32b"
         assert config.models.executor.name == "qwen3:8b"
-        assert config.models.embedding.name == "nomic-embed-text"
+        assert config.models.embedding.name == "qwen3-embedding:0.6b"
 
     def test_planner_defaults(self) -> None:
         config = JarvisConfig()
@@ -296,7 +296,7 @@ class TestModelAutoAdaptation:
         assert config.models.executor.name == "claude-haiku-4-5-20251001"
         assert config.models.coder.name == "claude-sonnet-4-6"
         # Anthropic hat kein Embedding → bleibt bei Ollama-Default
-        assert config.models.embedding.name == "nomic-embed-text"
+        assert config.models.embedding.name == "qwen3-embedding:0.6b"
         assert config.models.planner.context_window == 200000
 
     def test_api_key_auto_detects_backend(self, tmp_path: Path) -> None:
@@ -467,7 +467,7 @@ class TestMultiProviderAutoAdaptation:
         assert config.models.executor.name == "llama-3.1-8b-instant"
         assert config.models.coder.name == "llama-3.3-70b-versatile"
         # Embedding bleibt bei Ollama-Fallback
-        assert config.models.embedding.name == "nomic-embed-text"
+        assert config.models.embedding.name == "qwen3-embedding:0.6b"
 
     def test_deepseek_model_defaults(self, tmp_path: Path) -> None:
         """DeepSeek-Backend setzt korrekte Modellnamen."""

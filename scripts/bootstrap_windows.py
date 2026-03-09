@@ -309,10 +309,10 @@ def pull_model(name: str, ollama_path: str, timeout: int = 1800) -> bool:
 
 
 TIER_MODELS: dict[str, list[str]] = {
-    "minimal":    ["qwen3:8b", "nomic-embed-text"],
-    "standard":   ["qwen3:8b", "qwen3:32b", "nomic-embed-text"],
-    "power":      ["qwen3:8b", "qwen3:32b", "qwen3-coder:30b", "nomic-embed-text"],
-    "enterprise": ["qwen3:8b", "qwen3:32b", "qwen3-coder:30b", "nomic-embed-text"],
+    "minimal":    ["qwen3:8b", "qwen3-embedding:0.6b"],
+    "standard":   ["qwen3:8b", "qwen3:32b", "qwen3-embedding:0.6b"],
+    "power":      ["qwen3:8b", "qwen3:32b", "qwen3-coder:30b", "qwen3-embedding:0.6b"],
+    "enterprise": ["qwen3:8b", "qwen3:32b", "qwen3-coder:30b", "qwen3-embedding:0.6b"],
 }
 
 

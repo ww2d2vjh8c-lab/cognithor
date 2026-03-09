@@ -175,10 +175,10 @@ const defaults = () => ({
   vision_model: "openbmb/minicpm-v4.5", vision_model_detail: "qwen3-vl:32b",
   ollama: { base_url: "http://localhost:11434", timeout_seconds: 120, keep_alive: "30m" },
   models: {
-    planner: { name: "qwen3:32b", context_window: 32768, vram_gb: 20, strengths: ["reasoning","planning","reflection","german"], speed: "medium" },
-    executor: { name: "qwen3:8b", context_window: 32768, vram_gb: 6, strengths: ["tool-calling","simple-tasks"], speed: "fast" },
-    coder: { name: "qwen3-coder:30b", context_window: 32768, vram_gb: 20, strengths: ["code-generation","debugging","testing"], speed: "medium" },
-    embedding: { name: "nomic-embed-text", context_window: 8192, vram_gb: 0.5, strengths: ["semantic-search"], speed: "fast" },
+    planner: { name: "qwen3:32b", context_window: 32768, vram_gb: 20, strengths: ["reasoning","planning","reflection","german"], speed: "medium", backend: "" },
+    executor: { name: "qwen3:8b", context_window: 32768, vram_gb: 6, strengths: ["tool-calling","simple-tasks"], speed: "fast", backend: "" },
+    coder: { name: "qwen3-coder:30b", context_window: 32768, vram_gb: 20, strengths: ["code-generation","debugging","testing"], speed: "medium", backend: "" },
+    embedding: { name: "qwen3-embedding:0.6b", context_window: 8192, vram_gb: 0.5, strengths: ["semantic-search","multilingual"], speed: "fast", backend: "" },
   },
   model_overrides: { skill_models: {} },
   planner: { max_iterations: 10, escalation_after: 3, temperature: 0.7, response_token_budget: 3000 },
@@ -751,14 +751,29 @@ function ProvidersPage({ cfg, set }) {
 
 // ── Models ─────────────────────────────────────────────────────────────
 const ROLES = ["planner","executor","coder","embedding"];
+const BACKEND_OPTIONS = [
+  { value: "", label: "Global (Standard)" },
+  { value: "ollama", label: "Ollama (Lokal)" },
+  { value: "openai", label: "OpenAI" },
+  { value: "anthropic", label: "Anthropic" },
+  { value: "gemini", label: "Google Gemini" },
+  { value: "groq", label: "Groq" },
+  { value: "deepseek", label: "DeepSeek" },
+  { value: "mistral", label: "Mistral" },
+  { value: "together", label: "Together AI" },
+  { value: "openrouter", label: "OpenRouter" },
+  { value: "xai", label: "xAI (Grok)" },
+  { value: "lmstudio", label: "LM Studio" },
+];
 
 function ModelsPage({ cfg, set, setValidationErrors }) {
   return (<>
-    <Section title="Modelle" desc="Modell-Zuordnung pro Rolle, Vision-Modelle, Skill-Overrides" />
+    <Section title="Modelle" desc="Modell-Zuordnung pro Rolle, Vision-Modelle, Skill-Overrides. Jede Rolle kann einen eigenen API-Provider nutzen." />
     {ROLES.map(r => (
       <Card key={r} title={`${r.charAt(0).toUpperCase() + r.slice(1)}-Modell`}>
         <TextInput label="Modell-Name" value={cfg.models?.[r]?.name} onChange={v => set(`models.${r}.name`, v)} mono />
-        <NumberInput label="Context Window" value={cfg.models?.[r]?.context_window} onChange={v => set(`models.${r}.context_window`, v)} min={1024} max={131072} step={1024} />
+        <SelectInput label="Backend / Provider" value={cfg.models?.[r]?.backend || ""} onChange={v => set(`models.${r}.backend`, v)} options={BACKEND_OPTIONS} desc="Eigener Provider fuer diese Rolle (leer = globales Backend)" />
+        <NumberInput label="Context Window" value={cfg.models?.[r]?.context_window} onChange={v => set(`models.${r}.context_window`, v)} min={1024} max={2000000} step={1024} />
         <NumberInput label="VRAM (GB)" value={cfg.models?.[r]?.vram_gb} onChange={v => set(`models.${r}.vram_gb`, v)} min={0} max={80} step={0.5} />
         <SliderInput label="Temperature" value={cfg.models?.[r]?.temperature} onChange={v => set(`models.${r}.temperature`, v)} min={0} max={2} step={0.05} desc="Kreativität (0=deterministisch, 2=wild)" />
         <SliderInput label="Top P" value={cfg.models?.[r]?.top_p} onChange={v => set(`models.${r}.top_p`, v)} min={0} max={1} step={0.05} desc="Nucleus Sampling" />

@@ -221,9 +221,9 @@ def check_ollama_connection() -> None:
                 if any("nomic-embed" in m or "embed" in m for m in models):
                     passed("Embedding model available")
                 else:
-                    warned("No embedding model found", "ollama pull nomic-embed-text")
+                    warned("No embedding model found", "ollama pull qwen3-embedding:0.6b")
             else:
-                warned("No models installed", "ollama pull qwen3:8b && ollama pull nomic-embed-text")
+                warned("No models installed", "ollama pull qwen3:8b && ollama pull qwen3-embedding:0.6b")
     except urllib.error.URLError:
         warned(
             f"Ollama not reachable at {OLLAMA_URL}",

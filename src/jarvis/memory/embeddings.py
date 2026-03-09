@@ -21,10 +21,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("jarvis.memory.embeddings")
 
-# Default: nomic-embed-text via Ollama
-DEFAULT_MODEL = "nomic-embed-text"
+# Default: qwen3-embedding:0.6b via Ollama (higher accuracy, multilingual)
+DEFAULT_MODEL = "qwen3-embedding:0.6b"
 DEFAULT_BASE_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-DEFAULT_DIMENSIONS = 768
+DEFAULT_DIMENSIONS = 1024
 
 
 @dataclass

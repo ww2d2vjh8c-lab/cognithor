@@ -79,11 +79,12 @@ class ModelsConfig(BaseModel):
     )
     embedding: ModelConfig = Field(
         default_factory=lambda: ModelConfig(
-            name="nomic-embed-text",
+            name="qwen3-embedding:0.6b",
             context_window=8192,
             vram_gb=0.5,
-            strengths=["semantic-search"],
+            strengths=["semantic-search", "multilingual"],
             speed="fast",
+            embedding_dimensions=1024,
         )
     )
 
@@ -651,6 +652,7 @@ _OLLAMA_DEFAULT_MODEL_NAMES = {
     "qwen3-coder:30b",
     "qwen2.5-coder:7b",
     "nomic-embed-text",
+    "qwen3-embedding:0.6b",
     "llava:13b",
     "openbmb/minicpm-v4.5",
     # Legacy-Erkennung für Upgrades von älteren Versionen
@@ -732,10 +734,10 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
         },
         # Anthropic hat keine Embedding-API → Ollama-Fallback bleibt
         "embedding": {
-            "name": "nomic-embed-text",
+            "name": "qwen3-embedding:0.6b",
             "context_window": 8192,
             "vram_gb": 0.5,
-            "strengths": ["semantic-search"],
+            "strengths": ["semantic-search", "multilingual"],
             "speed": "fast",
         },
         "vision": {
@@ -814,10 +816,10 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
         },
         # Groq has no embedding API -> Ollama fallback
         "embedding": {
-            "name": "nomic-embed-text",
+            "name": "qwen3-embedding:0.6b",
             "context_window": 8192,
             "vram_gb": 0.5,
-            "strengths": ["semantic-search"],
+            "strengths": ["semantic-search", "multilingual"],
             "speed": "fast",
         },
         "vision": {
@@ -855,10 +857,10 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
         },
         # DeepSeek has no embedding API -> Ollama fallback
         "embedding": {
-            "name": "nomic-embed-text",
+            "name": "qwen3-embedding:0.6b",
             "context_window": 8192,
             "vram_gb": 0.5,
-            "strengths": ["semantic-search"],
+            "strengths": ["semantic-search", "multilingual"],
             "speed": "fast",
         },
         # DeepSeek has no vision API -> Ollama fallback
@@ -938,10 +940,10 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
         },
         # Together has no embedding API -> Ollama fallback
         "embedding": {
-            "name": "nomic-embed-text",
+            "name": "qwen3-embedding:0.6b",
             "context_window": 8192,
             "vram_gb": 0.5,
-            "strengths": ["semantic-search"],
+            "strengths": ["semantic-search", "multilingual"],
             "speed": "fast",
         },
         "vision": {
@@ -979,10 +981,10 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
         },
         # OpenRouter hat keine Embedding-API → Ollama-Fallback bleibt
         "embedding": {
-            "name": "nomic-embed-text",
+            "name": "qwen3-embedding:0.6b",
             "context_window": 8192,
             "vram_gb": 0.5,
-            "strengths": ["semantic-search"],
+            "strengths": ["semantic-search", "multilingual"],
             "speed": "fast",
         },
         "vision": {
@@ -1020,10 +1022,10 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
         },
         # xAI has no embedding API -> Ollama fallback
         "embedding": {
-            "name": "nomic-embed-text",
+            "name": "qwen3-embedding:0.6b",
             "context_window": 8192,
             "vram_gb": 0.5,
-            "strengths": ["semantic-search"],
+            "strengths": ["semantic-search", "multilingual"],
             "speed": "fast",
         },
         "vision": {
@@ -1060,10 +1062,10 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
             "speed": "fast",
         },
         "embedding": {
-            "name": "nomic-embed-text",
+            "name": "qwen3-embedding:0.6b",
             "context_window": 8192,
             "vram_gb": 0.5,
-            "strengths": ["semantic-search"],
+            "strengths": ["semantic-search", "multilingual"],
             "speed": "fast",
         },
         "vision": {
@@ -1182,10 +1184,10 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
             "speed": "fast",
         },
         "embedding": {
-            "name": "nomic-embed-text",
+            "name": "qwen3-embedding:0.6b",
             "context_window": 8192,
             "vram_gb": 0.5,
-            "strengths": ["semantic-search"],
+            "strengths": ["semantic-search", "multilingual"],
             "speed": "fast",
         },
         "vision": {
@@ -1222,10 +1224,10 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
             "speed": "fast",
         },
         "embedding": {
-            "name": "nomic-embed-text",
+            "name": "qwen3-embedding:0.6b",
             "context_window": 8192,
             "vram_gb": 0.5,
-            "strengths": ["semantic-search"],
+            "strengths": ["semantic-search", "multilingual"],
             "speed": "fast",
         },
         "vision": {

@@ -391,7 +391,7 @@ class MemoryIndex:
         self,
         content_hash: str,
         vector: list[float],
-        model_name: str = "nomic-embed-text",
+        model_name: str = "qwen3-embedding:0.6b",
     ) -> None:
         """Speichert ein Embedding. Thread-safe."""
         now = datetime.now().timestamp()
