@@ -11,8 +11,15 @@ from jarvis.mcp.media import MediaPipeline
 
 
 @pytest.fixture()
-def pipeline(tmp_path: Path) -> MediaPipeline:
-    return MediaPipeline(workspace_dir=tmp_path / "workspace")
+def workspace(tmp_path: Path) -> Path:
+    d = tmp_path / "workspace"
+    d.mkdir()
+    return d
+
+
+@pytest.fixture()
+def pipeline(workspace: Path) -> MediaPipeline:
+    return MediaPipeline(workspace_dir=workspace)
 
 
 # ── read_pdf ───────────────────────────────────────────────────────
@@ -26,9 +33,9 @@ class TestReadPdf:
         assert "nicht gefunden" in result.error
 
     @pytest.mark.asyncio
-    async def test_extract_text(self, pipeline: MediaPipeline, tmp_path: Path) -> None:
+    async def test_extract_text(self, pipeline: MediaPipeline, workspace: Path) -> None:
         """PDF text extraction via mocked fitz."""
-        pdf_path = tmp_path / "test.pdf"
+        pdf_path = workspace / "test.pdf"
         pdf_path.write_bytes(b"dummy")
 
         mock_page = MagicMock()
@@ -52,9 +59,9 @@ class TestReadPdf:
         assert result.metadata["page_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_page_range(self, pipeline: MediaPipeline, tmp_path: Path) -> None:
+    async def test_page_range(self, pipeline: MediaPipeline, workspace: Path) -> None:
         """Page range parameter filters pages correctly."""
-        pdf_path = tmp_path / "multi.pdf"
+        pdf_path = workspace / "multi.pdf"
         pdf_path.write_bytes(b"dummy")
 
         pages = []
@@ -94,9 +101,9 @@ class TestReadPpt:
         assert "nicht gefunden" in result.error
 
     @pytest.mark.asyncio
-    async def test_extract_slides(self, pipeline: MediaPipeline, tmp_path: Path) -> None:
+    async def test_extract_slides(self, pipeline: MediaPipeline, workspace: Path) -> None:
         """PPTX slide extraction via mocked pptx."""
-        pptx_path = tmp_path / "test.pptx"
+        pptx_path = workspace / "test.pptx"
         pptx_path.write_bytes(b"dummy")
 
         mock_title = MagicMock()
@@ -152,9 +159,9 @@ class TestReadDocx:
         assert "nicht gefunden" in result.error
 
     @pytest.mark.asyncio
-    async def test_extract_paragraphs(self, pipeline: MediaPipeline, tmp_path: Path) -> None:
+    async def test_extract_paragraphs(self, pipeline: MediaPipeline, workspace: Path) -> None:
         """DOCX paragraph extraction via mocked docx."""
-        docx_path = tmp_path / "test.docx"
+        docx_path = workspace / "test.docx"
         docx_path.write_bytes(b"dummy")
 
         mock_run = MagicMock()
