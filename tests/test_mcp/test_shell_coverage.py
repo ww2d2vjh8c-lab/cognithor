@@ -27,10 +27,11 @@ class TestValidateCommand:
         assert result is not None
         assert "Null-Byte" in result
 
-    def test_path_traversal_warning(self) -> None:
-        # Path traversal should warn but not block
+    def test_path_traversal_blocked(self) -> None:
+        # Path traversal is a hard block
         result = ShellTools._validate_command("cat ../../etc/passwd", "/workspace")
-        assert result is None  # Not blocked, just warned
+        assert result is not None
+        assert "Path-Traversal" in result
 
     def test_normal_command(self) -> None:
         result = ShellTools._validate_command("ls -la", "/workspace")
