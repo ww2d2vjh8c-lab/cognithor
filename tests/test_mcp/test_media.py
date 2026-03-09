@@ -424,7 +424,9 @@ class TestFileSizeLimits:
         assert not result.success
         assert "gross" in result.error.lower() or "large" in result.error.lower()
 
-    async def test_extract_text_within_limit(self, pipeline: MediaPipeline, workspace: Path) -> None:
+    async def test_extract_text_within_limit(
+        self, pipeline: MediaPipeline, workspace: Path
+    ) -> None:
         """Dateien innerhalb des Limits werden normal verarbeitet."""
         small_file = workspace / "small.txt"
         small_file.write_text("Kleiner Text", encoding="utf-8")
