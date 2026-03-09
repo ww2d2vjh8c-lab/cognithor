@@ -200,7 +200,7 @@ class TestPlannerLLMError:
         assert isinstance(plan, ActionPlan)
         assert plan.confidence == 0.0
         assert plan.direct_response is not None
-        assert "technisches Problem" in plan.direct_response
+        assert "Sprachmodell" in plan.direct_response
 
     @pytest.mark.asyncio
     async def test_plan_llm_error_with_audit_logger(self, config: JarvisConfig) -> None:
