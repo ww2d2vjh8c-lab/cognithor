@@ -929,6 +929,19 @@ const PROVIDERS = [
 // Fix #13: Search/filter for providers
 function ProvidersPage({ cfg, set }) {
   const [filter, setFilter] = useState("");
+  const filterRef = useRef(null);
+  // Kill browser autofill: Chrome ignores autoComplete="off", so we
+  // force-clear the DOM value on mount + on any autofill event.
+  useEffect(() => {
+    const el = filterRef.current;
+    if (!el) return;
+    const kill = () => { if (el.value && !filter) { el.value = ""; setFilter(""); } };
+    // Chrome fires 'animationstart' on autofill via its internal :-webkit-autofill CSS
+    el.addEventListener("animationstart", kill);
+    // Also force-clear after a short delay (autofill races React hydration)
+    const t = setTimeout(kill, 100);
+    return () => { el.removeEventListener("animationstart", kill); clearTimeout(t); };
+  }, []);
   const filtered = PROVIDERS.filter(p =>
     !filter || p.name.toLowerCase().includes(filter.toLowerCase()) || p.id.includes(filter.toLowerCase())
   );
@@ -937,11 +950,11 @@ function ProvidersPage({ cfg, set }) {
     <Card title="Active Backend">
       <SelectInput label="LLM Backend" value={cfg.llm_backend_type} onChange={v => set("llm_backend_type", v)} options={PROVIDERS.map(p => ({ value: p.id, label: p.name }))} desc="All models use this backend" />
     </Card>
-    <div className="cc-search-bar">
+    <form autoComplete="off" onSubmit={e => e.preventDefault()} className="cc-search-bar">
       <span className="cc-search-icon">{I.search}</span>
-      <input className="cc-search-input" placeholder="Filter providers..." value={filter} onChange={e => setFilter(e.target.value)} autoComplete="off" name="cc-provider-filter" />
-      {filter && <button className="cc-search-clear" onClick={() => setFilter("")}>{I.x}</button>}
-    </div>
+      <input ref={filterRef} className="cc-search-input" placeholder="Filter providers..." value={filter} onChange={e => setFilter(e.target.value)} autoComplete="new-password" role="presentation" name={"q_" + Date.now()} />
+      {filter && <button type="button" className="cc-search-clear" onClick={() => setFilter("")}>{I.x}</button>}
+    </form>
     {filtered.map(p => {
       if (p.id === "ollama") return (
         <Card key="ollama" title="Ollama (Lokal)" open={cfg.llm_backend_type === "ollama"}>
@@ -2162,6 +2175,8 @@ export default function App() {
         .cc-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text2); }
         .cc-search-input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 10px 10px 36px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; }
         .cc-search-input:focus { border-color: var(--accent); }
+        .cc-search-input:-webkit-autofill, .cc-search-input:-webkit-autofill:hover, .cc-search-input:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0 1000px var(--bg2) inset !important; -webkit-text-fill-color: var(--text) !important; caret-color: var(--text); transition: background-color 5000s ease-in-out 0s; }
+        @keyframes cc-autofill-hack { from {} }
         .cc-search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text2); cursor: pointer; }
         .cc-empty { text-align: center; padding: 20px; color: var(--text2); font-size: 13px; }
 
