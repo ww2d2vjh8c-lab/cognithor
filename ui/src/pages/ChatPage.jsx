@@ -82,7 +82,7 @@ export default function ChatPage() {
         <div className="cc-chat-header">
           <div className="cc-chat-header-left">
             <span className={`cc-chat-status-dot ${isConnected ? "cc-connected" : ""}`} />
-            <span className="cc-chat-title">Chat mit Jarvis</span>
+            <span className="cc-chat-title">Chat with Jarvis</span>
           </div>
           <div className="cc-chat-header-right">
             {/* Voice Mode Toggle */}
@@ -91,13 +91,13 @@ export default function ChatPage() {
                 className={`cc-chat-header-btn ${voice.isActive ? "cc-voice-active" : ""}`}
                 onClick={voice.toggle}
                 type="button"
-                title={voice.isActive ? "Sprachmodus deaktivieren" : `Sprachmodus aktivieren (Wake-Word: "${wakeWord}")`}
+                title={voice.isActive ? "Disable voice mode" : `Enable voice mode (wake word: "${wakeWord}")`}
               >
                 <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
                   <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
                 </svg>
-                {voice.isActive ? "Voice An" : "Voice"}
+                {voice.isActive ? "Voice On" : "Voice"}
               </button>
             )}
             {showCanvas && (
@@ -105,21 +105,21 @@ export default function ChatPage() {
                 className="cc-chat-header-btn"
                 onClick={() => {}}
                 type="button"
-                title="Canvas wird rechts angezeigt"
+                title="Canvas is displayed on the right"
               >
-                Canvas aktiv
+                Canvas active
               </button>
             )}
             <button
               className="cc-chat-header-btn"
               onClick={clearMessages}
               type="button"
-              title="Chat leeren"
+              title="Clear chat"
             >
               <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
               </svg>
-              Leeren
+              Clear
             </button>
           </div>
         </div>

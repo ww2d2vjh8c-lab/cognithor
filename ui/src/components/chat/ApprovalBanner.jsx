@@ -26,7 +26,7 @@ export function ApprovalBanner({ approval, onRespond }) {
               onClick={() => setExpanded(!expanded)}
               type="button"
             >
-              {expanded ? "Details ausblenden" : "Details anzeigen"}
+              {expanded ? "Hide details" : "Show details"}
             </button>
           )}
           <button
@@ -34,14 +34,14 @@ export function ApprovalBanner({ approval, onRespond }) {
             onClick={() => onRespond(approval.id, false)}
             type="button"
           >
-            Ablehnen
+            Deny
           </button>
           <button
             className="cc-approval-btn cc-approval-allow"
             onClick={() => onRespond(approval.id, true)}
             type="button"
           >
-            Genehmigen
+            Approve
           </button>
         </div>
       </div>

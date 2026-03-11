@@ -40,7 +40,7 @@ export function TextInput({ label, value, onChange, desc, placeholder, type = "t
           aria-invalid={!!error}
         />
         {isSecret && (
-          <button className="cc-eye-btn" onClick={() => setShow(!show)} type="button" aria-label={show ? "Verbergen" : "Anzeigen"}>{show ? I.eyeOff : I.eye}</button>
+          <button className="cc-eye-btn" onClick={() => setShow(!show)} type="button" aria-label={show ? "Hide" : "Show"}>{show ? I.eyeOff : I.eye}</button>
         )}
       </div>
       {error && <div className="cc-field-error" role="alert">{error}</div>}
@@ -50,7 +50,7 @@ export function TextInput({ label, value, onChange, desc, placeholder, type = "t
 
 export function NumberInput({ label, value, onChange, desc, min, max, step = 1, error }) {
   const localErr = (value !== undefined && value !== null) && ((min !== undefined && value < min) || (max !== undefined && value > max));
-  const displayErr = error || (localErr ? `Wert muss zwischen ${min} und ${max} liegen.` : null);
+  const displayErr = error || (localErr ? `Value must be between ${min} and ${max}.` : null);
   return (
     <div className="cc-field">
       <div className="cc-label">{label}</div>
@@ -96,7 +96,7 @@ export function SliderInput({ label, value, onChange, min = 0, max = 1, step = 0
           <span
             className="cc-slider-val"
             onClick={() => { setDraft(typeof value === "number" ? value.toFixed(2) : String(value)); setEditing(true); }}
-            title="Klicken zum manuellen Eingeben"
+            title="Click to enter manually"
           >
             {typeof value === "number" ? value.toFixed(2) : value}
           </span>
@@ -135,7 +135,7 @@ export function ListInput({ label, value = [], onChange, desc, placeholder }) {
         ))}
       </div>
       <div className="cc-list-add">
-        <input className="cc-input" value={draft} onChange={e => setDraft(e.target.value)} placeholder={placeholder || "Hinzuf\u00fcgen\u2026"} onKeyDown={e => e.key === "Enter" && add()} />
+        <input className="cc-input" value={draft} onChange={e => setDraft(e.target.value)} placeholder={placeholder || "Add..."} onKeyDown={e => e.key === "Enter" && add()} />
         <button className="cc-btn-sm" onClick={add} type="button">{I.plus}</button>
       </div>
     </div>
@@ -152,7 +152,7 @@ export function TextArea({ label, value, onChange, desc, rows = 8, mono, error, 
           {desc && <div className="cc-desc">{desc}</div>}
         </div>
         {onReset && (
-          <button className="cc-btn-reset" onClick={onReset} title={resetLabel || "Auf Standard zur\u00fccksetzen"} type="button">
+          <button className="cc-btn-reset" onClick={onReset} title={resetLabel || "Reset to default"} type="button">
             {I.reset} <span>Reset</span>
           </button>
         )}
@@ -198,7 +198,7 @@ export function JsonEditor({ label, value, onChange, desc, rows = 6, onValidatio
       if (onValidationErrorRef.current) onValidationErrorRef.current(null);
       onChange(parsed);
     } catch (e) {
-      const errorMsg = `JSON-Fehler: ${e.message.replace(/^JSON\.parse: /, "")}`;
+      const errorMsg = `JSON error: ${e.message.replace(/^JSON\.parse: /, "")}`;
       setErr(errorMsg);
       if (onValidationErrorRef.current) onValidationErrorRef.current(errorMsg);
     }
@@ -266,7 +266,7 @@ export function Spinner() {
   return (
     <div className="cc-spinner-wrap">
       <div className="cc-spinner" />
-      <span className="cc-spinner-text">Konfiguration wird geladen\u2026</span>
+      <span className="cc-spinner-text">Loading configuration\u2026</span>
     </div>
   );
 }

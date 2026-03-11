@@ -32,7 +32,7 @@ export function ChatCanvas({ html, title, onClose }) {
     <div className="cc-canvas-panel">
       <div className="cc-canvas-header">
         <span className="cc-canvas-title">{title || "Canvas"}</span>
-        <button className="cc-canvas-close" onClick={onClose} type="button" title="Canvas schliessen">
+        <button className="cc-canvas-close" onClick={onClose} type="button" title="Close canvas">
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>

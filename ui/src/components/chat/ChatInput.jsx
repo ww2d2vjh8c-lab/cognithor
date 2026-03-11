@@ -115,7 +115,7 @@ export function ChatInput({ onSend, onFile, onVoice, disabled }) {
           value={text}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder="Nachricht eingeben..."
+          placeholder="Type a message..."
           disabled={disabled}
           rows={1}
         />
@@ -124,7 +124,7 @@ export function ChatInput({ onSend, onFile, onVoice, disabled }) {
             className="cc-chat-input-btn"
             onClick={handleFileClick}
             disabled={disabled}
-            title="Datei anhängen"
+            title="Attach file"
             type="button"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@ export function ChatInput({ onSend, onFile, onVoice, disabled }) {
             className={`cc-chat-input-btn ${isRecording ? "cc-recording" : ""}`}
             onClick={handleVoiceClick}
             disabled={disabled}
-            title={isRecording ? "Aufnahme stoppen" : "Sprachnachricht"}
+            title={isRecording ? "Stop recording" : "Voice message"}
             type="button"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -147,7 +147,7 @@ export function ChatInput({ onSend, onFile, onVoice, disabled }) {
             className="cc-chat-input-btn cc-chat-send-btn"
             onClick={handleSend}
             disabled={disabled || !text.trim()}
-            title="Senden (Enter)"
+            title="Send (Enter)"
             type="button"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

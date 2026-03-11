@@ -119,9 +119,9 @@ function GraphRenderer({ entities, relations, width, height, onNodeClick, select
           <circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/>
           <path d="M6 7l4 4M14 13l4-6M6 17l4-4"/>
         </svg>
-        <div>Keine Entitäten im Wissensgraph</div>
+        <div>No entities in knowledge graph</div>
         <div style={{ fontSize: 12, marginTop: 6, opacity: 0.6 }}>
-          Entitäten werden automatisch aus Gesprächen extrahiert.
+          Entities are automatically extracted from conversations.
         </div>
       </div>
     );
@@ -202,19 +202,19 @@ function EntityDetail({ entity, relations, onClose }) {
         <button className="cc-kg-close" onClick={onClose}>&times;</button>
       </div>
       <div className="cc-kg-detail-row"><b>ID:</b> {entity.id?.slice(0, 12)}</div>
-      <div className="cc-kg-detail-row"><b>Typ:</b> {entity.type}</div>
+      <div className="cc-kg-detail-row"><b>Type:</b> {entity.type}</div>
       <div className="cc-kg-detail-row">
-        <b>Konfidenz:</b> {Math.round((entity.confidence || 0) * 100)}%
+        <b>Confidence:</b> {Math.round((entity.confidence || 0) * 100)}%
       </div>
       {entity.attributes && Object.keys(entity.attributes).length > 0 && (
         <div className="cc-kg-detail-row">
-          <b>Attribute:</b>
+          <b>Attributes:</b>
           <pre className="cc-kg-output">{JSON.stringify(entity.attributes, null, 2)}</pre>
         </div>
       )}
       {relations.length > 0 && (
         <div className="cc-kg-detail-row">
-          <b>Beziehungen ({relations.length}):</b>
+          <b>Relationships ({relations.length}):</b>
           <div className="cc-kg-rel-list">
             {relations.map((r, i) => (
               <div key={i} className="cc-kg-rel-item">
@@ -250,18 +250,18 @@ export default function KnowledgeGraphPage() {
         api("GET", "/memory/graph/entities"),
       ]);
       if (sRes?.error) {
-        setError(`Stats konnten nicht geladen werden (${sRes.error})`);
+        setError(`Failed to load stats (${sRes.error})`);
       } else if (sRes) {
         setStats(sRes);
       }
       if (eRes?.error) {
-        setError(`Entitäten konnten nicht geladen werden (${eRes.error})`);
+        setError(`Failed to load entities (${eRes.error})`);
       } else if (eRes?.entities) {
         setEntities(eRes.entities);
         setRelations(eRes.relations || []);
       }
     } catch (e) {
-      setError(`Verbindungsfehler: ${e.message || "Backend nicht erreichbar"}`);
+      setError(`Connection error: ${e.message || "Backend not reachable"}`);
     } finally {
       setLoading(false);
     }
@@ -294,18 +294,18 @@ export default function KnowledgeGraphPage() {
   const graphW = 800;
   const graphH = 500;
 
-  if (loading) return <div className="cc-kg-loading">Wissensgraph laden...</div>;
+  if (loading) return <div className="cc-kg-loading">Loading knowledge graph...</div>;
 
   return (
     <div className="cc-kg-page">
       <style>{KG_STYLES}</style>
 
       <div className="cc-kg-header">
-        <h2 className="cc-kg-title">Wissensgraph</h2>
+        <h2 className="cc-kg-title">Knowledge Graph</h2>
         <div className="cc-kg-stats">
-          <span>{stats.entities || 0} Entitäten</span>
-          <span>{stats.relations || 0} Beziehungen</span>
-          <button className="cc-kg-refresh" onClick={fetchData} title="Aktualisieren">
+          <span>{stats.entities || 0} Entities</span>
+          <span>{stats.relations || 0} Relationships</span>
+          <button className="cc-kg-refresh" onClick={fetchData} title="Refresh">
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M23 4v6h-6M1 20v-6h6"/>
               <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
@@ -328,17 +328,17 @@ export default function KnowledgeGraphPage() {
         <input
           className="cc-kg-search"
           type="text"
-          placeholder="Entität suchen..."
+          placeholder="Search entity..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
         <select className="cc-kg-select" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-          <option value="">Alle Typen</option>
+          <option value="">All types</option>
           {entityTypes.map(t => (
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
-        <span className="cc-kg-count">{filtered.length} sichtbar</span>
+        <span className="cc-kg-count">{filtered.length} visible</span>
       </div>
 
       {/* Graph */}

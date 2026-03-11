@@ -1,29 +1,29 @@
 const TOOL_LABELS = {
-  web_search: "Suche im Web",
-  search_and_read: "Lese Webseite",
-  exec_command: "Fuehre Befehl aus",
-  shell: "Fuehre Befehl aus",
-  read_file: "Lese Datei",
-  write_file: "Schreibe Datei",
-  list_directory: "Liste Verzeichnis auf",
-  create_file: "Erstelle Datei",
-  delete_file: "Loesche Datei",
-  move_file: "Verschiebe Datei",
-  memory_store: "Speichere in Memory",
-  memory_search: "Durchsuche Memory",
-  vault_store: "Speichere im Vault",
-  vault_search: "Durchsuche Vault",
-  document_export: "Erstelle Dokument",
-  canvas_push: "Erstelle Canvas",
-  canvas_eval: "Aktualisiere Canvas",
-  vision: "Analysiere Bild",
-  generate_image: "Generiere Bild",
-  code_run: "Fuehre Code aus",
-  synthesize: "Generiere Audio",
+  web_search: "Searching the web",
+  search_and_read: "Reading webpage",
+  exec_command: "Executing command",
+  shell: "Executing command",
+  read_file: "Reading file",
+  write_file: "Writing file",
+  list_directory: "Listing directory",
+  create_file: "Creating file",
+  delete_file: "Deleting file",
+  move_file: "Moving file",
+  memory_store: "Storing in memory",
+  memory_search: "Searching memory",
+  vault_store: "Storing in vault",
+  vault_search: "Searching vault",
+  document_export: "Creating document",
+  canvas_push: "Creating canvas",
+  canvas_eval: "Updating canvas",
+  vision: "Analyzing image",
+  generate_image: "Generating image",
+  code_run: "Executing code",
+  synthesize: "Generating audio",
 };
 
 function getToolLabel(name) {
-  if (!name) return "Verarbeite...";
+  if (!name) return "Processing...";
   return TOOL_LABELS[name] || name.replace(/_/g, " ");
 }
 

@@ -909,7 +909,7 @@ function GeneralPage({ cfg, set }) {
 
 // ── Providers ──────────────────────────────────────────────────────────
 const PROVIDERS = [
-  { id: "ollama", name: "Ollama (Lokal)", keyField: null },
+  { id: "ollama", name: "Ollama (Local)", keyField: null },
   { id: "openai", name: "OpenAI", keyField: "openai_api_key", extra: ["openai_base_url"] },
   { id: "anthropic", name: "Anthropic Claude", keyField: "anthropic_api_key", extra: ["anthropic_max_tokens"] },
   { id: "gemini", name: "Google Gemini", keyField: "gemini_api_key" },
@@ -957,7 +957,7 @@ function ProvidersPage({ cfg, set }) {
     </form>
     {filtered.map(p => {
       if (p.id === "ollama") return (
-        <Card key="ollama" title="Ollama (Lokal)" open={cfg.llm_backend_type === "ollama"}>
+        <Card key="ollama" title="Ollama (Local)" open={cfg.llm_backend_type === "ollama"}>
           <TextInput label="Base URL" value={cfg.ollama?.base_url} onChange={v => set("ollama.base_url", v)} mono />
           <NumberInput label="Timeout (Sek.)" value={cfg.ollama?.timeout_seconds} onChange={v => set("ollama.timeout_seconds", v)} min={10} max={600} />
           <TextInput label="Keep-Alive" value={cfg.ollama?.keep_alive} onChange={v => set("ollama.keep_alive", v)} desc="How long models stay in VRAM (e.g. 30m)" />
@@ -979,7 +979,7 @@ function ProvidersPage({ cfg, set }) {
 const ROLES = ["planner","executor","coder","embedding"];
 const BACKEND_OPTIONS = [
   { value: "", label: "Global (Standard)" },
-  { value: "ollama", label: "Ollama (Lokal)" },
+  { value: "ollama", label: "Ollama (Local)" },
   { value: "openai", label: "OpenAI" },
   { value: "anthropic", label: "Anthropic" },
   { value: "gemini", label: "Google Gemini" },
@@ -996,8 +996,8 @@ function ModelsPage({ cfg, set, setValidationErrors }) {
   return (<>
     <Section title="Models" desc="Model assignment per role, vision models, skill overrides. Each role can use its own API provider." />
     {ROLES.map(r => (
-      <Card key={r} title={`${r.charAt(0).toUpperCase() + r.slice(1)}-Modell`}>
-        <TextInput label="Modell-Name" value={cfg.models?.[r]?.name} onChange={v => set(`models.${r}.name`, v)} mono />
+      <Card key={r} title={`${r.charAt(0).toUpperCase() + r.slice(1)} Model`}>
+        <TextInput label="Model name" value={cfg.models?.[r]?.name} onChange={v => set(`models.${r}.name`, v)} mono />
         <SelectInput label="Backend / Provider" value={cfg.models?.[r]?.backend || ""} onChange={v => set(`models.${r}.backend`, v)} options={BACKEND_OPTIONS} desc="Custom provider for this role (empty = global backend)" />
         <NumberInput label="Context Window" value={cfg.models?.[r]?.context_window} onChange={v => set(`models.${r}.context_window`, v)} min={1024} max={2000000} step={1024} />
         <NumberInput label="VRAM (GB)" value={cfg.models?.[r]?.vram_gb} onChange={v => set(`models.${r}.vram_gb`, v)} min={0} max={80} step={0.5} />
@@ -1290,8 +1290,8 @@ function McpPage({ cfg, set, mcpServers, setMcpServers, a2a, setA2a, setValidati
   };
 
   return (<>
-    <Section title="MCP & A2A" desc="Model Context Protocol Server + Agent-zu-Agent Kommunikation" />
-    <Card title="MCP Server-Modus">
+    <Section title="MCP & A2A" desc="Model Context Protocol Server + Agent-to-Agent Communication" />
+    <Card title="MCP Server Mode">
       <SelectInput label="Mode" value={mcpServers.mode || "disabled"} onChange={v => setMcpServers({...mcpServers, mode: v})} options={["disabled","stdio","http","both"]} desc="Expose Jarvis as MCP server" />
       {mcpServers.mode !== "disabled" && <>
         <TextInput label="HTTP Host" value={mcpServers.http_host || "127.0.0.1"} onChange={v => setMcpServers({...mcpServers, http_host: v})} mono />
@@ -1305,7 +1305,7 @@ function McpPage({ cfg, set, mcpServers, setMcpServers, a2a, setA2a, setValidati
         <Toggle label="Sampling enabled" value={mcpServers.enable_sampling} onChange={v => setMcpServers({...mcpServers, enable_sampling: v})} />
       </>}
     </Card>
-    <Card title="Externe MCP Server">
+    <Card title="External MCP Servers">
       <div className="cc-desc" style={{marginBottom:16}}>Connected external MCP servers (tools & resources)</div>
       {extServerNames.map(name => {
         const srv = extServers[name];
@@ -1333,7 +1333,7 @@ function McpPage({ cfg, set, mcpServers, setMcpServers, a2a, setA2a, setValidati
       })}
       <button className="cc-btn" onClick={addExtServer}>+ Add server</button>
     </Card>
-    <Card title="A2A Protokoll">
+    <Card title="A2A Protocol">
       <Toggle label="A2A enabled" value={a2a.enabled} onChange={v => setA2a({...a2a, enabled: v})} desc="Agent-to-agent communication (Linux Foundation A2A RC v1.0)" />
       {a2a.enabled && <>
         <TextInput label="Host" value={a2a.host || "127.0.0.1"} onChange={v => setA2a({...a2a, host: v})} mono />
@@ -1373,7 +1373,7 @@ function CronPage({ cfg, set, cronJobs, setCronJobs }) {
       <NumberInput label="Interval (min)" value={cfg.heartbeat?.interval_minutes} onChange={v => set("heartbeat.interval_minutes", v)} min={1} max={1440} />
       <TextInput label="Checklist file" value={cfg.heartbeat?.checklist_file} onChange={v => set("heartbeat.checklist_file", v)} mono desc="Relative to jarvis_home" />
       <SelectInput label="Channel" value={cfg.heartbeat?.channel} onChange={v => set("heartbeat.channel", v)} options={["cli","telegram","webui","slack","discord","whatsapp","mattermost","google_chat"]} />
-      <TextInput label="Modell" value={cfg.heartbeat?.model} onChange={v => set("heartbeat.model", v)} mono />
+      <TextInput label="Model" value={cfg.heartbeat?.model} onChange={v => set("heartbeat.model", v)} mono />
     </Card>
     <Card title="Cron-Jobs">
       {cronJobs.map((job, i) => (
@@ -1390,7 +1390,7 @@ function CronPage({ cfg, set, cronJobs, setCronJobs }) {
           {job.schedule && <div className="cc-cron-preview">⏰ {cronToHuman(job.schedule)}</div>}
           <TextArea label="Prompt" value={job.prompt} onChange={v => updCron(i, "prompt", v)} rows={4} />
           <SelectInput label="Channel" value={job.channel} onChange={v => updCron(i, "channel", v)} options={["telegram","cli","webui","slack","discord","whatsapp","mattermost","google_chat"]} />
-          <TextInput label="Modell" value={job.model} onChange={v => updCron(i, "model", v)} mono />
+          <TextInput label="Model" value={job.model} onChange={v => updCron(i, "model", v)} mono />
           <TextInput label="Agent" value={job.agent || ""} onChange={v => updCron(i, "agent", v)} placeholder="(empty = default routing)" />
         </div>
       ))}

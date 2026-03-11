@@ -68,8 +68,8 @@ export function ThemeToggle({ theme, onToggle }) {
     <button
       className="cc-theme-toggle"
       onClick={onToggle}
-      title={theme === "dark" ? "Helles Design" : "Dunkles Design"}
-      aria-label={theme === "dark" ? "Zu hellem Design wechseln" : "Zu dunklem Design wechseln"}
+      title={theme === "dark" ? "Light mode" : "Dark mode"}
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       type="button"
     >
       {theme === "dark" ? I.sun : I.moon}

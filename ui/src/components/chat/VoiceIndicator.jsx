@@ -1,9 +1,9 @@
 export function VoiceIndicator({ voiceState, lastHeard, VoiceState }) {
   const stateLabels = {
-    [VoiceState.LISTENING]: "Sag \"Jarvis\"...",
-    [VoiceState.CONVERSATION]: "Ich hoere zu... (\"Jarvis Ende\" zum Beenden)",
-    [VoiceState.PROCESSING]: "Verarbeite...",
-    [VoiceState.SPEAKING]: "Spricht...",
+    [VoiceState.LISTENING]: "Say \"Jarvis\"...",
+    [VoiceState.CONVERSATION]: "Listening... (say \"Jarvis stop\" to end)",
+    [VoiceState.PROCESSING]: "Processing...",
+    [VoiceState.SPEAKING]: "Speaking...",
   };
 
   const stateIcons = {

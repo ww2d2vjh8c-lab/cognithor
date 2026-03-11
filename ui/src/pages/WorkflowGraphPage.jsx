@@ -102,7 +102,7 @@ function layoutDag(nodeResults, nodes) {
 // ── SVG DAG Renderer ──────────────────────────────────────────────────
 function DagGraph({ nodeResults, nodes, onNodeClick }) {
   const { positioned, edges } = layoutDag(nodeResults, nodes);
-  if (!positioned.length) return <div className="cc-wf-empty">Keine Knoten</div>;
+  if (!positioned.length) return <div className="cc-wf-empty">No nodes</div>;
 
   const maxX = Math.max(...positioned.map(n => n.x)) + NODE_W + 40;
   const maxY = Math.max(...positioned.map(n => n.y)) + NODE_H + 40;
@@ -189,7 +189,7 @@ function NodeDetail({ node, onClose }) {
         <button className="cc-wf-close" onClick={onClose}>&times;</button>
       </div>
       <div className="cc-wf-detail-row"><b>ID:</b> {node.id}</div>
-      <div className="cc-wf-detail-row"><b>Typ:</b> {node.node.type}</div>
+      <div className="cc-wf-detail-row"><b>Type:</b> {node.node.type}</div>
       <div className="cc-wf-detail-row"><b>Status:</b> <span style={{ color: c.text }}>{node.status}</span></div>
       {node.result?.output && (
         <div className="cc-wf-detail-row"><b>Output:</b>
@@ -197,18 +197,18 @@ function NodeDetail({ node, onClose }) {
         </div>
       )}
       {node.result?.error && (
-        <div className="cc-wf-detail-row"><b>Fehler:</b>
+        <div className="cc-wf-detail-row"><b>Error:</b>
           <pre className="cc-wf-output" style={{ color: "#ff5252" }}>{node.result.error}</pre>
         </div>
       )}
       {node.result?.duration_ms > 0 && (
-        <div className="cc-wf-detail-row"><b>Dauer:</b> {node.result.duration_ms}ms</div>
+        <div className="cc-wf-detail-row"><b>Duration:</b> {node.result.duration_ms}ms</div>
       )}
       {node.result?.retry_count > 0 && (
         <div className="cc-wf-detail-row"><b>Retries:</b> {node.result.retry_count}</div>
       )}
       {node.node.depends_on?.length > 0 && (
-        <div className="cc-wf-detail-row"><b>Abhängig von:</b> {node.node.depends_on.join(", ")}</div>
+        <div className="cc-wf-detail-row"><b>Depends on:</b> {node.node.depends_on.join(", ")}</div>
       )}
     </div>
   );
@@ -227,11 +227,11 @@ function TemplateCard({ template, onStart }) {
       </div>
       <div className="cc-wf-card-footer">
         <span className="cc-wf-card-meta">
-          {template.step_count} Schritte · {template.category}
+          {template.step_count} steps · {template.category}
           {template.estimated_minutes > 0 && ` · ~${template.estimated_minutes}min`}
         </span>
         <button className="cc-wf-start-btn" onClick={() => onStart(template.template_id)}>
-          Starten
+          Start
         </button>
       </div>
     </div>
@@ -269,7 +269,7 @@ function DagRunRow({ run, onClick }) {
   return (
     <div className="cc-wf-instance cc-wf-clickable" onClick={() => onClick(run.id)}>
       <span className="cc-wf-inst-name">{run.workflow_name || run.id}</span>
-      <span className="cc-wf-inst-progress">{run.node_count} Knoten</span>
+      <span className="cc-wf-inst-progress">{run.node_count} nodes</span>
       <span style={statusStyles[run.status] || {}}>{run.status}</span>
       <span className="cc-wf-inst-time">{run.started_at?.slice(0, 16).replace("T", " ")}</span>
     </div>
@@ -287,7 +287,7 @@ export default function WorkflowGraphPage() {
   const [tab, setTab] = useState("templates");
 
   if (loading) {
-    return <div className="cc-wf-loading">Workflows laden...</div>;
+    return <div className="cc-wf-loading">Loading workflows...</div>;
   }
 
   return (
@@ -299,8 +299,8 @@ export default function WorkflowGraphPage() {
         {stats && (
           <div className="cc-wf-stats">
             <span>{stats.templates || 0} Templates</span>
-            <span>{stats.simple?.running || 0} aktiv</span>
-            <span>{stats.simple?.completed || 0} fertig</span>
+            <span>{stats.simple?.running || 0} active</span>
+            <span>{stats.simple?.completed || 0} completed</span>
             <span>{stats.dag_runs || 0} DAG Runs</span>
           </div>
         )}
@@ -312,7 +312,7 @@ export default function WorkflowGraphPage() {
       <div className="cc-wf-tabs">
         {[
           { id: "templates", label: "Templates" },
-          { id: "instances", label: `Instanzen (${instances.length})` },
+          { id: "instances", label: `Instances (${instances.length})` },
           { id: "dag", label: `DAG Runs (${dagRuns.length})` },
         ].map(t => (
           <button key={t.id}
@@ -327,7 +327,7 @@ export default function WorkflowGraphPage() {
       {tab === "templates" && (
         <div className="cc-wf-grid">
           {templates.length === 0 ? (
-            <div className="cc-wf-empty">Keine Workflow-Templates verfügbar</div>
+            <div className="cc-wf-empty">No workflow templates available</div>
           ) : templates.map(t => (
             <TemplateCard key={t.template_id} template={t} onStart={startWorkflow} />
           ))}
@@ -338,7 +338,7 @@ export default function WorkflowGraphPage() {
       {tab === "instances" && (
         <div className="cc-wf-list">
           {instances.length === 0 ? (
-            <div className="cc-wf-empty">Keine laufenden Workflows</div>
+            <div className="cc-wf-empty">No running workflows</div>
           ) : instances.map(inst => (
             <InstanceRow key={inst.instance_id} inst={inst} />
           ))}
@@ -349,7 +349,7 @@ export default function WorkflowGraphPage() {
       {tab === "dag" && !selectedRun && (
         <div className="cc-wf-list">
           {dagRuns.length === 0 ? (
-            <div className="cc-wf-empty">Keine DAG Runs vorhanden</div>
+            <div className="cc-wf-empty">No DAG runs available</div>
           ) : dagRuns.map(run => (
             <DagRunRow key={run.id} run={run} onClick={fetchDagRun} />
           ))}
@@ -361,7 +361,7 @@ export default function WorkflowGraphPage() {
         <div className="cc-wf-graph-container">
           <div className="cc-wf-graph-toolbar">
             <button className="cc-wf-back-btn" onClick={() => { setSelectedRun(null); setSelectedNode(null); }}>
-              ← Zurück
+              ← Back
             </button>
             <span className="cc-wf-graph-title">
               {selectedRun.workflow_name || selectedRun.id}

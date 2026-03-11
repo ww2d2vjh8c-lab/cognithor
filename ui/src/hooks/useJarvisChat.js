@@ -129,7 +129,7 @@ export function useJarvisChat() {
         setMessages(prev => {
           const updated = [...prev];
           for (let i = updated.length - 1; i >= 0; i--) {
-            if (updated[i].role === "user" && updated[i].text === "[Sprachnachricht]") {
+            if (updated[i].role === "user" && updated[i].text === "[Voice message]") {
               updated[i] = { ...updated[i], text: data.text };
               break;
             }
@@ -143,7 +143,7 @@ export function useJarvisChat() {
         break;
 
       case "error":
-        addMessage("system", data.message || data.error || "Ein Fehler ist aufgetreten.");
+        addMessage("system", data.message || data.error || "An error occurred.");
         setIsStreaming(false);
         setStreamText("");
         streamAccRef.current = "";
@@ -274,11 +274,11 @@ export function useJarvisChat() {
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result.split(",")[1];
-      addMessage("user", `[Datei: ${file.name}]`);
+      addMessage("user", `[File: ${file.name}]`);
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({
           type: "user_message",
-          text: `[Datei: ${file.name}]`,
+          text: `[File: ${file.name}]`,
           session_id: sessionIdRef.current,
           metadata: {
             file_name: file.name,
@@ -295,11 +295,11 @@ export function useJarvisChat() {
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result.split(",")[1];
-      addMessage("user", "[Sprachnachricht]");
+      addMessage("user", "[Voice message]");
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({
           type: "user_message",
-          text: "[Sprachnachricht]",
+          text: "[Voice message]",
           session_id: sessionIdRef.current,
           metadata: {
             audio_base64: base64,

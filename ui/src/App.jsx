@@ -32,11 +32,11 @@ class ErrorBoundary extends Component {
           textAlign: 'center',
         }}>
           <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#ff6b6b' }}>
-            Etwas ist schiefgelaufen
+            Something went wrong
           </h1>
           <p style={{ maxWidth: '500px', lineHeight: 1.6, marginBottom: '1.5rem', color: '#aaa' }}>
-            Das Control Center hat einen unerwarteten Fehler erkannt.
-            Ein Neuladen behebt das Problem in den meisten Faellen.
+            The Control Center encountered an unexpected error.
+            Reloading the page usually fixes the problem.
           </p>
           <pre style={{
             background: '#16213e',
@@ -49,7 +49,7 @@ class ErrorBoundary extends Component {
             color: '#ff8a80',
             textAlign: 'left',
           }}>
-            {this.state.error?.message || 'Unbekannter Fehler'}
+            {this.state.error?.message || 'Unknown error'}
           </pre>
           <button
             onClick={() => window.location.reload()}
@@ -63,7 +63,7 @@ class ErrorBoundary extends Component {
               cursor: 'pointer',
             }}
           >
-            Seite neu laden
+            Reload page
           </button>
         </div>
       )
