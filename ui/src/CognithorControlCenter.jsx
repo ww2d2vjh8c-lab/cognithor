@@ -939,7 +939,7 @@ function ProvidersPage({ cfg, set }) {
     </Card>
     <div className="cc-search-bar">
       <span className="cc-search-icon">{I.search}</span>
-      <input className="cc-search-input" placeholder="Filter providers..." value={filter} onChange={e => setFilter(e.target.value)} />
+      <input className="cc-search-input" placeholder="Filter providers..." value={filter} onChange={e => setFilter(e.target.value)} autoComplete="off" name="cc-provider-filter" />
       {filter && <button className="cc-search-clear" onClick={() => setFilter("")}>{I.x}</button>}
     </div>
     {filtered.map(p => {

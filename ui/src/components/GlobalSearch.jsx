@@ -149,6 +149,7 @@ export function GlobalSearch({ onNavigate }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search settings..."
+            autoComplete="off"
             autoFocus
             aria-label="Global search"
           />
