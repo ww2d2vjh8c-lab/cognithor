@@ -2175,7 +2175,7 @@ export default function App() {
         .cc-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text2); }
         .cc-search-input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 10px 10px 36px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; }
         .cc-search-input:focus { border-color: var(--accent); }
-        .cc-search-input:-webkit-autofill, .cc-search-input:-webkit-autofill:hover, .cc-search-input:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0 1000px var(--bg2) inset !important; -webkit-text-fill-color: var(--text) !important; caret-color: var(--text); transition: background-color 5000s ease-in-out 0s; }
+        .cc-search-input:-webkit-autofill, .cc-search-input:-webkit-autofill:hover, .cc-search-input:-webkit-autofill:focus, .cc-global-search-input:-webkit-autofill, .cc-global-search-input:-webkit-autofill:hover, .cc-global-search-input:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0 1000px var(--bg2) inset !important; -webkit-text-fill-color: var(--text) !important; caret-color: var(--text); transition: background-color 5000s ease-in-out 0s; }
         @keyframes cc-autofill-hack { from {} }
         .cc-search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text2); cursor: pointer; }
         .cc-empty { text-align: center; padding: 20px; color: var(--text2); font-size: 13px; }

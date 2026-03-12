@@ -76,6 +76,18 @@ export function GlobalSearch({ onNavigate }) {
   const [open, setOpen] = useState(false);
   const inputRef = useRef(null);
 
+  // Kill browser autofill: Chrome ignores autoComplete="off", so we
+  // force-clear the DOM value on mount + on any autofill event.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.value = "";
+    const onAnim = () => { el.value = ""; setQuery(""); };
+    el.addEventListener("animationstart", onAnim);
+    const t = setTimeout(() => { if (el.value && !query) { el.value = ""; } }, 100);
+    return () => { el.removeEventListener("animationstart", onAnim); clearTimeout(t); };
+  }, [open]); // re-run when dialog opens
+
   // Ctrl+K shortcut
   useEffect(() => {
     const handler = (e) => {
@@ -149,7 +161,9 @@ export function GlobalSearch({ onNavigate }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search settings..."
-            autoComplete="off"
+            autoComplete="new-password"
+            role="presentation"
+            name={"gs_" + Date.now()}
             autoFocus
             aria-label="Global search"
           />
