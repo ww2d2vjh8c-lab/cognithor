@@ -3,9 +3,10 @@
     "locale": "zh",
     "name": "简体中文",
     "version": "v0.34.4",
-    "authors": ["Jarvis Team"]
+    "authors": [
+      "Jarvis Team"
+    ]
   },
-
   "error": {
     "model_not_installed": "所需的语言模型尚未安装。请运行：ollama pull {model}",
     "ollama_unreachable": "语言模型（Ollama）不可达。请确保 Ollama 正在运行：ollama serve",
@@ -55,7 +56,6 @@
     "planner_not_init": "Planner 未初始化——无法委派",
     "gatekeeper_not_init": "Gatekeeper 未初始化——无法委派"
   },
-
   "tool": {
     "exec_command": "Shell 命令",
     "write_file": "写入文件",
@@ -78,9 +78,32 @@
     "vault_entry": "知识库条目",
     "analyze_code": "代码分析",
     "browser_navigate": "浏览器导航",
-    "browser_screenshot": "浏览器截图"
+    "browser_screenshot": "浏览器截图",
+    "db_query": "数据库查询",
+    "db_schema": "数据库架构",
+    "db_execute": "数据库写入",
+    "db_connect": "数据库连接",
+    "create_chart": "创建图表",
+    "create_table_image": "创建表格图片",
+    "chart_from_csv": "从CSV创建图表",
+    "git_status": "Git 状态",
+    "git_diff": "Git 差异",
+    "git_log": "Git 日志",
+    "git_commit": "Git 提交",
+    "git_branch": "Git 分支",
+    "search_files": "文件搜索",
+    "find_in_files": "内容搜索",
+    "find_and_replace": "查找和替换",
+    "docker_ps": "Docker 容器列表",
+    "docker_logs": "Docker 日志",
+    "docker_inspect": "Docker 检查",
+    "docker_run": "Docker 启动",
+    "docker_stop": "Docker 停止",
+    "api_list": "API 集成列表",
+    "api_connect": "API 连接",
+    "api_call": "API 调用",
+    "api_disconnect": "API 断开"
   },
-
   "tool_desc": {
     "web_search": "使用 DuckDuckGo 进行网页搜索，支持多后端备用（SearXNG、Brave、Google CSE）。",
     "web_fetch": "获取网页并使用 trafilatura 提取干净的文本内容。",
@@ -107,9 +130,32 @@
     "get_episodes": "加载最近 N 天的日志条目。",
     "search_procedures": "搜索程序（已验证的重复任务工作流）。",
     "update_procedure": "报告程序执行的成功/失败，用于学习追踪。",
-    "memory_stats": "显示记忆系统统计信息。"
+    "memory_stats": "显示记忆系统统计信息。",
+    "db_query": "在数据库上执行只读 SQL 查询。支持 SQLite（文件路径）和 PostgreSQL（连接字符串）。返回格式化表格。",
+    "db_schema": "显示数据库架构。不带 table 参数：列出所有表。带 table：详细列信息（名称、类型、可空、主键、默认值）。",
+    "db_execute": "执行写入 SQL 语句（INSERT/UPDATE/DELETE/CREATE）。需要 Gatekeeper 批准。DROP 语句被阻止。",
+    "db_connect": "测试数据库连接并显示信息（类型、版本、大小、表数量）。",
+    "create_chart": "从数据创建图表（bar、line、pie、scatter、hbar）。以暗色主题保存为 PNG。",
+    "create_table_image": "将数据渲染为格式化表格图片（PNG）。可选最大值高亮。暗色主题。",
+    "chart_from_csv": "直接从 CSV 文件生成图表。自动检测列。",
+    "git_status": "显示 Git 工作树状态：已暂存、未暂存和未跟踪的文件。",
+    "git_diff": "显示 Git 差异。选项：未暂存（默认）、已暂存（--cached）或与特定提交比较。",
+    "git_log": "显示 Git 提交历史，支持作者筛选和紧凑格式。",
+    "git_commit": "暂存指定文件并创建 Git 提交。不允许 'git add .'。",
+    "git_branch": "Git 分支操作：列出、创建、切换、删除（仅安全删除）。",
+    "search_files": "按名称或 glob 模式查找文件。递归搜索，排除 .git、node_modules 等。",
+    "find_in_files": "使用文本或正则表达式搜索文件内容。显示带上下文行的匹配结果。",
+    "find_and_replace": "跨文件查找和替换。默认：dry_run（仅预览）。创建 .bak 备份。",
+    "docker_ps": "列出 Docker 容器，包括状态、端口和镜像信息。",
+    "docker_logs": "获取 Docker 容器日志，支持尾行数和时间过滤。",
+    "docker_inspect": "检查 Docker 容器或镜像的详细配置信息。",
+    "docker_run": "从镜像启动 Docker 容器，支持端口映射和环境变量。",
+    "docker_stop": "优雅地停止正在运行的 Docker 容器。",
+    "api_list": "列出所有已配置的 API 集成和可用模板。",
+    "api_connect": "配置新的 API 集成，包含身份验证。",
+    "api_call": "向已配置的集成发送经过身份验证的 API 调用。",
+    "api_disconnect": "移除 API 集成配置。"
   },
-
   "channel": {
     "approval_required": "需要审批",
     "approval_rationale": "原因：{rationale}",
@@ -118,42 +164,35 @@
     "stt_unavailable": "语音识别不可用。请安装 faster-whisper：pip install faster-whisper",
     "error_fallback": "处理过程中发生错误。"
   },
-
   "status": {
     "exec_command": "正在执行命令...",
     "run_python": "正在运行 Python 代码...",
     "tool_running": "正在运行 {tool}..."
   },
-
   "voice": {
     "approval_prompt": "我可以运行 {tool} 吗？原因：{reason}。请说「是」或「否」。"
   },
-
   "gatekeeper": {
     "invalid_path": "无效路径：{path}",
     "path_outside_allowed": "路径超出允许的目录范围：{path}",
     "dangerous_code": "检测到危险的 Python 代码：{description}"
   },
-
   "executor": {
     "action_skipped": "操作已跳过：{status}——{reason}",
     "deadlock": "操作已跳过：依赖未满足（死锁）",
     "deps_not_met": "操作已跳过：依赖未满足",
     "no_mcp_client": "没有可用的 MCP 客户端"
   },
-
   "planner": {
     "no_tools": "没有可用的工具。",
     "output_truncated": "[... 输出已截断]"
   },
-
   "prompt": {
     "respond_default": "简洁且有信息量地回答。",
     "respond_chinese": "用中文简洁且有信息量地回答。",
     "natural_speech": "用自然的口语化语言回答，适合语音输出。",
     "jarvis_identity": "您是 Jarvis。请礼貌地用中文解释。"
   },
-
   "personality": {
     "greeting_night": "夜猫子您好！",
     "greeting_morning": "早上好！",
@@ -165,18 +204,15 @@
     "success_directive": "当任务成功完成时，给予积极的确认。",
     "proactive_directive": "询问用户是否还需要其他帮助，或者更多细节是否会有所帮助。"
   },
-
   "sentiment": {
     "response_frustrated": "请特别耐心、理解和乐于助人。",
     "response_urgent": "简洁直接地回答。直奔主题。省略客套话。",
     "response_confused": "请特别清晰、逐步地解释。使用简单的语言。"
   },
-
   "text": {
     "truncated": "[... 已截断]",
     "output_truncated": "[... 已截断：{current}/{total} 字符，来源：{url}]"
   },
-
   "web": {
     "invalid_url": "无效的 URL：{url}",
     "invalid_domain": "无有效域名：{url}",
@@ -191,7 +227,6 @@
     "search_results_for": "搜索结果：{query}",
     "source_comparison_note": "应注意各来源之间的一致性和矛盾之处"
   },
-
   "media": {
     "unsupported_image": "不支持的图像格式：{suffix}",
     "unsupported_format": "不支持的格式：{suffix}。支持：PDF、DOCX、TXT、MD、HTML、CSV",
@@ -202,7 +237,6 @@
     "export_unsupported_format": "不支持的格式：{fmt}。允许：pdf、docx",
     "tts_unavailable": "没有可用的 TTS 后端。请安装 piper 或 espeak-ng。"
   },
-
   "fs": {
     "invalid_path": "无效路径：{path}",
     "access_denied": "访问被拒绝：{path} 超出允许的目录范围",
@@ -210,11 +244,9 @@
     "file_too_large": "文件过大（{size} 字节）。最大：1 MB。",
     "edit_ambiguous": "请使用更长的 old_text 片段以确保唯一匹配。"
   },
-
   "shell": {
     "path_blocked": "命令被阻止：路径 '{path}' 超出工作区范围。"
   },
-
   "memory": {
     "invalid_tier": "错误：未知层级 '{tier}'。有效值：{valid}",
     "no_results": "没有找到结果：'{query}'",
@@ -229,7 +261,6 @@
     "empty_graph": "# 知识图谱\n\n暂无实体。\n",
     "compaction_status": "是否需要压缩：是/否"
   },
-
   "ingest": {
     "unsupported_format": "不支持的格式：{suffix}",
     "no_extractor": "没有针对 {suffix} 的提取器",
@@ -237,18 +268,15 @@
     "docx_required": "DOCX 提取需要 python-docx：pip install python-docx",
     "file_too_large": "文件过大：{size} MB"
   },
-
   "code": {
     "access_denied": "访问被拒绝：'{path}' 超出工作区范围",
     "only_python": "错误：仅支持 Python 文件（.py）。"
   },
-
   "browser": {
     "text_truncated": "[... 已截断，共 {length} 字符]",
     "field_filled": "字段 '{selector}' 已填写",
     "vision_unavailable": "（视觉功能不可用）"
   },
-
   "security": {
     "token_store_insecure": "令牌存储使用 Base64 后备方案（未加密！）。pip install cryptography",
     "not_encrypted_warning": "未加密。pip install cryptography",
@@ -256,12 +284,10 @@
     "rate_limit_exceeded": "速率限制 '{name}' 已超出：{detail}",
     "forbidden_value": "包含被禁止的值 '{value}'"
   },
-
   "vault": {
     "invalid_token_format": "无效的令牌格式（Base64 错误）：{error}",
     "token_too_short": "令牌太短，无法进行旧版解密"
   },
-
   "skill": {
     "invalid_package_name": "无效的包名 '{name}'",
     "invalid_version": "无效的版本 '{version}'：需要 SemVer 格式",
@@ -276,30 +302,25 @@
     "hash_mismatch": "内容哈希不匹配（可能被篡改？）",
     "auto_created": "此技能为自动创建。需要手动填充内容。"
   },
-
   "config": {
     "preset_office_name": "办公助手",
     "preset_office_desc": "每日简报、邮件概览、日程检查"
   },
-
   "wizard": {
     "invalid_selection": "'{title}' 的选择无效",
     "confirmation": "确认",
     "confirm_settings": "请检查设置并确认。"
   },
-
   "cli": {
     "help_log_level": "覆盖日志级别",
     "help_no_cli": "不启动 CLI 通道（Control Center 无头模式）",
     "help_api_port": "Control Center API 端口",
     "help_api_host": "Control Center API 主机"
   },
-
   "cron": {
     "default_weather": "天气预报",
     "default_weekly": "每周回顾：\n"
   },
-
   "collaboration": {
     "researcher": "深入调研。提供事实、来源和背景信息。",
     "analyst": "分析数据。识别模式、趋势和关联。",
@@ -310,13 +331,11 @@
     "mediator": "在各方立场之间调解。寻求共识，解决冲突。",
     "previous_contributions": "先前的贡献：\n"
   },
-
   "webchat": {
     "attach_file": "附加文件",
     "approval_required": "需要审批",
     "mic_access_denied": "无法访问麦克风。请允许访问。"
   },
-
   "audit": {
     "eval_dangerous": "eval() 允许执行任意代码",
     "exec_dangerous": "exec() 允许执行任意代码",
@@ -330,21 +349,114 @@
     "user_approved": "用户已批准：{reason}",
     "user_rejected": "用户已拒绝：{reason}"
   },
-
   "log": {
     "approval_timeout": "审批超时：%s",
     "cron_loaded": "已加载的定时任务：%d",
     "cron_triggered": "定时任务已触发：'%s'",
     "heartbeat_executed": "心跳已执行"
   },
-
   "integrity": {
     "negation_contradiction": "否定矛盾（重叠：{count} 个词）",
     "content_too_long": "内容异常过长"
   },
-
   "hygiene": {
     "contradictory_values": "'{key}' 的值相互矛盾：{values}",
     "hash_mismatch": "条目 '{entry_id}' 的哈希不匹配"
+  },
+  "tools": {
+    "set_reminder": "设置提醒",
+    "set_reminder_desc": "设置未来的提醒。提供文本以及延迟分钟数或绝对时间。",
+    "list_reminders": "列出提醒",
+    "list_reminders_desc": "列出活跃/待处理的提醒。可选包括过去（已触发/已取消）的提醒。",
+    "send_notification": "发送通知",
+    "send_notification_desc": "发送即时桌面通知，包含标题和消息。",
+    "get_clipboard": "读取剪贴板",
+    "get_clipboard_desc": "读取剪贴板内容（文本或图片）。注意：剪贴板可能包含敏感信息。",
+    "set_clipboard": "设置剪贴板",
+    "set_clipboard_desc": "将文本复制到系统剪贴板。",
+    "screenshot_desktop": "桌面截图",
+    "screenshot_desktop_desc": "截取完整桌面截图。注意：截图可能包含敏感信息。",
+    "screenshot_region": "区域截图",
+    "screenshot_region_desc": "截取特定屏幕区域的截图。注意：截图可能包含敏感信息。",
+    "reminder_fired": "提醒 #{id}：{text}",
+    "reminder_set": "提醒 #{id} 已设置：\"{text}\" 到期时间 {due_at}（重复：{repeat}）",
+    "no_reminders": "未找到提醒。",
+    "clipboard_text": "剪贴板文本（{length} 字符）",
+    "clipboard_image": "剪贴板包含图片，已保存至：{path}",
+    "clipboard_empty": "剪贴板为空或无法读取。",
+    "screenshot_saved": "截图已保存：{path}（{width}x{height}）",
+    "copied_to_clipboard": "已复制 {chars} 个字符到剪贴板。",
+    "max_reminders_reached": "已达到最大活跃提醒数（{max}）。请先取消一些提醒。",
+    "notification_sent": "通知已发送。",
+    "notification_fallback": "通知已记录（无可用桌面后端）。"
+  },
+  "email": {
+    "read_inbox": "读取收件箱",
+    "search": "搜索邮件",
+    "send": "发送邮件",
+    "summarize": "收件箱摘要",
+    "no_emails": "{folder} 中没有邮件。",
+    "no_results": "未找到匹配的邮件：{criteria}",
+    "sent_success": "邮件已成功发送至：{to}",
+    "rate_limited": "已达到速率限制：每小时最多 {max} 封邮件。",
+    "invalid_address": "无效的邮件地址：{address}",
+    "missing_password": "未找到邮件密码。环境变量 '{env_var}' 未设置。",
+    "attachment_not_found": "未找到附件：{path}",
+    "attachment_outside_workspace": "附件路径不允许：{path}",
+    "missing_recipient": "未指定收件人。",
+    "missing_subject": "未指定主题。",
+    "missing_body": "未指定邮件正文。",
+    "invalid_date": "无效日期：{date}（期望：YYYY-MM-DD）"
+  },
+  "email_desc": {
+    "email_read_inbox": "从收件箱读取邮件。返回发件人、主题、日期和预览。",
+    "email_search": "按发件人、主题、内容或日期搜索邮件。",
+    "email_send": "通过 SMTP 发送邮件。支持文本和 HTML、抄送/密送以及工作区文件附件。",
+    "email_summarize": "收件箱摘要：按发件人和主题分组，统计和热门发件人。"
+  },
+  "calendar": {
+    "today": "今日日程",
+    "upcoming": "即将到来的日程",
+    "create_event": "创建日程",
+    "check_availability": "检查空闲时间",
+    "no_events_today": "{date} 没有日程。",
+    "no_upcoming": "未来 {days} 天没有日程。",
+    "event_created": "日程已创建：{title}",
+    "no_free_slots": "未找到空闲时间段。",
+    "invalid_date": "无效日期：{date}（期望：YYYY-MM-DD）",
+    "invalid_time": "无效时间：{time}（期望：HH:MM）",
+    "missing_title": "未指定标题。",
+    "missing_start": "未指定开始时间。",
+    "all_day": "全天"
+  },
+  "calendar_desc": {
+    "calendar_today": "显示今日日历事件。可选择指定其他日期。",
+    "calendar_upcoming": "显示即将到来的日历事件，按开始时间排序。",
+    "calendar_create_event": "创建新的日历事件。写入本地 ICS 文件。",
+    "calendar_check_availability": "在工作时间内查找空闲时间段。考虑现有日程。"
+  },
+  "docker": {
+    "not_available": "未找到 Docker CLI。Docker 是否已安装？",
+    "timeout": "Docker 命令在 {seconds} 秒后超时",
+    "container_not_found": "未找到容器。请使用 docker_ps 检查名称或 ID。",
+    "image_not_found": "未找到 Docker 镜像。请检查镜像名称。",
+    "name_in_use": "此名称的容器已存在。",
+    "permission_denied": "Docker 访问被拒绝。Docker 守护进程是否在运行？",
+    "port_allocated": "指定的端口已被占用。",
+    "privileged_blocked": "出于安全原因，特权模式被阻止。",
+    "invalid_container_name": "无效的容器名称。仅允许使用字母数字字符、连字符、下划线和点。",
+    "invalid_port": "无效的端口映射。预期格式：主机端口:容器端口（1-65535）。"
+  },
+  "api_hub": {
+    "no_integrations": "尚未配置任何集成。",
+    "integration_configured": "集成配置成功。",
+    "integration_removed": "集成已成功移除。",
+    "integration_not_found": "未找到集成。",
+    "credential_not_set": "环境变量未设置。请在进行 API 调用前设置。",
+    "rate_limit_exceeded": "已超过速率限制。请等待后重试。",
+    "invalid_method": "无效的 HTTP 方法。",
+    "plaintext_warning": "配置以明文存储。安装 cryptography 以启用加密。",
+    "health_ok": "健康检查通过。",
+    "health_failed": "健康检查失败。"
   }
 }

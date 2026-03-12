@@ -253,6 +253,61 @@ class SynthesisConfig(BaseModel):
     """Maximale Gesamtgröße des Kontexts für das LLM."""
 
 
+class EmailConfig(BaseModel):
+    """E-Mail-Tools Konfiguration (IMAP/SMTP).
+
+    Passwort wird NIE in der Config gespeichert, sondern aus einer
+    Umgebungsvariable gelesen (``password_env``).
+    """
+
+    enabled: bool = False
+    """Aktiviert oder deaktiviert die E-Mail-Tools."""
+
+    imap_host: str = ""
+    """IMAP-Server Hostname (z.B. 'imap.gmail.com')."""
+
+    imap_port: int = Field(default=993, ge=1, le=65535)
+    """IMAP-Server Port (Standard: 993 für SSL)."""
+
+    smtp_host: str = ""
+    """SMTP-Server Hostname (z.B. 'smtp.gmail.com')."""
+
+    smtp_port: int = Field(default=465, ge=1, le=65535)
+    """SMTP-Server Port (Standard: 465 für SSL, 587 für STARTTLS)."""
+
+    username: str = ""
+    """E-Mail-Benutzername (oft die E-Mail-Adresse)."""
+
+    password_env: str = "JARVIS_EMAIL_PASSWORD"
+    """Name der Umgebungsvariable mit dem E-Mail-Passwort."""
+
+
+class CalendarConfig(BaseModel):
+    """Kalender-Tools Konfiguration (ICS/CalDAV).
+
+    Primär: Lokale ICS-Datei (immer verfügbar).
+    Optional: CalDAV-Client wenn ``caldav``-Bibliothek installiert.
+    """
+
+    enabled: bool = False
+    """Aktiviert oder deaktiviert die Kalender-Tools."""
+
+    ics_path: str = ""
+    """Pfad zur lokalen ICS-Datei (Default: ~/.jarvis/calendar.ics)."""
+
+    caldav_url: str = ""
+    """CalDAV-Server URL (optional, z.B. 'https://caldav.example.com/dav/')."""
+
+    username: str = ""
+    """CalDAV-Benutzername (optional)."""
+
+    password_env: str = "JARVIS_CALENDAR_PASSWORD"
+    """Name der Umgebungsvariable mit dem CalDAV-Passwort."""
+
+    timezone: str = ""
+    """Zeitzone (z.B. 'Europe/Berlin'). Leer = System-Zeitzone."""
+
+
 class CodeConfig(BaseModel):
     """Code-Execution Konfiguration."""
 
@@ -1617,6 +1672,8 @@ class JarvisConfig(BaseModel):
     shell: ShellConfig = Field(default_factory=ShellConfig)
     media: MediaConfig = Field(default_factory=MediaConfig)
     synthesis: SynthesisConfig = Field(default_factory=SynthesisConfig)
+    email: EmailConfig = Field(default_factory=EmailConfig)
+    calendar: CalendarConfig = Field(default_factory=CalendarConfig)
     code: CodeConfig = Field(default_factory=CodeConfig)
     executor: ExecutorConfig = Field(default_factory=ExecutorConfig)
     vault: VaultConfig = Field(default_factory=VaultConfig)

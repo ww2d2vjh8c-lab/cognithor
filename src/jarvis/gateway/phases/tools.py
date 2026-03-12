@@ -132,9 +132,13 @@ async def init_tools(
         PhaseResult with initialized tool subsystems.
     """
     from jarvis.mcp.bridge import MCPBridge
+    from jarvis.mcp.chart_tools import register_chart_tools
     from jarvis.mcp.code_tools import register_code_tools
+    from jarvis.mcp.database_tools import register_database_tools
     from jarvis.mcp.filesystem import register_fs_tools
+    from jarvis.mcp.git_tools import register_git_tools
     from jarvis.mcp.memory_server import register_memory_tools
+    from jarvis.mcp.search_tools import register_search_tools
     from jarvis.mcp.shell import register_shell_tools
     from jarvis.mcp.web import register_web_tools
 
@@ -145,6 +149,10 @@ async def init_tools(
     register_shell_tools(mcp_client, config)
     web_tools = register_web_tools(mcp_client, config)
     register_code_tools(mcp_client, config)
+    register_git_tools(mcp_client, config)
+    register_search_tools(mcp_client, config)
+    register_database_tools(mcp_client, config)
+    register_chart_tools(mcp_client, config)
 
     # Browser-Use v17: Autonomous browser automation (optional)
     browser_agent = None
@@ -328,7 +336,40 @@ async def init_tools(
             synthesizer._set_web_tools(web_tools)
             log.debug("synthesis_web_injected")
 
-    # MCP-Server mode (optional, only if enabled in config)
+    # Email tools (optional)
+    try:
+        from jarvis.mcp.email_tools import register_email_tools
+
+        register_email_tools(mcp_client, config)
+    except Exception:
+        log.debug("email_tools_not_registered")
+
+    # Calendar tools (optional)
+    try:
+        from jarvis.mcp.calendar_tools import register_calendar_tools
+
+        register_calendar_tools(mcp_client, config)
+    except Exception:
+        log.debug("calendar_tools_not_registered")
+
+    # Docker tools (optional -- requires docker CLI)
+    try:
+        from jarvis.mcp.docker_tools import register_docker_tools
+
+        register_docker_tools(mcp_client, config)
+    except Exception:
+        log.debug("docker_tools_not_registered", exc_info=True)
+
+    # API Integration Hub
+    try:
+        from jarvis.mcp.api_hub import register_api_hub_tools
+
+        register_api_hub_tools(mcp_client, config)
+        log.info("api_hub_registered")
+    except Exception:
+        log.debug("api_hub_not_registered", exc_info=True)
+
+        # MCP-Server mode (optional, only if enabled in config)
     mcp_bridge = None
     try:
         mcp_bridge = MCPBridge(config)
@@ -373,5 +414,32 @@ async def init_tools(
         except Exception:
             log.debug("cost_tracker_init_skipped", exc_info=True)
     result["cost_tracker"] = cost_tracker
+
+    # Notification/Reminder tools
+    notification_tools = None
+    try:
+        from jarvis.mcp.notification_tools import (
+            register_notification_tools,
+            restore_pending_reminders,
+        )
+
+        notification_tools = register_notification_tools(mcp_client, config)
+        log.info("notification_tools_registered")
+        # Restore pending reminders from DB (fire overdue, reschedule future)
+        try:
+            await restore_pending_reminders(notification_tools)
+        except Exception:
+            log.debug("notification_tools_restore_skipped", exc_info=True)
+    except Exception:
+        log.debug("notification_tools_not_registered", exc_info=True)
+
+    # Desktop tools (clipboard, screenshot)
+    try:
+        from jarvis.mcp.desktop_tools import register_desktop_tools
+
+        register_desktop_tools(mcp_client, config)
+        log.info("desktop_tools_registered")
+    except Exception:
+        log.debug("desktop_tools_not_registered", exc_info=True)
 
     return result

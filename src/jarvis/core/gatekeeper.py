@@ -431,6 +431,32 @@ class Gatekeeper:
             "read_ppt",
             "read_docx",
             "list_remote_agents",
+            "git_status",
+            "git_diff",
+            "git_log",
+            "search_files",
+            "find_in_files",
+            "db_query",
+            "db_schema",
+            "create_chart",
+            "create_table_image",
+            "chart_from_csv",
+            "set_reminder",
+            "list_reminders",
+            "send_notification",
+            "get_clipboard",
+            "set_clipboard",
+            "screenshot_desktop",
+            "screenshot_region",
+            "calendar_today",
+            "calendar_upcoming",
+            "calendar_check_availability",
+            # Docker (read-only)
+            "docker_ps",
+            "docker_logs",
+            "docker_inspect",
+            # API Hub (read-only)
+            "api_list",
         }
         if tool in green_tools:
             return RiskLevel.GREEN
@@ -454,6 +480,19 @@ class Gatekeeper:
             "install_community_skill",
             "report_skill",
             "delegate_to_remote_agent",
+            "email_read_inbox",
+            "email_search",
+            "email_summarize",
+            "git_commit",
+            "git_branch",
+            "find_and_replace",
+            "db_connect",
+            # Docker (write, but safe)
+            "docker_stop",
+            # API Hub (write, but safe)
+            "api_connect",
+            "api_call",
+            "api_disconnect",
         }
         if tool in yellow_tools:
             return RiskLevel.YELLOW
@@ -461,9 +500,13 @@ class Gatekeeper:
         # ORANGE: Operationen die User-Bestätigung brauchen
         orange_tools = {
             "email_send",
+            "calendar_create_event",
             "delete_file",
             "fetch_url",
             "http_request",
+            "db_execute",
+            # Docker (container creation)
+            "docker_run",
         }
         if tool in orange_tools:
             return RiskLevel.ORANGE

@@ -3,9 +3,10 @@
     "locale": "de",
     "name": "Deutsch",
     "version": "1.0.0",
-    "authors": ["Jarvis Team"]
+    "authors": [
+      "Jarvis Team"
+    ]
   },
-
   "error": {
     "model_not_installed": "Das benötigte Sprachmodell ist nicht installiert. Ausführen: ollama pull {model}",
     "ollama_unreachable": "Das Sprachmodell (Ollama) ist nicht erreichbar. Stelle sicher, dass Ollama läuft: ollama serve",
@@ -55,7 +56,6 @@
     "planner_not_init": "Planner nicht initialisiert -- Delegation nicht möglich",
     "gatekeeper_not_init": "Gatekeeper nicht initialisiert -- Delegation nicht möglich"
   },
-
   "tool": {
     "exec_command": "Shell-Befehl",
     "write_file": "Datei schreiben",
@@ -78,9 +78,32 @@
     "vault_entry": "Vault-Eintrag",
     "analyze_code": "Code-Analyse",
     "browser_navigate": "Browser-Navigation",
-    "browser_screenshot": "Browser-Screenshot"
+    "browser_screenshot": "Browser-Screenshot",
+    "git_status": "Git-Status",
+    "git_diff": "Git-Diff",
+    "git_log": "Git-Log",
+    "git_commit": "Git-Commit",
+    "git_branch": "Git-Branch",
+    "search_files": "Datei-Suche",
+    "find_in_files": "Inhalts-Suche",
+    "find_and_replace": "Suchen und Ersetzen",
+    "db_query": "Datenbank-Abfrage",
+    "db_schema": "Datenbank-Schema",
+    "db_execute": "Datenbank-Schreibzugriff",
+    "db_connect": "Datenbankverbindung",
+    "create_chart": "Diagramm erstellen",
+    "create_table_image": "Tabellen-Bild erstellen",
+    "chart_from_csv": "Diagramm aus CSV",
+    "docker_ps": "Docker-Container",
+    "docker_logs": "Docker-Logs",
+    "docker_inspect": "Docker-Inspektion",
+    "docker_run": "Docker starten",
+    "docker_stop": "Docker stoppen",
+    "api_list": "API-Integrationen",
+    "api_connect": "API verbinden",
+    "api_call": "API-Aufruf",
+    "api_disconnect": "API trennen"
   },
-
   "tool_desc": {
     "web_search": "Websuche durchführen mit DuckDuckGo und Multi-Backend-Fallback (SearXNG, Brave, Google CSE).",
     "web_fetch": "Webseite abrufen und sauberen Text mit trafilatura extrahieren.",
@@ -107,9 +130,32 @@
     "get_episodes": "Lädt die Tageslog-Einträge der letzten N Tage.",
     "search_procedures": "Durchsucht Prozeduren (bewährte Abläufe für wiederkehrende Aufgaben).",
     "update_procedure": "Meldet Erfolg/Misserfolg einer Prozedur für Lern-Tracking.",
-    "memory_stats": "Zeigt Statistiken des Memory-Systems."
+    "memory_stats": "Zeigt Statistiken des Memory-Systems.",
+    "git_status": "Zeigt den Git Working-Tree-Status: staged, unstaged und untracked Dateien.",
+    "git_diff": "Zeigt Git-Diffs. Optionen: unstaged (Standard), staged (--cached), oder Vergleich mit einem Commit.",
+    "git_log": "Zeigt die Git-Commit-History mit optionalem Autor-Filter und kompaktem Format.",
+    "git_commit": "Staged bestimmte Dateien und erstellt einen Git-Commit. Kein 'git add .' erlaubt.",
+    "git_branch": "Git-Branch-Operationen: list, create, switch, delete (nur sicheres Loeschen).",
+    "search_files": "Findet Dateien nach Name oder Glob-Pattern. Rekursive Suche ohne .git, node_modules, etc.",
+    "find_in_files": "Durchsucht Dateiinhalte nach Text oder Regex. Zeigt Treffer mit Kontextzeilen.",
+    "find_and_replace": "Sucht und ersetzt in Dateien. Standard: dry_run (nur Vorschau). Erstellt .bak-Backups.",
+    "db_query": "Fuehrt eine Read-Only SQL-Abfrage auf einer Datenbank aus. Unterstuetzt SQLite (Dateipfad) und PostgreSQL (Connection-String). Gibt formatierte Tabelle zurueck.",
+    "db_schema": "Zeigt das Datenbank-Schema. Ohne table-Parameter: Liste aller Tabellen. Mit table: Detaillierte Spalteninfo (Name, Typ, Nullable, PK, Default).",
+    "db_execute": "Fuehrt eine schreibende SQL-Anweisung aus (INSERT/UPDATE/DELETE/CREATE). Erfordert Gatekeeper-Genehmigung. DROP-Anweisungen blockiert.",
+    "db_connect": "Testet eine Datenbankverbindung und zeigt Infos (Typ, Version, Groesse, Anzahl Tabellen).",
+    "create_chart": "Erstellt ein Diagramm (bar, line, pie, scatter, hbar) aus Daten. Speichert als PNG im Dark-Theme.",
+    "create_table_image": "Rendert Daten als formatierte Tabelle als Bild (PNG). Optionales Maximalwert-Highlighting. Dark-Theme.",
+    "chart_from_csv": "Erstellt ein Diagramm direkt aus einer CSV-Datei. Erkennt Spalten automatisch.",
+    "docker_ps": "Docker-Container auflisten mit Status, Ports und Image-Info.",
+    "docker_logs": "Logs eines Docker-Containers abrufen mit Tail- und Zeitfilter.",
+    "docker_inspect": "Docker-Container oder Image inspizieren fuer detaillierte Konfiguration.",
+    "docker_run": "Docker-Container von einem Image starten mit Port-Mapping und Umgebungsvariablen.",
+    "docker_stop": "Einen laufenden Docker-Container ordnungsgemaess stoppen.",
+    "api_list": "Alle konfigurierten API-Integrationen und verfuegbare Templates auflisten.",
+    "api_connect": "Neue API-Integration mit Authentifizierung einrichten.",
+    "api_call": "Authentifizierten API-Aufruf an eine konfigurierte Integration senden.",
+    "api_disconnect": "API-Integrations-Konfiguration entfernen."
   },
-
   "channel": {
     "approval_required": "Bestätigung erforderlich",
     "approval_rationale": "Begründung: {rationale}",
@@ -118,42 +164,35 @@
     "stt_unavailable": "Spracherkennung nicht verfügbar. Installiere faster-whisper: pip install faster-whisper",
     "error_fallback": "Ein Fehler ist bei der Verarbeitung aufgetreten."
   },
-
   "status": {
     "exec_command": "Führe Befehl aus...",
     "run_python": "Führe Python-Code aus...",
     "tool_running": "Führe {tool} aus..."
   },
-
   "voice": {
     "approval_prompt": "Darf ich {tool} ausführen? Grund: {reason}. Sage Ja oder Nein."
   },
-
   "gatekeeper": {
     "invalid_path": "Ungültiger Pfad: {path}",
     "path_outside_allowed": "Pfad ausserhalb erlaubter Verzeichnisse: {path}",
     "dangerous_code": "Gefährlicher Python-Code erkannt: {description}"
   },
-
   "executor": {
     "action_skipped": "Aktion übersprungen: {status} -- {reason}",
     "deadlock": "Aktion übersprungen: Abhängigkeiten nicht erfüllt (Deadlock)",
     "deps_not_met": "Aktion übersprungen: Abhängigkeiten nicht erfüllt",
     "no_mcp_client": "Kein MCP-Client verfügbar"
   },
-
   "planner": {
     "no_tools": "Keine Tools verfügbar.",
     "output_truncated": "[... Output gekürzt]"
   },
-
   "prompt": {
     "respond_default": "Antworte prägnant und informativ.",
     "respond_german": "Antworte auf Deutsch, prägnant und informativ.",
     "natural_speech": "Antworte in natürlicher, gesprochener Sprache, die für Sprachausgabe geeignet ist.",
     "jarvis_identity": "Du bist Jarvis. Erkläre höflich auf Deutsch."
   },
-
   "personality": {
     "greeting_night": "Hallo Nachtschwärmer! ",
     "greeting_morning": "Guten Morgen! ",
@@ -165,18 +204,15 @@
     "success_directive": "Wenn eine Aufgabe erfolgreich abgeschlossen wurde, bestätige das positiv.",
     "proactive_directive": "ob der User noch etwas braucht oder ob dir weitere Details helfen würden."
   },
-
   "sentiment": {
     "response_frustrated": "Sei besonders geduldig, verständnisvoll und hilfsbereit.",
     "response_urgent": "Antworte prägnant und direkt. Komm sofort zum Punkt. Überspringe Höflichkeitsfloskeln.",
     "response_confused": "Erkläre besonders klar und schrittweise. Verwende einfache Sprache."
   },
-
   "text": {
     "truncated": "[... gekürzt]",
     "output_truncated": "[... gekürzt: {current}/{total} Zeichen, Quelle: {url}]"
   },
-
   "web": {
     "invalid_url": "Ungültige URL: {url}",
     "invalid_domain": "Keine gültige Domain: {url}",
@@ -191,7 +227,6 @@
     "search_results_for": "Suchergebnisse für: {query}",
     "source_comparison_note": "Übereinstimmungen und Widersprüche zwischen Quellen sollten beachtet werden"
   },
-
   "media": {
     "unsupported_image": "Nicht unterstütztes Bildformat: {suffix}",
     "unsupported_format": "Nicht unterstütztes Format: {suffix}. Unterstützt: PDF, DOCX, TXT, MD, HTML, CSV",
@@ -202,7 +237,6 @@
     "export_unsupported_format": "Nicht unterstütztes Format: {fmt}. Erlaubt: pdf, docx",
     "tts_unavailable": "Kein TTS-Backend verfügbar. Installiere piper oder espeak-ng."
   },
-
   "fs": {
     "invalid_path": "Ungültiger Pfad: {path}",
     "access_denied": "Zugriff verweigert: {path} liegt ausserhalb erlaubter Verzeichnisse",
@@ -210,11 +244,9 @@
     "file_too_large": "Datei zu gross ({size} Bytes). Maximum: 1 MB.",
     "edit_ambiguous": "Verwende einen längeren Ausschnitt als old_text."
   },
-
   "shell": {
     "path_blocked": "Befehl blockiert: Pfad '{path}' liegt ausserhalb des Workspace."
   },
-
   "memory": {
     "invalid_tier": "Fehler: Unbekannter Tier '{tier}'. Gültig: {valid}",
     "no_results": "Keine Ergebnisse für: '{query}'",
@@ -229,7 +261,6 @@
     "empty_graph": "# Wissens-Graph\n\nKeine Entitäten vorhanden.\n",
     "compaction_status": "Compaction nötig: JA/Nein"
   },
-
   "ingest": {
     "unsupported_format": "Nicht unterstütztes Format: {suffix}",
     "no_extractor": "Kein Extraktor für {suffix}",
@@ -237,18 +268,15 @@
     "docx_required": "DOCX-Extraktion benötigt python-docx: pip install python-docx",
     "file_too_large": "Datei zu gross: {size} MB"
   },
-
   "code": {
     "access_denied": "Zugriff verweigert: '{path}' liegt ausserhalb des Workspace",
     "only_python": "Fehler: Nur Python-Dateien (.py) werden unterstützt."
   },
-
   "browser": {
     "text_truncated": "[... gekürzt, {length} Zeichen gesamt]",
     "field_filled": "Feld '{selector}' ausgefüllt",
     "vision_unavailable": "(Vision nicht verfügbar)"
   },
-
   "security": {
     "token_store_insecure": "Token-Store nutzt Base64-Fallback (NICHT verschlüsselt!). pip install cryptography",
     "not_encrypted_warning": "NICHT verschlüsselt. pip install cryptography",
@@ -256,12 +284,10 @@
     "rate_limit_exceeded": "Rate-Limit '{name}' überschritten: {detail}",
     "forbidden_value": "enthält verbotenen Wert '{value}'"
   },
-
   "vault": {
     "invalid_token_format": "Ungültiges Token-Format (Base64-Fehler): {error}",
     "token_too_short": "Token zu kurz für Legacy-Entschlüsselung"
   },
-
   "skill": {
     "invalid_package_name": "Ungültiger Paketname '{name}'",
     "invalid_version": "Ungültige Version '{version}': SemVer erwartet",
@@ -276,30 +302,25 @@
     "hash_mismatch": "Content-Hash stimmt nicht überein (Manipulation?)",
     "auto_created": "Dieser Skill wurde automatisch erstellt. Er muss manuell mit Inhalt befüllt werden."
   },
-
   "config": {
     "preset_office_name": "Büro-Assistent",
     "preset_office_desc": "Tägliche Briefings, E-Mail-Übersicht, Kalender-Check"
   },
-
   "wizard": {
     "invalid_selection": "Ungültige Auswahl für '{title}'",
     "confirmation": "Bestätigung",
     "confirm_settings": "Prüfe die Einstellungen und bestätige."
   },
-
   "cli": {
     "help_log_level": "Log-Level überschreiben",
     "help_no_cli": "CLI-Channel nicht starten (Headless-Betrieb für Control Center)",
     "help_api_port": "Port für die Control Center API",
     "help_api_host": "Host für die Control Center API"
   },
-
   "cron": {
     "default_weather": "Wetter für Nürnberg",
     "default_weekly": "Wochenrückblick:\n"
   },
-
   "collaboration": {
     "researcher": "Recherchiere gründlich. Liefere Fakten, Quellen und Kontext.",
     "analyst": "Analysiere die Daten. Identifiziere Muster, Trends und Zusammenhänge.",
@@ -310,13 +331,11 @@
     "mediator": "Vermittle zwischen Positionen. Finde Konsens und löse Konflikte.",
     "previous_contributions": "Vorherige Beiträge:\n"
   },
-
   "webchat": {
     "attach_file": "Datei anhängen",
     "approval_required": "Bestätigung erforderlich",
     "mic_access_denied": "Mikrofon-Zugriff nicht möglich. Bitte erlaube den Zugriff."
   },
-
   "audit": {
     "eval_dangerous": "eval() erlaubt beliebige Code-Ausführung",
     "exec_dangerous": "exec() erlaubt beliebige Code-Ausführung",
@@ -330,21 +349,114 @@
     "user_approved": "User-Bestätigung für: {reason}",
     "user_rejected": "User-Ablehnung für: {reason}"
   },
-
   "log": {
     "approval_timeout": "Approval-Timeout für %s",
     "cron_loaded": "Geladene Cron-Jobs: %d",
     "cron_triggered": "Cron-Job ausgelöst: '%s'",
     "heartbeat_executed": "Heartbeat ausgeführt"
   },
-
   "integrity": {
     "negation_contradiction": "Negations-Widerspruch (Überlappung: {count} Wörter)",
     "content_too_long": "Inhalt ungewöhnlich lang"
   },
-
   "hygiene": {
     "contradictory_values": "Widersprüchliche Werte für '{key}': {values}",
     "hash_mismatch": "Hash-Mismatch für Eintrag '{entry_id}'"
+  },
+  "tools": {
+    "set_reminder": "Erinnerung setzen",
+    "set_reminder_desc": "Eine Erinnerung fuer die Zukunft setzen. Text und entweder eine Verzoegerung in Minuten oder einen absoluten Zeitpunkt angeben.",
+    "list_reminders": "Erinnerungen auflisten",
+    "list_reminders_desc": "Aktive/ausstehende Erinnerungen auflisten. Optional vergangene (ausgeloeste/abgebrochene) Erinnerungen einbeziehen.",
+    "send_notification": "Benachrichtigung senden",
+    "send_notification_desc": "Eine sofortige Desktop-Benachrichtigung mit Titel und Nachricht senden.",
+    "get_clipboard": "Zwischenablage lesen",
+    "get_clipboard_desc": "Inhalt der Zwischenablage lesen (Text oder Bild). Hinweis: Die Zwischenablage kann sensible Informationen enthalten.",
+    "set_clipboard": "Zwischenablage setzen",
+    "set_clipboard_desc": "Text in die System-Zwischenablage kopieren.",
+    "screenshot_desktop": "Desktop-Screenshot",
+    "screenshot_desktop_desc": "Einen vollstaendigen Desktop-Screenshot aufnehmen. Hinweis: Screenshots koennen sensible Informationen enthalten.",
+    "screenshot_region": "Bereich-Screenshot",
+    "screenshot_region_desc": "Einen Screenshot eines bestimmten Bildschirmbereichs aufnehmen. Hinweis: Screenshots koennen sensible Informationen enthalten.",
+    "reminder_fired": "Erinnerung #{id}: {text}",
+    "reminder_set": "Erinnerung #{id} gesetzt: \"{text}\" faellig um {due_at} (Wiederholung: {repeat})",
+    "no_reminders": "Keine Erinnerungen gefunden.",
+    "clipboard_text": "Zwischenablage-Text ({length} Zeichen)",
+    "clipboard_image": "Zwischenablage enthaelt ein Bild, gespeichert unter: {path}",
+    "clipboard_empty": "Zwischenablage ist leer oder nicht lesbar.",
+    "screenshot_saved": "Screenshot gespeichert: {path} ({width}x{height})",
+    "copied_to_clipboard": "{chars} Zeichen in die Zwischenablage kopiert.",
+    "max_reminders_reached": "Maximale Anzahl aktiver Erinnerungen erreicht ({max}). Bitte einige Erinnerungen abbrechen.",
+    "notification_sent": "Benachrichtigung gesendet.",
+    "notification_fallback": "Benachrichtigung protokolliert (kein Desktop-Backend verfuegbar)."
+  },
+  "email": {
+    "read_inbox": "Posteingang lesen",
+    "search": "E-Mails durchsuchen",
+    "send": "E-Mail senden",
+    "summarize": "Posteingang zusammenfassen",
+    "no_emails": "Keine E-Mails in {folder}.",
+    "no_results": "Keine E-Mails gefunden fuer: {criteria}",
+    "sent_success": "E-Mail erfolgreich gesendet an: {to}",
+    "rate_limited": "Rate-Limit erreicht: maximal {max} E-Mails pro Stunde.",
+    "invalid_address": "Ungueltige E-Mail-Adresse: {address}",
+    "missing_password": "E-Mail-Passwort nicht gefunden. Umgebungsvariable '{env_var}' ist nicht gesetzt.",
+    "attachment_not_found": "Anhang nicht gefunden: {path}",
+    "attachment_outside_workspace": "Anhang-Pfad nicht erlaubt: {path}",
+    "missing_recipient": "Kein Empfaenger angegeben.",
+    "missing_subject": "Kein Betreff angegeben.",
+    "missing_body": "Kein Nachrichtentext angegeben.",
+    "invalid_date": "Ungueltiges Datum: {date} (erwartet: JJJJ-MM-TT)"
+  },
+  "email_desc": {
+    "email_read_inbox": "E-Mails aus dem Posteingang lesen. Gibt Absender, Betreff, Datum und Vorschau zurueck.",
+    "email_search": "E-Mails durchsuchen nach Absender, Betreff, Inhalt oder Datum.",
+    "email_send": "E-Mail senden ueber SMTP. Unterstuetzt Text und HTML, CC/BCC und Datei-Anhaenge aus dem Workspace.",
+    "email_summarize": "Posteingang zusammenfassen: Gruppierung nach Absender und Thread, Statistiken und Top-Absender."
+  },
+  "calendar": {
+    "today": "Heutige Termine",
+    "upcoming": "Kommende Termine",
+    "create_event": "Termin erstellen",
+    "check_availability": "Verfuegbarkeit pruefen",
+    "no_events_today": "Keine Termine am {date}.",
+    "no_upcoming": "Keine Termine in den naechsten {days} Tagen.",
+    "event_created": "Termin erstellt: {title}",
+    "no_free_slots": "Keine freien Zeitfenster gefunden.",
+    "invalid_date": "Ungueltiges Datum: {date} (erwartet: JJJJ-MM-TT)",
+    "invalid_time": "Ungueltige Uhrzeit: {time} (erwartet: HH:MM)",
+    "missing_title": "Kein Titel angegeben.",
+    "missing_start": "Keine Startzeit angegeben.",
+    "all_day": "ganztaegig"
+  },
+  "calendar_desc": {
+    "calendar_today": "Zeigt die heutigen Kalender-Termine an. Optional ein anderes Datum angeben.",
+    "calendar_upcoming": "Zeigt kommende Kalender-Termine an, sortiert nach Startzeit.",
+    "calendar_create_event": "Neuen Kalender-Termin erstellen. Schreibt in die lokale ICS-Datei.",
+    "calendar_check_availability": "Freie Zeitfenster innerhalb der Arbeitszeit finden. Beruecksichtigt bestehende Termine."
+  },
+  "docker": {
+    "not_available": "Docker-CLI nicht gefunden. Ist Docker installiert?",
+    "timeout": "Docker-Befehl nach {seconds}s abgelaufen",
+    "container_not_found": "Container nicht gefunden. Pruefe den Namen oder die ID mit docker_ps.",
+    "image_not_found": "Docker-Image nicht gefunden. Pruefe den Image-Namen.",
+    "name_in_use": "Ein Container mit diesem Namen existiert bereits.",
+    "permission_denied": "Docker-Zugriff verweigert. Laeuft der Docker-Daemon?",
+    "port_allocated": "Der angegebene Port ist bereits belegt.",
+    "privileged_blocked": "Privilegierter Modus ist aus Sicherheitsgruenden blockiert.",
+    "invalid_container_name": "Ungueltiger Container-Name. Verwende alphanumerische Zeichen, Bindestriche, Unterstriche und Punkte.",
+    "invalid_port": "Ungueltiges Port-Mapping. Erwartetes Format: HOST_PORT:CONTAINER_PORT (1-65535)."
+  },
+  "api_hub": {
+    "no_integrations": "Noch keine Integrationen konfiguriert.",
+    "integration_configured": "Integration erfolgreich konfiguriert.",
+    "integration_removed": "Integration erfolgreich entfernt.",
+    "integration_not_found": "Integration nicht gefunden.",
+    "credential_not_set": "Umgebungsvariable nicht gesetzt. Setze sie vor API-Aufrufen.",
+    "rate_limit_exceeded": "Rate-Limit ueberschritten. Warte vor dem naechsten Versuch.",
+    "invalid_method": "Ungueltige HTTP-Methode.",
+    "plaintext_warning": "Konfiguration als Klartext gespeichert. Installiere cryptography fuer Verschluesselung.",
+    "health_ok": "Health-Check bestanden.",
+    "health_failed": "Health-Check fehlgeschlagen."
   }
 }
