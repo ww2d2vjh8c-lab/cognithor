@@ -150,7 +150,7 @@ const PAGES = [
   { id: "channels", label: "Channels", icon: I.ch, key: "9" },
   { id: "security", label: "Security", icon: I.shield, key: "0" },
   { id: "web", label: "Web Tools", icon: I.web, key: null },
-  { id: "mcp", label: "MCP & A2A", icon: I.plug, key: null },
+  { id: "mcp", label: "Integrations", icon: I.plug, key: null },
   { id: "cron", label: "Cron & Heartbeat", icon: I.clock, key: null },
   { id: "database", label: "Database", icon: I.db, key: null },
   { id: "logging", label: "Logging", icon: I.terminal, key: null },
@@ -1290,7 +1290,7 @@ function McpPage({ cfg, set, mcpServers, setMcpServers, a2a, setA2a, setValidati
   };
 
   return (<>
-    <Section title="MCP & A2A" desc="Model Context Protocol Server + Agent-to-Agent Communication" />
+    <Section title="Integrations" desc="Model Context Protocol (MCP) Server + Agent-to-Agent Communication (A2A)" />
     <Card title="MCP Server Mode">
       <SelectInput label="Mode" value={mcpServers.mode || "disabled"} onChange={v => setMcpServers({...mcpServers, mode: v})} options={["disabled","stdio","http","both"]} desc="Expose Jarvis as MCP server" />
       {mcpServers.mode !== "disabled" && <>

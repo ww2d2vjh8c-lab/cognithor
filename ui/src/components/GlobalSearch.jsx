@@ -59,7 +59,7 @@ const PAGE_LABELS = {
   channels: "Channels",
   security: "Security",
   web: "Web Tools",
-  mcp: "MCP & A2A",
+  mcp: "Integrations",
   cron: "Cron & Heartbeat",
   database: "Database",
   logging: "Logging",
