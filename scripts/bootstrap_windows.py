@@ -22,8 +22,36 @@ import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 
-# ── Version (muss mit pyproject.toml uebereinstimmen) ─────────────────────
-BOOTSTRAP_VERSION = "0.27.1"
+# ── Version (dynamisch aus pyproject.toml lesen) ──────────────────────────
+def _read_version() -> str:
+    """Liest die Version aus pyproject.toml oder src/jarvis/__init__.py."""
+    # 1. Versuche pyproject.toml im Repo-Root
+    for candidate in [Path(__file__).resolve().parent.parent / "pyproject.toml",
+                      Path.cwd() / "pyproject.toml"]:
+        if candidate.exists():
+            try:
+                text = candidate.read_text(encoding="utf-8")
+                for line in text.splitlines():
+                    if line.strip().startswith("version"):
+                        # version = "0.34.4"
+                        ver = line.split("=", 1)[1].strip().strip('"').strip("'")
+                        if ver:
+                            return ver
+            except Exception:
+                pass
+    # 2. Fallback: jarvis.__init__.__version__
+    init_path = Path(__file__).resolve().parent.parent / "src" / "jarvis" / "__init__.py"
+    if init_path.exists():
+        try:
+            for line in init_path.read_text(encoding="utf-8").splitlines():
+                if line.startswith("__version__"):
+                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            pass
+    return "0.0.0"
+
+
+BOOTSTRAP_VERSION = _read_version()
 
 # ── Pfade ──────────────────────────────────────────────────────────────────
 JARVIS_HOME = Path(os.environ.get("JARVIS_HOME", Path.home() / ".jarvis"))

@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from jarvis import __version__
+from jarvis import BANNER_ASCII, __version__
 
 # WebSocket/FastAPI types must be at module level so that
 # `from __future__ import annotations` (PEP 563) can resolve
@@ -1265,6 +1265,7 @@ def _print_banner(
     backend = getattr(config, "llm_backend_type", "ollama")
     scheme = "https" if config.security.ssl_certfile else "http"
     lite_tag = " [LITE]" if lite else ""
+    print(f"\n{BANNER_ASCII}")
     print(f"\n{'=' * 60}")
     print(f"  COGNITHOR · Agent OS v{__version__}{lite_tag}")
     print(f"  Home:   {config.jarvis_home}")
