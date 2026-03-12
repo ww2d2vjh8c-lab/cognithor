@@ -23,6 +23,8 @@
 
 > **Note:** Cognithor is in **active development (Beta)**. While the test suite is extensive (10,208 tests, 89% coverage), the project has not been battle-tested in production environments. Expect rough edges, breaking changes between versions, and some German-language strings in system prompts and error messages. Contributions, bug reports, and feedback are very welcome. See [Status & Maturity](#status--maturity) for details.
 
+  [![clawdboard](https://clawdboard.ai/api/badge/Alex8791-cyber)](https://clawdboard.ai/user/Alex8791-cyber)
+
 ---
 
 ## Why Cognithor?
