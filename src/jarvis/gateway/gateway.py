@@ -482,7 +482,7 @@ class Gateway:
         core_path.write_text(content, encoding="utf-8")
         log.info(
             "core_inventory_synced",
-            tools=len(tools),
+            tools=tool_count,
             skills=len(skill_lines),
             procedures=len(proc_lines),
         )
