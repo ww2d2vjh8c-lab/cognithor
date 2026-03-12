@@ -15,7 +15,6 @@ Architektur-Bibel: §11.7 (Security-Framework), §14.4 (Metriken)
 from __future__ import annotations
 
 import calendar
-import hashlib
 import statistics
 import time
 from dataclasses import dataclass, field

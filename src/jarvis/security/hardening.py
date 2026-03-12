@@ -21,7 +21,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +119,8 @@ class SecurityGate:
         if critical_findings > self._policy.max_critical_findings:
             decision = GateDecision.BLOCK
             reasons.append(
-                f"{critical_findings} kritische Findings (max: {self._policy.max_critical_findings})"
+                f"{critical_findings} kritische Findings "
+                f"(max: {self._policy.max_critical_findings})"
             )
 
         # High Findings
@@ -248,7 +249,10 @@ repos:
         stages: [commit]
       - id: jarvis-credential-scan
         name: Credential Scanner
-        entry: python -c "from jarvis.security.hardening import CredentialScanner; CredentialScanner().scan_staged()"
+        entry: >-
+          python -c "from jarvis.security.hardening
+          import CredentialScanner;
+          CredentialScanner().scan_staged()"
         language: python
         types: [python]
         stages: [commit]

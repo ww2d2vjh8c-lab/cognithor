@@ -14,7 +14,7 @@ Bible reference: §3.2 (Gatekeeper), §6.2 (Skills), §11 (Security)
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from jarvis.utils.logging import get_logger
 

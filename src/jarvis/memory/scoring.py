@@ -14,7 +14,6 @@ Architecture: §8.4 (Memory Consolidation Pipeline)
 from __future__ import annotations
 
 import math
-import time
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any

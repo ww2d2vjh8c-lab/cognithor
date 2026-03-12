@@ -242,7 +242,11 @@ BUILTIN_TASKS: list[BenchmarkTask] = [
         description="Create, read, modify, and verify a file.",
         category=TaskCategory.AUTOMATION,
         difficulty=TaskDifficulty.MEDIUM,
-        user_message="Erstelle eine Datei 'data.json' mit {\"count\": 0}, lies sie, erhöhe count auf 1, und speichere sie.",
+        user_message=(
+            "Erstelle eine Datei 'data.json' mit "
+            '{"count": 0}, lies sie, erhöhe count '
+            "auf 1, und speichere sie."
+        ),
         expected_tools=["write_file", "read_file"],
         expected_keywords=["count", "1"],
         tags=["file", "json", "multi-step"],
@@ -323,7 +327,9 @@ BUILTIN_TASKS: list[BenchmarkTask] = [
         description="Solve a simple logical puzzle.",
         category=TaskCategory.REASONING,
         difficulty=TaskDifficulty.MEDIUM,
-        user_message="Wenn alle Äpfel Früchte sind und einige Früchte rot sind, sind dann alle Äpfel rot?",
+        user_message=(
+            "Wenn alle Äpfel Früchte sind und einige Früchte rot sind, sind dann alle Äpfel rot?"
+        ),
         expected_tools=[],
         expected_keywords=["nein", "nicht"],
         tags=["logic", "deduction"],
@@ -357,7 +363,9 @@ BUILTIN_TASKS: list[BenchmarkTask] = [
         description="Use multiple tools in sequence to complete a task.",
         category=TaskCategory.TOOL_USE,
         difficulty=TaskDifficulty.HARD,
-        user_message="Suche nach dem aktuellen Wetter in Berlin und speichere das Ergebnis in einer Datei.",
+        user_message=(
+            "Suche nach dem aktuellen Wetter in Berlin und speichere das Ergebnis in einer Datei."
+        ),
         expected_tools=["web_search", "write_file"],
         expected_keywords=["Berlin", "Wetter"],
         tags=["multi-tool", "orchestration"],
@@ -664,8 +672,8 @@ class BenchmarkReport:
         lines.append("")
         lines.append("## Summary")
         lines.append("")
-        lines.append(f"| Metric | Value |")
-        lines.append(f"|--------|-------|")
+        lines.append("| Metric | Value |")
+        lines.append("|--------|-------|")
         lines.append(f"| Total Tasks | {summary['total']} |")
         lines.append(f"| Passed | {summary['passed']} |")
         lines.append(f"| Partial | {summary.get('partial', 0)} |")
@@ -702,7 +710,9 @@ class BenchmarkReport:
                 "timeout": "T",
             }.get(result.status.value, "?")
             lines.append(
-                f"| {name} | {status_icon} {result.status.value} | {result.score:.3f} | {result.duration_ms:.0f}ms | {result.tokens_used} |"
+                f"| {name} | {status_icon} {result.status.value} "
+                f"| {result.score:.3f} | {result.duration_ms:.0f}ms "
+                f"| {result.tokens_used} |"
             )
         lines.append("")
 

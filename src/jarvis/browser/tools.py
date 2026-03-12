@@ -23,10 +23,7 @@ from typing import Any
 
 from jarvis.browser.agent import BrowserAgent
 from jarvis.browser.types import (
-    ActionType,
-    BrowserAction,
     BrowserConfig,
-    BrowserWorkflow,
 )
 from jarvis.utils.logging import get_logger
 

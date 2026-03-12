@@ -242,7 +242,10 @@ class Gatekeeper:
                 ):
                     decision = GateDecision(
                         status=GateStatus.BLOCK,
-                        reason=f"Tool '{action.tool}' benoetigt Netzwerk, aber System ist im OFFLINE-Modus",
+                        reason=(
+                            f"Tool '{action.tool}' benoetigt Netzwerk, "
+                            f"aber System ist im OFFLINE-Modus"
+                        ),
                         risk_level=RiskLevel.RED,
                         original_action=action,
                         policy_name="operation_mode_offline",
@@ -427,6 +430,7 @@ class Gatekeeper:
             "read_pdf",
             "read_ppt",
             "read_docx",
+            "list_remote_agents",
         }
         if tool in green_tools:
             return RiskLevel.GREEN
@@ -449,6 +453,7 @@ class Gatekeeper:
             "create_skill",
             "install_community_skill",
             "report_skill",
+            "delegate_to_remote_agent",
         }
         if tool in yellow_tools:
             return RiskLevel.YELLOW

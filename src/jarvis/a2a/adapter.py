@@ -263,7 +263,9 @@ class A2AAdapter:
 
         return A2AAgentCard(
             name="Jarvis",
-            description="Lokaler KI-Agent mit Memory, Browser-Automatisierung und EU-AI-Act-Compliance.",
+            description=(
+                "Lokaler KI-Agent mit Memory, Browser-Automatisierung und EU-AI-Act-Compliance."
+            ),
             url=base_url,
             version="16.0.0",
             provider=A2AProvider(organization=getattr(self._config, "owner_name", "Jarvis")),

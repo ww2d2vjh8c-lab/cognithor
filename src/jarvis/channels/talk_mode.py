@@ -19,7 +19,7 @@ Bibel-Referenz: §9.3 (Voice Channel Extension)
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from jarvis.utils.logging import get_logger
 

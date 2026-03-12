@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from jarvis.memory.scoring import DecayStrategy, ImportanceScorer, MemoryScore, ScoringWeights
+from jarvis.memory.scoring import ImportanceScorer
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)

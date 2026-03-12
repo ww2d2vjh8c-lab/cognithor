@@ -394,7 +394,10 @@ class Gateway:
         if self._audit_logger:
             self._audit_logger.log_system(
                 "startup",
-                description=f"Jarvis gestartet (LLM={llm_ok}, Tools={len(self._mcp_client.get_tool_list())})",
+                description=(
+                    f"Jarvis gestartet (LLM={llm_ok}, "
+                    f"Tools={len(self._mcp_client.get_tool_list())})"
+                ),
             )
 
         # CORE.md: Tool/Skill-Inventar aktualisieren
@@ -533,6 +536,12 @@ class Gateway:
             except Exception as exc:
                 log.warning("a2a_adapter_start_failed", error=str(exc))
 
+        # Auto-update: community skill sync if plugins.auto_update is enabled
+        if getattr(self._config.plugins, "auto_update", False) or getattr(
+            self._config.marketplace, "auto_update", False
+        ):
+            asyncio.create_task(self._auto_update_skills(), name="auto-update-skills")
+
         # Channels starten
         tasks = []
         for channel in self._channels.values():
@@ -547,6 +556,27 @@ class Gateway:
             await asyncio.gather(*tasks, return_exceptions=True)
         else:
             log.warning("no_channels_registered")
+
+    async def _auto_update_skills(self) -> None:
+        """Background task: sync community registry if auto_update is enabled."""
+        try:
+            from jarvis.skills.community.sync import RegistrySync
+
+            sync = RegistrySync(
+                community_dir=self._config.jarvis_home / "skills" / "community",
+                skill_registry=self._skill_registry if hasattr(self, "_skill_registry") else None,
+            )
+            result = await sync.sync_once()
+            if result.success:
+                log.info(
+                    "auto_update_sync_done",
+                    skills=result.registry_skills,
+                    recalls=len(result.new_recalls),
+                )
+            else:
+                log.warning("auto_update_sync_failed", errors=result.errors)
+        except Exception as exc:
+            log.debug("auto_update_skipped", reason=str(exc))
 
     async def shutdown(self) -> None:
         """Fährt den Gateway sauber herunter mit Session-Persistierung."""
@@ -890,7 +920,11 @@ class Gateway:
             )
             return OutgoingMessage(
                 channel=msg.channel,
-                text=f"Sub-Agent Rekursion abgebrochen: Tiefe {_depth} überschreitet Maximum {_max_depth}.",
+                text=(
+                    f"Sub-Agent Rekursion abgebrochen: "
+                    f"Tiefe {_depth} überschreitet "
+                    f"Maximum {_max_depth}."
+                ),
                 is_final=True,
             )
 
@@ -1639,13 +1673,19 @@ class Gateway:
                 break
 
             # Multi-step / coding tasks: let replan decide if more steps needed.
-            # BUT cap consecutive replans to prevent infinite loops.
-            # After 3 successful iterations (tools executed), call formulate_response
-            # to deliver results to the user instead of endlessly replanning.
+            # Caps scale with user's max_iterations setting to prevent infinite loops
+            # while respecting the configured iteration budget.
             _successful_iters = sum(1 for r in all_results if r.success)
-            _max_coding_iters = min(6, session.max_iterations - 1)
+            # Scale coding cap: 80% of max_iterations (min 4, reserve room for formulate)
+            _max_coding_iters = max(4, int(session.max_iterations * 0.8))
+            _max_coding_iters = min(_max_coding_iters, session.max_iterations - 1)
+            # Scale success threshold: ~30% of max_iterations (min 3)
+            _success_threshold = max(3, int(session.max_iterations * 0.3))
             if has_success and (used_coding_tool or _is_multi_step):
-                if session.iteration_count >= _max_coding_iters or _successful_iters >= 4:
+                if (
+                    session.iteration_count >= _max_coding_iters
+                    or _successful_iters >= _success_threshold
+                ):
                     await _status_cb("finishing", "Formuliere Antwort...")
                     final_response = await self._planner.formulate_response(
                         user_message=msg.text,
@@ -2168,7 +2208,18 @@ class Gateway:
     # Regex-Patterns für Faktenfragen (Wann/Wo/Wer/Was + Verb)
     _FACT_QUESTION_PATTERNS: list[re.Pattern[str]] = [
         re.compile(
-            r"\b(wann|wo|wer|was|wie viele|welche[rsmn]?)\b.{3,}(hat|haben|ist|sind|wurde|wurden|war|waren|gibt|gab|passiert|geschehen|entführ|verhaft|angegriff|getötet|gestorben|gewählt|gestürzt|finde[nt]?|stattfinde[nt]?|statt|spiele[nt]?|laufe[nt]?|läuft|komm[ent]?|beginne[nt]?|beginn|anfange[nt]?|fängt|endet|aufgetreten|gestartet|eröffnet|erschien|veröffentlich)",
+            r"\b(wann|wo|wer|was|wie viele|welche[rsmn]?)\b"
+            r".{3,}"
+            r"(hat|haben|ist|sind|wurde|wurden"
+            r"|war|waren|gibt|gab|passiert|geschehen"
+            r"|entführ|verhaft|angegriff|getötet"
+            r"|gestorben|gewählt|gestürzt"
+            r"|finde[nt]?|stattfinde[nt]?|statt"
+            r"|spiele[nt]?|laufe[nt]?|läuft"
+            r"|komm[ent]?|beginne[nt]?|beginn"
+            r"|anfange[nt]?|fängt|endet"
+            r"|aufgetreten|gestartet|eröffnet"
+            r"|erschien|veröffentlich)",
             re.IGNORECASE,
         ),
         re.compile(

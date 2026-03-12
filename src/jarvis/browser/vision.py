@@ -12,7 +12,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from jarvis.core.vision import (
-    ImageMediaType,
     build_vision_message,
     format_for_backend,
 )

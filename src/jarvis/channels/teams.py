@@ -28,7 +28,6 @@ Abhaengigkeiten:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import uuid
 from typing import TYPE_CHECKING, Any
@@ -125,9 +124,9 @@ class TeamsChannel(Channel):
             from botbuilder.core import (  # type: ignore[import-untyped]
                 BotFrameworkAdapter,
                 BotFrameworkAdapterSettings,
-                TurnContext,
+                TurnContext,  # noqa: F401
             )
-            from botbuilder.schema import Activity, ActivityTypes  # type: ignore[import-untyped]
+            from botbuilder.schema import Activity, ActivityTypes  # type: ignore[import-untyped]  # noqa: F401
         except ImportError:
             logger.error(
                 "botbuilder-core nicht installiert. "
@@ -204,7 +203,7 @@ class TeamsChannel(Channel):
     async def _handle_messages(self, request: Any) -> Any:
         """POST /api/messages -- Eingehende Bot Framework Activities."""
         from aiohttp import web
-        from botbuilder.core import BotFrameworkAdapter, TurnContext  # type: ignore[import-untyped]
+        from botbuilder.core import TurnContext  # type: ignore[import-untyped]
         from botbuilder.schema import Activity  # type: ignore[import-untyped]
 
         if not self._adapter:

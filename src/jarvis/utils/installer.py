@@ -118,7 +118,6 @@ def build_install_command(
 
     Returns a list suitable for ``subprocess.run()``.
     """
-    project = str(project_dir)
     spec = f".[{extras}]" if extras else "."
     if not editable:
         spec = spec  # non-editable keeps the same spec with uv pip install

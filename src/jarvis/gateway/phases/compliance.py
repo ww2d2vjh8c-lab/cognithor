@@ -1,4 +1,4 @@
-"""Compliance phase: Compliance framework, decision log, remediation, economics, export, impact, explainability.
+"""Compliance phase: framework, decision log, remediation, economics, etc.
 
 Attributes handled:
   _compliance_framework, _decision_log, _remediation_tracker,

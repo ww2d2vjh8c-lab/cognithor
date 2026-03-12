@@ -12,7 +12,6 @@ Alle Notifications sind async und fail-safe (nie den Workflow blockieren).
 
 from __future__ import annotations
 
-import asyncio
 import time
 from collections import deque
 from typing import Any, Callable, Awaitable
@@ -265,7 +264,9 @@ class HITLNotifier:
         templates = {
             "new_request": f"[HITL] Neue Anfrage: {title} ({request.config.priority.value})",
             "reminder": f"[HITL] Erinnerung: {title} wartet auf Bearbeitung",
-            "resolved": f"[HITL] Erledigt: {title} -- {extra.get('decision', '?') if extra else '?'}",
+            "resolved": (
+                f"[HITL] Erledigt: {title} -- {extra.get('decision', '?') if extra else '?'}"
+            ),
             "escalated": f"[HITL] Eskaliert: {title} (Eskalation #{request.escalation_count})",
         }
         return templates.get(event, f"[HITL] {event}: {title}")

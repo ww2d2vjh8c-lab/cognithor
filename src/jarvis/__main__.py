@@ -547,7 +547,11 @@ def main() -> None:
                                             websocket,
                                             {
                                                 "type": "error",
-                                                "error": f"Audiodatei zu gross ({estimated_size // 1_048_576} MB, max {_MAX_AUDIO_B64_BYTES // 1_048_576} MB)",
+                                                "error": (
+                                                    f"Audiodatei zu gross "
+                                                    f"({estimated_size // 1_048_576} MB, "
+                                                    f"max {_MAX_AUDIO_B64_BYTES // 1_048_576} MB)"
+                                                ),
                                             },
                                         ):
                                             break
@@ -604,7 +608,10 @@ def main() -> None:
                                                 websocket,
                                                 {
                                                     "type": "error",
-                                                    "error": "Audiodatei konnte nicht transkribiert werden.",
+                                                    "error": (
+                                                        "Audiodatei konnte nicht "
+                                                        "transkribiert werden."
+                                                    ),
                                                 },
                                             ):
                                                 break

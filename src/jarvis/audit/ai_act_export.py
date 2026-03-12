@@ -456,12 +456,12 @@ class ComplianceExporter:
         d = report.to_dict()
         lines = [
             f"# EU AI Act Compliance Report -- {d['system_name']} v{d['version']}",
-            f"",
+            "",
             f"**Report-ID:** {d['report_id']}",
             f"**Erstellt:** {d['generated_at']}",
             f"**Gesamt-Compliance:** {d['overall_compliance']}%",
-            f"",
-            f"## 1. Risikobewertung",
+            "",
+            "## 1. Risikobewertung",
         ]
 
         ra = d.get("risk_assessment", {})
@@ -481,7 +481,9 @@ class ComplianceExporter:
         lines.extend(["", "## 3. Gegenmaßnahmen"])
         for m in d.get("mitigations", []):
             lines.append(
-                f"- [{m.get('status', '')}] **{m.get('risk_factor', '')}**: {m.get('description', '')}"
+                f"- [{m.get('status', '')}] "
+                f"**{m.get('risk_factor', '')}**: "
+                f"{m.get('description', '')}"
             )
 
         lines.extend(

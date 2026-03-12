@@ -12,10 +12,9 @@ Architektur-Bibel: §5.3 (Model-Router), §9.5 (Lokalisierung)
 
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 # ============================================================================
@@ -184,7 +183,7 @@ class ModelExtensionRegistry:
             "total_models": len(models),
             "providers": list(set(m.provider.value for m in models)),
             "capabilities": list(set(c.value for m in models for c in m.capabilities)),
-            "languages": list(set(l for m in models for l in m.languages)),
+            "languages": list(set(lang for m in models for lang in m.languages)),
             "defaults_set": len(self._defaults),
         }
 

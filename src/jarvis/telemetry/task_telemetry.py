@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import sqlite3
 import json
-import time
 from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any

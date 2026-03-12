@@ -8,7 +8,6 @@ via a meta-LLM call.
 from __future__ import annotations
 
 import hashlib
-import json
 import sqlite3
 import time as _time
 from datetime import datetime, timezone
@@ -206,7 +205,9 @@ class PromptEvolutionEngine:
         """Record the reward score for a session that used a specific prompt version."""
         now = datetime.now(timezone.utc).isoformat()
         self._conn.execute(
-            "INSERT INTO prompt_sessions (session_id, prompt_version_id, reward_score, recorded_at) "
+            "INSERT INTO prompt_sessions "
+            "(session_id, prompt_version_id, "
+            "reward_score, recorded_at) "
             "VALUES (?, ?, ?, ?)",
             (session_id, prompt_version_id, reward, now),
         )
@@ -364,9 +365,11 @@ class PromptEvolutionEngine:
 
         # Meta-prompt for variant generation
         meta_prompt = (
-            "Du bist ein Prompt-Optimierer. Analysiere diesen System-Prompt und die Session-Daten.\n"
+            "Du bist ein Prompt-Optimierer. Analysiere diesen "
+            "System-Prompt und die Session-Daten.\n"
             "Erstelle eine verbesserte Version die:\n"
-            "- Gleiche Struktur und Platzhalter behaelt ({tools_section}, {context_section}, etc.)\n"
+            "- Gleiche Struktur und Platzhalter behaelt "
+            "({tools_section}, {context_section}, etc.)\n"
             "- Klarere Anweisungen fuer schwache Bereiche gibt\n"
             "- Keine neuen Platzhalter einfuehrt\n"
             "Antworte NUR mit dem verbesserten Prompt, ohne Erklaerung.\n\n"
@@ -387,7 +390,9 @@ class PromptEvolutionEngine:
             self._conn.execute(
                 """
                 INSERT OR IGNORE INTO prompt_versions
-                    (id, template_name, template_text, parent_id, created_at, is_active, metadata_json)
+                    (id, template_name, template_text,
+                     parent_id, created_at, is_active,
+                     metadata_json)
                 VALUES (?, ?, ?, ?, ?, 0, '{}')
                 """,
                 (new_vid, template_name, new_text, winner_id, now),

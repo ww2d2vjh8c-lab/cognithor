@@ -49,7 +49,7 @@ class WakeWordDetector:
         """Lädt Vosk für Keyword-Spotting."""
         try:
             from vosk import KaldiRecognizer, Model
-            import json as _json
+            import json as _json  # noqa: F401
 
             model = Model(lang="de")
             self._model = KaldiRecognizer(model, self._sample_rate)

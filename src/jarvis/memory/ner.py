@@ -12,9 +12,7 @@ Architecture: §8.3 (Knowledge Graph NER)
 from __future__ import annotations
 
 import re
-import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Any
 

@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
-from jarvis.core.bindings import BindingEngine, MessageBinding, MessageContext
+from jarvis.core.bindings import BindingEngine, MessageContext
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:

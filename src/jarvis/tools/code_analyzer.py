@@ -11,9 +11,7 @@ Detektiert:
 from __future__ import annotations
 
 import ast
-import os
 from pathlib import Path
-from typing import Any
 
 from jarvis.models import CodeSmell
 from jarvis.utils.logging import get_logger
@@ -183,7 +181,10 @@ class CodeSmellDetector:
                     line=node.lineno,
                     smell_type="long_function",
                     severity="warning",
-                    message=f"Funktion '{node.name}' hat {lines} Zeilen (max: {self._max_function_lines})",
+                    message=(
+                        f"Funktion '{node.name}' hat {lines} Zeilen "
+                        f"(max: {self._max_function_lines})"
+                    ),
                     suggestion=f"Funktion '{node.name}' in kleinere Funktionen aufteilen",
                 )
             )
@@ -197,7 +198,11 @@ class CodeSmellDetector:
                     line=node.lineno,
                     smell_type="deep_nesting",
                     severity="warning",
-                    message=f"Funktion '{node.name}' hat Verschachtelungstiefe {depth} (max: {self._max_nesting_depth})",
+                    message=(
+                        f"Funktion '{node.name}' hat "
+                        f"Verschachtelungstiefe {depth} "
+                        f"(max: {self._max_nesting_depth})"
+                    ),
                     suggestion="Early returns oder Guard-Clauses verwenden",
                 )
             )
@@ -216,7 +221,11 @@ class CodeSmellDetector:
                     line=node.lineno,
                     smell_type="too_many_params",
                     severity="warning",
-                    message=f"Funktion '{node.name}' hat {param_count} Parameter (max: {self._max_parameters})",
+                    message=(
+                        f"Funktion '{node.name}' hat "
+                        f"{param_count} Parameter "
+                        f"(max: {self._max_parameters})"
+                    ),
                     suggestion="Parameter-Objekt oder Builder-Pattern verwenden",
                 )
             )
@@ -236,7 +245,11 @@ class CodeSmellDetector:
                     line=node.lineno,
                     smell_type="god_class",
                     severity="warning",
-                    message=f"Klasse '{node.name}' hat {len(methods)} Methoden (max: {self._max_class_methods})",
+                    message=(
+                        f"Klasse '{node.name}' hat "
+                        f"{len(methods)} Methoden "
+                        f"(max: {self._max_class_methods})"
+                    ),
                     suggestion="Klasse in kleinere Klassen mit Single Responsibility aufteilen",
                 )
             )

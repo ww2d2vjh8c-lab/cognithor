@@ -26,7 +26,6 @@ import sys
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
 
 from jarvis.utils.logging import get_logger
 
@@ -140,6 +139,7 @@ class SandboxConfig:
     max_file_size_mb: int = 100
     max_processes: int = 64
     default_timeout: int = 30
+    max_cpu_seconds: int = 10
 
     # Umgebungsvariablen die durchgereicht werden
     env_passthrough: list[str] = field(
@@ -595,7 +595,10 @@ class SandboxExecutor:
         self._level = SandboxLevel.BARE
         log.warning(
             "no_sandbox_available",
-            message="Weder bwrap noch firejail noch Windows Job Objects gefunden. Befehle laufen UNGESCHÜTZT!",
+            message=(
+                "Weder bwrap noch firejail noch Windows Job Objects "
+                "gefunden. Befehle laufen UNGESCHÜTZT!"
+            ),
             install_hint="apt install bubblewrap  # Empfohlen (Linux)",
         )
 
@@ -786,7 +789,7 @@ class SandboxExecutor:
             timeout=timeout,
             max_memory_mb=max_memory_mb,
             max_processes=max_processes,
-            max_cpu_seconds=self._config.default_timeout,
+            max_cpu_seconds=self._config.max_cpu_seconds,
         )
 
     async def _exec_bare(

@@ -638,7 +638,9 @@ class AgentWizard(BaseWizard):
                 icon="💻",
                 preset_values={
                     "name": "coder",
-                    "system_prompt": "Du bist ein erfahrener Entwickler. Schreibe sauberen, getesteten Code.",
+                    "system_prompt": (
+                        "Du bist ein erfahrener Entwickler. Schreibe sauberen, getesteten Code."
+                    ),
                     "preferred_model": _get_model_for_role("coder", "codestral:22b"),
                     "allowed_tools": ["shell", "filesystem", "web"],
                     "sandbox_profile": "standard",
@@ -651,7 +653,9 @@ class AgentWizard(BaseWizard):
                 icon="🔍",
                 preset_values={
                     "name": "researcher",
-                    "system_prompt": "Du bist ein gründlicher Rechercheur. Prüfe Fakten und fasse zusammen.",
+                    "system_prompt": (
+                        "Du bist ein gründlicher Rechercheur. Prüfe Fakten und fasse zusammen."
+                    ),
                     "preferred_model": "",
                     "allowed_tools": ["web", "browser", "memory"],
                     "sandbox_profile": "minimal",
@@ -664,7 +668,9 @@ class AgentWizard(BaseWizard):
                 icon="👨‍👩‍👧",
                 preset_values={
                     "name": "family_assistant",
-                    "system_prompt": "Du hilfst bei Familienorganisation: Termine, Einkäufe, Erinnerungen.",
+                    "system_prompt": (
+                        "Du hilfst bei Familienorganisation: Termine, Einkäufe, Erinnerungen."
+                    ),
                     "preferred_model": _get_model_for_role("executor", "qwen3:8b"),
                     "allowed_tools": ["calendar", "memory"],
                     "sandbox_profile": "minimal",

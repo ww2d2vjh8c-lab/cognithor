@@ -15,7 +15,6 @@ Kern-Konzepte:
 from __future__ import annotations
 
 import os
-import random
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -272,7 +271,7 @@ class Span:
             "service": self.service_name,
         }
         if self.links:
-            d["links"] = [l.to_dict() for l in self.links]
+            d["links"] = [link.to_dict() for link in self.links]
         return d
 
     def to_otlp(self) -> dict[str, Any]:

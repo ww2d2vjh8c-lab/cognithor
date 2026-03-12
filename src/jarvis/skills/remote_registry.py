@@ -380,9 +380,11 @@ class RemoteRegistry:
                 )
             plugin_dir.mkdir(parents=True, exist_ok=True)
             skill_file = plugin_dir / "skill.md"
-            skill_content = (
-                content
-                or f"---\nname: {name}\nversion: {manifest.version}\ntrigger_keywords: {manifest.tags}\n---\n\n{manifest.description}"
+            skill_content = content or (
+                f"---\nname: {name}\n"
+                f"version: {manifest.version}\n"
+                f"trigger_keywords: {manifest.tags}\n"
+                f"---\n\n{manifest.description}"
             )
             skill_file.write_text(skill_content, encoding="utf-8")
 

@@ -316,5 +316,5 @@ class A2AHTTPHandler:
             finally:
                 writer.close()
 
-        server = await asyncio.start_server(handle_connection, host, port)
+        _server = await asyncio.start_server(handle_connection, host, port)
         log.info("a2a_minimal_server_started", host=host, port=port)

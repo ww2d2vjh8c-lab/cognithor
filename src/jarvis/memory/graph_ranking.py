@@ -30,13 +30,12 @@ Bibel-Referenz: §4.4 (Wissens-Graph), §4.10 (Graph Ranking)
 from __future__ import annotations
 
 import logging
-import math
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from typing import Any
 
-from jarvis.models import Entity, MemorySearchResult, Relation
+from jarvis.models import Entity, MemorySearchResult
 
 logger = logging.getLogger("jarvis.memory.graph_ranking")
 

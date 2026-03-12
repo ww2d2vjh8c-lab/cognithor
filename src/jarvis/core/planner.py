@@ -21,7 +21,7 @@ import re
 import time
 from typing import TYPE_CHECKING, Any
 
-from jarvis.core.model_router import ModelRouter, OllamaClient, OllamaError
+from jarvis.core.model_router import ModelRouter, OllamaError
 from jarvis.models import (
     ActionPlan,
     MessageRole,
@@ -66,12 +66,17 @@ erstellst du einen Plan. Der Executor führt ihn aus.
 erstellen, Webrecherchen durchführen und komplexe Aufgaben autonom lösen.
 
 ## Sprachstil
-- Antworte in natuerlicher, gesprochener Sprache -- so wie ein Mensch in einem Gespraech reden wuerde.
-- Vermeide Aufzaehlungen, Bullet-Points und technische Formatierung, wenn nicht explizit verlangt. Formuliere fliessende Saetze.
-- Sei direkt und praegnant, aber nicht roboterhaft. Kurze, klare Saetze statt verschachtelter Konstruktionen.
+- Antworte in natuerlicher, gesprochener Sprache -- so wie ein Mensch \
+in einem Gespraech reden wuerde.
+- Vermeide Aufzaehlungen, Bullet-Points und technische Formatierung, \
+wenn nicht explizit verlangt. Formuliere fliessende Saetze.
+- Sei direkt und praegnant, aber nicht roboterhaft. Kurze, klare \
+Saetze statt verschachtelter Konstruktionen.
 - Du darfst umgangssprachlich sein -- "also", "na ja", "schau mal", "okay" klingt menschlicher.
-- Wenn du etwas erklaerst, stell dir vor du redest mit einem Freund: locker, verstaendlich, auf den Punkt.
-- Bei Faktenfragen: 2-3 Saetze, nicht als Liste. Nur bei expliziten Listen-Anfragen darfst du Aufzaehlungen nutzen.
+- Wenn du etwas erklaerst, stell dir vor du redest mit einem Freund: \
+locker, verstaendlich, auf den Punkt.
+- Bei Faktenfragen: 2-3 Saetze, nicht als Liste. Nur bei expliziten \
+Listen-Anfragen darfst du Aufzaehlungen nutzen.
 
 ## Verfügbare Tools
 {tools_section}
@@ -164,7 +169,7 @@ Direkte Textantwort (Option A): „Eine API ist eine Programmierschnittstelle...
 | Anfrage enthält... | Option | Typisches Tool |
 |---------------------|--------|----------------|
 | Allgemeine Erklärung, Smalltalk, Meinung | A | -- |
-| Aktuelle Ereignisse, Politik, Nachrichten, Fakten, „wann", „was ist passiert" | B | search_and_read (bevorzugt) oder web_news_search |
+| Aktuelle Ereignisse, Politik, Nachrichten, Fakten | B | search_and_read / web_news_search |
 | „Datei", „lesen", „erstellen", „schreiben" | B | read_file / write_file |
 | „Verzeichnis", „Ordner", „auflisten" | B | list_directory |
 | „Befehl", „ausführen", „Shell", „Code" | B | exec_command |
@@ -174,7 +179,7 @@ Direkte Textantwort (Option A): „Eine API ist eine Programmierschnittstelle...
 | „Kontakt", „Entität" | B | get_entity / add_entity |
 | „Prozedur", „wie mache ich" | B | search_procedures |
 | „Skill", „Skills", „was kannst du", „welche Tools", „Fähigkeiten" | B | list_skills |
-| „PDF", „DOCX", „Brief", „Schreiben", „Dokument", „Kündigung", „Vertrag", „Bewerbung", „erstelle als" | B | document_export |
+| „PDF", „DOCX", „Brief", „Dokument", „Kündigung", „Vertrag" | B | document_export |
 | „Code", „Script", „Programm", „debugge", „programmiere" | B | run_python / write_file |
 | „analysiere Code", „Code-Review", „Code prüfen" | B | analyze_code |
 | Unklare Anfrage | A | -- (nachfragen) |
@@ -556,9 +561,13 @@ class Planner:
         if plan.parse_failed:
             log.warning("planner_json_retry", model=model, goal=user_message[:80])
             retry_hint = (
-                "\n\nIMPORTANT: Your previous response contained malformed JSON that could not be parsed. "
-                "Please respond with VALID JSON only. Use this exact format:\n"
-                '```json\n{"goal": "...", "steps": [{"tool": "...", "args": {...}, "purpose": "..."}]}\n```'
+                "\n\nIMPORTANT: Your previous response contained "
+                "malformed JSON that could not be parsed. "
+                "Please respond with VALID JSON only. "
+                "Use this exact format:\n"
+                '```json\n{"goal": "...", "steps": '
+                '[{"tool": "...", "args": {...}, '
+                '"purpose": "..."}]}\n```'
             )
             retry_messages = list(messages)
             retry_messages.append({"role": "assistant", "content": assistant_text})
@@ -662,9 +671,13 @@ class Planner:
         if plan.parse_failed:
             log.warning("planner_replan_json_retry", model=model)
             retry_hint = (
-                "\n\nIMPORTANT: Your previous response contained malformed JSON. "
-                "Please respond with VALID JSON only. Use this exact format:\n"
-                '```json\n{"goal": "...", "steps": [{"tool": "...", "args": {...}, "purpose": "..."}]}\n```'
+                "\n\nIMPORTANT: Your previous response contained "
+                "malformed JSON. "
+                "Please respond with VALID JSON only. "
+                "Use this exact format:\n"
+                '```json\n{"goal": "...", "steps": '
+                '[{"tool": "...", "args": {...}, '
+                '"purpose": "..."}]}\n```'
             )
             retry_messages = list(messages)
             retry_messages.append({"role": "assistant", "content": assistant_text})
@@ -764,13 +777,16 @@ class Planner:
                 f"## Suchergebnisse aus dem Internet (AKTUELLE FAKTEN)\n\n"
                 f"{search_content_block}\n\n"
                 f"## Anweisungen\n"
-                f"Beantworte die Frage des Users AUSSCHLIEẞLICH auf Basis der obigen Suchergebnisse.\n"
+                f"Beantworte die Frage des Users AUSSCHLIEẞLICH "
+                f"auf Basis der obigen Suchergebnisse.\n"
                 f"REGELN:\n"
-                f"1. Die Suchergebnisse sind AKTUELL und KORREKT. Dein Trainingswissen ist VERALTET.\n"
+                f"1. Die Suchergebnisse sind AKTUELL und KORREKT. "
+                f"Dein Trainingswissen ist VERALTET.\n"
                 f"2. Wenn die Suchergebnisse ein Ereignis beschreiben, dann IST es passiert.\n"
                 f"3. Sage NIEMALS 'es gibt keinen Beleg' oder 'das ist nicht passiert', wenn die "
                 f"Suchergebnisse das Gegenteil zeigen.\n"
-                f"4. Zitiere konkrete Daten, Namen, Orte und Fakten DIREKT aus den Suchergebnissen.\n"
+                f"4. Zitiere konkrete Daten, Namen, Orte und Fakten "
+                f"DIREKT aus den Suchergebnissen.\n"
                 f"5. Erfinde KEINE Details, die nicht in den Suchergebnissen stehen.\n"
                 f"6. Antworte auf Deutsch, prägnant und faktenbasiert.\n"
                 f"7. Antworte in natürlicher, gesprochener Sprache -- wie ein Mensch im Gespräch. "
@@ -781,11 +797,16 @@ class Planner:
                 f"Der User hat gefragt: {user_message}\n\n"
                 f"Du hast folgende Aktionen ausgeführt und Ergebnisse erhalten:\n\n"
                 f"{results_text}\n\n"
-                f"Formuliere jetzt eine hilfreiche Antwort auf Deutsch in natuerlicher, gesprochener Sprache.\n"
-                f"WICHTIG: Nutze die ERFOLGREICHEN Ergebnisse (✓) direkt in deiner Antwort. "
-                f"Ignoriere fehlgeschlagene/blockierte Schritte, wenn das Ziel trotzdem erreicht wurde. "
-                f"Gib dem User KEINE Anleitungen fuer Dinge, die du bereits erledigt hast. "
-                f"Antworte wie ein Mensch im Gespraech -- fliessende Saetze, keine Bullet-Points oder Listen."
+                f"Formuliere jetzt eine hilfreiche Antwort auf Deutsch "
+                f"in natuerlicher, gesprochener Sprache.\n"
+                f"WICHTIG: Nutze die ERFOLGREICHEN Ergebnisse "
+                f"direkt in deiner Antwort. "
+                f"Ignoriere fehlgeschlagene/blockierte Schritte, "
+                f"wenn das Ziel trotzdem erreicht wurde. "
+                f"Gib dem User KEINE Anleitungen fuer Dinge, "
+                f"die du bereits erledigt hast. "
+                f"Antworte wie ein Mensch im Gespraech -- "
+                f"fliessende Saetze, keine Bullet-Points."
             )
 
         # Aktuelles Datum/Uhrzeit für korrekte zeitliche Bezüge
@@ -849,7 +870,11 @@ class Planner:
                     f"[{r.tool_name}] {r.content[:300]}" for r in results if r.success
                 )
                 if raw_results:
-                    return f"Hier sind die Ergebnisse (Zusammenfassung fehlgeschlagen):\n\n{raw_results}"
+                    return (
+                        "Hier sind die Ergebnisse "
+                        "(Zusammenfassung fehlgeschlagen):"
+                        f"\n\n{raw_results}"
+                    )
                 return (
                     "Ich konnte die Ergebnisse leider nicht zusammenfassen — "
                     "das Sprachmodell antwortet fehlerhaft. "

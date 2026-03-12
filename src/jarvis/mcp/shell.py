@@ -14,7 +14,6 @@ Bibel-Referenz: §5.3 (jarvis-shell Server), §4.3 (Sandbox)
 
 from __future__ import annotations
 
-import os
 import re
 import shlex
 from pathlib import Path
@@ -100,19 +99,47 @@ class ShellTools:
         )
 
         # Sandbox-Konfiguration aus JarvisConfig ableiten
+        # Wire UI SandboxConfig (models.py) → execution SandboxConfig (core/sandbox.py)
+        _ui_sandbox = getattr(config, "sandbox", None)
         sandbox_config = SandboxConfig(
             workspace_dir=config.workspace_dir,
             default_timeout=self._default_timeout,
         )
 
-        # Sandbox-Level aus Config übernehmen (wenn vorhanden)
-        sandbox_level = getattr(config, "sandbox_level", "bwrap")
-        if sandbox_level in ("bwrap", "firejail", "bare"):
+        if _ui_sandbox is not None:
+            # Memory limit from UI config
+            _mem = getattr(_ui_sandbox, "max_memory_mb", None)
+            if _mem and isinstance(_mem, int):
+                sandbox_config.max_memory_mb = _mem
+            # CPU time limit from UI config
+            _cpu = getattr(_ui_sandbox, "max_cpu_seconds", None)
+            if _cpu and isinstance(_cpu, int):
+                sandbox_config.max_cpu_seconds = _cpu
+            # Network access from UI config
+            _net = getattr(_ui_sandbox, "network_access", None)
+            if _net is not None:
+                sandbox_config.network = NetworkPolicy.ALLOW if _net else NetworkPolicy.BLOCK
+            # Sandbox level from UI config
+            _level = getattr(_ui_sandbox, "level", None)
+            if _level is not None:
+                level_val = _level.value if hasattr(_level, "value") else str(_level)
+                if level_val in ("bwrap", "firejail", "bare", "process"):
+                    try:
+                        sandbox_config.preferred_level = SandboxLevel(level_val)
+                    except ValueError:
+                        pass
+            # Env vars from UI config
+            _env = getattr(_ui_sandbox, "env_vars", None)
+            if _env and isinstance(_env, dict):
+                sandbox_config.env_passthrough.extend(_env.keys())
+
+        # Legacy: direct config attributes (backward compat)
+        sandbox_level = getattr(config, "sandbox_level", None)
+        if sandbox_level and sandbox_level in ("bwrap", "firejail", "bare"):
             sandbox_config.preferred_level = SandboxLevel(sandbox_level)
 
-        # Netzwerk-Policy aus Config
-        sandbox_network = getattr(config, "sandbox_network", "allow")
-        if sandbox_network in ("allow", "block"):
+        sandbox_network = getattr(config, "sandbox_network", None)
+        if sandbox_network and sandbox_network in ("allow", "block"):
             sandbox_config.network = NetworkPolicy(sandbox_network)
 
         self._sandbox = SandboxExecutor(sandbox_config)

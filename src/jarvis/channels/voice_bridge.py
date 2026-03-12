@@ -21,9 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import io
 import tempfile
-import wave
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any

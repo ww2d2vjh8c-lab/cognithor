@@ -12,7 +12,6 @@ Bibel-Referenz: §14 (Skills & Ecosystem)
 
 from __future__ import annotations
 
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -347,7 +346,7 @@ class SkillMarketplace:
 
     def featured(self, max_results: int = 10) -> list[SkillListing]:
         """Kuratierte Empfehlungen."""
-        featured = [l for l in self._listings.values() if l.is_featured]
+        featured = [listing for listing in self._listings.values() if listing.is_featured]
         featured.sort(key=lambda r: r.popularity_score, reverse=True)
         return featured[:max_results]
 
@@ -363,7 +362,7 @@ class SkillMarketplace:
 
     def top_rated(self, max_results: int = 10) -> list[SkillListing]:
         """Bestbewertete Skills (min 2 Reviews)."""
-        rated = [l for l in self._listings.values() if l.rating_count >= 2]
+        rated = [listing for listing in self._listings.values() if listing.rating_count >= 2]
         rated.sort(key=lambda r: r.average_rating, reverse=True)
         return rated[:max_results]
 
@@ -463,12 +462,12 @@ class SkillMarketplace:
         all_listings = list(self._listings.values())
         return {
             "total_skills": len(all_listings),
-            "featured_count": sum(1 for l in all_listings if l.is_featured),
-            "verified_count": sum(1 for l in all_listings if l.is_verified),
-            "total_installs": sum(l.install_count for l in all_listings),
+            "featured_count": sum(1 for listing in all_listings if listing.is_featured),
+            "verified_count": sum(1 for listing in all_listings if listing.is_verified),
+            "total_installs": sum(listing.install_count for listing in all_listings),
             "total_reviews": sum(len(r) for r in self._reviews.values()),
-            "categories_used": len(set(l.category for l in all_listings)),
-            "unique_publishers": len(set(l.publisher_id for l in all_listings)),
+            "categories_used": len(set(listing.category for listing in all_listings)),
+            "unique_publishers": len(set(listing.publisher_id for listing in all_listings)),
         }
 
     # ------------------------------------------------------------------

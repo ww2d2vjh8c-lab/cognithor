@@ -11,9 +11,9 @@ import logging
 import sqlite3
 import threading
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 log = logging.getLogger(__name__)
 

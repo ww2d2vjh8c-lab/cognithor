@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 from typing import List
 
 from jarvis.config import load_config
@@ -41,7 +40,7 @@ def main(argv: List[str] | None = None) -> None:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # list command
-    list_parser = subparsers.add_parser("list", help="Verfügbare Skills auflisten")
+    _list_parser = subparsers.add_parser("list", help="Verfügbare Skills auflisten")
 
     # create command
     create_parser = subparsers.add_parser("create", help="Neuen Skill (Prozedur) anlegen")

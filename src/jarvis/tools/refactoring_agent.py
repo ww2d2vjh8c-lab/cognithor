@@ -6,11 +6,10 @@ Standalone ausfuehrbar: python -m jarvis.tools.refactoring_agent src/jarvis/
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from jarvis.models import CodeSmell, ArchitectureFinding, RefactoringReport
+from jarvis.models import RefactoringReport
 from jarvis.tools.code_analyzer import CodeSmellDetector
 from jarvis.tools.architecture_analyzer import ArchitectureAnalyzer
 from jarvis.utils.logging import get_logger
@@ -142,9 +141,9 @@ if __name__ == "__main__":
     agent = RefactoringAgent()
     report = agent.run_analysis(src)
 
-    print(f"\n=== Refactoring Report ===")
+    print("\n=== Refactoring Report ===")
     print(f"Summary: {report.summary}")
-    print(f"\nTop Issues:")
+    print("\nTop Issues:")
     for issue in agent.get_priority_issues(report):
         print(f"  [{issue['severity']}] {issue['subtype']}: {issue['message']}")
         if issue["suggestion"]:

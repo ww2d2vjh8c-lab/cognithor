@@ -216,7 +216,8 @@ class CapabilityMatrix:
             )
         if spec.max_timeout_seconds > profile.max_timeout_seconds:
             violations.append(
-                f"Tool needs {spec.max_timeout_seconds}s timeout, profile allows {profile.max_timeout_seconds}s"
+                f"Tool needs {spec.max_timeout_seconds}s timeout, "
+                f"profile allows {profile.max_timeout_seconds}s"
             )
         return violations
 

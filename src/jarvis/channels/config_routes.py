@@ -1020,7 +1020,7 @@ def _register_memory_routes(
             auto_quarantine = body.get("auto_quarantine", True)
             report = engine.scan_batch(entries, auto_quarantine=auto_quarantine)
             return report.to_dict()
-        except Exception as exc:
+        except Exception:
             log.exception("Error during memory hygiene scan")
             return {"error": "Internal error during memory hygiene scan"}
 
@@ -1465,7 +1465,8 @@ def _register_skill_routes(
         for role, name in configured.items():
             if models and name not in models:
                 warnings.append(
-                    f"Modell '{name}' ({role}) ist nicht verfügbar. Installieren: ollama pull {name}"
+                    f"Modell '{name}' ({role}) ist nicht verfügbar. "
+                    f"Installieren: ollama pull {name}"
                 )
         return {
             "models": models,
@@ -2178,7 +2179,7 @@ def _register_governance_routes(
         if interop is None:
             return {"links": [], "stats": {}}
         return {
-            "links": [l.to_dict() for l in interop.federation.active_links()],
+            "links": [link.to_dict() for link in interop.federation.active_links()],
             "stats": interop.federation.stats(),
         }
 

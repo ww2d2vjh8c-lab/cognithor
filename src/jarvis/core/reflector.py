@@ -16,7 +16,7 @@ import re
 from datetime import date
 from typing import TYPE_CHECKING, Any
 
-from jarvis.core.model_router import ModelRouter, OllamaClient, OllamaError
+from jarvis.core.model_router import ModelRouter, OllamaError
 from jarvis.models import (
     AgentResult,
     Entity,

@@ -285,7 +285,9 @@ class ModelInversionDetector:
                         stage=StageName.MODEL_INVERSION.value,
                         severity="high",
                         title="System-Prompt Extraction Attempt",
-                        description="Versuch erkannt, System-Prompt oder Instruktionen zu extrahieren.",
+                        description=(
+                            "Versuch erkannt, System-Prompt oder Instruktionen zu extrahieren."
+                        ),
                         evidence=text[:200],
                         remediation="Input-Filter für Prompt-Extraction-Muster einbauen.",
                         cwe_id="CWE-200",
@@ -368,7 +370,9 @@ class DependencyScanner:
                                 stage=StageName.DEPENDENCY_SCAN.value,
                                 severity=info["severity"],
                                 title=f"Vulnerable dependency: {dep}",
-                                description=f"{info['cve']}: {dep} hat eine bekannte Schwachstelle.",
+                                description=(
+                                    f"{info['cve']}: {dep} hat eine bekannte Schwachstelle."
+                                ),
                                 remediation=f"Update {vuln_name} auf >= {vuln_version}.",
                                 cwe_id="CWE-1104",
                             )

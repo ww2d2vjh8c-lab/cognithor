@@ -627,7 +627,11 @@ class WebUIChannel(Channel):
                 ws,
                 {
                     "type": WSMessageType.ERROR,
-                    "error": f"Audiodatei zu gross ({estimated_size // 1_048_576} MB, max {MAX_UPLOAD_SIZE // 1_048_576} MB)",
+                    "error": (
+                        f"Audiodatei zu gross "
+                        f"({estimated_size // 1_048_576} MB, "
+                        f"max {MAX_UPLOAD_SIZE // 1_048_576} MB)"
+                    ),
                 },
             )
             return None
@@ -715,7 +719,9 @@ class WebUIChannel(Channel):
                     ws,
                     {
                         "type": WSMessageType.ERROR,
-                        "error": "faster-whisper nicht installiert. Voice-Transkription nicht verfügbar.",
+                        "error": (
+                            "faster-whisper nicht installiert. Voice-Transkription nicht verfügbar."
+                        ),
                     },
                 )
                 return None
@@ -770,7 +776,11 @@ class WebUIChannel(Channel):
                 ws,
                 {
                     "type": WSMessageType.ERROR,
-                    "error": f"Datei zu gross ({estimated_size // 1_048_576} MB, max {MAX_UPLOAD_SIZE // 1_048_576} MB)",
+                    "error": (
+                        f"Datei zu gross "
+                        f"({estimated_size // 1_048_576} MB, "
+                        f"max {MAX_UPLOAD_SIZE // 1_048_576} MB)"
+                    ),
                 },
             )
             return None

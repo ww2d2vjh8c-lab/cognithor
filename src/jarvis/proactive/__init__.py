@@ -270,17 +270,17 @@ class TaskQueue:
             Nächster Task oder None.
         """
         best: ProactiveTask | None = None
-        best_idx: int = -1
+        _best_idx: int = -1
 
         for i, task in enumerate(self._queue):
             if task.status != TaskStatus.PENDING:
                 continue
             if best is None or task.priority > best.priority:
                 best = task
-                best_idx = i
+                _best_idx = i
             elif task.priority == best.priority and task.created_at < best.created_at:
                 best = task
-                best_idx = i
+                _best_idx = i
 
         if best is not None:
             best.status = TaskStatus.RUNNING

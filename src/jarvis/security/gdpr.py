@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
@@ -690,43 +689,43 @@ class AuditExporter:
         data = self._build_report(user_id=user_id)
         lines: list[str] = []
 
-        lines.append(f"# GDPR Compliance Audit Report")
-        lines.append(f"")
+        lines.append("# GDPR Compliance Audit Report")
+        lines.append("")
         lines.append(f"**Generated:** {data['generated_at']}")
         if user_id:
             lines.append(f"**User:** {user_id}")
-        lines.append(f"")
+        lines.append("")
 
         # Summary
         summary = data["summary"]
         lines.append("## Summary")
-        lines.append(f"")
-        lines.append(f"| Metric | Value |")
-        lines.append(f"|--------|-------|")
+        lines.append("")
+        lines.append("| Metric | Value |")
+        lines.append("|--------|-------|")
         lines.append(f"| Total Processing Records | {summary['total_processing_records']} |")
         lines.append(f"| Total Model Usage Records | {summary['total_model_usage_records']} |")
         lines.append(f"| Data Categories | {', '.join(summary['categories'])} |")
         lines.append(f"| Models Used | {', '.join(summary['models_used'])} |")
         lines.append(f"| PII Invocations | {summary['pii_invocations']} |")
-        lines.append(f"")
+        lines.append("")
 
         # Retention policies
         if data.get("retention_policies"):
             lines.append("## Retention Policies")
-            lines.append(f"")
-            lines.append(f"| Category | Retention | Action | Description |")
-            lines.append(f"|----------|-----------|--------|-------------|")
+            lines.append("")
+            lines.append("| Category | Retention | Action | Description |")
+            lines.append("|----------|-----------|--------|-------------|")
             for p in data["retention_policies"]:
                 lines.append(
                     f"| {p['category']} | {p['retention_days']}d | "
                     f"{p['action']} | {p['description']} |"
                 )
-            lines.append(f"")
+            lines.append("")
 
         # Erasure requests
         if data.get("erasure_requests"):
             lines.append("## Erasure Requests")
-            lines.append(f"")
+            lines.append("")
             for er in data["erasure_requests"]:
                 lines.append(
                     f"- **{er['request_id']}** ({er['status']}): "
@@ -734,14 +733,14 @@ class AuditExporter:
                     f"{er['records_deleted']} processing + "
                     f"{er['model_records_deleted']} model records deleted"
                 )
-            lines.append(f"")
+            lines.append("")
 
         # Processing records
         if data.get("processing_records"):
             lines.append("## Processing Records")
-            lines.append(f"")
-            lines.append(f"| ID | User | Category | Tool | Purpose | Legal Basis |")
-            lines.append(f"|----|------|----------|------|---------|-------------|")
+            lines.append("")
+            lines.append("| ID | User | Category | Tool | Purpose | Legal Basis |")
+            lines.append("|----|------|----------|------|---------|-------------|")
             for r in data["processing_records"][:100]:
                 lines.append(
                     f"| {r['record_id']} | {r['user_id']} | {r['category']} | "
@@ -751,7 +750,7 @@ class AuditExporter:
                 lines.append(
                     f"| ... | {len(data['processing_records']) - 100} more records | | | | |"
                 )
-            lines.append(f"")
+            lines.append("")
 
         return "\n".join(lines)
 

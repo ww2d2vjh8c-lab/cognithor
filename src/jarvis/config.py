@@ -1532,7 +1532,9 @@ class JarvisConfig(BaseModel):
     # Betriebsmodus
     operation_mode: Literal["offline", "online", "hybrid", "auto"] = Field(
         default="auto",
-        description="Betriebsmodus: 'offline', 'online', 'hybrid', 'auto' (auto-detect aus API-Keys)",
+        description=(
+            "Betriebsmodus: 'offline', 'online', 'hybrid', 'auto' (auto-detect aus API-Keys)"
+        ),
     )
 
     # LLM-Backend
@@ -1555,7 +1557,13 @@ class JarvisConfig(BaseModel):
         "lmstudio",
     ] = Field(
         default="ollama",
-        description="LLM-Backend: 'ollama', 'openai', 'anthropic', 'gemini', 'groq', 'deepseek', 'mistral', 'together', 'openrouter', 'xai', 'cerebras', 'github', 'bedrock', 'huggingface', 'moonshot', 'lmstudio'",
+        description=(
+            "LLM-Backend: 'ollama', 'openai', 'anthropic', "
+            "'gemini', 'groq', 'deepseek', 'mistral', "
+            "'together', 'openrouter', 'xai', 'cerebras', "
+            "'github', 'bedrock', 'huggingface', "
+            "'moonshot', 'lmstudio'"
+        ),
     )
     openai_api_key: str = Field(default="", description="API-Key für OpenAI-kompatibles Backend")
     openai_base_url: str = Field(
@@ -1851,8 +1859,10 @@ class JarvisConfig(BaseModel):
         ollama_timeout = self.ollama.timeout_seconds
         if ollama_timeout < base:
             issues.append(
-                f"ollama.timeout_seconds ({ollama_timeout}s) < executor.default_timeout_seconds ({base}s) — "
-                f"LLM-Calls könnten vom Executor vorzeitig abgebrochen werden"
+                f"ollama.timeout_seconds ({ollama_timeout}s) < "
+                f"executor.default_timeout_seconds ({base}s)"
+                f" — LLM-Calls könnten vom Executor "
+                f"vorzeitig abgebrochen werden"
             )
 
         for issue in issues:

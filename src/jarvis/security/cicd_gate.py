@@ -20,8 +20,9 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 
-_gate_counter = itertools.count()
 from typing import Any, Callable
+
+_gate_counter = itertools.count()
 
 
 # ============================================================================

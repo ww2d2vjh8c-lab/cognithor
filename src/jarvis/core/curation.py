@@ -14,7 +14,6 @@ Architektur-Bibel: §15.2 (Ecosystem-Governance), §16.3 (Transparency)
 
 from __future__ import annotations
 
-import hashlib
 import time
 from dataclasses import dataclass, field
 from enum import Enum

@@ -29,7 +29,6 @@ Abhaengigkeiten:
 from __future__ import annotations
 
 import asyncio
-import io
 import logging
 import uuid
 from pathlib import Path
@@ -127,7 +126,7 @@ class MatrixChannel(Channel):
         self._workspace_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            from nio import AsyncClient, LoginResponse, MatrixRoom, RoomMessageText
+            from nio import AsyncClient, LoginResponse, MatrixRoom, RoomMessageText  # noqa: F401
         except ImportError:
             logger.error(
                 "matrix-nio nicht installiert. Installiere mit: pip install 'matrix-nio[e2e]'"

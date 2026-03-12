@@ -7,9 +7,7 @@ Budget-Enforcement mit taeglichen und monatlichen Limits.
 from __future__ import annotations
 
 import sqlite3
-import uuid
 from datetime import UTC, date, datetime
-from typing import Any
 
 from jarvis.models import BudgetStatus, CostRecord, CostReport
 from jarvis.utils.logging import get_logger
@@ -107,7 +105,9 @@ class CostTracker:
         )
 
         self._conn.execute(
-            "INSERT INTO llm_costs (id, timestamp, session_id, model, input_tokens, output_tokens, cost_usd) "
+            "INSERT INTO llm_costs "
+            "(id, timestamp, session_id, model, "
+            "input_tokens, output_tokens, cost_usd) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 record.id,

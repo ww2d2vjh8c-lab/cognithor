@@ -23,7 +23,7 @@ import json
 import logging
 import secrets
 import uuid
-from typing import TYPE_CHECKING, Any, Callable, Coroutine
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
@@ -96,7 +96,8 @@ class WhatsAppChannel(Channel):
             logger.info("WhatsApp: faster-whisper geladen fuer Voice-Transkription")
         except ImportError:
             logger.debug(
-                "WhatsApp: faster-whisper nicht verfuegbar, Voice wird als Text-Hinweis weitergeleitet"
+                "WhatsApp: faster-whisper nicht verfuegbar, "
+                "Voice wird als Text-Hinweis weitergeleitet"
             )
 
     @property

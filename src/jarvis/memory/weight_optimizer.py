@@ -10,7 +10,6 @@ Constraints: Jedes Gewicht min 0.05, Summe = 1.0
 from __future__ import annotations
 
 import hashlib
-import json
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path

@@ -15,8 +15,6 @@ Bibel-Referenz: §12 (Konfigurationsmanagement)
 
 from __future__ import annotations
 
-import copy
-from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field

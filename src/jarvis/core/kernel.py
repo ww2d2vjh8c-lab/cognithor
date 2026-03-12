@@ -9,16 +9,12 @@ from jarvis.core.plan_graph import PlanGraph
 from jarvis.models import (
     Checkpoint,
     KernelState,
-    PlanNode,
     ToolResult,
 )
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
-    from jarvis.core.executor import Executor
-    from jarvis.core.gatekeeper import Gatekeeper
-    from jarvis.core.planner import Planner
-    from jarvis.models import PlannedAction, SessionContext
+    pass
 
 log = get_logger(__name__)
 

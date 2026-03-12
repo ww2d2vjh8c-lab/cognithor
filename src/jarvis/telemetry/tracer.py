@@ -18,12 +18,10 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
 import contextvars
 import time
 from collections import deque
-from typing import Any, Generator
+from typing import Any
 
 from jarvis.telemetry.types import (
     Span,
@@ -31,8 +29,6 @@ from jarvis.telemetry.types import (
     SpanKind,
     StatusCode,
     Trace,
-    generate_span_id,
-    generate_trace_id,
 )
 from jarvis.utils.logging import get_logger
 

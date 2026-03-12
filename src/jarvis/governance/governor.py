@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from jarvis.models import PolicyChange, PolicyProposal
 from jarvis.utils.logging import get_logger
@@ -340,7 +339,7 @@ class GovernanceAgent:
                 suggested_change = {
                     "action": "remove_from_allowed_tools",
                     "tool": tool_name,
-                    "reason": f"No calls in the last 7 days",
+                    "reason": "No calls in the last 7 days",
                 }
                 pid = self._create_proposal(
                     category="unused_tool",

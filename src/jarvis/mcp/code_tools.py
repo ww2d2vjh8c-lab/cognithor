@@ -60,18 +60,39 @@ class CodeTools:
         self._max_code_size: int = getattr(_code, "max_code_size", _DEFAULT_MAX_CODE_SIZE)
         self._default_timeout: int = getattr(_code, "default_timeout_seconds", _DEFAULT_TIMEOUT)
 
-        # Sandbox-Konfiguration (gleich wie ShellTools)
+        # Sandbox-Konfiguration: wire UI SandboxConfig → execution SandboxConfig
+        _ui_sandbox = getattr(config, "sandbox", None)
         sandbox_config = SandboxConfig(
             workspace_dir=config.workspace_dir,
             default_timeout=self._default_timeout,
         )
 
-        sandbox_level = getattr(config, "sandbox_level", "bwrap")
-        if sandbox_level in ("bwrap", "firejail", "bare"):
+        if _ui_sandbox is not None:
+            _mem = getattr(_ui_sandbox, "max_memory_mb", None)
+            if _mem and isinstance(_mem, int):
+                sandbox_config.max_memory_mb = _mem
+            _cpu = getattr(_ui_sandbox, "max_cpu_seconds", None)
+            if _cpu and isinstance(_cpu, int):
+                sandbox_config.max_cpu_seconds = _cpu
+            _net = getattr(_ui_sandbox, "network_access", None)
+            if _net is not None:
+                sandbox_config.network = NetworkPolicy.ALLOW if _net else NetworkPolicy.BLOCK
+            _level = getattr(_ui_sandbox, "level", None)
+            if _level is not None:
+                level_val = _level.value if hasattr(_level, "value") else str(_level)
+                if level_val in ("bwrap", "firejail", "bare", "process"):
+                    try:
+                        sandbox_config.preferred_level = SandboxLevel(level_val)
+                    except ValueError:
+                        pass
+
+        # Legacy: direct config attributes (backward compat)
+        sandbox_level = getattr(config, "sandbox_level", None)
+        if sandbox_level and sandbox_level in ("bwrap", "firejail", "bare"):
             sandbox_config.preferred_level = SandboxLevel(sandbox_level)
 
-        sandbox_network = getattr(config, "sandbox_network", "allow")
-        if sandbox_network in ("allow", "block"):
+        sandbox_network = getattr(config, "sandbox_network", None)
+        if sandbox_network and sandbox_network in ("allow", "block"):
             sandbox_config.network = NetworkPolicy(sandbox_network)
 
         self._sandbox = SandboxExecutor(sandbox_config)
@@ -110,7 +131,10 @@ class CodeTools:
 
         code_size = len(code.encode("utf-8"))
         if code_size > self._max_code_size:
-            return f"Code zu gross ({code_size / 1_048_576:.1f} MB, max {self._max_code_size / 1_048_576:.0f} MB)"
+            return (
+                f"Code zu gross ({code_size / 1_048_576:.1f} MB, "
+                f"max {self._max_code_size / 1_048_576:.0f} MB)"
+            )
 
         cwd = working_dir or str(self._workspace)
 
@@ -206,7 +230,7 @@ class CodeTools:
                 if not path.exists():
                     return f"Fehler: Datei '{file_path}' nicht gefunden."
                 if not path.suffix == ".py":
-                    return f"Fehler: Nur Python-Dateien (.py) werden unterstützt."
+                    return "Fehler: Nur Python-Dateien (.py) werden unterstützt."
                 source = path.read_text(encoding="utf-8")
                 source_name = str(path)
             except (OSError, UnicodeDecodeError) as e:
@@ -228,7 +252,7 @@ class CodeTools:
             try:
                 ast.parse(source)
             except SyntaxError as e:
-                smells_text = f"Syntaxfehler in Zeile {e.lineno}: {e.msg}"
+                _smells_text = f"Syntaxfehler in Zeile {e.lineno}: {e.msg}"
             else:
                 # analyze_file braucht eine echte Datei -- temp-Datei erstellen
                 tmp = self._workspace / f"_jarvis_analyze_{uuid.uuid4().hex[:8]}.py"

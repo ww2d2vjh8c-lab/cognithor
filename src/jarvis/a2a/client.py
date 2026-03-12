@@ -22,7 +22,6 @@ from jarvis.a2a.types import (
     TaskState,
     TaskStatus,
     TextPart,
-    part_from_dict,
 )
 from jarvis.utils.logging import get_logger
 

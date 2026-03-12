@@ -96,6 +96,25 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 
 ## What's New
 
+### v0.34.4-beta — A2A Delegation, Sandbox Enforcement, Lint Zero
+
+- **A2A Planner Delegation** — 2 new MCP tools (`list_remote_agents`, `delegate_to_remote_agent`) let the Planner autonomously discover and delegate tasks to remote A2A agents. Auto-discovery via `/.well-known/agent.json`
+- **Sandbox Config Enforcement** — UI settings for `max_memory_mb`, `max_cpu_seconds`, and `network_access` now actually propagate to the execution sandbox (were previously ignored)
+- **Proportional Iteration Caps** — `max_iterations` setting now scales coding task caps proportionally (80% for iteration cap, 30% for success threshold) instead of hardcoded limits
+- **Auto-Update on Startup** — `plugins.auto_update` and `marketplace.auto_update` now trigger community registry sync at gateway startup
+- **Lint Zero** — 393 lint errors (F401, F541, F841, E501, E741, E402) cleaned to zero across the entire codebase
+- **MCP tools: 51 → 53** (added A2A delegation tools)
+- **10,208 tests passing** (0 failures)
+
+### v0.34.3-beta — REPLAN Loop Fix, Full English UI, Tool Schemas
+
+- **REPLAN Loop Fix** — Deep architectural fix to PGE loop: detects bare REPLAN text, consecutive no-tool iterations, and coding task caps to prevent infinite replanning
+- **Full English UI** — All remaining German strings in Control Center translated (cron.js, A2A descriptions, icons, prompts)
+- **Tool Schemas in CORE.md** — Auto-inventory now shows full parameter signatures (`tool(param: type *)`) instead of bare names
+- **Chrome Autofill Defense** — GlobalSearch and provider filter inputs protected against Chrome autofill interference
+- **Renamed "MCP & A2A" → "Integrations"** — Clearer page label in Control Center
+- **Backend Startup Fix** — Vite now verifies jarvis importability before selecting a Python interpreter; bootstrap auto-repairs broken venvs
+
 ### v0.33.0-beta — i18n Language Packs, 4 Critical Bug Fixes
 
 - **i18n Language Pack System** — JSON-based internationalization with dot-notation keys, SHA-256 integrity verification, fallback chain (locale → EN → raw key), thread-safe locale switching. Ships with German and English packs (~250 keys each)
@@ -147,7 +166,7 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 - **Security** — 4-level sandbox, SHA-256 audit chain, EU AI Act compliance module, credential vault, red-teaming, runtime token encryption (Fernet AES-256), TLS support, file-size limits (not independently audited — see [Status & Maturity](#status--maturity))
 - **Knowledge Vault** — Obsidian-compatible Markdown vault with YAML frontmatter, tags, `[[backlinks]]`, full-text search
 - **Document Analysis** — LLM-powered structured analysis of PDF/DOCX/HTML (summary, risks, action items, decisions)
-- **Model Context Protocol (MCP)** — 51 tools across 10 modules (filesystem, shell, memory, web, browser, media, vault, synthesis, code, skills)
+- **Model Context Protocol (MCP)** — 53 tools across 10 modules (filesystem, shell, memory, web, browser, media, vault, synthesis, code, skills) + A2A delegation
 - **Distributed Locking** — Redis-backed (with file-based fallback) locks for multi-instance deployments
 - **Durable Message Queue** — SQLite-backed persistent queue with priorities, DLQ, and automatic retry
 - **Prometheus Metrics** — /metrics endpoint with Grafana dashboard for production observability
@@ -155,7 +174,7 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 - **Community Skill Marketplace** — GitHub-hosted registry with publisher verification (4 trust levels), 5-check validation pipeline, ToolEnforcer runtime sandboxing, async install/search/report
 - **Telegram Webhook** — Polling + webhook mode with sub-100ms latency
 - **Auto-Dependency Loading** — Missing optional packages detected and installed at startup
-- **Agent-to-Agent Protocol (A2A)** — Linux Foundation RC v1.0 for inter-agent communication
+- **Agent-to-Agent Protocol (A2A)** — Linux Foundation RC v1.0 with full JSON-RPC 2.0 server/client, Planner-level delegation via MCP tools, auto-discovery, SSE streaming
 - **Integrated Chat** — Full chat page in the Control Center with WebSocket streaming, tool indicators, canvas panel, approval banners, and voice mode
 - **React Control Center** — Full web dashboard (React 19 + Vite 7) with integrated backend launcher, live config editing, agent management, prompt editing, cron jobs, MCP servers, and A2A settings
 - **Human Feel** — Personality Engine (warmth, humor, greetings), sentiment detection (frustrated/urgent/confused/positive), user preference learning, real-time status callbacks, user-friendly German error messages

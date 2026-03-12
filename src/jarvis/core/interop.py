@@ -401,16 +401,16 @@ class FederationManager:
         return False
 
     def active_links(self) -> list[FederationLink]:
-        return [l for l in self._links.values() if l.status == FederationStatus.ACTIVE]
+        return [link for link in self._links.values() if link.status == FederationStatus.ACTIVE]
 
     def get_link(self, link_id: str) -> FederationLink | None:
         return self._links.get(link_id)
 
     def links_for_agent(self, agent_id: str) -> list[FederationLink]:
         return [
-            l
-            for l in self._links.values()
-            if l.local_agent_id == agent_id or l.remote_agent_id == agent_id
+            link
+            for link in self._links.values()
+            if link.local_agent_id == agent_id or link.remote_agent_id == agent_id
         ]
 
     def can_delegate(self, link_id: str, capability: CapabilityType) -> bool:
@@ -433,10 +433,10 @@ class FederationManager:
         links = list(self._links.values())
         return {
             "total_links": len(links),
-            "active": sum(1 for l in links if l.status == FederationStatus.ACTIVE),
-            "pending": sum(1 for l in links if l.status == FederationStatus.PENDING),
-            "suspended": sum(1 for l in links if l.status == FederationStatus.SUSPENDED),
-            "revoked": sum(1 for l in links if l.status == FederationStatus.REVOKED),
+            "active": sum(1 for link in links if link.status == FederationStatus.ACTIVE),
+            "pending": sum(1 for link in links if link.status == FederationStatus.PENDING),
+            "suspended": sum(1 for link in links if link.status == FederationStatus.SUSPENDED),
+            "revoked": sum(1 for link in links if link.status == FederationStatus.REVOKED),
         }
 
 

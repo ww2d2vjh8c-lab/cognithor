@@ -309,7 +309,9 @@ class DiscoveryManager:
             },
             "memory_system": {
                 "name": "Gedächtnissystem",
-                "description": "5-Tier-Memory mit Hybrid-Suche, Wissens-Graph und Episodischem Speicher",
+                "description": (
+                    "5-Tier-Memory mit Hybrid-Suche, Wissens-Graph und Episodischem Speicher"
+                ),
                 "tags": ["memory", "knowledge", "graph"],
                 "tools": ["search_memory", "save_to_memory", "get_entity", "add_entity"],
             },

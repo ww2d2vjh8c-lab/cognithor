@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
-from datetime import datetime, UTC, date
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -231,7 +231,9 @@ class EpisodicStore:
         with self._write_lock:
             conn = self._get_conn()
             conn.execute(
-                """INSERT INTO episode_summaries (id, period, start_date, end_date, summary, key_learnings)
+                """INSERT INTO episode_summaries
+                   (id, period, start_date, end_date,
+                    summary, key_learnings)
                    VALUES (?, ?, ?, ?, ?, ?)""",
                 (sid, period, start_date, end_date, summary, json.dumps(key_learnings or [])),
             )

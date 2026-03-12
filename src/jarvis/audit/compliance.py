@@ -495,35 +495,35 @@ class ReportExporter:
 
         lines = [
             f"# Compliance-Bericht: {report.framework_name}",
-            f"",
+            "",
             f"**Bericht-ID:** {report.report_id}",
             f"**Erstellt:** {report.generated_at}",
             f"**Compliance-Score:** {report.compliance_score}%",
-            f"",
-            f"## Zusammenfassung",
-            f"",
-            f"| Status | Anzahl |",
-            f"|--------|--------|",
+            "",
+            "## Zusammenfassung",
+            "",
+            "| Status | Anzahl |",
+            "|--------|--------|",
             f"| ✅ Konform | {report.compliant} |",
             f"| ⚠️ Teilweise | {report.partial} |",
             f"| ❌ Nicht konform | {report.non_compliant} |",
             f"| ❓ Nicht bewertet | {report.not_assessed} |",
-            f"",
-            f"## Einzelprüfungen",
-            f"",
+            "",
+            "## Einzelprüfungen",
+            "",
         ]
 
         for c in report.checks:
             emoji = status_emoji.get(c.status.value, "❓")
             lines.append(f"### {emoji} {c.check_id}: {c.requirement}")
-            lines.append(f"")
+            lines.append("")
             lines.append(f"**Regulierung:** {c.regulation}")
             lines.append(f"**Beschreibung:** {c.description}")
             if c.evidence:
                 lines.append(f"**Evidenz:** {c.evidence}")
             if c.remediation:
                 lines.append(f"**Maßnahme:** {c.remediation}")
-            lines.append(f"")
+            lines.append("")
 
         return "\n".join(lines)
 

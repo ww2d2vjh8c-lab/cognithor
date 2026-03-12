@@ -35,8 +35,6 @@ from __future__ import annotations
 from typing import Any, Callable, Awaitable
 
 from jarvis.hitl.types import (
-    ApprovalRequest,
-    ApprovalResponse,
     ApprovalStatus,
     HITLConfig,
     HITLNodeKind,

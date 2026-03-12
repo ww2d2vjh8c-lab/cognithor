@@ -1432,7 +1432,11 @@ def register_web_tools(
                 "reader_mode": {
                     "type": "string",
                     "enum": ["auto", "trafilatura", "jina"],
-                    "description": "Extraktions-Modus: auto (Standard, Jina-Fallback bei wenig Inhalt), trafilatura, jina",
+                    "description": (
+                        "Extraktions-Modus: auto (Standard, "
+                        "Jina-Fallback bei wenig Inhalt), "
+                        "trafilatura, jina"
+                    ),
                     "default": "auto",
                 },
             },

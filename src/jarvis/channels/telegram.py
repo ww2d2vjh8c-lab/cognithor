@@ -24,7 +24,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -712,7 +711,9 @@ class TelegramChannel(Channel):
         # Dokument-Grössenlimit prüfen
         if doc.file_size and doc.file_size > MAX_DOCUMENT_SIZE:
             await update.effective_message.reply_text(
-                f"Dokument zu gross ({doc.file_size // 1_048_576} MB, max {MAX_DOCUMENT_SIZE // 1_048_576} MB)"
+                f"Dokument zu gross "
+                f"({doc.file_size // 1_048_576} MB, "
+                f"max {MAX_DOCUMENT_SIZE // 1_048_576} MB)"
             )
             return
 
@@ -733,7 +734,10 @@ class TelegramChannel(Channel):
             await file.download_to_drive(str(doc_path))
 
             size_kb = (doc.file_size or 0) // 1024
-            text = f"[Dokument empfangen: {filename}, {size_kb} KB, MIME: {doc.mime_type or 'unbekannt'}]"
+            text = (
+                f"[Dokument empfangen: {filename}, "
+                f"{size_kb} KB, MIME: {doc.mime_type or 'unbekannt'}]"
+            )
             if caption:
                 text += f"\nBeschreibung: {caption}"
             text += f"\nGespeichert unter: {doc_path}"

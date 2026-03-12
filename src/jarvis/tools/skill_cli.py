@@ -14,7 +14,6 @@ Architektur-Bibel: §15.1 (Skill-Ecosystem), §15.4 (Developer Experience)
 
 from __future__ import annotations
 
-import hashlib
 import sys
 import time
 from dataclasses import dataclass, field
@@ -66,10 +65,44 @@ BUILT_IN_TEMPLATES: dict[TemplateType, SkillTemplate] = {
         TemplateType.BASIC,
         "Einfacher Skill mit Eingabe/Ausgabe",
         {
-            "SKILL.md": "# {name}\n\n## Beschreibung\n{description}\n\n## Verwendung\n```\njarvis {slug} <eingabe>\n```\n",
-            "skill.py": '"""Jarvis Skill: {name}."""\n\nfrom jarvis.skills.base import BaseSkill\n\n\nclass {classname}(BaseSkill):\n    """Skill: {name}."""\n\n    NAME = "{slug}"\n    DESCRIPTION = "{description}"\n    VERSION = "0.1.0"\n\n    async def execute(self, params: dict) -> dict:\n        """Hauptlogik."""\n        return {"status": "ok", "result": "TODO"}\n',
-            "test_skill.py": '"""Tests für {name}."""\n\nimport pytest\nfrom .skill import {classname}\n\n\nclass Test{classname}:\n    def test_execute(self) -> None:\n        skill = {classname}()\n        # TODO: Test implementieren\n        assert skill.NAME == "{slug}"\n',
-            "manifest.json": '{\n  "name": "{slug}",\n  "version": "0.1.0",\n  "author": "{author}",\n  "description": "{description}",\n  "min_jarvis": "0.13.0",\n  "permissions": [],\n  "tags": []\n}\n',
+            "SKILL.md": (
+                "# {name}\n\n## Beschreibung\n"
+                "{description}\n\n## Verwendung\n"
+                "```\njarvis {slug} <eingabe>\n```\n"
+            ),
+            "skill.py": (
+                '"""Jarvis Skill: {name}."""\n\n'
+                "from jarvis.skills.base import BaseSkill"
+                "\n\n\nclass {classname}(BaseSkill):\n"
+                '    """Skill: {name}."""\n\n'
+                '    NAME = "{slug}"\n'
+                '    DESCRIPTION = "{description}"\n'
+                '    VERSION = "0.1.0"\n\n'
+                "    async def execute("
+                "self, params: dict) -> dict:\n"
+                '        """Hauptlogik."""\n'
+                "        return {"
+                '"status": "ok", "result": "TODO"}\n'
+            ),
+            "test_skill.py": (
+                '"""Tests für {name}."""\n\n'
+                "import pytest\n"
+                "from .skill import {classname}\n\n\n"
+                "class Test{classname}:\n"
+                "    def test_execute(self) -> None:\n"
+                "        skill = {classname}()\n"
+                "        # TODO: Test implementieren\n"
+                '        assert skill.NAME == "{slug}"\n'
+            ),
+            "manifest.json": (
+                '{\n  "name": "{slug}",'
+                '\n  "version": "0.1.0",'
+                '\n  "author": "{author}",'
+                '\n  "description": "{description}",'
+                '\n  "min_jarvis": "0.13.0",'
+                '\n  "permissions": [],'
+                '\n  "tags": []\n}\n'
+            ),
         },
     ),
     TemplateType.API_INTEGRATION: SkillTemplate(
@@ -78,10 +111,38 @@ BUILT_IN_TEMPLATES: dict[TemplateType, SkillTemplate] = {
         TemplateType.API_INTEGRATION,
         "Skill mit REST-API-Anbindung",
         {
-            "SKILL.md": "# {name}\n\nAPI-Integration für {description}\n",
-            "skill.py": '"""Jarvis Skill: {name} (API)."""\n\nimport httpx\nfrom jarvis.skills.base import BaseSkill\n\n\nclass {classname}(BaseSkill):\n    NAME = "{slug}"\n    REQUIRES_NETWORK = True\n    API_BASE = "https://api.example.com/v1"\n\n    async def execute(self, params: dict) -> dict:\n        async with httpx.AsyncClient() as client:\n            resp = await client.get(f"{self.API_BASE}/endpoint")\n            return {"data": resp.json()}\n',
-            "test_skill.py": '"""Tests für {name}."""\nimport pytest\nfrom .skill import {classname}\n\nclass Test{classname}:\n    def test_name(self) -> None:\n        assert {classname}.NAME == "{slug}"\n',
-            "manifest.json": '{\n  "name": "{slug}",\n  "version": "0.1.0",\n  "permissions": ["network"],\n  "tags": ["api"]\n}\n',
+            "SKILL.md": ("# {name}\n\nAPI-Integration für {description}\n"),
+            "skill.py": (
+                '"""Jarvis Skill: {name} (API)."""\n\n'
+                "import httpx\n"
+                "from jarvis.skills.base import BaseSkill"
+                "\n\n\nclass {classname}(BaseSkill):\n"
+                '    NAME = "{slug}"\n'
+                "    REQUIRES_NETWORK = True\n"
+                '    API_BASE = "https://api.example.com/v1"'
+                "\n\n    async def execute("
+                "self, params: dict) -> dict:\n"
+                "        async with httpx.AsyncClient()"
+                " as client:\n"
+                "            resp = await client.get("
+                'f"{self.API_BASE}/endpoint")\n'
+                '            return {"data": resp.json()}\n'
+            ),
+            "test_skill.py": (
+                '"""Tests für {name}."""\n'
+                "import pytest\n"
+                "from .skill import {classname}\n\n"
+                "class Test{classname}:\n"
+                "    def test_name(self) -> None:\n"
+                "        assert {classname}.NAME "
+                '== "{slug}"\n'
+            ),
+            "manifest.json": (
+                '{\n  "name": "{slug}",'
+                '\n  "version": "0.1.0",'
+                '\n  "permissions": ["network"],'
+                '\n  "tags": ["api"]\n}\n'
+            ),
         },
         dependencies=["httpx"],
     ),
@@ -91,10 +152,32 @@ BUILT_IN_TEMPLATES: dict[TemplateType, SkillTemplate] = {
         TemplateType.AUTOMATION,
         "Workflow-Automatisierung mit Cron-Support",
         {
-            "SKILL.md": "# {name}\n\nAutomation: {description}\n",
-            "skill.py": '"""Jarvis Skill: {name} (Automation)."""\n\nfrom jarvis.skills.base import BaseSkill\n\n\nclass {classname}(BaseSkill):\n    NAME = "{slug}"\n    CRON = "0 * * * *"  # Stündlich\n\n    async def execute(self, params: dict) -> dict:\n        return {"status": "ok", "automated": True}\n',
-            "test_skill.py": '"""Tests."""\nfrom .skill import {classname}\n\ndef test_cron() -> None:\n    assert {classname}.CRON is not None\n',
-            "manifest.json": '{\n  "name": "{slug}",\n  "version": "0.1.0",\n  "permissions": ["cron"],\n  "tags": ["automation"]\n}\n',
+            "SKILL.md": ("# {name}\n\nAutomation: {description}\n"),
+            "skill.py": (
+                '"""Jarvis Skill: {name} (Automation)."""'
+                "\n\nfrom jarvis.skills.base import "
+                "BaseSkill\n\n\n"
+                "class {classname}(BaseSkill):\n"
+                '    NAME = "{slug}"\n'
+                '    CRON = "0 * * * *"  # Stündlich\n'
+                "\n    async def execute("
+                "self, params: dict) -> dict:\n"
+                "        return {"
+                '"status": "ok", "automated": True}\n'
+            ),
+            "test_skill.py": (
+                '"""Tests."""\n'
+                "from .skill import {classname}\n\n"
+                "def test_cron() -> None:\n"
+                "    assert {classname}.CRON "
+                "is not None\n"
+            ),
+            "manifest.json": (
+                '{\n  "name": "{slug}",'
+                '\n  "version": "0.1.0",'
+                '\n  "permissions": ["cron"],'
+                '\n  "tags": ["automation"]\n}\n'
+            ),
         },
     ),
 }

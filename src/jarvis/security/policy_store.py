@@ -23,8 +23,6 @@ Architecture: §11.5 (Policy-as-Code)
 from __future__ import annotations
 
 import json
-import shutil
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -32,13 +30,7 @@ from typing import TYPE_CHECKING, Any
 import yaml
 
 from jarvis.models import (
-    GateDecision,
-    GateStatus,
     PlannedAction,
-    PolicyMatch,
-    PolicyParamMatch,
-    PolicyRule,
-    RiskLevel,
     SessionContext,
 )
 from jarvis.utils.logging import get_logger

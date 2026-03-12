@@ -283,7 +283,6 @@ class MCPBridge:
         Default: DISABLED.
         """
         import yaml
-        from pathlib import Path
 
         config = MCPServerConfig()  # Default: disabled
 

@@ -280,7 +280,7 @@ class GoogleChatChannel(Channel):
             if requester_user:
                 self._approval_users[approval_id] = requester_user
 
-        card = {
+        _card = {
             "cardsV2": [
                 {
                     "cardId": approval_id,
@@ -293,7 +293,10 @@ class GoogleChatChannel(Channel):
                                     {"textParagraph": {"text": f"<b>Grund:</b> {reason}"}},
                                     {
                                         "textParagraph": {
-                                            "text": f"<b>Parameter:</b> {json.dumps(action.params)[:200]}"
+                                            "text": (
+                                                f"<b>Parameter:</b> "
+                                                f"{json.dumps(action.params)[:200]}"
+                                            )
                                         }
                                     },
                                     {

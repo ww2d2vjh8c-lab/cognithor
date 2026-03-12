@@ -631,7 +631,7 @@ class SetupWizard:
 
     def auto_setup(self) -> SetupState:
         """One-Click-Setup: Alles automatisch."""
-        hw = self.step_hardware()
+        _hw = self.step_hardware()
         self.step_model()
         self.step_preset()
         self.step_channels()

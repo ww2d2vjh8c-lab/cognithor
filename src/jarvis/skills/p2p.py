@@ -41,9 +41,7 @@ Bibel-Referenz: §6.5 (P2P Skill Distribution)
 
 from __future__ import annotations
 
-import hashlib
 import logging
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -52,13 +50,11 @@ from pathlib import Path
 from typing import Any
 
 from jarvis.skills.package import (
-    AnalysisVerdict,
     CodeAnalyzer,
     InstallResult,
     PackageBuilder,
     PackageInstaller,
     PackageSigner,
-    PackageSignature,
     SkillManifest,
     SkillPackage,
     TrustLevel,

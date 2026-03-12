@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from jarvis.skills.community.validator import SkillValidator, ValidationResult
+from jarvis.skills.community.validator import SkillValidator
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)

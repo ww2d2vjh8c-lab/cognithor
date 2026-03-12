@@ -21,7 +21,6 @@ Bibel-Referenz: §4.7 (Enhanced Retrieval), §4.3 (Episodic Compression)
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import math
 import re
@@ -30,7 +29,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from typing import Any, Callable
 
-from jarvis.models import Chunk, MemorySearchResult, MemoryTier
+from jarvis.models import MemorySearchResult, MemoryTier
 
 logger = logging.getLogger("jarvis.memory.enhanced_retrieval")
 

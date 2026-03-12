@@ -6,8 +6,10 @@ ohne externe Abhängigkeiten (kein prometheus_client nötig).
 Format-Spezifikation: https://prometheus.io/docs/instrumenting/exposition_formats/
 
 Unterstützte Metriken:
-  - Counter:   jarvis_requests_total, jarvis_errors_total, jarvis_tokens_used_total, jarvis_tool_calls_total
-  - Gauge:     jarvis_active_sessions, jarvis_queue_depth, jarvis_memory_usage_bytes, jarvis_uptime_seconds
+  - Counter:   jarvis_requests_total, jarvis_errors_total,
+               jarvis_tokens_used_total, jarvis_tool_calls_total
+  - Gauge:     jarvis_active_sessions, jarvis_queue_depth,
+               jarvis_memory_usage_bytes, jarvis_uptime_seconds
   - Histogram: jarvis_request_duration_ms, jarvis_tool_duration_ms
 """
 

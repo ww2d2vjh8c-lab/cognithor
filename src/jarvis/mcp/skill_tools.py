@@ -102,8 +102,8 @@ class SkillTools:
             f'description: "{description.strip()}"',
             f"trigger_keywords: [{keywords_yaml}]",
             f"category: {category.strip()}",
-            f"priority: 0",
-            f"enabled: true",
+            "priority: 0",
+            "enabled: true",
         ]
         if tools_yaml:
             lines.append(f"tools_required: [{tools_yaml}]")
@@ -279,13 +279,19 @@ def register_skill_tools(
     mcp_client.register_builtin_handler(
         "list_skills",
         st.list_skills,
-        description="Listet alle registrierten Jarvis-Skills mit Name, Kategorie, Keywords und Erfolgsrate.",
+        description=(
+            "Listet alle registrierten Jarvis-Skills mit Name, Kategorie, Keywords und Erfolgsrate."
+        ),
         input_schema={
             "type": "object",
             "properties": {
                 "category": {
                     "type": "string",
-                    "description": "Kategorie-Filter. Leer lassen oder 'all' fuer alle Kategorien. Beispiele: 'general', 'daily'.",
+                    "description": (
+                        "Kategorie-Filter. Leer lassen oder "
+                        "'all' fuer alle Kategorien. "
+                        "Beispiele: 'general', 'daily'."
+                    ),
                     "default": "",
                 },
                 "enabled_only": {

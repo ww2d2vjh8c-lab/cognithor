@@ -122,7 +122,7 @@ def validate_model_path_containment(
             model_path=str(model_path),
             allowed_dir=str(allowed_dir),
         )
-        raise ValueError(f"Model path escapes allowed directory")
+        raise ValueError("Model path escapes allowed directory")
     return Path(resolved_str)
 
 

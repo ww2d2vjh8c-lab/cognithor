@@ -60,7 +60,9 @@ async def init_core(config: Any) -> PhaseResult:
                 "llm_not_available",
                 backend=llm.backend_type,
                 url=config.lmstudio_base_url,
-                message="LM Studio nicht erreichbar. Laeuft der Server auf dem konfigurierten Port?",
+                message=(
+                    "LM Studio nicht erreichbar. Laeuft der Server auf dem konfigurierten Port?"
+                ),
             )
         else:
             log.warning(

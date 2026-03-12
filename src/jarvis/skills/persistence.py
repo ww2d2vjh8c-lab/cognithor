@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import time
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -363,7 +362,8 @@ class MarketplaceStore:
     def increment_install_count(self, package_id: str) -> None:
         """Erhoeht den Installations-Zaehler um 1."""
         self.conn.execute(
-            "UPDATE listings SET install_count = install_count + 1, updated_at = ? WHERE package_id = ?",
+            "UPDATE listings SET install_count = install_count + 1, "
+            "updated_at = ? WHERE package_id = ?",
             (_now(), package_id),
         )
         self.conn.commit()
@@ -599,7 +599,8 @@ class MarketplaceStore:
             "SELECT COUNT(*) FROM reviews",
         ).fetchone()[0]
         total_publishers = c.execute(
-            "SELECT COUNT(DISTINCT publisher_id) FROM listings WHERE recalled = 0 AND publisher_id != ''",
+            "SELECT COUNT(DISTINCT publisher_id) FROM listings "
+            "WHERE recalled = 0 AND publisher_id != ''",
         ).fetchone()[0]
         total_categories = c.execute(
             "SELECT COUNT(DISTINCT category) FROM listings WHERE recalled = 0",

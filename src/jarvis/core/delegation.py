@@ -26,7 +26,6 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
@@ -35,7 +34,7 @@ from pydantic import BaseModel, Field
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
-    from jarvis.core.agent_router import AgentProfile, AgentRouter
+    from jarvis.core.agent_router import AgentRouter
     from jarvis.core.orchestrator import Orchestrator
     from jarvis.security.audit import AuditTrail
 

@@ -441,7 +441,9 @@ class IMessageChannel(Channel):
             script = (
                 f'tell application "Messages"\n'
                 f"  set targetService to 1st account whose service type = iMessage\n"
-                f'  set targetBuddy to participant "{_escape_applescript(handle)}" of targetService\n'
+                f"  set targetBuddy to participant "
+                f'"{_escape_applescript(handle)}" '
+                f"of targetService\n"
                 f'  send "{_escape_applescript(chunk)}" to targetBuddy\n'
                 f"end tell"
             )

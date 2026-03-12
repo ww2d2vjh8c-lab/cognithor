@@ -565,7 +565,8 @@ class SkillGenerator:
             # Mit Sandbox: pytest ausführen
             try:
                 result = await self._sandbox.execute(
-                    f"{shlex.quote(sys.executable)} -m pytest {shlex.quote(test_file.name)} -v --tb=short 2>&1",
+                    f"{shlex.quote(sys.executable)} -m pytest "
+                    f"{shlex.quote(test_file.name)} -v --tb=short 2>&1",
                     working_dir=str(test_dir),
                     timeout=30,
                 )

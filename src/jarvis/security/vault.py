@@ -20,15 +20,13 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
-import json
 import logging
 import os
 import time
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 
@@ -289,7 +287,8 @@ class VaultManager:
         """Cross-Agent-Zugriff. Blockiert und loggt fremde Zugriffe."""
         if requesting_agent != target_agent:
             _vault_log.warning(
-                "cross_agent_access_blocked: agent=%s versuchte Zugriff auf agent=%s (service=%s, key=%s)",
+                "cross_agent_access_blocked: agent=%s versuchte "
+                "Zugriff auf agent=%s (service=%s, key=%s)",
                 requesting_agent,
                 target_agent,
                 service,

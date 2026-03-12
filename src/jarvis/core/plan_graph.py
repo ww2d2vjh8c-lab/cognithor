@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from collections import defaultdict, deque
-from typing import Any
 
-from jarvis.models import ActionPlan, PlanNode, RiskLevel
+from jarvis.models import ActionPlan, PlanNode
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)

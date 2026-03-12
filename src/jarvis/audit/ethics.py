@@ -14,7 +14,6 @@ Architektur-Bibel: §13.1 (Governance), §15.1 (Wirtschaftlichkeit)
 
 from __future__ import annotations
 
-import hashlib
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -145,14 +144,14 @@ class BudgetManager:
         return len(self._limits)
 
     def over_budget(self) -> list[BudgetLimit]:
-        return [l for l in self._limits.values() if l.daily_utilization >= 90]
+        return [lim for lim in self._limits.values() if lim.daily_utilization >= 90]
 
     def stats(self) -> dict[str, Any]:
         limits = list(self._limits.values())
         return {
             "total_entities": len(limits),
-            "total_spent_today": round(sum(l.spent_today for l in limits), 4),
-            "total_spent_month": round(sum(l.spent_this_month for l in limits), 4),
+            "total_spent_today": round(sum(lim.spent_today for lim in limits), 4),
+            "total_spent_month": round(sum(lim.spent_this_month for lim in limits), 4),
             "over_budget_count": len(self.over_budget()),
         }
 
@@ -361,7 +360,7 @@ class BiasDetector:
                 report_id=f"BIAS-{self._counter:04d}",
                 category=BiasCategory.GENDER,
                 severity="low",
-                description=f"Gender-Stereotyp (männl.) erkannt",
+                description="Gender-Stereotyp (männl.) erkannt",
                 evidence=text[:200],
                 recommendation="Stereotyp-freie Formulierung verwenden.",
             )
@@ -620,7 +619,9 @@ class EthicsPolicy:
                 violation_id=f"ETH-{self._counter:04d}",
                 violation_type=EthicsViolationType.BIAS,
                 severity="high" if bias_findings > self._max_bias * 2 else "medium",
-                description=f"{bias_findings} Bias-Findings überschreiten Limit von {self._max_bias}/Tag",
+                description=(
+                    f"{bias_findings} Bias-Findings überschreiten Limit von {self._max_bias}/Tag"
+                ),
                 agent_id=agent_id,
                 timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             )

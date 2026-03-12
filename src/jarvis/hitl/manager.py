@@ -29,11 +29,8 @@ from jarvis.hitl.types import (
     ApprovalResponse,
     ApprovalStatus,
     EscalationAction,
-    EscalationPolicy,
     HITLConfig,
     HITLNodeKind,
-    NotificationChannel,
-    NotificationType,
     ReviewPriority,
     ReviewTask,
 )

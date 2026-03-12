@@ -13,7 +13,6 @@ Funktioniert mit jedem Playwright-Page-Objekt.
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from jarvis.browser.types import (
@@ -84,7 +83,9 @@ JS_EXTRACT_INPUTS = """
             options = Array.from(el.options).map(o => o.text || o.value);
         }
         return {
-            selector: el.id ? `#${el.id}` : (el.name ? `[name="${el.name}"]` : `${tag}:nth-of-type(${i+1})`),
+            selector: el.id ? `#${el.id}`
+              : (el.name ? `[name="${el.name}"]`
+              : `${tag}:nth-of-type(${i+1})`),
             name: el.name || '',
             type: type,
             value: el.value || '',
@@ -147,7 +148,8 @@ JS_EXTRACT_TABLES = """
         const rows = Array.from(table.querySelectorAll('tbody tr, tr')).slice(0, 100).map(tr => {
             return Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim());
         }).filter(r => r.length > 0);
-        return { headers, rows, rowCount: rows.length, colCount: headers.length || (rows[0] || []).length };
+        return { headers, rows, rowCount: rows.length,
+          colCount: headers.length || (rows[0] || []).length };
     });
 }
 """

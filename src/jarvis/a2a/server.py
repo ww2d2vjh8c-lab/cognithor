@@ -26,10 +26,8 @@ from typing import Any, AsyncIterator, Awaitable, Callable
 from jarvis.a2a.types import (
     A2A_CONTENT_TYPE,
     A2A_PROTOCOL_VERSION,
-    A2A_VERSION_HEADER,
     A2AAgentCard,
     A2AErrorCode,
-    Artifact,
     Message,
     MessageRole,
     PushNotificationAuth,
@@ -37,7 +35,6 @@ from jarvis.a2a.types import (
     Task,
     TaskArtifactUpdateEvent,
     TaskState,
-    TaskStatus,
     TaskStatusUpdateEvent,
     TextPart,
 )
@@ -178,7 +175,11 @@ class A2AServer:
                     "id": body.get("id"),
                     "error": {
                         "code": A2AErrorCode.INCOMPATIBLE_VERSION,
-                        "message": f"Incompatible version. Server: {A2A_PROTOCOL_VERSION}, Client: {client_version}",
+                        "message": (
+                            f"Incompatible version. "
+                            f"Server: {A2A_PROTOCOL_VERSION}, "
+                            f"Client: {client_version}"
+                        ),
                     },
                 }
 
@@ -314,7 +315,7 @@ class A2AServer:
         self._track_context(task)
 
         # History length from config
-        accepted_history = config.get("acceptedOutputModes") or config.get("historyLength")
+        _accepted_history = config.get("acceptedOutputModes") or config.get("historyLength")
 
         log.info("a2a_task_created", task_id=task.id, context_id=task.context_id)
 

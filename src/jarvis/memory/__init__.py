@@ -24,12 +24,12 @@ from jarvis.memory.semantic import SemanticMemory
 from jarvis.memory.watcher import MemoryWatcher
 from jarvis.memory.hygiene import MemoryHygieneEngine
 from jarvis.memory.integrity import (
-    ContradictionDetector,
-    DecisionExplainer,
-    DuplicateDetector,
-    IntegrityChecker,
-    MemoryVersionControl,
-    PlausibilityChecker,
+    ContradictionDetector,  # noqa: F401
+    DecisionExplainer,  # noqa: F401
+    DuplicateDetector,  # noqa: F401
+    IntegrityChecker,  # noqa: F401
+    MemoryVersionControl,  # noqa: F401
+    PlausibilityChecker,  # noqa: F401
 )
 from jarvis.memory.working import WorkingMemoryManager
 

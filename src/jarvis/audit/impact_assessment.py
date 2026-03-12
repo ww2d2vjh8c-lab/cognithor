@@ -585,7 +585,11 @@ class ImpactAssessor:
                 ImpactDimension.FUNDAMENTAL_RIGHTS,
                 ImpactSeverity.MODERATE,
                 ImpactLikelihood.POSSIBLE,
-                "KI-gestützte Versicherungsempfehlungen können Zugang zu Versicherungsschutz beeinflussen",
+                (
+                    "KI-gestützte Versicherungsempfehlungen "
+                    "können Zugang zu Versicherungsschutz "
+                    "beeinflussen"
+                ),
                 ["Versicherungsnehmer", "Antragsteller"],
                 ["Human-in-the-Loop", "Transparenzpflicht"],
                 "medium",

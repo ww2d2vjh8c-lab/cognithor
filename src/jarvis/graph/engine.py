@@ -29,8 +29,6 @@ from typing import Any, AsyncIterator
 
 from jarvis.graph.state import StateManager
 from jarvis.graph.types import (
-    Checkpoint,
-    Edge,
     EdgeType,
     END,
     ExecutionRecord,
@@ -41,7 +39,6 @@ from jarvis.graph.types import (
     NodeResult,
     NodeStatus,
     NodeType,
-    START,
 )
 from jarvis.utils.logging import get_logger
 

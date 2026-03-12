@@ -12,7 +12,6 @@ Architecture: §15.2 (Distributed Agent Runtime)
 
 from __future__ import annotations
 
-import hashlib
 import time
 from dataclasses import dataclass, field
 from enum import StrEnum

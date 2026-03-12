@@ -23,10 +23,8 @@ MCP-Tool-Registrierung:
 
 from __future__ import annotations
 
-import asyncio
-import base64
 import contextlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -419,7 +417,8 @@ class BrowserTool:
                         type: el.type || '',
                         name: el.name || '',
                         id: el.id || '',
-                        text: (el.textContent || el.value || el.placeholder || '').trim().slice(0, 40)
+                        text: (el.textContent || el.value
+                          || el.placeholder || '').trim().slice(0, 40)
                     }))
             """)
 

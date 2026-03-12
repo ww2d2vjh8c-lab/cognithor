@@ -5,7 +5,6 @@ from __future__ import annotations
 import sqlite3
 import json
 import time
-import math
 from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
@@ -92,7 +91,9 @@ class TaskProfiler:
         conn = self._get_conn()
         now = datetime.now(UTC).isoformat()
         conn.execute(
-            """INSERT INTO tool_calls (session_id, tool_name, latency_ms, success, error_type, timestamp)
+            """INSERT INTO tool_calls
+               (session_id, tool_name, latency_ms,
+                success, error_type, timestamp)
                VALUES (?, ?, ?, ?, ?, ?)""",
             (session_id, tool_name, latency_ms, int(success), error_type, now),
         )

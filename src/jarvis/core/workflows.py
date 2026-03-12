@@ -133,7 +133,9 @@ def _sales_pipeline_template() -> WorkflowTemplate:
     return WorkflowTemplate(
         template_id="wf-sales-pipeline",
         name="Sales-Pipeline Follow-up",
-        description="Automatisiertes Follow-up für offene Leads: Erinnerungen, Angebote, Nachverfolgung.",
+        description=(
+            "Automatisiertes Follow-up für offene Leads: Erinnerungen, Angebote, Nachverfolgung."
+        ),
         category="sales",
         icon="💰",
         estimated_minutes=30,
@@ -160,7 +162,9 @@ def _incident_response_template() -> WorkflowTemplate:
     return WorkflowTemplate(
         template_id="wf-incident",
         name="Incident-Response",
-        description="Strukturierter Ablauf bei System-Incidents: Melden, Eskalieren, Lösen, Dokumentieren.",
+        description=(
+            "Strukturierter Ablauf bei System-Incidents: Melden, Eskalieren, Lösen, Dokumentieren."
+        ),
         category="support",
         icon="🚨",
         estimated_minutes=60,

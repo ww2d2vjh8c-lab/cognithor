@@ -689,25 +689,25 @@ from jarvis.audit.ethics import (  # noqa: E402
     FairnessAuditor,
 )
 from jarvis.audit.ai_act_export import (  # noqa: E402
-    ComplianceExporter,
+    ComplianceExporter,  # noqa: F401
     RiskClassifier as ExportRiskClassifier,
-    TransparencyChecker,
+    TransparencyChecker,  # noqa: F401
 )
 from jarvis.audit.eu_ai_act import (  # noqa: E402
-    ComplianceDocManager,
-    EUAIActGovernor,
-    RiskClassifier,
-    TrainingCatalog,
-    TransparencyRegister,
+    ComplianceDocManager,  # noqa: F401
+    EUAIActGovernor,  # noqa: F401
+    RiskClassifier,  # noqa: F401
+    TrainingCatalog,  # noqa: F401
+    TransparencyRegister,  # noqa: F401
 )
 
 # Alias damit beide RiskClassifier erreichbar sind
 AIActExportRiskClassifier = ExportRiskClassifier
 from jarvis.audit.impact_assessment import (  # noqa: E402
-    EthicsBoard,
-    ImpactAssessor,
-    MitigationTracker,
-    StakeholderRegistry,
+    EthicsBoard,  # noqa: F401
+    ImpactAssessor,  # noqa: F401
+    MitigationTracker,  # noqa: F401
+    StakeholderRegistry,  # noqa: F401
 )
 
 __all__ = [

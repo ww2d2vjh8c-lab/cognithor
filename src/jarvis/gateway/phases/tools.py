@@ -30,6 +30,88 @@ def declare_tools_attrs(config: Any) -> PhaseResult:
     }
 
 
+def _register_a2a_tools(mcp_client: Any, a2a_adapter: Any) -> None:
+    """Register A2A delegation tools so the Planner can delegate to remote agents."""
+
+    async def _list_remote_agents(**_kwargs: Any) -> str:
+        """List all registered remote A2A agents."""
+        if not a2a_adapter or not hasattr(a2a_adapter, "_client") or not a2a_adapter._client:
+            return "A2A not available or no client configured."
+        remotes = a2a_adapter._client.list_remotes()
+        if not remotes:
+            return "No remote agents registered. Use delegate_to_remote_agent with an endpoint URL."
+        lines = []
+        for r in remotes:
+            name = r.card.name if r.card else "unknown"
+            skills_str = ""
+            if r.card and r.card.skills:
+                skills_str = ", ".join(s.name for s in r.card.skills[:5])
+            lines.append(f"- {name} ({r.endpoint}) skills: [{skills_str}]")
+        return "\n".join(lines)
+
+    async def _delegate_to_remote_agent(**kwargs: Any) -> str:
+        """Send a task to a remote A2A agent and return the result."""
+        endpoint = kwargs.get("endpoint", "")
+        task_text = kwargs.get("task", "")
+        if not endpoint or not task_text:
+            return "Error: 'endpoint' and 'task' are required."
+        if not a2a_adapter:
+            return "Error: A2A adapter not available."
+
+        # Auto-discover if not yet known
+        if hasattr(a2a_adapter, "_client") and a2a_adapter._client:
+            remote = a2a_adapter._client.get_remote(endpoint)
+            if not remote:
+                await a2a_adapter.discover_remote(endpoint)
+
+        task = await a2a_adapter.delegate_task(endpoint=endpoint, text=task_text)
+        if task is None:
+            return f"Failed to delegate task to {endpoint}. Agent may be unreachable."
+
+        # Extract result text from artifacts
+        parts = []
+        if task.artifacts:
+            for art in task.artifacts:
+                for p in art.parts:
+                    if hasattr(p, "text"):
+                        parts.append(p.text)
+        if parts:
+            return "\n".join(parts)
+        return f"Task delegated (id={task.id}, state={task.state.value}). No text result yet."
+
+    mcp_client.register_builtin_handler(
+        "list_remote_agents",
+        _list_remote_agents,
+        description="List all registered remote A2A agents and their capabilities.",
+        input_schema={"type": "object", "properties": {}},
+    )
+
+    mcp_client.register_builtin_handler(
+        "delegate_to_remote_agent",
+        _delegate_to_remote_agent,
+        description=(
+            "Delegate a task to a remote A2A agent. The agent processes the task "
+            "and returns a result. Use list_remote_agents first to see available agents."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "endpoint": {
+                    "type": "string",
+                    "description": "The remote agent's base URL (e.g. http://192.168.1.10:3002)",
+                },
+                "task": {
+                    "type": "string",
+                    "description": "The task description to send to the remote agent",
+                },
+            },
+            "required": ["endpoint", "task"],
+        },
+    )
+
+    log.info("a2a_tools_registered", tools=["list_remote_agents", "delegate_to_remote_agent"])
+
+
 async def init_tools(
     config: Any,
     mcp_client: Any,
@@ -267,6 +349,7 @@ async def init_tools(
         a2a_adapter = A2AAdapter(config)
         if a2a_adapter.setup(interop, handle_message):
             log.info("a2a_protocol_enabled")
+            _register_a2a_tools(mcp_client, a2a_adapter)
         else:
             log.debug("a2a_protocol_disabled")
     except Exception as exc:

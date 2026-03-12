@@ -36,7 +36,6 @@ import json
 import logging
 import re
 import tarfile
-import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -691,7 +690,8 @@ class SkillPackage:
                     raise ValueError(f"Pfad-Traversal erkannt im Paket: {member.name}")
                 if member.size > max_member_size:
                     raise ValueError(
-                        f"Paket-Mitglied zu gross: {member.name} ({member.size:,} > {max_member_size:,} Bytes)"
+                        f"Paket-Mitglied zu gross: {member.name} "
+                        f"({member.size:,} > {max_member_size:,} Bytes)"
                     )
                 f = tar.extractfile(member)
                 if f:
@@ -912,7 +912,9 @@ class PackageInstaller:
                     return InstallResult(
                         success=False,
                         package_id=pkg_id,
-                        message=f"Herausgeber '{package.signature.signer_id}' nicht vertrauenswürdig",
+                        message=(
+                            f"Herausgeber '{package.signature.signer_id}' nicht vertrauenswürdig"
+                        ),
                     )
 
         # 2. Signatur-Integrität

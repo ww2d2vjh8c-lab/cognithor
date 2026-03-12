@@ -16,8 +16,6 @@ Alle Tools arbeiten mit lokalen Dateipfaden -- keine Cloud-Uploads.
 from __future__ import annotations
 
 import asyncio
-import io
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -182,7 +180,11 @@ class MediaPipeline:
         if file_size > self._max_audio_file_size:
             return MediaResult(
                 success=False,
-                error=f"Audiodatei zu gross ({file_size / 1_048_576:.1f} MB, max {self._max_audio_file_size // 1_048_576} MB)",
+                error=(
+                    f"Audiodatei zu gross "
+                    f"({file_size / 1_048_576:.1f} MB, "
+                    f"max {self._max_audio_file_size // 1_048_576} MB)"
+                ),
             )
 
         try:
@@ -264,7 +266,11 @@ class MediaPipeline:
             if file_size > self._max_image_file_size:
                 return MediaResult(
                     success=False,
-                    error=f"Bild zu gross ({file_size / 1_048_576:.1f} MB, max {self._max_image_file_size // 1_048_576} MB)",
+                    error=(
+                        f"Bild zu gross "
+                        f"({file_size / 1_048_576:.1f} MB, "
+                        f"max {self._max_image_file_size // 1_048_576} MB)"
+                    ),
                 )
 
             # Bild als Base64 laden
@@ -382,7 +388,11 @@ class MediaPipeline:
         if file_size > self._max_extract_file_size:
             return MediaResult(
                 success=False,
-                error=f"Datei zu gross ({file_size / 1_048_576:.1f} MB, max {self._max_extract_file_size // 1_048_576} MB)",
+                error=(
+                    f"Datei zu gross "
+                    f"({file_size / 1_048_576:.1f} MB, "
+                    f"max {self._max_extract_file_size // 1_048_576} MB)"
+                ),
             )
 
         suffix = path.suffix.lower()
@@ -449,7 +459,8 @@ class MediaPipeline:
             pass
 
         raise ImportError(
-            "Kein PDF-Reader verfügbar. Installiere: pip install pymupdf oder pip install pdfplumber"
+            "Kein PDF-Reader verfügbar. Installiere: "
+            "pip install pymupdf oder pip install pdfplumber"
         )
 
     def _extract_docx(self, path: Path) -> str:
@@ -519,7 +530,11 @@ class MediaPipeline:
         if file_size > self._max_extract_file_size:
             return MediaResult(
                 success=False,
-                error=f"Datei zu gross ({file_size / 1_048_576:.1f} MB, max {self._max_extract_file_size // 1_048_576} MB)",
+                error=(
+                    f"Datei zu gross "
+                    f"({file_size / 1_048_576:.1f} MB, "
+                    f"max {self._max_extract_file_size // 1_048_576} MB)"
+                ),
             )
 
         loop = asyncio.get_running_loop()
@@ -656,7 +671,11 @@ class MediaPipeline:
         if file_size > self._max_extract_file_size:
             return MediaResult(
                 success=False,
-                error=f"Datei zu gross ({file_size / 1_048_576:.1f} MB, max {self._max_extract_file_size // 1_048_576} MB)",
+                error=(
+                    f"Datei zu gross "
+                    f"({file_size / 1_048_576:.1f} MB, "
+                    f"max {self._max_extract_file_size // 1_048_576} MB)"
+                ),
             )
 
         loop = asyncio.get_running_loop()
@@ -756,7 +775,11 @@ class MediaPipeline:
         if file_size > self._max_extract_file_size:
             return MediaResult(
                 success=False,
-                error=f"Datei zu gross ({file_size / 1_048_576:.1f} MB, max {self._max_extract_file_size // 1_048_576} MB)",
+                error=(
+                    f"Datei zu gross "
+                    f"({file_size / 1_048_576:.1f} MB, "
+                    f"max {self._max_extract_file_size // 1_048_576} MB)"
+                ),
             )
 
         loop = asyncio.get_running_loop()
@@ -908,7 +931,11 @@ class MediaPipeline:
 
         text = extract_result.text
         if not text.strip():
-            return "Fehler: Kein Text im Dokument gefunden. Möglicherweise ein gescanntes PDF (OCR erforderlich)."
+            return (
+                "Fehler: Kein Text im Dokument gefunden. "
+                "Möglicherweise ein gescanntes PDF "
+                "(OCR erforderlich)."
+            )
 
         # Hinweis bei sehr kurzem Text
         ocr_warning = ""
@@ -974,7 +1001,10 @@ class MediaPipeline:
         if sample_rate not in self.ALLOWED_SAMPLE_RATES:
             return MediaResult(
                 success=False,
-                error=f"Ungueltige Samplerate: {sample_rate}. Erlaubt: {sorted(self.ALLOWED_SAMPLE_RATES)}",
+                error=(
+                    f"Ungueltige Samplerate: {sample_rate}. "
+                    f"Erlaubt: {sorted(self.ALLOWED_SAMPLE_RATES)}"
+                ),
             )
 
         path = self._validate_input_path(input_path)
@@ -1587,7 +1617,8 @@ MEDIA_TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
     "document_export": {
         "description": (
             "Exportiert Text als PDF- oder DOCX-Dokument (Briefform, Schreiben, etc.). "
-            "Der Inhalt wird als Fließtext übergeben, Absätze durch doppelte Zeilenumbrüche getrennt."
+            "Der Inhalt wird als Fließtext übergeben, "
+            "Absätze durch doppelte Zeilenumbrüche getrennt."
         ),
         "inputSchema": {
             "type": "object",

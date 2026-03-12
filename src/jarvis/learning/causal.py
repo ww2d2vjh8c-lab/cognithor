@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from jarvis.models import SequenceScore, ToolSequenceRecord
+from jarvis.models import SequenceScore
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
@@ -73,7 +73,9 @@ class CausalAnalyzer:
 
         conn = self._get_conn()
         conn.execute(
-            """INSERT INTO causal_sequences (session_id, timestamp, tool_sequence, success_score, model_used)
+            """INSERT INTO causal_sequences
+               (session_id, timestamp, tool_sequence,
+                success_score, model_used)
                VALUES (?, ?, ?, ?, ?)""",
             (
                 session_id,

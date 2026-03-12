@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import tempfile
 import uuid
 from pathlib import Path
 from typing import Any

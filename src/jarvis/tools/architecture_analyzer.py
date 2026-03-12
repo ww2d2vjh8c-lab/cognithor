@@ -9,7 +9,6 @@ Erkennt:
 from __future__ import annotations
 
 import ast
-import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -145,8 +144,10 @@ class ArchitectureAnalyzer:
                             severity="warning",
                             modules=[module, imp],
                             message=(
-                                f"Layer-Verletzung: {module} (Layer {self._get_layer_name(module)}) "
-                                f"importiert {imp} (Layer {self._get_layer_name(imp)})"
+                                f"Layer-Verletzung: {module} "
+                                f"(Layer {self._get_layer_name(module)}) "
+                                f"importiert {imp} "
+                                f"(Layer {self._get_layer_name(imp)})"
                             ),
                         )
                     )

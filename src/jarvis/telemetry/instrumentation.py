@@ -20,11 +20,11 @@ from __future__ import annotations
 import asyncio
 import functools
 import time
-from typing import Any, Callable, Awaitable
+from typing import Any, Callable
 
 from jarvis.telemetry.tracer import TracerProvider, SpanContextManager
 from jarvis.telemetry.metrics import MetricsProvider
-from jarvis.telemetry.types import SpanKind, StatusCode
+from jarvis.telemetry.types import SpanKind
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)

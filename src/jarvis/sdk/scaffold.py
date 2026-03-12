@@ -6,7 +6,6 @@ Generates ready-to-run Python files with proper SDK decorators.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 
 # ---------------------------------------------------------------------------

@@ -12,7 +12,7 @@ import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import httpx
 
@@ -378,7 +378,8 @@ class EmbeddingClient:
 
         Args:
             model: Name des Embedding-Modells.
-            base_url: Base-URL (nur für Rückwärtskompatibilität, wird ignoriert wenn provider gesetzt).
+            base_url: Base-URL (nur für Rückwärtskompatibilität,
+                wird ignoriert wenn provider gesetzt).
             dimensions: Erwartete Vektor-Dimensionalität.
             timeout: Request-Timeout in Sekunden.
             provider: Optionaler EmbeddingProvider. Default: OllamaEmbeddingProvider.

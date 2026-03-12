@@ -91,7 +91,10 @@ class JarvisPromptProvider:
                     ),
                     MCPPromptArgument(
                         name="length",
-                        description="Gewünschte Länge: short (2-3 Sätze), medium (1 Absatz), long (mehrere Absätze)",
+                        description=(
+                            "Gewünschte Länge: short (2-3 Sätze), "
+                            "medium (1 Absatz), long (mehrere Absätze)"
+                        ),
                         required=False,
                     ),
                     MCPPromptArgument(
@@ -349,9 +352,20 @@ class JarvisPromptProvider:
     ) -> list[dict[str, Any]]:
         """Generiert Messages für Code-Review."""
         focus_instructions = {
-            "security": "Fokussiere auf Sicherheitslücken: Injection, Path Traversal, XSS, Auth-Probleme, unsichere Deserialisierung.",
-            "performance": "Fokussiere auf Performance: N+1 Queries, unnötige Allokationen, algorithmische Komplexität, Caching-Möglichkeiten.",
-            "readability": "Fokussiere auf Lesbarkeit: Naming, Struktur, Kommentare, Single Responsibility, DRY.",
+            "security": (
+                "Fokussiere auf Sicherheitslücken: Injection, "
+                "Path Traversal, XSS, Auth-Probleme, "
+                "unsichere Deserialisierung."
+            ),
+            "performance": (
+                "Fokussiere auf Performance: N+1 Queries, "
+                "unnötige Allokationen, algorithmische "
+                "Komplexität, Caching-Möglichkeiten."
+            ),
+            "readability": (
+                "Fokussiere auf Lesbarkeit: Naming, Struktur, "
+                "Kommentare, Single Responsibility, DRY."
+            ),
             "all": "Prüfe Sicherheit, Performance, Lesbarkeit und Best Practices.",
         }
 
@@ -379,7 +393,9 @@ class JarvisPromptProvider:
         """Generiert Messages für Übersetzung."""
         domain_hint = {
             "insurance": "Behalte Versicherungsfachbegriffe bei oder übersetze sie korrekt.",
-            "legal": "Behalte juristische Fachbegriffe bei. Beachte länderspezifische Rechtsbegriffe.",
+            "legal": (
+                "Behalte juristische Fachbegriffe bei. Beachte länderspezifische Rechtsbegriffe."
+            ),
             "technical": "Technische Begriffe präzise übersetzen, Akronyme beibehalten.",
             "medical": "Medizinische Terminologie korrekt übersetzen.",
             "general": "",
@@ -410,8 +426,16 @@ class JarvisPromptProvider:
         """Generiert Messages für Brainstorming."""
         method_instructions = {
             "freeform": "Generiere möglichst viele kreative Ideen ohne Einschränkungen.",
-            "six_hats": "Nutze die 6-Hüte-Methode (de Bono): Weiß (Fakten), Rot (Gefühle), Schwarz (Risiken), Gelb (Vorteile), Grün (Kreativ), Blau (Prozess).",
-            "scamper": "Nutze SCAMPER: Substitute, Combine, Adapt, Modify, Put to other uses, Eliminate, Reverse.",
+            "six_hats": (
+                "Nutze die 6-Hüte-Methode (de Bono): "
+                "Weiß (Fakten), Rot (Gefühle), "
+                "Schwarz (Risiken), Gelb (Vorteile), "
+                "Grün (Kreativ), Blau (Prozess)."
+            ),
+            "scamper": (
+                "Nutze SCAMPER: Substitute, Combine, Adapt, "
+                "Modify, Put to other uses, Eliminate, Reverse."
+            ),
             "swot": "Führe eine SWOT-Analyse durch: Strengths, Weaknesses, Opportunities, Threats.",
             "mind_map": "Erstelle eine Mind-Map-Struktur mit Haupt- und Unterthemen.",
         }
@@ -437,7 +461,9 @@ class JarvisPromptProvider:
             "beginner": "Erkläre einfach und verständlich, vermeide Fachbegriffe.",
             "intermediate": "Nutze Fachbegriffe, aber erkläre sie kurz.",
             "expert": "Nutze Fachsprache, gehe in die Tiefe, referenziere aktuelle Forschung.",
-            "child": "Erkläre so, dass ein 10-Jähriger es versteht. Nutze einfache Wörter und Bilder.",
+            "child": (
+                "Erkläre so, dass ein 10-Jähriger es versteht. Nutze einfache Wörter und Bilder."
+            ),
             "executive": "Erkläre knapp und geschäftsorientiert. Fokus auf Relevanz und Impact.",
         }
 

@@ -25,14 +25,13 @@ from pathlib import Path
 from typing import Any
 
 from jarvis.browser.page_analyzer import PageAnalyzer
-from jarvis.browser.session_manager import SessionManager, SessionSnapshot
+from jarvis.browser.session_manager import SessionManager
 from jarvis.browser.types import (
     ActionResult,
     ActionType,
     BrowserAction,
     BrowserConfig,
     BrowserWorkflow,
-    ExtractionMode,
     PageState,
     WorkflowStatus,
 )
@@ -43,7 +42,7 @@ log = get_logger(__name__)
 # Playwright-Verfügbarkeit prüfen
 _HAS_PLAYWRIGHT = False
 try:
-    from playwright.async_api import async_playwright, Browser, BrowserContext, Page
+    from playwright.async_api import async_playwright, Browser, BrowserContext, Page  # noqa: F401
 
     _HAS_PLAYWRIGHT = True
 except ImportError:
@@ -508,7 +507,7 @@ class BrowserAgent:
         """Extrahiert alle Links."""
         self._ensure_running()
         state = await self._analyzer.analyze(self.page, extract_text=False)
-        return [{"text": l.text, "href": l.href} for l in state.links if l.href]
+        return [{"text": link.text, "href": link.href} for link in state.links if link.href]
 
     async def find_and_click(self, description: str) -> ActionResult:
         """Findet ein Element anhand Beschreibung und klickt darauf."""

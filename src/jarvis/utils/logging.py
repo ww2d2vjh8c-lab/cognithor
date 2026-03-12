@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from importlib import import_module
 from typing import TYPE_CHECKING, Any
 
 """
@@ -34,8 +35,6 @@ messages will still be emitted but without structured context or JSON
 rendering. File handlers are still supported via the standard
 `logging` library to satisfy tests that check for log file creation.
 """
-
-from importlib import import_module
 
 try:
     # Attempt to import structlog. If this fails, we'll fall back to

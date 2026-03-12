@@ -1,4 +1,4 @@
-"""Advanced phase: Monitoring, isolation, auth, connectors, workflows, ecosystem, extensions, governance, portal, CLI, etc.
+"""Advanced phase: Monitoring, isolation, auth, connectors, workflows, etc.
 
 Attributes handled:
   _monitoring_hub, _isolation, _workspace_guard, _auth_gateway,

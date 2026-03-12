@@ -30,7 +30,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from jarvis.models import Chunk, MemoryTier
+from jarvis.models import MemoryTier
 
 logger = logging.getLogger("jarvis.memory.multimodal")
 
@@ -403,7 +403,7 @@ class MultimodalMemory:
 
         try:
             # index_text gibt Anzahl zurück, wir brauchen IDs
-            count = self._manager.index_text(
+            _count = self._manager.index_text(
                 text,
                 source_path,
                 tier=MemoryTier.SEMANTIC,

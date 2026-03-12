@@ -15,7 +15,6 @@ Architektur-Bibel: §18.1 (Performance), §18.2 (Skalierbarkeit)
 
 from __future__ import annotations
 
-import hashlib
 import math
 import random
 import time

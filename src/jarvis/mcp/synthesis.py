@@ -297,7 +297,10 @@ class KnowledgeSynthesizer:
                 await self._vault_tools.vault_save(
                     title=vault_title,
                     content=result,
-                    tags=f"synthese, {_extract_keywords(topic)[0] if _extract_keywords(topic) else 'wissen'}",
+                    tags=(
+                        "synthese, "
+                        f"{_extract_keywords(topic)[0] if _extract_keywords(topic) else 'wissen'}"
+                    ),
                     folder="knowledge",
                 )
                 result += f"\n\n*Im Vault gespeichert als '{vault_title}'.*"
@@ -341,7 +344,10 @@ class KnowledgeSynthesizer:
         )
 
         if not stored_sources:
-            return f"Keine gespeicherten Informationen zu '{topic}' gefunden. Widerspruchsanalyse nicht möglich."
+            return (
+                f"Keine gespeicherten Informationen zu '{topic}' "
+                f"gefunden. Widerspruchsanalyse nicht möglich."
+            )
 
         # Aktuelles Web-Wissen sammeln
         web_sources = await self._gather_sources(
@@ -354,7 +360,10 @@ class KnowledgeSynthesizer:
         )
 
         if not web_sources:
-            return f"Keine aktuellen Web-Informationen zu '{topic}' gefunden. Widerspruchsanalyse nicht möglich."
+            return (
+                f"Keine aktuellen Web-Informationen zu '{topic}' "
+                f"gefunden. Widerspruchsanalyse nicht möglich."
+            )
 
         stored_context = self._format_source_context(stored_sources)
         web_context = self._format_source_context(web_sources)
@@ -867,7 +876,10 @@ def register_synthesis_tools(
                 "depth": {
                     "type": "string",
                     "enum": ["quick", "standard", "deep"],
-                    "description": "Analysetiefe: quick (nur Memory+Vault), standard (+ Web), deep (detailliert)",
+                    "description": (
+                        "Analysetiefe: quick (nur Memory+Vault), "
+                        "standard (+ Web), deep (detailliert)"
+                    ),
                     "default": "standard",
                 },
                 "language": {
