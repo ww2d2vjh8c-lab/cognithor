@@ -5,6 +5,7 @@ import { ConfirmModal } from "./components/ConfirmModal";
 import ChatPage from "./pages/ChatPage";
 import WorkflowGraphPage from "./pages/WorkflowGraphPage";
 import KnowledgeGraphPage from "./pages/KnowledgeGraphPage";
+import { t, setLocale as setI18nLocale, onLocaleChange } from "./utils/i18n";
 
 // ═══════════════════════════════════════════════════════════════════════
 // Cognithor · Control Center v2 — UX-Rewrite mit allen 23 Fixes
@@ -135,31 +136,33 @@ const I = {
   chat: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>,
   workflow: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="5" cy="6" r="3"/><circle cx="19" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><path d="M7.5 7.5L10.5 16M16.5 7.5L13.5 16"/></svg>,
   graph: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M9 6h6M6 9v6M18 9v6M9 18h6M8.5 8.5l7 7"/></svg>,
+  language: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 8l4 12M3 8h8M7 8l1-4M13 2l5.5 14M16.5 16H21M14.5 11h5"/><path d="M11.5 22L16 11l4.5 11"/></svg>,
 };
 
 // ── Navigation ─────────────────────────────────────────────────────────
-const PAGES = [
-  { id: "chat", label: "Chat", icon: I.chat, key: "1" },
-  { id: "general", label: "General", icon: I.home, key: "2" },
-  { id: "language", label: "Language", icon: I.language, key: "3" },
-  { id: "providers", label: "LLM Providers", icon: I.llm, key: "4" },
-  { id: "models", label: "Models", icon: I.model, key: "5" },
-  { id: "planner", label: "PGE Trinity", icon: I.brain, key: "6" },
-  { id: "executor", label: "Executor", icon: I.terminal, key: "7" },
-  { id: "memory", label: "Memory", icon: I.mem, key: "8" },
-  { id: "channels", label: "Channels", icon: I.ch, key: "9" },
-  { id: "security", label: "Security", icon: I.shield, key: "0" },
-  { id: "web", label: "Web Tools", icon: I.web, key: null },
-  { id: "mcp", label: "Integrations", icon: I.plug, key: null },
-  { id: "cron", label: "Cron & Heartbeat", icon: I.clock, key: null },
-  { id: "database", label: "Database", icon: I.db, key: null },
-  { id: "logging", label: "Logging", icon: I.terminal, key: null },
-  { id: "prompts", label: "Prompts & Policies", icon: I.file, key: null },
-  { id: "agents", label: "Agents", icon: I.bot, key: null },
-  { id: "bindings", label: "Bindings", icon: I.link, key: null },
-  { id: "workflows", label: "Workflows", icon: I.workflow, key: null },
-  { id: "knowledge-graph", label: "Knowledge Graph", icon: I.graph, key: null },
-  { id: "system", label: "System", icon: I.gear, key: null },
+// Labels use i18n keys — resolved at render time via t()
+const PAGE_DEFS = [
+  { id: "chat", i18n: "nav.chat", icon: I.chat, key: "1" },
+  { id: "general", i18n: "nav.general", icon: I.home, key: "2" },
+  { id: "language", i18n: "nav.language", icon: I.language, key: "3" },
+  { id: "providers", i18n: "nav.providers", icon: I.llm, key: "4" },
+  { id: "models", i18n: "nav.models", icon: I.model, key: "5" },
+  { id: "planner", i18n: "nav.planner", icon: I.brain, key: "6" },
+  { id: "executor", i18n: "nav.executor", icon: I.terminal, key: "7" },
+  { id: "memory", i18n: "nav.memory", icon: I.mem, key: "8" },
+  { id: "channels", i18n: "nav.channels", icon: I.ch, key: "9" },
+  { id: "security", i18n: "nav.security", icon: I.shield, key: "0" },
+  { id: "web", i18n: "nav.web", icon: I.web, key: null },
+  { id: "mcp", i18n: "nav.mcp", icon: I.plug, key: null },
+  { id: "cron", i18n: "nav.cron", icon: I.clock, key: null },
+  { id: "database", i18n: "nav.database", icon: I.db, key: null },
+  { id: "logging", i18n: "nav.logging", icon: I.terminal, key: null },
+  { id: "prompts", i18n: "nav.prompts", icon: I.file, key: null },
+  { id: "agents", i18n: "nav.agents", icon: I.bot, key: null },
+  { id: "bindings", i18n: "nav.bindings", icon: I.link, key: null },
+  { id: "workflows", i18n: "nav.workflows", icon: I.workflow, key: null },
+  { id: "knowledge-graph", i18n: "nav.knowledge_graph", icon: I.graph, key: null },
+  { id: "system", i18n: "nav.system", icon: I.gear, key: null },
 ];
 
 // ── Default Config ─────────────────────────────────────────────────────
@@ -701,6 +704,7 @@ function LanguagePage({ cfg, set }) {
   const handleLocaleChange = useCallback((newLocale) => {
     setActiveLocale(newLocale);
     set("language", newLocale);
+    setI18nLocale(newLocale);  // Update UI language immediately
     setError(null);
     setSuccess(null);
     setPreview(null);
@@ -1601,6 +1605,9 @@ export default function App() {
   const [validationErrors, setValidationErrors] = useState({});
   const { toasts, add: toast, dismiss: dismissToast } = useToast();
   const { theme, toggle: toggleTheme } = useTheme();
+  // i18n: re-render when locale changes
+  const [, setI18nTick] = useState(0);
+  useEffect(() => onLocaleChange(() => setI18nTick(n => n + 1)), []);
 
   // Styled ConfirmModal state (replaces native confirm())
   const [confirmState, setConfirmState] = useState({ open: false, title: "", message: "", danger: false, resolve: null });
@@ -1676,6 +1683,8 @@ export default function App() {
       prompts: loadedPrompts,
     }));
     setLoaded(true);
+    // Sync UI language from backend config
+    if (mergedCfg.language) setI18nLocale(mergedCfg.language);
     return true;
   }, []); // All setters are stable React refs — no deps needed
 
@@ -1943,7 +1952,7 @@ export default function App() {
       }
       // Ctrl/Cmd+1..9,0 for pages (matched by key field, not index)
       if ((e.ctrlKey || e.metaKey) && e.key >= "0" && e.key <= "9") {
-        const target = PAGES.find(p => p.key === e.key);
+        const target = PAGE_DEFS.find(p => p.key === e.key);
         if (target) { e.preventDefault(); setPage(target.id); }
       }
     };
@@ -2454,9 +2463,9 @@ export default function App() {
 
         {/* Sidebar with keyboard hints */}
         <nav className={`cc-sidebar ${menuOpen ? "mobile-open" : ""}`} role="navigation" aria-label="Main navigation">
-          {PAGES.map(p => (
+          {PAGE_DEFS.map(p => (
             <button key={p.id} className={`cc-nav-item ${page === p.id ? "active" : ""}`} onClick={() => changePage(p.id)} aria-current={page === p.id ? "page" : undefined}>
-              {p.icon} {p.label}
+              {p.icon} {t(p.i18n)}
               {p.key && <span className="cc-nav-key">⌘{p.key}</span>}
             </button>
           ))}

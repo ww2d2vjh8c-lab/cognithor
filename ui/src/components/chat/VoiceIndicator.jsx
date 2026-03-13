@@ -1,9 +1,11 @@
+import { t } from "../../utils/i18n";
+
 export function VoiceIndicator({ voiceState, lastHeard, VoiceState }) {
   const stateLabels = {
-    [VoiceState.LISTENING]: "Say \"Jarvis\"...",
-    [VoiceState.CONVERSATION]: "Listening... (say \"Jarvis stop\" to end)",
-    [VoiceState.PROCESSING]: "Processing...",
-    [VoiceState.SPEAKING]: "Speaking...",
+    [VoiceState.LISTENING]: t("voice.wake"),
+    [VoiceState.CONVERSATION]: t("voice.listening"),
+    [VoiceState.PROCESSING]: t("voice.processing"),
+    [VoiceState.SPEAKING]: t("voice.speaking"),
   };
 
   const stateIcons = {

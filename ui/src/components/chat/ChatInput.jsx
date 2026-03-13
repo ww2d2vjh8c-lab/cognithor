@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { t } from "../../utils/i18n";
 
 const MAX_VOICE_DURATION = 15000; // 15 seconds
 
@@ -115,7 +116,7 @@ export function ChatInput({ onSend, onFile, onVoice, disabled }) {
           value={text}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder={t("chat.placeholder")}
           disabled={disabled}
           rows={1}
         />
@@ -124,7 +125,7 @@ export function ChatInput({ onSend, onFile, onVoice, disabled }) {
             className="cc-chat-input-btn"
             onClick={handleFileClick}
             disabled={disabled}
-            title="Attach file"
+            title={t("chat.attach")}
             type="button"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -135,7 +136,7 @@ export function ChatInput({ onSend, onFile, onVoice, disabled }) {
             className={`cc-chat-input-btn ${isRecording ? "cc-recording" : ""}`}
             onClick={handleVoiceClick}
             disabled={disabled}
-            title={isRecording ? "Stop recording" : "Voice message"}
+            title={isRecording ? t("chat.stop_recording") : t("chat.voice_message")}
             type="button"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -147,7 +148,7 @@ export function ChatInput({ onSend, onFile, onVoice, disabled }) {
             className="cc-chat-input-btn cc-chat-send-btn"
             onClick={handleSend}
             disabled={disabled || !text.trim()}
-            title="Send (Enter)"
+            title={t("chat.send")}
             type="button"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

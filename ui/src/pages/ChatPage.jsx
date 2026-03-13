@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getToken } from "../utils/api";
 import { useJarvisChat } from "../hooks/useJarvisChat";
 import { useVoiceMode } from "../hooks/useVoiceMode";
+import { t } from "../utils/i18n";
 import { MessageList } from "../components/chat/MessageList";
 import { ChatInput } from "../components/chat/ChatInput";
 import { ChatCanvas } from "../components/chat/ChatCanvas";
@@ -82,7 +83,7 @@ export default function ChatPage() {
         <div className="cc-chat-header">
           <div className="cc-chat-header-left">
             <span className={`cc-chat-status-dot ${isConnected ? "cc-connected" : ""}`} />
-            <span className="cc-chat-title">Chat with Jarvis</span>
+            <span className="cc-chat-title">{t("chat.title")}</span>
           </div>
           <div className="cc-chat-header-right">
             {/* Voice Mode Toggle */}
@@ -97,7 +98,7 @@ export default function ChatPage() {
                   <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
                   <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
                 </svg>
-                {voice.isActive ? "Voice On" : "Voice"}
+                {voice.isActive ? t("chat.voice_on") : t("chat.voice")}
               </button>
             )}
             {showCanvas && (
@@ -107,7 +108,7 @@ export default function ChatPage() {
                 type="button"
                 title="Canvas is displayed on the right"
               >
-                Canvas active
+                {t("chat.canvas_active")}
               </button>
             )}
             <button
@@ -119,7 +120,7 @@ export default function ChatPage() {
               <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
               </svg>
-              Clear
+              {t("chat.clear")}
             </button>
           </div>
         </div>
