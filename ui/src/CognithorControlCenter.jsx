@@ -1688,13 +1688,41 @@ export default function App() {
     return true;
   }, []); // All setters are stable React refs — no deps needed
 
+  // Track appStatus in a ref so polling can read it without re-creating the interval
+  const appStatusRef = useRef(appStatus);
+  useEffect(() => { appStatusRef.current = appStatus; }, [appStatus]);
+
   // App Status Polling — auto-reload config when backend transitions to "running"
   useEffect(() => {
     const checkStatus = async () => {
       const res = await api("GET", "/system/status");
       if (res && res.status) {
         const prev = prevStatusRef.current;
+        const current = appStatusRef.current;
         prevStatusRef.current = res.status;
+
+        // Respect transitional states: don't let poll revert "starting" → "stopped"
+        // or "stopping" → "running" — only allow confirmed transitions
+        if (current === "starting") {
+          if (res.status === "running") {
+            if (transitionTimerRef.current) { clearTimeout(transitionTimerRef.current); transitionTimerRef.current = null; }
+            setAppStatus("running");
+            toast("Cognithor started.", "success");
+            await loadAllConfig();
+          }
+          // else stay in "starting" — backend not ready yet
+          return;
+        }
+        if (current === "stopping") {
+          if (res.status !== "running") {
+            if (transitionTimerRef.current) { clearTimeout(transitionTimerRef.current); transitionTimerRef.current = null; }
+            setAppStatus("stopped");
+            toast("Cognithor stopped.", "info");
+          }
+          // else stay in "stopping" — backend still shutting down
+          return;
+        }
+
         setAppStatus(res.status);
         // Backend just came up — reload config from the now-running backend
         if (res.status === "running" && prev !== "running" && !configLoadedRef.current) {
@@ -1710,39 +1738,50 @@ export default function App() {
     checkStatus();
     const interval = setInterval(checkStatus, 3000);
     return () => clearInterval(interval);
-  }, [loadAllConfig]);
+  }, [loadAllConfig, toast]);
 
   const toggleLockRef = useRef(false);
+  const transitionTimerRef = useRef(null);
   const toggleAppStatus = useCallback(async () => {
     if (toggleLockRef.current) return;
     toggleLockRef.current = true;
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     try {
       if (appStatus === "running") {
         setAppStatus("stopping");
         const res = await api("POST", "/system/stop");
-        if (!res.error) {
-          setAppStatus("stopped");
-          toast("Cognithor stopped.", "info");
-        } else {
+        if (res.error) {
           setAppStatus("running");
           toast(`Error stopping: ${res.error}`, "error");
+        } else {
+          // Safety timeout: revert after 60s if polling never confirms
+          transitionTimerRef.current = setTimeout(() => {
+            setAppStatus(s => s === "stopping" ? "stopped" : s);
+          }, 60000);
         }
       } else {
         setAppStatus("starting");
         const res = await api("POST", "/system/start");
-        if (!res.error) {
-          setAppStatus("running");
-          toast("Cognithor started.", "success");
-          await loadAllConfig();
-        } else {
+        if (res.error) {
           setAppStatus("stopped");
           toast(`Error starting: ${res.error}`, "error");
+        } else {
+          // Safety timeout: revert after 90s if polling never confirms
+          transitionTimerRef.current = setTimeout(() => {
+            setAppStatus(s => {
+              if (s === "starting") {
+                toast("Backend did not start in time — check logs.", "error");
+                return "stopped";
+              }
+              return s;
+            });
+          }, 90000);
         }
       }
     } finally {
       setTimeout(() => { toggleLockRef.current = false; }, 2000);
     }
-  }, [appStatus, loadAllConfig, toast]);
+  }, [appStatus, toast]);
 
   // Revert all changes to last saved state
   const revertChanges = useCallback(async () => {
@@ -2221,6 +2260,7 @@ export default function App() {
         .cc-spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
         .cc-spinner-text { color: var(--text2); font-size: 14px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .cc-btn-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; opacity: 0.8; }
 
         /* ── Misc ────────────────────────────────── */
         .cc-warn { background: rgba(255,171,64,0.1); border: 1px solid rgba(255,171,64,0.3); border-radius: 6px; padding: 8px 12px; font-size: 12px; color: var(--warn); margin-bottom: 12px; }
@@ -2255,8 +2295,8 @@ export default function App() {
         .cc-global-search-trigger:hover { border-color: var(--accent); color: var(--accent); }
         .cc-global-search-hint { color: var(--text2); }
         .cc-global-search-kbd { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 1px 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; margin-left: 4px; }
-        .cc-global-search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); z-index: 250; display: flex; align-items: flex-start; justify-content: center; padding-top: 15vh; animation: modalIn 0.15s ease-out; }
-        .cc-global-search-dialog { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; width: 90%; max-width: 520px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+        .cc-global-search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.18); z-index: 250; display: flex; align-items: flex-start; justify-content: center; padding-top: 15vh; animation: modalIn 0.15s ease-out; cursor: pointer; }
+        .cc-global-search-dialog { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; width: 90%; max-width: 520px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05); cursor: default; }
         .cc-global-search-input-wrap { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text2); }
         .cc-global-search-input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 15px; font-family: inherit; outline: none; }
         .cc-global-search-esc { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 6px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; color: var(--text2); }
@@ -2428,16 +2468,16 @@ export default function App() {
           <GlobalSearch onNavigate={(pageId) => { setPage(pageId); setMenuOpen(false); }} />
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
           {/* Start/Stop Button */}
-          <button 
-            className={`cc-btn-sm ${appStatus === "running" ? "cc-btn-danger" : "cc-btn-success"}`} 
-            style={{ 
-              width: "auto", 
-              padding: "0 12px", 
-              height: "28px", 
-              marginRight: "8px", 
-              backgroundColor: appStatus === "running" ? "rgba(255,68,102,0.1)" : "rgba(0,230,118,0.1)",
-              borderColor: appStatus === "running" ? "rgba(255,68,102,0.4)" : "rgba(0,230,118,0.4)",
-              color: appStatus === "running" ? "var(--danger)" : "var(--success)"
+          <button
+            className={`cc-btn-sm ${appStatus === "running" ? "cc-btn-danger" : appStatus === "starting" || appStatus === "stopping" ? "cc-btn-transitioning" : "cc-btn-success"}`}
+            style={{
+              width: "auto",
+              padding: "0 12px",
+              height: "28px",
+              marginRight: "8px",
+              backgroundColor: appStatus === "starting" || appStatus === "stopping" ? "rgba(255,183,77,0.1)" : appStatus === "running" ? "rgba(255,68,102,0.1)" : "rgba(0,230,118,0.1)",
+              borderColor: appStatus === "starting" || appStatus === "stopping" ? "rgba(255,183,77,0.4)" : appStatus === "running" ? "rgba(255,68,102,0.4)" : "rgba(0,230,118,0.4)",
+              color: appStatus === "starting" || appStatus === "stopping" ? "#ffb74d" : appStatus === "running" ? "var(--danger)" : "var(--success)"
             }}
             onClick={toggleAppStatus}
             disabled={appStatus === "starting" || appStatus === "stopping"}
@@ -2445,8 +2485,10 @@ export default function App() {
           >
             {appStatus === "running" ? (
               <>{I.stop} <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>Power Off</span></>
-            ) : appStatus === "starting" || appStatus === "stopping" ? (
-              <span style={{fontSize: "12px", fontWeight: "600"}}>Please wait...</span>
+            ) : appStatus === "starting" ? (
+              <><span className="cc-btn-spinner" /> <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>Starting...</span></>
+            ) : appStatus === "stopping" ? (
+              <><span className="cc-btn-spinner" /> <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>Stopping...</span></>
             ) : (
               <>{I.play} <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>Power On</span></>
             )}
