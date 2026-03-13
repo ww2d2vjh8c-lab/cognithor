@@ -41,8 +41,8 @@ function Show-Banner {
     Write-Host ""
     Write-Host "   ____  ___   ____ _   _ ___ _____ _   _  ___  ____" -ForegroundColor Cyan
     Write-Host "  / ___|/ _ \ / ___| \ | |_ _|_   _| | | |/ _ \|  _ \" -ForegroundColor Cyan
-    Write-Host " | |  _| | | | |  _|  \| || |  | | | |_| | | | | |_) |" -ForegroundColor Cyan
-    Write-Host " | |_| | |_| | |_| | |\  || |  | | |  _  | |_| |  _ <" -ForegroundColor Cyan
+    Write-Host " | |   | | | | |  _|  \| || |  | | | |_| | | | | |_) |" -ForegroundColor Cyan
+    Write-Host " | |___| |_| | |_| | |\  || |  | | |  _  | |_| |  _ <" -ForegroundColor Cyan
     Write-Host "  \____|\___/ \____|_| \_|___| |_| |_| |_|\___/|_| \_\" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "              -- PowerShell Installer --" -ForegroundColor DarkCyan
@@ -50,8 +50,8 @@ function Show-Banner {
 }
 
 function Write-OK   { param($Msg) Write-Host "  [OK]      $Msg" -ForegroundColor Green }
-function Write-Fail { param($Msg) Write-Host "  [FEHLER]  $Msg" -ForegroundColor Red }
-function Write-Warn { param($Msg) Write-Host "  [WARNUNG] $Msg" -ForegroundColor Yellow }
+function Write-Fail { param($Msg) Write-Host "  [ERROR]   $Msg" -ForegroundColor Red }
+function Write-Warn { param($Msg) Write-Host "  [WARNING] $Msg" -ForegroundColor Yellow }
 function Write-Info { param($Msg) Write-Host "  [INFO]    $Msg" -ForegroundColor Blue }
 function Write-Step { param($Num, $Title)
     Write-Host ""
@@ -75,37 +75,37 @@ function Main {
     Show-Banner
 
     # ── Step 1: Python ────────────────────────────────────────────────
-    Write-Step "1/10" "Python pruefen"
+    Write-Step "1/10" "Check Python"
     $python = Find-Python
     if (-not $python) {
-        Write-Warn "Python 3.12+ nicht gefunden. Versuche automatische Installation..."
+        Write-Warn "Python 3.12+ not found. Attempting automatic installation..."
 
         # Try winget
         $wingetAvailable = $null -ne (Get-Command winget -ErrorAction SilentlyContinue)
         if ($wingetAvailable) {
-            Write-Info "Installiere Python 3.12 via winget ..."
-            Write-Info "(Das kann 1-2 Minuten dauern.)"
+            Write-Info "Installing Python 3.12 via winget ..."
+            Write-Info "(This may take 1-2 minutes.)"
             try {
                 & winget install --id Python.Python.3.12 -e --accept-source-agreements --accept-package-agreements --silent 2>&1 | Out-Null
                 if ($LASTEXITCODE -eq 0) {
-                    Write-OK "Python via winget installiert"
+                    Write-OK "Python installed via winget"
                     # Refresh PATH
                     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
                     $python = Find-Python
                 }
             } catch {
-                Write-Warn "winget-Installation fehlgeschlagen: $_"
+                Write-Warn "winget installation failed: $_"
             }
         }
 
         if (-not $python) {
-            Write-Fail "Python 3.12+ konnte nicht installiert werden!"
+            Write-Fail "Could not install Python 3.12+!"
             Write-Host ""
-            Write-Host "  Bitte manuell installieren:" -ForegroundColor Yellow
+            Write-Host "  Please install manually:" -ForegroundColor Yellow
             Write-Host "  https://www.python.org/downloads/" -ForegroundColor Yellow
             Write-Host ""
-            Write-Host "  WICHTIG: 'Add Python to PATH' ankreuzen!" -ForegroundColor Yellow
-            Write-Host "  Danach dieses Script erneut starten." -ForegroundColor Yellow
+            Write-Host "  IMPORTANT: Check 'Add Python to PATH'!" -ForegroundColor Yellow
+            Write-Host "  Then run this script again." -ForegroundColor Yellow
             return
         }
     }
@@ -113,42 +113,42 @@ function Main {
     Write-OK "$pyVer"
 
     # ── Step 2: GPU Detection ─────────────────────────────────────────
-    Write-Step "2/10" "GPU-Erkennung"
+    Write-Step "2/10" "GPU Detection"
     $gpuInfo = Detect-GPU
     $vramGB = $gpuInfo.VramGB
 
     if ($vramGB -gt 0) {
         Write-OK "GPU: $($gpuInfo.Name) ($vramGB GB VRAM)"
     } else {
-        Write-Info "Keine NVIDIA GPU erkannt oder nvidia-smi fehlt."
-        Write-Info "CPU-Modus -- Lite wird empfohlen."
+        Write-Info "No NVIDIA GPU detected or nvidia-smi missing."
+        Write-Info "CPU mode -- Lite is recommended."
         if (-not $ForceLite) {
             $Lite = $true
-            Write-Info "Lite-Modus automatisch aktiviert."
+            Write-Info "Lite mode automatically enabled."
         }
     }
 
     # Auto-lite if VRAM < 12 GB
     if ($vramGB -gt 0 -and $vramGB -lt 12 -and -not $ForceLite) {
         $Lite = $true
-        Write-Info "VRAM unter 12 GB -- Lite-Modus automatisch aktiviert."
+        Write-Info "VRAM under 12 GB -- Lite mode automatically enabled."
         Write-Info "(qwen3:8b statt qwen3:32b, spart ~14 GB VRAM)"
     }
 
     if ($vramGB -ge 12 -and -not $Lite) {
-        Write-OK "Genug VRAM fuer Standard-Modus (qwen3:32b)"
+        Write-OK "Enough VRAM for standard mode (qwen3:32b)"
     }
 
     $modeLabel = if ($Lite) { "LITE (6 GB VRAM)" } elseif ($Full) { "FULL" } elseif ($Minimal) { "MINIMAL" } else { "STANDARD" }
     Write-Host ""
-    Write-Info "Modus: $modeLabel"
+    Write-Info "Mode: $modeLabel"
     Write-Info "Home:  $JarvisHome"
 
     # ── Step 3: Repository ────────────────────────────────────────────
     Write-Step "3/10" "Repository"
     $repoRoot = Find-Or-Clone-Repo $python
     if (-not $repoRoot) {
-        Write-Fail "Repository konnte nicht gefunden/geclont werden."
+        Write-Fail "Could not find or clone repository."
         return
     }
     Write-OK "Repo: $repoRoot"
@@ -156,25 +156,25 @@ function Main {
     # ── Step 4: Virtual Environment ───────────────────────────────────
     Write-Step "4/10" "Virtual Environment"
     if (-not (Test-Path (Join-Path $VenvDir "Scripts" "activate.bat"))) {
-        Write-Info "Erstelle venv in $VenvDir ..."
+        Write-Info "Creating venv in $VenvDir ..."
         & $python -m venv $VenvDir
         if ($LASTEXITCODE -ne 0) {
-            Write-Fail "venv konnte nicht erstellt werden!"
+            Write-Fail "Could not create venv!"
             return
         }
         # Upgrade pip
         & (Join-Path $VenvDir "Scripts" "python.exe") -m pip install --upgrade pip setuptools wheel --quiet 2>$null
-        Write-OK "venv erstellt"
+        Write-OK "venv created"
     } else {
-        Write-OK "venv bereits vorhanden"
+        Write-OK "venv already exists"
     }
     $venvPython = Join-Path $VenvDir "Scripts" "python.exe"
 
     # ── Step 5: pip install (visible progress) ────────────────────────
-    Write-Step "5/10" "Python-Abhaengigkeiten"
+    Write-Step "5/10" "Python Dependencies"
     $spec = if ($InstallExtras) { "$repoRoot[$InstallExtras]" } else { "$repoRoot" }
-    Write-Info "Installiere cognithor[$InstallExtras] ..."
-    Write-Info "(Das kann beim ersten Mal 3-5 Minuten dauern. Bitte nicht schliessen!)"
+    Write-Info "Installing cognithor[$InstallExtras] ..."
+    Write-Info "(This may take 3-5 minutes on first run. Please do not close!)"
     Write-Host ""
     # Show pip output so user sees progress (no --quiet)
     & $venvPython -m pip install -e $spec --disable-pip-version-check --progress-bar on 2>&1 | ForEach-Object {
@@ -184,61 +184,61 @@ function Main {
         }
     }
     if ($LASTEXITCODE -ne 0) {
-        Write-Fail "pip install fehlgeschlagen!"
-        Write-Host "  Manuell: cd `"$repoRoot`" && pip install -e `".[all]`"" -ForegroundColor Yellow
+        Write-Fail "pip install failed!"
+        Write-Host "  Manually: cd `"$repoRoot`" && pip install -e `".[all]`"" -ForegroundColor Yellow
         return
     }
-    Write-OK "Abhaengigkeiten installiert"
+    Write-OK "Dependencies installed"
 
     # ── Step 6: Ollama ────────────────────────────────────────────────
-    Write-Step "6/10" "Ollama pruefen"
+    Write-Step "6/10" "Check Ollama"
     $ollamaPath = Find-Ollama
     $ollamaReady = $false
 
     if (-not $ollamaPath) {
-        Write-Warn "Ollama nicht gefunden."
-        Write-Info "Versuche Installation via winget ..."
+        Write-Warn "Ollama not found."
+        Write-Info "Attempting installation via winget ..."
         try {
             & winget install --id Ollama.Ollama -e --accept-source-agreements --accept-package-agreements --silent 2>&1 | Out-Null
             if ($LASTEXITCODE -eq 0) {
-                Write-OK "Ollama via winget installiert"
+                Write-OK "Ollama installed via winget"
                 # Refresh PATH
                 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
                 $ollamaPath = Find-Ollama
             } else {
-                Write-Warn "winget-Installation fehlgeschlagen."
-                Write-Host "  Bitte manuell installieren: https://ollama.com/download" -ForegroundColor Yellow
+                Write-Warn "winget installation failed."
+                Write-Host "  Please install manually: https://ollama.com/download" -ForegroundColor Yellow
             }
         } catch {
-            Write-Warn "winget nicht verfuegbar."
-            Write-Host "  Bitte Ollama manuell installieren: https://ollama.com/download" -ForegroundColor Yellow
+            Write-Warn "winget not available."
+            Write-Host "  Please install Ollama manually: https://ollama.com/download" -ForegroundColor Yellow
         }
     }
 
     if ($ollamaPath) {
         Write-OK "Ollama: $ollamaPath"
         if (Test-OllamaRunning) {
-            Write-OK "Ollama-Server laeuft"
+            Write-OK "Ollama server running"
             $ollamaReady = $true
         } else {
-            Write-Info "Starte Ollama-Server ..."
+            Write-Info "Starting Ollama server ..."
             Start-Process -FilePath $ollamaPath -ArgumentList "serve" -WindowStyle Hidden
             for ($i = 0; $i -lt 30; $i++) {
                 Start-Sleep -Milliseconds 500
                 if (Test-OllamaRunning) {
-                    Write-OK "Ollama-Server gestartet"
+                    Write-OK "Ollama server started"
                     $ollamaReady = $true
                     break
                 }
             }
             if (-not $ollamaReady) {
-                Write-Warn "Ollama-Server antwortet nicht"
+                Write-Warn "Ollama server not responding"
             }
         }
     }
 
     # ── Step 7: Models ────────────────────────────────────────────────
-    Write-Step "7/10" "Ollama-Modelle"
+    Write-Step "7/10" "Ollama Models"
     if ($ollamaReady -and $ollamaPath) {
         if ($Lite) {
             Ensure-Model "qwen3:8b" $ollamaPath
@@ -249,11 +249,11 @@ function Main {
             Ensure-Model "nomic-embed-text" $ollamaPath
         }
     } else {
-        Write-Warn "Modell-Download uebersprungen (Ollama nicht bereit)"
+        Write-Warn "Model download skipped (Ollama not ready)"
     }
 
     # ── Step 8: Init ──────────────────────────────────────────────────
-    Write-Step "8/10" "Verzeichnisstruktur"
+    Write-Step "8/10" "Directory Structure"
     $initArgs = @("-m", "jarvis", "--init-only")
     if ($Lite) { $initArgs += "--lite" }
     & $venvPython $initArgs 2>$null
@@ -262,9 +262,9 @@ function Main {
             $p = Join-Path $JarvisHome $_
             if (-not (Test-Path $p)) { New-Item -ItemType Directory -Path $p -Force | Out-Null }
         }
-        Write-OK "Verzeichnisse manuell erstellt"
+        Write-OK "Directories created manually"
     } else {
-        Write-OK "Verzeichnisstruktur initialisiert"
+        Write-OK "Directory structure initialized"
     }
 
     # ── Step 9: Smoke test ────────────────────────────────────────────
@@ -273,37 +273,37 @@ function Main {
     if ($LASTEXITCODE -eq 0) {
         Write-OK "Import OK: $smokeResult"
     } else {
-        Write-Fail "Import fehlgeschlagen!"
+        Write-Fail "Import failed!"
         return
     }
 
     # ── Step 10: Summary ─────────────────────────────────────────────
-    Write-Step "10/10" "Zusammenfassung"
+    Write-Step "10/10" "Summary"
     Write-Host ""
-    Write-OK "Cognithor erfolgreich installiert!"
+    Write-OK "Cognithor successfully installed!"
     Write-Host ""
     if ($vramGB -gt 0) {
         Write-Host "  GPU: $($gpuInfo.Name) ($vramGB GB VRAM)" -ForegroundColor Gray
     }
     $modelMode = if ($Lite) { "LITE (qwen3:8b, ~6 GB VRAM)" } else { "STANDARD (qwen3:32b + qwen3:8b)" }
-    Write-Host "  Modell-Modus: $modelMode" -ForegroundColor Gray
+    Write-Host "  Model mode: $modelMode" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "  Starten:" -ForegroundColor White
+    Write-Host "  Start:" -ForegroundColor White
     Write-Host "    & `"$venvPython`" -m jarvis                 # CLI" -ForegroundColor Gray
     if ($Lite) {
-        Write-Host "    & `"$venvPython`" -m jarvis --lite        # Lite-Modus" -ForegroundColor Gray
+        Write-Host "    & `"$venvPython`" -m jarvis --lite        # Lite mode" -ForegroundColor Gray
     }
     if (Test-Path (Join-Path $repoRoot "start_cognithor.bat")) {
         Write-Host "    start_cognithor.bat                       # Web-UI" -ForegroundColor Gray
     }
     Write-Host ""
-    Write-Host "  Verzeichnisse:" -ForegroundColor White
+    Write-Host "  Directories:" -ForegroundColor White
     Write-Host "    $JarvisHome\                               Home" -ForegroundColor Gray
-    Write-Host "    $JarvisHome\config.yaml                    Konfiguration" -ForegroundColor Gray
-    Write-Host "    $JarvisHome\memory\                        Erinnerungen" -ForegroundColor Gray
+    Write-Host "    $JarvisHome\config.yaml                    Configuration" -ForegroundColor Gray
+    Write-Host "    $JarvisHome\memory\                        Memory" -ForegroundColor Gray
     Write-Host ""
 
-    Write-Host "  venv aktivieren (fuer diese Shell):" -ForegroundColor White
+    Write-Host "  Activate venv (for this shell):" -ForegroundColor White
     Write-Host "    & `"$VenvDir\Scripts\Activate.ps1`"" -ForegroundColor Gray
     Write-Host ""
 }
@@ -386,7 +386,7 @@ function Find-Or-Clone-Repo {
     # Check if already cloned
     $cloneTarget = Join-Path $JarvisHome "cognithor"
     if (Test-Path (Join-Path $cloneTarget "pyproject.toml")) {
-        Write-Info "Bestehendes Repo gefunden: $cloneTarget"
+        Write-Info "Existing repo found: $cloneTarget"
         try {
             Push-Location $cloneTarget
             & git pull --quiet 2>$null
@@ -397,16 +397,16 @@ function Find-Or-Clone-Repo {
     # Try git clone
     $git = Get-Command git -ErrorAction SilentlyContinue
     if ($git) {
-        Write-Info "Clone Repository nach $cloneTarget ..."
+        Write-Info "Cloning repository to $cloneTarget ..."
         if (-not (Test-Path $JarvisHome)) { New-Item -ItemType Directory -Path $JarvisHome -Force | Out-Null }
         & git clone $RepoUrl $cloneTarget --quiet
         if ($LASTEXITCODE -eq 0) {
             return $cloneTarget
         }
-        Write-Warn "git clone fehlgeschlagen."
+        Write-Warn "git clone failed."
     }
     # Fallback: ZIP download
-    Write-Info "Lade Repository als ZIP herunter ..."
+    Write-Info "Downloading repository as ZIP ..."
     if (-not (Test-Path $JarvisHome)) { New-Item -ItemType Directory -Path $JarvisHome -Force | Out-Null }
     $zipPath = Join-Path $JarvisHome "cognithor.zip"
     try {
@@ -421,14 +421,14 @@ function Find-Or-Clone-Repo {
         }
         Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
         if (Test-Path (Join-Path $cloneTarget "pyproject.toml")) {
-            Write-OK "Repository heruntergeladen"
+            Write-OK "Repository downloaded"
             return $cloneTarget
         }
     } catch {
-        Write-Warn "ZIP-Download fehlgeschlagen: $_"
+        Write-Warn "ZIP download failed: $_"
     }
-    Write-Fail "Repository konnte nicht heruntergeladen werden."
-    Write-Host "  Bitte manuell herunterladen:" -ForegroundColor Yellow
+    Write-Fail "Could not download repository."
+    Write-Host "  Please download manually:" -ForegroundColor Yellow
     Write-Host "  https://github.com/Alex8791-cyber/cognithor/archive/refs/heads/main.zip" -ForegroundColor Yellow
     return $null
 }
@@ -466,18 +466,18 @@ function Ensure-Model {
         $baseName = ($ModelName -split ":")[0]
         $found = $data.models | Where-Object { $_.name -like "$baseName*" }
         if ($found) {
-            Write-OK "Modell vorhanden: $ModelName"
+            Write-OK "Model available: $ModelName"
             return
         }
     } catch {}
 
-    Write-Info "Lade Modell: $ModelName (kann einige Minuten dauern) ..."
+    Write-Info "Downloading model: $ModelName (may take a few minutes) ..."
     & $OllamaPath pull $ModelName
     if ($LASTEXITCODE -eq 0) {
-        Write-OK "Modell installiert: $ModelName"
+        Write-OK "Model installed: $ModelName"
     } else {
-        Write-Warn "Download fehlgeschlagen: $ModelName"
-        Write-Host "  Manuell: ollama pull $ModelName" -ForegroundColor Yellow
+        Write-Warn "Download failed: $ModelName"
+        Write-Host "  Manually: ollama pull $ModelName" -ForegroundColor Yellow
     }
 }
 

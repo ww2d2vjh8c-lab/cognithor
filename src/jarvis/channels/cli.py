@@ -38,7 +38,7 @@ BANNER = r"""
 ██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
 ╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║
  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
-  Agent OS v{version} · Lokal · DSGVO-konform
+  Agent OS v{version} · Local-first · Privacy-focused
 """
 
 

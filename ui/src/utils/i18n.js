@@ -65,7 +65,7 @@ const packs = {
     "lang.active": "Active Language",
     "lang.system": "System language",
     "lang.system_desc": "Controls UI messages, error texts, and status outputs. Changing this triggers a prompt translation offer below.",
-    "lang.packs_info": "Installed language packs: {packs} · Prompt presets available for: {presets}",
+    "lang.packs_info": "Installed language packs: {packs} \u00b7 Prompt presets available for: {presets}",
     "lang.translate_title": "System Prompt Translation",
     "lang.translate_desc": "You changed the language to {lang}.",
     "lang.translate_question": "Would you like to translate the system prompts?",
@@ -88,6 +88,8 @@ const packs = {
     "header.version": "Control Center v{version}",
     "header.backend_stopped": "Backend not started. Click \"Power On\" above to launch Cognithor.",
     "header.backend_error": "Backend unreachable \u2014 is Cognithor running?",
+    "header.starting": "Starting...",
+    "header.stopping": "Stopping...",
 
     // Prompts & Policies page
     "prompts.title": "Prompts & Policies",
@@ -108,6 +110,13 @@ const packs = {
     "common.loading": "Loading...",
     "common.error": "Error",
     "common.search": "Search...",
+
+    // Save bar
+    "save.unsaved": "Unsaved changes",
+    "save.discard": "Discard",
+    "save.saving": "Saving...",
+    "save.saved": "Saved!",
+    "save.save": "Save changes",
   },
 
   de: {
@@ -180,6 +189,8 @@ const packs = {
     "header.version": "Control Center v{version}",
     "header.backend_stopped": "Backend nicht gestartet. Klicke oben auf \"Einschalten\" um Cognithor zu starten.",
     "header.backend_error": "Backend nicht erreichbar \u2014 l\u00e4uft Cognithor?",
+    "header.starting": "Startet...",
+    "header.stopping": "Stoppt...",
 
     "prompts.title": "Prompts & Richtlinien",
     "prompts.subtitle": "System-Prompts, Gatekeeper-Richtlinien, CORE.md und HEARTBEAT.md anzeigen und bearbeiten",
@@ -198,6 +209,13 @@ const packs = {
     "common.loading": "Laden...",
     "common.error": "Fehler",
     "common.search": "Suchen...",
+
+    // Save bar
+    "save.unsaved": "Ungespeicherte \u00c4nderungen",
+    "save.discard": "Verwerfen",
+    "save.saving": "Speichere...",
+    "save.saved": "Gespeichert!",
+    "save.save": "\u00c4nderungen speichern",
   },
 
   zh: {
@@ -248,15 +266,41 @@ const packs = {
     "lang.active": "\u5f53\u524d\u8bed\u8a00",
     "lang.system": "\u7cfb\u7edf\u8bed\u8a00",
     "lang.system_desc": "\u63a7\u5236\u754c\u9762\u6d88\u606f\u3001\u9519\u8bef\u6587\u672c\u548c\u72b6\u6001\u8f93\u51fa\u3002\u66f4\u6539\u540e\u5c06\u63d0\u4f9b\u63d0\u793a\u8bcd\u7ffb\u8bd1\u9009\u9879\u3002",
+    "lang.packs_info": "\u5df2\u5b89\u88c5\u8bed\u8a00\u5305\uff1a{packs} \u00b7 \u53ef\u7528\u63d0\u793a\u8bcd\u9884\u8bbe\uff1a{presets}",
+    "lang.translate_title": "\u7cfb\u7edf\u63d0\u793a\u8bcd\u7ffb\u8bd1",
+    "lang.translate_desc": "\u4f60\u5df2\u5c06\u8bed\u8a00\u66f4\u6539\u4e3a {lang}\u3002",
+    "lang.translate_question": "\u662f\u5426\u8981\u7ffb\u8bd1\u7cfb\u7edf\u63d0\u793a\u8bcd\uff1f",
+    "lang.method_preset": "\u4f7f\u7528\u7cbe\u9009\u9884\u8bbe\uff08\u5373\u65f6\uff0c\u63a8\u8350\uff09",
+    "lang.method_ollama": "\u901a\u8fc7 Ollama \u7ffb\u8bd1\uff08\u8f83\u6162\uff0c\u81ea\u5b9a\u4e49\uff09",
     "lang.translate_btn": "\u7ffb\u8bd1\u63d0\u793a\u8bcd",
+    "lang.translating": "\u7ffb\u8bd1\u4e2d...",
+    "lang.skip": "\u8df3\u8fc7 \u2014 \u4fdd\u7559\u5f53\u524d\u63d0\u793a\u8bcd",
+    "lang.preview_title": "\u7ffb\u8bd1\u9884\u89c8",
+    "lang.preview_desc": "\u8bf7\u67e5\u770b\u4ee5\u4e0b\u7ffb\u8bd1\u7684\u63d0\u793a\u8bcd\u3002\u70b9\u51fb\u201c\u5e94\u7528\u201d\u5199\u5165\uff0c\u6216\u201c\u653e\u5f03\u201d\u4fdd\u7559\u539f\u6587\u3002",
     "lang.accept": "\u5e94\u7528",
     "lang.discard": "\u653e\u5f03",
+    "lang.planner_prompt": "Planner \u7cfb\u7edf\u63d0\u793a\u8bcd",
+    "lang.replan_prompt": "\u91cd\u89c4\u5212\u63d0\u793a\u8bcd",
+    "lang.escalation_prompt": "\u5347\u7ea7\u63d0\u793a\u8bcd",
 
     "header.power_on": "\u542f\u52a8",
     "header.power_off": "\u5173\u95ed",
     "header.version": "\u63a7\u5236\u4e2d\u5fc3 v{version}",
+    "header.backend_stopped": "\u540e\u7aef\u672a\u542f\u52a8\u3002\u70b9\u51fb\u4e0a\u65b9\u201c\u542f\u52a8\u201d\u6309\u94ae\u6765\u542f\u52a8 Cognithor\u3002",
+    "header.backend_error": "\u540e\u7aef\u4e0d\u53ef\u8fbe \u2014 Cognithor \u662f\u5426\u5728\u8fd0\u884c\uff1f",
+    "header.starting": "\u542f\u52a8\u4e2d...",
+    "header.stopping": "\u505c\u6b62\u4e2d...",
 
     "prompts.title": "\u63d0\u793a\u8bcd & \u7b56\u7565",
+    "prompts.subtitle": "\u67e5\u770b\u548c\u81ea\u5b9a\u4e49\u7cfb\u7edf\u63d0\u793a\u8bcd\u3001\u5b88\u95e8\u4eba\u7b56\u7565\u3001CORE.md \u548c HEARTBEAT.md",
+    "prompts.core_title": "CORE.md \u2014 \u7cfb\u7edf\u4e2a\u6027",
+    "prompts.core_desc": "\u6838\u5fc3\u8bb0\u5fc6\uff08Markdown\uff09",
+    "prompts.core_hint": "Jarvis \u7684\u4e2a\u6027\u3001\u89c4\u5219\u548c\u504f\u597d",
+    "prompts.planner": "Planner \u7cfb\u7edf\u63d0\u793a\u8bcd",
+    "prompts.replan": "\u91cd\u89c4\u5212\u63d0\u793a\u8bcd",
+    "prompts.escalation": "\u5347\u7ea7\u63d0\u793a\u8bcd",
+    "prompts.gatekeeper": "\u5b88\u95e8\u4eba\u7b56\u7565\uff08YAML\uff09",
+    "prompts.heartbeat": "HEARTBEAT.md \u2014 \u5fc3\u8df3\u68c0\u67e5\u6e05\u5355",
     "prompts.reset": "\u91cd\u7f6e",
 
     "common.save": "\u4fdd\u5b58",
@@ -264,6 +308,13 @@ const packs = {
     "common.loading": "\u52a0\u8f7d\u4e2d...",
     "common.error": "\u9519\u8bef",
     "common.search": "\u641c\u7d22...",
+
+    // Save bar
+    "save.unsaved": "\u672a\u4fdd\u5b58\u7684\u66f4\u6539",
+    "save.discard": "\u653e\u5f03",
+    "save.saving": "\u4fdd\u5b58\u4e2d...",
+    "save.saved": "\u5df2\u4fdd\u5b58!",
+    "save.save": "\u4fdd\u5b58\u66f4\u6539",
   },
 };
 

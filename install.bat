@@ -19,8 +19,8 @@ chcp 65001 >nul 2>&1
 echo.
 echo    ____  ___   ____ _   _ ___ _____ _   _  ___  ____
 echo   / ___^|/ _ \ / ___^| \ ^| ^|_ _^|_   _^| ^| ^| ^|/ _ \^|  _ \
-echo  ^| ^|  _^| ^| ^| ^| ^|  _^|  \^| ^|^| ^|  ^| ^| ^| ^|_^| ^| ^| ^| ^| ^|_^) ^|
-echo  ^| ^|_^| ^| ^|_^| ^| ^|_^| ^| ^|\  ^|^| ^|  ^| ^| ^|  _  ^| ^|_^| ^|  _ ^<
+echo  ^| ^|   ^| ^| ^| ^| ^|  _^|  \^| ^|^| ^|  ^| ^| ^| ^|_^| ^| ^| ^| ^| ^|_^) ^|
+echo  ^| ^|___^| ^|_^| ^| ^|_^| ^| ^|\  ^|^| ^|  ^| ^| ^|  _  ^| ^|_^| ^|  _ ^<
 echo   \____^|\___/ \____^|_^| \_^|___^| ^|_^| ^|_^| ^|_^|\___/^|_^| \_\
 echo.
 echo                    -- Installer --
@@ -89,13 +89,13 @@ if "%REPO_ROOT%"=="" (
 if "%REPO_ROOT%"=="" (
     if exist "%JARVIS_HOME%\cognithor\pyproject.toml" (
         set "REPO_ROOT=%JARVIS_HOME%\cognithor"
-        echo   [OK] Bestehendes Repo: !REPO_ROOT!
+        echo   [OK] Existing repo: !REPO_ROOT!
     )
 )
 
 :: Repo herunterladen
 if "%REPO_ROOT%"=="" (
-    echo   Kein lokales Repository gefunden.
+    echo   No local repository found.
     echo.
 
     :: Versuch 1: git clone
@@ -106,31 +106,31 @@ if "%REPO_ROOT%"=="" (
         git clone https://github.com/Alex8791-cyber/cognithor.git "%JARVIS_HOME%\cognithor" --quiet 2>nul
         if not errorlevel 1 (
             set "REPO_ROOT=%JARVIS_HOME%\cognithor"
-            echo   [OK] Repository geclont: !REPO_ROOT!
+            echo   [OK] Repository cloned: !REPO_ROOT!
         ) else (
-            echo   [WARNUNG] git clone fehlgeschlagen.
+            echo   [WARNING] git clone failed.
         )
     )
 
     :: Versuch 2: PowerShell ZIP-Download
     if "!REPO_ROOT!"=="" (
-        echo   Lade Repository als ZIP herunter ...
+        echo   Downloading repository as ZIP ...
         if not exist "%JARVIS_HOME%" mkdir "%JARVIS_HOME%"
         powershell -NoProfile -Command "try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri 'https://github.com/Alex8791-cyber/cognithor/archive/refs/heads/main.zip' -OutFile '%JARVIS_HOME%\cognithor.zip' -UseBasicParsing; Expand-Archive -Path '%JARVIS_HOME%\cognithor.zip' -DestinationPath '%JARVIS_HOME%' -Force; if (Test-Path '%JARVIS_HOME%\cognithor-main') { if (Test-Path '%JARVIS_HOME%\cognithor') { Remove-Item '%JARVIS_HOME%\cognithor' -Recurse -Force }; Rename-Item '%JARVIS_HOME%\cognithor-main' 'cognithor' }; Remove-Item '%JARVIS_HOME%\cognithor.zip' -Force; exit 0 } catch { Write-Host $_.Exception.Message; exit 1 }" 2>nul
         if not errorlevel 1 (
             if exist "%JARVIS_HOME%\cognithor\pyproject.toml" (
                 set "REPO_ROOT=%JARVIS_HOME%\cognithor"
-                echo   [OK] Repository heruntergeladen: !REPO_ROOT!
+                echo   [OK] Repository downloaded: !REPO_ROOT!
             )
         )
     )
 
     if "!REPO_ROOT!"=="" (
-        echo   [FEHLER] Repository konnte nicht heruntergeladen werden!
+        echo   [ERROR] Could not download repository!
         echo.
-        echo   Bitte manuell herunterladen:
+        echo   Please download manually:
         echo   https://github.com/Alex8791-cyber/cognithor/archive/refs/heads/main.zip
-        echo   Entpacken und install.bat aus dem Ordner starten.
+        echo   Extract and run install.bat from the folder.
         echo.
         pause
         exit /b 1
@@ -138,7 +138,7 @@ if "%REPO_ROOT%"=="" (
 )
 
 if "%REPO_ROOT%"=="" (
-    echo   [FEHLER] Kein Repository gefunden!
+    echo   [ERROR] No repository found!
     pause
     exit /b 1
 )
@@ -150,7 +150,7 @@ echo.
 ::  1. Python pruefen / installieren
 :: ============================================================
 echo   ----------------------------------------------------------
-echo     1/10  Python pruefen
+echo     1/10  Check Python
 echo   ----------------------------------------------------------
 
 set "PYTHON_CMD="
@@ -179,19 +179,19 @@ if "%PYTHON_CMD%"=="" (
 
 :: Python nicht gefunden oder zu alt -> automatisch installieren
 if "%PYTHON_CMD%"=="" (
-    echo   Python 3.12+ nicht gefunden. Versuche automatische Installation...
+    echo   Python 3.12+ not found. Attempting automatic installation...
     echo.
 
     :: Versuch 1: winget
     where winget >nul 2>&1
     if not errorlevel 1 (
-        echo   Installiere Python 3.12 via winget ...
-        echo   (Das kann 1-2 Minuten dauern.)
+        echo   Installing Python 3.12 via winget ...
+        echo   (This may take 1-2 minutes.)
         winget install --id Python.Python.3.12 -e --accept-source-agreements --accept-package-agreements --silent 2>nul
         if not errorlevel 1 (
-            echo   [OK] Python via winget installiert
+            echo   [OK] Python installed via winget
             echo.
-            echo   WICHTIG: PATH wird aktualisiert...
+            echo   IMPORTANT: Refreshing PATH...
             :: PATH neu laden
             for /f "tokens=2*" %%a in ('reg query "HKCU\Environment" /v Path 2^>nul') do set "USER_PATH=%%b"
             for /f "tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul') do set "SYS_PATH=%%b"
@@ -220,7 +220,7 @@ if "%PYTHON_CMD%"=="" (
                 )
             )
         ) else (
-            echo   [WARNUNG] winget-Installation fehlgeschlagen.
+            echo   [WARNING] winget installation failed.
         )
     )
 )
@@ -228,13 +228,13 @@ if "%PYTHON_CMD%"=="" (
 :: Immer noch kein Python?
 if "%PYTHON_CMD%"=="" (
     echo.
-    echo   [FEHLER] Python 3.12+ konnte nicht installiert werden!
+    echo   [ERROR] Could not install Python 3.12+!
     echo.
-    echo   Bitte manuell installieren:
+    echo   Please install manually:
     echo   https://www.python.org/downloads/
     echo.
-    echo   WICHTIG: Bei der Installation "Add Python to PATH" ankreuzen!
-    echo   Danach dieses Script erneut starten.
+    echo   IMPORTANT: Check "Add Python to PATH" during installation!
+    echo   Then run this script again.
     echo.
     pause
     exit /b 1
@@ -248,10 +248,10 @@ echo.
 ::  2. GPU-Erkennung (Auto-Lite)
 :: ============================================================
 echo   ----------------------------------------------------------
-echo     2/10  GPU-Erkennung
+echo     2/10  GPU Detection
 echo   ----------------------------------------------------------
 
-set "GPU_NAME=Keine NVIDIA GPU erkannt"
+set "GPU_NAME=No NVIDIA GPU detected"
 set "VRAM_GB=0"
 
 where nvidia-smi >nul 2>&1
@@ -269,11 +269,11 @@ if not errorlevel 1 (
 if %VRAM_GB% gtr 0 (
     echo   [OK] GPU: %GPU_NAME% ^(%VRAM_GB% GB VRAM^)
 ) else (
-    echo   [INFO] Keine NVIDIA GPU erkannt oder nvidia-smi fehlt.
-    echo   CPU-Modus -- Lite wird empfohlen.
+    echo   [INFO] No NVIDIA GPU detected or nvidia-smi missing.
+    echo   CPU mode -- Lite is recommended.
     if "%FORCE_LITE%"=="0" (
         set "LITE=1"
-        echo   [INFO] Lite-Modus automatisch aktiviert.
+        echo   [INFO] Lite mode automatically enabled.
     )
 )
 
@@ -281,25 +281,25 @@ if %VRAM_GB% gtr 0 (
 if %VRAM_GB% gtr 0 if %VRAM_GB% lss 12 (
     if "%FORCE_LITE%"=="0" (
         set "LITE=1"
-        echo   [INFO] VRAM unter 12 GB -- Lite-Modus automatisch aktiviert.
+        echo   [INFO] VRAM under 12 GB -- Lite mode automatically enabled.
         echo   (qwen3:8b statt qwen3:32b, spart ~14 GB VRAM)
     )
 )
 
 if %VRAM_GB% geq 12 (
     if "%FORCE_LITE%"=="0" (
-        echo   [OK] Genug VRAM fuer Standard-Modus ^(qwen3:32b^)
+        echo   [OK] Enough VRAM for standard mode ^(qwen3:32b^)
     )
 )
 
 :: Modus-Anzeige
 echo.
 if "%LITE%"=="1" (
-    echo   Modus: LITE ^(6 GB VRAM^)
+    echo   Mode: LITE ^(6 GB VRAM^)
 ) else if "%MODE%"=="full" (
-    echo   Modus: FULL ^(alle Features inkl. Voice^)
+    echo   Mode: FULL ^(all features incl. voice^)
 ) else (
-    echo   Modus: STANDARD ^(empfohlen^)
+    echo   Mode: STANDARD ^(recommended^)
 )
 echo   Home:  %JARVIS_HOME%
 echo.
@@ -309,8 +309,8 @@ echo.
 :: ============================================================
 echo %REPO_ROOT% | findstr /i "Program Files" >nul 2>&1
 if not errorlevel 1 (
-    echo   [WARNUNG] Repo liegt in Program Files.
-    echo   Empfehlung: In %USERPROFILE%\cognithor oder C:\cognithor installieren.
+    echo   [WARNING] Repo is in Program Files.
+    echo   Recommendation: Install in %USERPROFILE%\cognithor or C:\cognithor.
     echo.
 )
 
@@ -324,20 +324,20 @@ echo   ----------------------------------------------------------
 if not exist "%JARVIS_HOME%" mkdir "%JARVIS_HOME%"
 
 if exist "%VENV_DIR%\Scripts\activate.bat" (
-    echo   [OK] venv bereits vorhanden: %VENV_DIR%
+    echo   [OK] venv already exists: %VENV_DIR%
     call "%VENV_DIR%\Scripts\activate.bat"
 ) else (
-    echo   Erstelle venv in %VENV_DIR% ...
+    echo   Creating venv in %VENV_DIR% ...
     %PYTHON_CMD% -m venv "%VENV_DIR%"
     if errorlevel 1 (
-        echo   [FEHLER] venv konnte nicht erstellt werden!
-        echo   Versuche: %PYTHON_CMD% -m pip install virtualenv
+        echo   [ERROR] Could not create venv!
+        echo   Try: %PYTHON_CMD% -m pip install virtualenv
         pause
         exit /b 1
     )
     call "%VENV_DIR%\Scripts\activate.bat"
     python -m pip install --upgrade pip setuptools wheel --quiet >nul 2>&1
-    echo   [OK] venv erstellt und aktiviert
+    echo   [OK] venv created and activated
 )
 echo.
 
@@ -345,19 +345,19 @@ echo.
 ::  5. pip install (mit sichtbarem Fortschritt)
 :: ============================================================
 echo   ----------------------------------------------------------
-echo     4/10  Python-Abhaengigkeiten installieren
+echo     4/10  Install Python dependencies
 echo   ----------------------------------------------------------
 
-echo   Installiere cognithor[%MODE%] ...
-echo   (Das kann beim ersten Mal 3-5 Minuten dauern. Bitte nicht schliessen!)
+echo   Installing cognithor[%MODE%] ...
+echo   (This may take 3-5 minutes on first run. Please do not close!)
 echo.
 
 :: Fortschritt: pip ohne --quiet, aber mit --progress-bar on
 python -m pip install -e "%REPO_ROOT%[%MODE%]" --disable-pip-version-check --progress-bar on
 if errorlevel 1 (
     echo.
-    echo   [FEHLER] pip install fehlgeschlagen!
-    echo   Versuche manuell:
+    echo   [ERROR] pip install failed!
+    echo   Try manually:
     echo     cd "%REPO_ROOT%"
     echo     pip install -e ".[all]"
     echo.
@@ -366,14 +366,14 @@ if errorlevel 1 (
 )
 
 echo.
-echo   [OK] Abhaengigkeiten installiert
+echo   [OK] Dependencies installed
 echo.
 
 :: ============================================================
 ::  6. Ollama pruefen / installieren
 :: ============================================================
 echo   ----------------------------------------------------------
-echo     5/10  Ollama pruefen
+echo     5/10  Check Ollama
 echo   ----------------------------------------------------------
 
 set "OLLAMA_CMD="
@@ -394,16 +394,16 @@ if exist "%ProgramFiles%\Ollama\ollama.exe" (
 )
 
 :: Ollama nicht gefunden -> automatisch installieren
-echo   Ollama nicht gefunden. Versuche automatische Installation...
+echo   Ollama not found. Attempting automatic installation...
 echo.
 
 :: Versuch 1: winget
 where winget >nul 2>&1
 if not errorlevel 1 (
-    echo   Installiere Ollama via winget ...
+    echo   Installing Ollama via winget ...
     winget install --id Ollama.Ollama -e --accept-source-agreements --accept-package-agreements --silent 2>nul
     if not errorlevel 1 (
-        echo   [OK] Ollama via winget installiert
+        echo   [OK] Ollama installed via winget
 
         :: PATH neu laden
         for /f "tokens=2*" %%a in ('reg query "HKCU\Environment" /v Path 2^>nul') do set "USER_PATH=%%b"
@@ -421,33 +421,33 @@ if not errorlevel 1 (
             goto :ollama_found
         )
     ) else (
-        echo   [WARNUNG] winget-Installation fehlgeschlagen.
+        echo   [WARNING] winget installation failed.
     )
 )
 
 :: Immer noch kein Ollama
 if "%OLLAMA_CMD%"=="" (
     echo.
-    echo   [WARNUNG] Ollama konnte nicht automatisch installiert werden.
+    echo   [WARNING] Could not install Ollama automatically.
     echo.
-    echo   Bitte manuell installieren: https://ollama.com/download
-    echo   Nach der Installation dieses Script erneut starten.
+    echo   Please install manually: https://ollama.com/download
+    echo   After installation, run this script again.
     echo.
     goto :skip_models
 )
 
 :ollama_found
-echo   [OK] Ollama gefunden: %OLLAMA_CMD%
+echo   [OK] Ollama found: %OLLAMA_CMD%
 
 :: Pruefen ob Ollama-Server laeuft
 python -c "import urllib.request; urllib.request.urlopen('http://localhost:11434/api/tags', timeout=3)" >nul 2>&1
 if errorlevel 1 (
-    echo   Ollama-Server wird gestartet...
+    echo   Starting Ollama server...
     start "" /b "%OLLAMA_CMD%" serve >nul 2>&1
     set "WAIT_COUNT=0"
     :wait_ollama
     if !WAIT_COUNT! geq 30 (
-        echo   [WARNUNG] Ollama-Server antwortet nicht.
+        echo   [WARNING] Ollama server not responding.
         goto :skip_models
     )
     timeout /t 1 /nobreak >nul 2>&1
@@ -456,9 +456,9 @@ if errorlevel 1 (
         set /a WAIT_COUNT+=1
         goto :wait_ollama
     )
-    echo   [OK] Ollama-Server gestartet
+    echo   [OK] Ollama server started
 ) else (
-    echo   [OK] Ollama-Server laeuft bereits
+    echo   [OK] Ollama server already running
 )
 echo.
 
@@ -466,7 +466,7 @@ echo.
 ::  7. Modelle pruefen / pullen
 :: ============================================================
 echo   ----------------------------------------------------------
-echo     6/10  Ollama-Modelle
+echo     6/10  Ollama Models
 echo   ----------------------------------------------------------
 
 if "%LITE%"=="1" (
@@ -485,7 +485,7 @@ echo.
 ::  8. Verzeichnisstruktur
 :: ============================================================
 echo   ----------------------------------------------------------
-echo     7/10  Verzeichnisstruktur initialisieren
+echo     7/10  Initialize directory structure
 echo   ----------------------------------------------------------
 
 if "%LITE%"=="1" (
@@ -497,9 +497,9 @@ if errorlevel 1 (
     if not exist "%JARVIS_HOME%\memory" mkdir "%JARVIS_HOME%\memory"
     if not exist "%JARVIS_HOME%\logs" mkdir "%JARVIS_HOME%\logs"
     if not exist "%JARVIS_HOME%\cache" mkdir "%JARVIS_HOME%\cache"
-    echo   [OK] Verzeichnisse manuell erstellt
+    echo   [OK] Directories created manually
 ) else (
-    echo   [OK] Verzeichnisstruktur initialisiert
+    echo   [OK] Directory structure initialized
 )
 echo.
 
@@ -512,8 +512,8 @@ echo   ----------------------------------------------------------
 
 python -c "import jarvis; print(f'  [OK] jarvis v{jarvis.__version__}')"
 if errorlevel 1 (
-    echo   [FEHLER] Import-Test fehlgeschlagen!
-    echo   Versuche: pip install -e "%REPO_ROOT%[all]"
+    echo   [ERROR] Import test failed!
+    echo   Try: pip install -e "%REPO_ROOT%[all]"
     pause
     exit /b 1
 )
@@ -523,12 +523,12 @@ echo.
 ::  10. Desktop-Shortcut
 :: ============================================================
 echo   ----------------------------------------------------------
-echo     9/10  Desktop-Verknuepfung
+echo     9/10  Desktop shortcut
 echo   ----------------------------------------------------------
 
 set "BAT_PATH=%REPO_ROOT%\start_cognithor.bat"
 if not exist "%BAT_PATH%" (
-    echo   [INFO] start_cognithor.bat nicht gefunden -- Shortcut uebersprungen
+    echo   [INFO] start_cognithor.bat not found -- shortcut skipped
     goto :skip_shortcut
 )
 
@@ -539,20 +539,20 @@ if "%DESKTOP_PATH%"=="" if exist "%USERPROFILE%\OneDrive\Schreibtisch" set "DESK
 if "%DESKTOP_PATH%"=="" if exist "%USERPROFILE%\Schreibtisch" set "DESKTOP_PATH=%USERPROFILE%\Schreibtisch"
 
 if "%DESKTOP_PATH%"=="" (
-    echo   [INFO] Desktop-Ordner nicht gefunden -- Shortcut uebersprungen
+    echo   [INFO] Desktop folder not found -- shortcut skipped
     goto :skip_shortcut
 )
 
 if exist "%DESKTOP_PATH%\Cognithor.lnk" (
-    echo   [OK] Desktop-Verknuepfung bereits vorhanden
+    echo   [OK] Desktop shortcut already exists
     goto :skip_shortcut
 )
 
 powershell -NoProfile -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('%DESKTOP_PATH%\Cognithor.lnk'); $sc.TargetPath = '%BAT_PATH%'; $sc.WorkingDirectory = '%REPO_ROOT%'; $sc.Description = 'Cognithor Control Center starten'; $sc.WindowStyle = 1; $sc.Save()" >nul 2>&1
 if errorlevel 1 (
-    echo   [WARNUNG] Desktop-Verknuepfung konnte nicht erstellt werden
+    echo   [WARNING] Could not create desktop shortcut
 ) else (
-    echo   [OK] Desktop-Verknuepfung erstellt
+    echo   [OK] Desktop shortcut created
 )
 
 :skip_shortcut
@@ -562,31 +562,31 @@ echo.
 ::  Zusammenfassung
 :: ============================================================
 echo   ----------------------------------------------------------
-echo     10/10  Zusammenfassung
+echo     10/10  Summary
 echo   ----------------------------------------------------------
 echo.
-echo   [OK] Cognithor erfolgreich installiert!
+echo   [OK] Cognithor successfully installed!
 echo.
-echo   Starten:
-echo     start_cognithor.bat          Web-UI (empfohlen)
-echo     python -m jarvis             CLI-Modus
+echo   Start:
+echo     start_cognithor.bat          Web UI (recommended)
+echo     python -m jarvis             CLI mode
 if "%LITE%"=="1" (
-    echo     python -m jarvis --lite     Lite-Modus ^(6 GB VRAM^)
+    echo     python -m jarvis --lite     Lite mode ^(6 GB VRAM^)
 )
 echo.
 if %VRAM_GB% gtr 0 (
-    echo   Erkannte GPU: %GPU_NAME% ^(%VRAM_GB% GB VRAM^)
+    echo   Detected GPU: %GPU_NAME% ^(%VRAM_GB% GB VRAM^)
 )
 if "%LITE%"=="1" (
-    echo   Modell-Modus: LITE ^(qwen3:8b, ~6 GB VRAM^)
+    echo   Model mode: LITE ^(qwen3:8b, ~6 GB VRAM^)
 ) else (
-    echo   Modell-Modus: STANDARD ^(qwen3:32b + qwen3:8b^)
+    echo   Model mode: STANDARD ^(qwen3:32b + qwen3:8b^)
 )
 echo.
-echo   Verzeichnisse:
+echo   Directories:
 echo     %JARVIS_HOME%\              Home
-echo     %JARVIS_HOME%\config.yaml   Konfiguration
-echo     %JARVIS_HOME%\memory\       Erinnerungen
+echo     %JARVIS_HOME%\config.yaml   Configuration
+echo     %JARVIS_HOME%\memory\       Memory
 echo     %JARVIS_HOME%\logs\         Logs
 echo.
 
@@ -601,16 +601,16 @@ exit /b 0
 set "MODEL_NAME=%~1"
 python -c "import urllib.request, json; data=json.loads(urllib.request.urlopen('http://localhost:11434/api/tags',timeout=5).read()); models=[m['name'] for m in data.get('models',[])]; exit(0 if any('%MODEL_NAME%'.split(':')[0] in m for m in models) else 1)" >nul 2>&1
 if not errorlevel 1 (
-    echo   [OK] Modell vorhanden: %MODEL_NAME%
+    echo   [OK] Model available: %MODEL_NAME%
     goto :eof
 )
-echo   Lade Modell: %MODEL_NAME% (kann einige Minuten dauern)...
+echo   Downloading model: %MODEL_NAME% (may take a few minutes)...
 "%OLLAMA_CMD%" pull %MODEL_NAME%
 if errorlevel 1 (
-    echo   [WARNUNG] Download fehlgeschlagen: %MODEL_NAME%
-    echo   Manuell: ollama pull %MODEL_NAME%
+    echo   [WARNING] Download failed: %MODEL_NAME%
+    echo   Manually: ollama pull %MODEL_NAME%
 ) else (
-    echo   [OK] Modell installiert: %MODEL_NAME%
+    echo   [OK] Model installed: %MODEL_NAME%
 )
 goto :eof
 
@@ -619,29 +619,29 @@ goto :eof
 :: ============================================================
 :uninstall
 echo.
-echo   Deinstallation von Cognithor
+echo   Uninstalling Cognithor
 echo   ============================
 echo.
-echo   Dies entfernt:
+echo   This will remove:
 echo     - Virtual Environment (%VENV_DIR%)
-echo     - Desktop-Verknuepfung
+echo     - Desktop shortcut
 echo.
-echo   NICHT entfernt:
-echo     - Deine Daten in %JARVIS_HOME% (memory, logs, config)
-echo     - Ollama und Modelle
+echo   NOT removed:
+echo     - Your data in %JARVIS_HOME% (memory, logs, config)
+echo     - Ollama and models
 echo.
-set /p "CONFIRM=Fortfahren? [j/N] "
-if /i not "%CONFIRM%"=="j" (
-    echo   Abgebrochen.
+set /p "CONFIRM=Continue? [y/N] "
+if /i not "%CONFIRM%"=="y" (
+    echo   Cancelled.
     pause
     exit /b 0
 )
 
 if exist "%VENV_DIR%" (
     rmdir /s /q "%VENV_DIR%"
-    echo   [OK] venv entfernt
+    echo   [OK] venv removed
 ) else (
-    echo   [INFO] Kein venv gefunden
+    echo   [INFO] No venv found
 )
 
 set "DESKTOP_PATH="
@@ -652,13 +652,13 @@ if "%DESKTOP_PATH%"=="" if exist "%USERPROFILE%\Schreibtisch\Cognithor.lnk" set 
 
 if not "%DESKTOP_PATH%"=="" (
     del "%DESKTOP_PATH%\Cognithor.lnk" >nul 2>&1
-    echo   [OK] Desktop-Verknuepfung entfernt
+    echo   [OK] Desktop shortcut removed
 )
 
 echo.
-echo   [OK] Deinstallation abgeschlossen.
-echo   Daten in %JARVIS_HOME% wurden NICHT geloescht.
-echo   Zum vollstaendigen Entfernen: rmdir /s /q "%JARVIS_HOME%"
+echo   [OK] Uninstallation complete.
+echo   Data in %JARVIS_HOME% was NOT deleted.
+echo   To fully remove: rmdir /s /q "%JARVIS_HOME%"
 echo.
 pause
 exit /b 0

@@ -704,7 +704,7 @@ function LanguagePage({ cfg, set }) {
   const handleLocaleChange = useCallback((newLocale) => {
     setActiveLocale(newLocale);
     set("language", newLocale);
-    setI18nLocale(newLocale);  // Update UI language immediately
+    // Language is applied to the UI only after a successful save (see save handler)
     setError(null);
     setSuccess(null);
     setPreview(null);
@@ -799,31 +799,30 @@ function LanguagePage({ cfg, set }) {
   };
 
   return (<>
-    <Section title="Language Settings" desc="System language, locale selection, and prompt translation" />
+    <Section title={t("lang.title")} desc={t("lang.subtitle")} />
 
     {/* Card 1: Active Language */}
-    <Card title="Active Language">
+    <Card title={t("lang.active")}>
       <SelectInput
-        label="System language"
+        label={t("lang.system")}
         value={activeLocale}
         onChange={handleLocaleChange}
         options={locales.map(l => ({ value: l, label: LOCALE_LABELS[l] || l.toUpperCase() }))}
-        desc="Controls UI messages, error texts, and status outputs. Changing this triggers a prompt translation offer below."
+        desc={t("lang.system_desc")}
       />
       <div className="cc-language-info">
         <small>
-          Installed language packs: {locales.length > 0 ? locales.map(l => l.toUpperCase()).join(", ") : "loading..."}
-          {presetLocales.length > 0 && <> · Prompt presets available for: {presetLocales.map(l => l.toUpperCase()).join(", ")}</>}
+          {t("lang.packs_info", { packs: locales.length > 0 ? locales.map(l => l.toUpperCase()).join(", ") : "...", presets: presetLocales.map(l => l.toUpperCase()).join(", ") })}
         </small>
       </div>
     </Card>
 
     {/* Card 2: Prompt Translation — shown when locale changes */}
     {showPromptTranslation && (
-      <Card title="System Prompt Translation" open>
+      <Card title={t("lang.translate_title")} open>
         <div className="cc-language-translation-intro">
-          You changed the language to <strong>{LOCALE_LABELS[activeLocale] || activeLocale.toUpperCase()}</strong>.
-          Would you like to translate the system prompts to match?
+          {t("lang.translate_desc", { lang: LOCALE_LABELS[activeLocale] || activeLocale.toUpperCase() })}
+          {" "}{t("lang.translate_question")}
         </div>
 
         <SelectInput
@@ -831,8 +830,8 @@ function LanguagePage({ cfg, set }) {
           value={method}
           onChange={setMethod}
           options={[
-            { value: "preset", label: "Use curated preset (instant)" + (presetLocales.includes(activeLocale) ? "" : " — not available for this language") },
-            { value: "ollama", label: "Translate via Ollama (uses local LLM)" },
+            { value: "preset", label: t("lang.method_preset") + (presetLocales.includes(activeLocale) ? "" : " — N/A") },
+            { value: "ollama", label: t("lang.method_ollama") },
           ]}
           desc={method === "preset"
             ? "Pre-verified translations — instant, no LLM needed. Available for: " + presetLocales.map(l => l.toUpperCase()).join(", ")
@@ -846,10 +845,10 @@ function LanguagePage({ cfg, set }) {
             onClick={handleTranslate}
             disabled={translating || (method === "preset" && !presetLocales.includes(activeLocale))}
           >
-            {translating ? "Translating..." : "Translate Prompts"}
+            {translating ? t("lang.translating") : t("lang.translate_btn")}
           </button>
           <button className="cc-btn" onClick={() => { setShowPromptTranslation(false); setPreview(null); }}>
-            Skip — keep current prompts
+            {t("lang.skip")}
           </button>
         </div>
 
@@ -860,17 +859,17 @@ function LanguagePage({ cfg, set }) {
 
     {/* Card 3: Translation Preview */}
     {preview && (
-      <Card title="Translation Preview" open>
+      <Card title={t("lang.preview_title")} open>
         <div className="cc-language-preview-intro">
-          Review the translated prompts below. Click <strong>Accept &amp; Apply</strong> to write them, or <strong>Discard</strong> to keep the originals.
+          {t("lang.preview_desc")}
         </div>
 
         {Object.entries(preview).map(([key, text]) => (
           <div key={key} className="cc-language-preview-block">
             <label className="cc-label">{
-              key === "plannerSystem" ? "Planner System Prompt" :
-              key === "replanPrompt" ? "Replan Prompt" :
-              key === "escalationPrompt" ? "Escalation Prompt" : key
+              key === "plannerSystem" ? t("lang.planner_prompt") :
+              key === "replanPrompt" ? t("lang.replan_prompt") :
+              key === "escalationPrompt" ? t("lang.escalation_prompt") : key
             }</label>
             <pre className="cc-language-preview-text">{text.slice(0, 800)}{text.length > 800 ? "\n…" : ""}</pre>
           </div>
@@ -878,10 +877,10 @@ function LanguagePage({ cfg, set }) {
 
         <div className="cc-language-actions" style={{ marginTop: 16 }}>
           <button className="cc-btn cc-btn-primary" onClick={handleApply}>
-            {I.check} Accept &amp; Apply
+            {I.check} {t("lang.accept")}
           </button>
           <button className="cc-btn" onClick={handleDiscard}>
-            Discard
+            {t("lang.discard")}
           </button>
         </div>
       </Card>
@@ -1911,6 +1910,9 @@ export default function App() {
       const data = await api("GET", "/config");
       if (data && !data.error) setCfg(prev => ({ ...prev, ...data }));
       setSavedSnapshot(JSON.stringify({ cfg: data || cfg, agents, bindings, cronJobs, mcpServers, a2a, prompts }));
+      // Apply UI locale after successful save if language changed
+      const effectiveLang = (data && data.language) || cfg.language;
+      if (effectiveLang) setI18nLocale(effectiveLang);
       if (warnings.length > 0) {
         toast(`Saved with warnings: ${warnings.join("; ")}`, "warn");
       } else {
@@ -2484,17 +2486,17 @@ export default function App() {
             title={appStatus === "running" ? "Stop Cognithor" : "Start Cognithor"}
           >
             {appStatus === "running" ? (
-              <>{I.stop} <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>Power Off</span></>
+              <>{I.stop} <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>{t("header.power_off")}</span></>
             ) : appStatus === "starting" ? (
-              <><span className="cc-btn-spinner" /> <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>Starting...</span></>
+              <><span className="cc-btn-spinner" /> <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>{t("header.starting")}</span></>
             ) : appStatus === "stopping" ? (
-              <><span className="cc-btn-spinner" /> <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>Stopping...</span></>
+              <><span className="cc-btn-spinner" /> <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>{t("header.stopping")}</span></>
             ) : (
-              <>{I.play} <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>Power On</span></>
+              <>{I.play} <span style={{marginLeft: "6px", fontSize: "12px", fontWeight: "600"}}>{t("header.power_on")}</span></>
             )}
           </button>
           
-          {hasChanges && <div className="cc-dirty-dot" title="Unsaved changes" />}
+          {hasChanges && <div className="cc-dirty-dot" title={t("save.unsaved")} />}
           <span style={{ fontSize: 11, color: "var(--text2)" }}>Control Center v{cfg.version}</span>
         </div>
       </div>
@@ -2521,7 +2523,7 @@ export default function App() {
             appStatus === "running" || appStatus === "starting" ? <Spinner /> : (
               <div className="cc-spinner-wrap">
                 <span className="cc-spinner-text" style={{textAlign:"center",lineHeight:"1.6"}}>
-                  Backend not started.<br/>Click <b>&quot;Power On&quot;</b> above to start Cognithor.
+                  {t("header.backend_stopped")}
                 </span>
               </div>
             )
@@ -2533,13 +2535,13 @@ export default function App() {
       {/* Fix #1 + #18: Save bar — only visible when there are changes */}
       {page !== "chat" && page !== "workflows" && page !== "knowledge-graph" && (
         <div className={`cc-save-bar ${hasChanges ? "cc-save-bar-visible" : ""}`}>
-          <span className="cc-save-hint">Unsaved changes</span>
+          <span className="cc-save-hint">{t("save.unsaved")}</span>
           <button
             className="cc-save-btn cc-save-btn-revert"
             onClick={revertChanges}
             type="button"
           >
-            {I.reset} Discard
+            {I.reset} {t("save.discard")}
           </button>
           <button
             className={`cc-save-btn ${saveState === "saved" ? "saved" : "primary"}`}
@@ -2547,7 +2549,7 @@ export default function App() {
             disabled={saveState === "saving"}
             type="button"
           >
-            {saveState === "saving" ? "Saving..." : saveState === "saved" ? <>{I.check} Saved!</> : <>{I.save} Save changes</>}
+            {saveState === "saving" ? t("save.saving") : saveState === "saved" ? <>{I.check} {t("save.saved")}</> : <>{I.save} {t("save.save")}</>}
           </button>
           <span className="cc-save-hint" style={{opacity: 0.4}}>Ctrl+S</span>
         </div>

@@ -15,8 +15,8 @@ chcp 65001 >nul 2>&1
 echo.
 echo    ____  ___   ____ _   _ ___ _____ _   _  ___  ____
 echo   / ___^|/ _ \ / ___^| \ ^| ^|_ _^|_   _^| ^| ^| ^|/ _ \^|  _ \
-echo  ^| ^|  _^| ^| ^| ^| ^|  _^|  \^| ^|^| ^|  ^| ^| ^| ^|_^| ^| ^| ^| ^| ^|_^) ^|
-echo  ^| ^|_^| ^| ^|_^| ^| ^|_^| ^| ^|\  ^|^| ^|  ^| ^| ^|  _  ^| ^|_^| ^|  _ ^<
+echo  ^| ^|   ^| ^| ^| ^| ^|  _^|  \^| ^|^| ^|  ^| ^| ^| ^|_^| ^| ^| ^| ^| ^|_^) ^|
+echo  ^| ^|___^| ^|_^| ^| ^|_^| ^| ^|\  ^|^| ^|  ^| ^| ^|  _  ^| ^|_^| ^|  _ ^<
 echo   \____^|\___/ \____^|_^| \_^|___^| ^|_^| ^|_^| ^|_^|\___/^|_^| \_\
 echo.
 
@@ -48,25 +48,25 @@ if "%PYTHON_CMD%"=="" (
 )
 
 if "%PYTHON_CMD%"=="" (
-    echo   Python wurde nicht gefunden.
+    echo   Python not found.
     echo.
     :: Pruefen ob winget verfuegbar ist
     where winget >nul 2>&1
     if errorlevel 1 goto :no_winget_python
-    echo   Python 3.12 kann automatisch installiert werden.
+    echo   Python 3.12 can be installed automatically.
     echo.
-    CHOICE /C JN /M "  Python 3.12 jetzt installieren? (J=Ja, N=Nein)"
+    CHOICE /C YN /M "  Install Python 3.12 now? (Y=Yes, N=No)"
     if errorlevel 2 goto :no_winget_python
     echo.
-    echo   Installiere Python 3.12 via winget...
+    echo   Installing Python 3.12 via winget...
     winget install --id Python.Python.3.12 -e --accept-source-agreements --accept-package-agreements
     if errorlevel 1 (
         echo.
-        echo   [WARNUNG] winget-Installation fehlgeschlagen.
+        echo   [WARNING] winget installation failed.
         goto :no_winget_python
     )
     echo.
-    echo   Python installiert. Aktualisiere PATH...
+    echo   Python installed. Refreshing PATH...
     :: PATH aus Registry refreshen (delayed expansion noetig innerhalb Block)
     for /f "tokens=2*" %%A in ('reg query "HKCU\Environment" /v Path 2^>nul') do set "USER_PATH=%%B"
     for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul') do set "SYS_PATH=%%B"
@@ -87,8 +87,8 @@ if "%PYTHON_CMD%"=="" (
     )
     if "!PYTHON_CMD!"=="" (
         echo.
-        echo   [INFO] Python wurde installiert, ist aber noch nicht im PATH.
-        echo   Bitte dieses Fenster schliessen und neu oeffnen.
+        echo   [INFO] Python was installed but is not yet in PATH.
+        echo   Please close this window and reopen it.
         echo.
         pause
         exit /b 1
@@ -98,12 +98,12 @@ if "%PYTHON_CMD%"=="" (
 
 :no_winget_python
 if "%PYTHON_CMD%"=="" (
-    echo   [FEHLER] Python wurde nicht gefunden!
+    echo   [ERROR] Python not found!
     echo.
-    echo   Bitte installiere Python 3.12+:
+    echo   Please install Python 3.12+:
     echo   https://www.python.org/downloads/
     echo.
-    echo   WICHTIG: Bei der Installation "Add Python to PATH" ankreuzen!
+    echo   IMPORTANT: Check "Add Python to PATH" during installation!
     echo.
     pause
     exit /b 1
@@ -115,11 +115,11 @@ if "%PYTHON_CMD%"=="" (
 :: ============================================================
 %PYTHON_CMD% -c "import sys; exit(0 if sys.version_info >= (3,12) else 1)" 2>nul
 if errorlevel 1 (
-    echo   [FEHLER] Python 3.12 oder neuer wird benoetigt!
+    echo   [ERROR] Python 3.12 or newer is required!
     echo.
-    for /f "tokens=*" %%v in ('%PYTHON_CMD% --version 2^>^&1') do echo   Installiert: %%v
+    for /f "tokens=*" %%v in ('%PYTHON_CMD% --version 2^>^&1') do echo   Installed: %%v
     echo.
-    echo   Bitte upgrade Python:
+    echo   Please upgrade Python:
     echo   https://www.python.org/downloads/
     echo.
     pause
@@ -136,14 +136,14 @@ if not errorlevel 1 set "HAS_NODE=1"
 :: ============================================================
 ::  4. Bootstrap ausfuehren
 :: ============================================================
-echo   Bootstrap wird gestartet...
+echo   Starting bootstrap...
 echo.
 
 %PYTHON_CMD% "%REPO_ROOT%\scripts\bootstrap_windows.py" --repo-root "%REPO_ROOT%"
 if errorlevel 1 (
     echo.
-    echo   [FEHLER] Bootstrap fehlgeschlagen!
-    echo   Bitte pruefe die Ausgabe oben fuer Details.
+    echo   [ERROR] Bootstrap failed!
+    echo   Please check the output above for details.
     echo.
     pause
     exit /b 1
@@ -157,7 +157,7 @@ if errorlevel 1 (
 if "%HAS_NODE%"=="0" goto :check_prebuilt
 if not exist "%REPO_ROOT%\ui\node_modules" (
     echo.
-    echo   [INFO] node_modules nicht gefunden. Versuche npm install...
+    echo   [INFO] node_modules not found. Trying npm install...
     cd /d "%REPO_ROOT%\ui"
     call npm install >nul 2>&1
     if errorlevel 1 goto :check_prebuilt
@@ -168,13 +168,13 @@ if not exist "%REPO_ROOT%\ui\node_modules" (
 ::  6a. Web-UI starten (Vite Dev Server)
 :: ============================================================
 echo.
-echo   Web-UI wird gestartet (Vite Dev Server)...
-echo   Oeffne http://127.0.0.1:5173 im Browser.
+echo   Starting Web UI (Vite Dev Server)...
+echo   Open http://127.0.0.1:5173 in your browser.
 echo.
 cd /d "%REPO_ROOT%\ui"
 call npm run dev
 echo.
-echo   Web-UI wurde beendet.
+echo   Web UI stopped.
 pause
 exit /b 0
 
@@ -184,14 +184,14 @@ exit /b 0
 :check_prebuilt
 if not exist "%REPO_ROOT%\ui\dist\index.html" goto :cli_fallback
 echo.
-echo   Node.js nicht gefunden -- starte Pre-built UI.
-echo   Backend + UI auf http://localhost:8741
+echo   Node.js not found -- starting pre-built UI.
+echo   Backend + UI at http://localhost:8741
 echo.
 cd /d "%REPO_ROOT%"
 start "" http://localhost:8741
 %PYTHON_CMD% -m jarvis --no-cli
 echo.
-echo   Cognithor wurde beendet.
+echo   Cognithor stopped.
 pause
 exit /b 0
 
@@ -200,13 +200,13 @@ exit /b 0
 :: ============================================================
 :cli_fallback
 echo.
-echo   Node.js nicht gefunden und kein Pre-built UI vorhanden.
-echo   Starte im CLI-Modus.
-echo   Fuer die Web-UI installiere Node.js 18+: https://nodejs.org/
+echo   Node.js not found and no pre-built UI available.
+echo   Starting in CLI mode.
+echo   For the Web UI, install Node.js 18+: https://nodejs.org/
 echo.
 echo   ============================================================
 cd /d "%REPO_ROOT%"
 %PYTHON_CMD% -m jarvis
 echo.
-echo   Cognithor wurde beendet.
+echo   Cognithor stopped.
 pause

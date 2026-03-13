@@ -1,4 +1,4 @@
-"""Jarvis · Agent OS -- Lokales autonomes Agent-Betriebssystem."""
+"""Jarvis · Agent OS -- Local-first autonomous agent operating system."""
 
 __version__ = "0.35.0"
 __author__ = "Alexander Söllner"
@@ -8,8 +8,8 @@ __author__ = "Alexander Söllner"
 BANNER_ASCII = r"""
    ____  ___   ____ _   _ ___ _____ _   _  ___  ____
   / ___|| _ \ / ___| \ | |_ _|_   _| | | |/ _ \|  _ \
- | |  _|| | | | |  _|  \| || |  | | | |_| | | | | |_) |
- | |_| || |_| | |_| | |\  || |  | | |  _  | |_| |  _ <
+ | |   || | | | |  _|  \| || |  | | | |_| | | | | |_) |
+ | |___|| |_| | |_| | |\  || |  | | |  _  | |_| |  _ <
   \____||___/ \____|_| \_|___| |_| |_| |_|\___/|_| \_\
 """.strip("\n")
 
