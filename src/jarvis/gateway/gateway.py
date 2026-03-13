@@ -74,28 +74,28 @@ _PRESEARCH_NO_ENGINE = "Keine Suchengine"
 # ── Tool-Status-Map für Progress-Feedback ────────────────────────
 
 _TOOL_STATUS_MAP: dict[str, str] = {
-    "web_search": "Suche im Web...",
-    "web_news_search": "Suche Nachrichten...",
-    "search_and_read": "Recherchiere im Web...",
-    "web_fetch": "Lade Webseite...",
-    "read_file": "Lese Datei...",
-    "write_file": "Schreibe Datei...",
-    "edit_file": "Bearbeite Datei...",
-    "exec_command": "Führe Befehl aus...",
-    "run_python": "Führe Python-Code aus...",
-    "search_memory": "Durchsuche Wissen...",
-    "save_to_memory": "Speichere Wissen...",
-    "document_export": "Erstelle Dokument...",
-    "media_analyze_image": "Analysiere Bild...",
-    "media_transcribe_audio": "Transkribiere Audio...",
-    "media_extract_text": "Extrahiere Text...",
-    "media_tts": "Erzeuge Sprachausgabe...",
-    "vault_search": "Durchsuche Vault...",
-    "vault_write": "Schreibe in Vault...",
-    "analyze_code": "Analysiere Code...",
-    "list_directory": "Lese Verzeichnis...",
-    "browser_navigate": "Navigiere Browser...",
-    "browser_screenshot": "Erstelle Screenshot...",
+    "web_search": "Searching the web...",
+    "web_news_search": "Searching news...",
+    "search_and_read": "Researching online...",
+    "web_fetch": "Fetching webpage...",
+    "read_file": "Reading file...",
+    "write_file": "Writing file...",
+    "edit_file": "Editing file...",
+    "exec_command": "Running command...",
+    "run_python": "Running Python code...",
+    "search_memory": "Searching knowledge...",
+    "save_to_memory": "Saving knowledge...",
+    "document_export": "Creating document...",
+    "media_analyze_image": "Analyzing image...",
+    "media_transcribe_audio": "Transcribing audio...",
+    "media_extract_text": "Extracting text...",
+    "media_tts": "Generating speech...",
+    "vault_search": "Searching vault...",
+    "vault_write": "Writing to vault...",
+    "analyze_code": "Analyzing code...",
+    "list_directory": "Listing directory...",
+    "browser_navigate": "Navigating browser...",
+    "browser_screenshot": "Taking screenshot...",
 }
 
 
@@ -1537,7 +1537,7 @@ class Gateway:
             )
 
             # Status: Thinking
-            await _status_cb("thinking", "Denke nach...")
+            await _status_cb("thinking", "Thinking...")
 
             # Planner
             if session.iteration_count == 1:
@@ -1571,8 +1571,8 @@ class Gateway:
                     confidence=plan.confidence,
                 )
                 final_response = (
-                    "Ich konnte die Antwort des Sprachmodells nicht korrekt verarbeiten. "
-                    "Bitte versuche es erneut oder formuliere deine Anfrage anders."
+                    "I couldn't process the language model's response correctly. "
+                    "Please try again or rephrase your request."
                 )
                 break
 
@@ -1586,20 +1586,43 @@ class Gateway:
                     or _resp.startswith("KORRIGIERTER PLAN")
                     or _resp.startswith("BETROFFENE SCHRITTE")
                     or _resp.startswith("AKTUALISIERTE RISIKOBEWERTUNG")
+                    or "REPLAN-GRUND" in _resp[:200]
+                    or "CORRECTED PLAN" in _resp[:200]
                 )
-                if _is_replan_text and session.iteration_count < session.max_iterations:
+                if _is_replan_text:
+                    _consecutive_no_tool_iters += 1
                     log.warning(
                         "pge_replan_text_as_response",
                         iteration=session.iteration_count,
+                        no_tool_streak=_consecutive_no_tool_iters,
                         preview=_resp[:100],
                     )
-                    # Force a replan by continuing the loop — don't break
-                    continue
+                    # Allow max 2 replan-text retries, then break
+                    if (
+                        _consecutive_no_tool_iters < _max_no_tool_iters
+                        and session.iteration_count < session.max_iterations
+                    ):
+                        continue
+                    # Stuck — never send raw REPLAN text to the user
+                    if all_results and any(r.success for r in all_results):
+                        await _status_cb("finishing", "Composing response...")
+                        final_response = await self._planner.formulate_response(
+                            user_message=msg.text,
+                            results=all_results,
+                            working_memory=wm,
+                        )
+                    else:
+                        final_response = (
+                            "I'm stuck in a planning loop and can't make progress. "
+                            "Please try rephrasing your request more concretely — e.g. "
+                            "'Write a Pac-Man main.py' instead of 'Create a game'."
+                        )
+                    break
 
                 # If we already have successful tool results but the replan
                 # returned text instead of JSON, formulate a proper response
                 if all_results and any(r.success for r in all_results):
-                    await _status_cb("finishing", "Formuliere Antwort...")
+                    await _status_cb("finishing", "Composing response...")
                     final_response = await self._planner.formulate_response(
                         user_message=msg.text,
                         results=all_results,
@@ -1613,7 +1636,7 @@ class Gateway:
             if not plan.has_actions:
                 # If there are prior successful results, summarize them
                 if all_results and any(r.success for r in all_results):
-                    await _status_cb("finishing", "Formuliere Antwort...")
+                    await _status_cb("finishing", "Composing response...")
                     final_response = await self._planner.formulate_response(
                         user_message=msg.text,
                         results=all_results,
@@ -1621,7 +1644,7 @@ class Gateway:
                     )
                     break
                 final_response = (
-                    "Ich konnte keinen Plan erstellen. Kannst du deine Frage umformulieren?"
+                    "I couldn't create a plan for this. Could you rephrase your question?"
                 )
                 break
 
@@ -1668,12 +1691,12 @@ class Gateway:
 
                         final_response = all_actions_blocked_message(plan.steps, approved_decisions)
                     except Exception:
-                        final_response = "Alle geplanten Aktionen wurden vom Gatekeeper blockiert."
+                        final_response = "All planned actions were blocked by the Gatekeeper."
                 break
 
             # Status: Tool-specific progress message
             for step in plan.steps:
-                tool_status = _TOOL_STATUS_MAP.get(step.tool, f"Führe {step.tool} aus...")
+                tool_status = _TOOL_STATUS_MAP.get(step.tool, f"Running {step.tool}...")
                 await _status_cb("executing", tool_status)
                 break  # Only send the first tool's status
 
@@ -1748,7 +1771,7 @@ class Gateway:
                 if _consecutive_no_tool_iters >= _max_no_tool_iters:
                     log.warning("pge_stuck_no_tools", iterations=session.iteration_count)
                     if all_results and any(r.success for r in all_results):
-                        await _status_cb("finishing", "Formuliere Antwort...")
+                        await _status_cb("finishing", "Composing response...")
                         final_response = await self._planner.formulate_response(
                             user_message=msg.text,
                             results=all_results,
@@ -1756,9 +1779,9 @@ class Gateway:
                         )
                     else:
                         final_response = (
-                            "Ich stecke in einer Planungsschleife fest. "
-                            "Bitte formuliere deine Anfrage konkreter — z.B. "
-                            "'Schreibe eine Pac-Man main.py' statt 'Erstelle ein Spiel'."
+                            "I'm stuck in a planning loop without making progress. "
+                            "Please try a more specific request — e.g. "
+                            "'Write a Pac-Man main.py' instead of 'Create a game'."
                         )
                     break
 
@@ -1784,7 +1807,7 @@ class Gateway:
             # ── Break conditions ─────────────────────────────────────────
             # Single-step non-coding tasks: respond immediately after success
             if has_success and not has_errors and not used_coding_tool and not _is_multi_step:
-                await _status_cb("finishing", "Formuliere Antwort...")
+                await _status_cb("finishing", "Composing response...")
                 final_response = await self._planner.formulate_response(
                     user_message=msg.text,
                     results=all_results,
@@ -1809,7 +1832,7 @@ class Gateway:
                     or _successful_iters >= _success_threshold
                 )
             ):
-                await _status_cb("finishing", "Formuliere Antwort...")
+                await _status_cb("finishing", "Composing response...")
                 final_response = await self._planner.formulate_response(
                     user_message=msg.text,
                     results=all_results,
@@ -1821,7 +1844,7 @@ class Gateway:
             # Failure-Threshold: give planner room for alternative strategies
             _failure_threshold = max(3, session.max_iterations // 2)
             if not has_success and session.iteration_count >= _failure_threshold:
-                await _status_cb("finishing", "Formuliere Antwort...")
+                await _status_cb("finishing", "Composing response...")
                 final_response = await self._planner.formulate_response(
                     user_message=msg.text,
                     results=all_results,
@@ -1831,10 +1854,10 @@ class Gateway:
 
         if session.iterations_exhausted and not final_response:
             final_response = (
-                "Ich habe leider das Maximum an Verarbeitungsschritten erreicht, "
-                "ohne die Aufgabe vollständig abzuschließen. "
-                "Versuch es bitte mit einer spezifischeren Anfrage oder brich die Aufgabe "
-                "in kleinere Schritte auf -- ich helfe gerne weiter!"
+                "I've reached the maximum number of processing steps "
+                "without fully completing the task. "
+                "Please try a more specific request or break the task "
+                "into smaller steps — happy to help!"
             )
 
         return final_response, all_results, all_plans, all_audit
@@ -2079,7 +2102,7 @@ class Gateway:
             Ergebnis-Text der Delegation.
         """
         if not self._agent_router:
-            return f"Agent-Router nicht verfügbar. Delegation an {to_agent} fehlgeschlagen."
+            return f"Agent router unavailable. Delegation to {to_agent} failed."
 
         # Delegation erstellen und validieren
         delegation = self._agent_router.create_delegation(from_agent, to_agent, task)
@@ -2189,7 +2212,7 @@ class Gateway:
             delegation.result = response
             delegation.success = True
         else:
-            delegation.result = "Delegation fehlgeschlagen: Keine erfolgreichen Aktionen."
+            delegation.result = "Delegation failed: no successful actions."
             delegation.success = False
 
         log.info(
