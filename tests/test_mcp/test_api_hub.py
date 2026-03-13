@@ -13,11 +13,9 @@ Testet:
 from __future__ import annotations
 
 import base64
-import json
 import os
-from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import TYPE_CHECKING
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -25,15 +23,17 @@ from jarvis.config import JarvisConfig, SecurityConfig, ensure_directory_structu
 from jarvis.mcp.api_hub import (
     API_TEMPLATES,
     APIHub,
-    _RateLimiter,
     _build_auth_headers,
     _build_auth_params,
     _load_integrations,
     _mask_credential,
+    _RateLimiter,
     _save_integrations,
     register_api_hub_tools,
 )
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # =============================================================================
 # Fixtures
@@ -354,12 +354,14 @@ class TestApiConnect:
     """Tests fuer api_connect."""
 
     async def test_connect_with_template(self, hub: APIHub, config: JarvisConfig) -> None:
-        with patch.dict(os.environ, {"GITHUB_TOKEN": "ghp_test123"}):
+        with (
+            patch.dict(os.environ, {"GITHUB_TOKEN": "ghp_test123"}),
+            patch.object(hub, "_health_check", return_value=(True, "OK (HTTP 200)")),
+        ):
             # Mock health check
-            with patch.object(hub, "_health_check", return_value=(True, "OK (HTTP 200)")):
-                result = await hub.api_connect(name="github")
-                assert "configured successfully" in result.lower()
-                assert "api.github.com" in result
+            result = await hub.api_connect(name="github")
+            assert "configured successfully" in result.lower()
+            assert "api.github.com" in result
 
     async def test_connect_custom_api(self, hub: APIHub) -> None:
         result = await hub.api_connect(
@@ -467,11 +469,13 @@ class TestApiCall:
                 }
             },
         )
-        with patch.dict(os.environ, {"TEST_TOKEN": "tok123"}):
-            with patch.object(hub, "_do_request", return_value=(200, '{"ok": true}')):
-                result = await hub.api_call(integration="test", endpoint="/test")
-                assert "Status: 200" in result
-                assert '"ok": true' in result
+        with (
+            patch.dict(os.environ, {"TEST_TOKEN": "tok123"}),
+            patch.object(hub, "_do_request", return_value=(200, '{"ok": true}')),
+        ):
+            result = await hub.api_call(integration="test", endpoint="/test")
+            assert "Status: 200" in result
+            assert '"ok": true' in result
 
     async def test_call_rate_limited(self, hub: APIHub, config: JarvisConfig) -> None:
         _save_integrations(
@@ -504,17 +508,19 @@ class TestApiCall:
                 }
             },
         )
-        with patch.dict(os.environ, {"TEST_TOKEN": "tok"}):
-            with patch.object(hub, "_do_request", return_value=(201, '{"id": 1}')) as mock:
-                await hub.api_call(
-                    integration="test",
-                    method="POST",
-                    endpoint="/items",
-                    body={"name": "test"},
-                )
-                # Verify body was passed
-                _, kwargs = mock.call_args
-                assert kwargs.get("body") == {"name": "test"}
+        with (
+            patch.dict(os.environ, {"TEST_TOKEN": "tok"}),
+            patch.object(hub, "_do_request", return_value=(201, '{"id": 1}')) as mock,
+        ):
+            await hub.api_call(
+                integration="test",
+                method="POST",
+                endpoint="/items",
+                body={"name": "test"},
+            )
+            # Verify body was passed
+            _, kwargs = mock.call_args
+            assert kwargs.get("body") == {"name": "test"}
 
     async def test_call_api_key_auth_params(self, hub: APIHub, config: JarvisConfig) -> None:
         _save_integrations(
@@ -528,14 +534,16 @@ class TestApiCall:
                 }
             },
         )
-        with patch.dict(os.environ, {"OWM_KEY": "mykey123"}):
-            with patch.object(hub, "_do_request", return_value=(200, "{}")) as mock:
-                await hub.api_call(
-                    integration="openweathermap",
-                    endpoint="/weather?q=London",
-                )
-                _, kwargs = mock.call_args
-                assert kwargs.get("params", {}).get("appid") == "mykey123"
+        with (
+            patch.dict(os.environ, {"OWM_KEY": "mykey123"}),
+            patch.object(hub, "_do_request", return_value=(200, "{}")) as mock,
+        ):
+            await hub.api_call(
+                integration="openweathermap",
+                endpoint="/weather?q=London",
+            )
+            _, kwargs = mock.call_args
+            assert kwargs.get("params", {}).get("appid") == "mykey123"
 
 
 class TestApiDisconnect:
@@ -598,11 +606,13 @@ class TestHealthCheck:
             "credential_env": "TEST_TOKEN",
             "headers": {},
         }
-        with patch.dict(os.environ, {"TEST_TOKEN": "tok"}):
-            with patch.object(hub, "_do_request", return_value=(200, "")):
-                ok, msg = await hub._health_check(integration, None, "/health")
-                assert ok is True
-                assert "OK" in msg
+        with (
+            patch.dict(os.environ, {"TEST_TOKEN": "tok"}),
+            patch.object(hub, "_do_request", return_value=(200, "")),
+        ):
+            ok, msg = await hub._health_check(integration, None, "/health")
+            assert ok is True
+            assert "OK" in msg
 
     async def test_health_check_failure(self, hub: APIHub) -> None:
         integration = {
@@ -611,11 +621,13 @@ class TestHealthCheck:
             "credential_env": "TEST_TOKEN",
             "headers": {},
         }
-        with patch.dict(os.environ, {"TEST_TOKEN": "tok"}):
-            with patch.object(hub, "_do_request", return_value=(401, "Unauthorized")):
-                ok, msg = await hub._health_check(integration, None, "/health")
-                assert ok is False
-                assert "401" in msg
+        with (
+            patch.dict(os.environ, {"TEST_TOKEN": "tok"}),
+            patch.object(hub, "_do_request", return_value=(401, "Unauthorized")),
+        ):
+            ok, msg = await hub._health_check(integration, None, "/health")
+            assert ok is False
+            assert "401" in msg
 
     async def test_health_check_exception(self, hub: APIHub) -> None:
         integration = {
@@ -624,8 +636,10 @@ class TestHealthCheck:
             "credential_env": "TEST_TOKEN",
             "headers": {},
         }
-        with patch.dict(os.environ, {"TEST_TOKEN": "tok"}):
-            with patch.object(hub, "_do_request", side_effect=Exception("Connection refused")):
-                ok, msg = await hub._health_check(integration, None, "/health")
-                assert ok is False
-                assert "failed" in msg.lower()
+        with (
+            patch.dict(os.environ, {"TEST_TOKEN": "tok"}),
+            patch.object(hub, "_do_request", side_effect=Exception("Connection refused")),
+        ):
+            ok, msg = await hub._health_check(integration, None, "/health")
+            assert ok is False
+            assert "failed" in msg.lower()

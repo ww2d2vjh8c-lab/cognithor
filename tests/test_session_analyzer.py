@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import sqlite3
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -18,6 +16,9 @@ from jarvis.learning.session_analyzer import (
     UserFeedback,
 )
 
+if TYPE_CHECKING:
+    import sqlite3
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -747,7 +748,9 @@ class TestHealthReport:
         for i in range(10):
             conn.execute(
                 """INSERT INTO failure_clusters
-                   (pattern_id, error_category, representative_error, first_seen, last_seen, frequency)
+                   (pattern_id, error_category,
+                    representative_error, first_seen,
+                    last_seen, frequency)
                    VALUES (?, 'timeout', ?, ?, ?, ?)""",
                 (f"pattern_{i}", f"error {i}", now, now, i + 1),
             )

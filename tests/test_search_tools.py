@@ -6,14 +6,12 @@ Testet Registrierung, Glob-Matching, Inhaltssuche, Binaer-Erkennung und Encoding
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 
 from jarvis.config import JarvisConfig, ensure_directory_structure
 from jarvis.mcp.search_tools import SearchTools, SearchToolsError, register_search_tools
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

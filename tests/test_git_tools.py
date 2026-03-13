@@ -5,15 +5,16 @@ Testet Registrierung, Pfad-Validierung und Git-Operationen mit gemocktem subproc
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import TYPE_CHECKING
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from jarvis.config import JarvisConfig, ensure_directory_structure
 from jarvis.mcp.git_tools import GitTools, GitToolsError, register_git_tools
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -101,33 +102,40 @@ class TestGitStatus:
         assert "kein Git-Repository" in result
 
     async def test_status_clean_repo(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(
                 git_tools,
                 "_run_git",
                 side_effect=[
                     (0, "", ""),  # porcelain
                     (0, "On branch main\nnothing to commit", ""),  # human
                 ],
-            ):
-                result = await git_tools.git_status()
-                assert "clean" in result.lower() or "nichts" in result.lower()
+            ),
+        ):
+            result = await git_tools.git_status()
+            assert "clean" in result.lower() or "nichts" in result.lower()
 
     async def test_status_with_changes(self, git_tools: GitTools) -> None:
         porcelain = "M  src/main.py\n?? new_file.txt\n"
-        human = "On branch main\nChanges to be committed:\n  modified: src/main.py\nUntracked files:\n  new_file.txt"
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(
+        human = (
+            "On branch main\nChanges to be committed:\n"
+            "  modified: src/main.py\nUntracked files:\n  new_file.txt"
+        )
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(
                 git_tools,
                 "_run_git",
                 side_effect=[
                     (0, porcelain, ""),
                     (0, human, ""),
                 ],
-            ):
-                result = await git_tools.git_status()
-                assert "Staged" in result
-                assert "Untracked" in result
+            ),
+        ):
+            result = await git_tools.git_status()
+            assert "Staged" in result
+            assert "Untracked" in result
 
 
 # ---------------------------------------------------------------------------
@@ -137,27 +145,31 @@ class TestGitStatus:
 
 class TestGitDiff:
     async def test_diff_no_changes(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, "", "")):
-                result = await git_tools.git_diff()
-                assert "Keine unstaged" in result
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "", "")),
+        ):
+            result = await git_tools.git_diff()
+            assert "Keine unstaged" in result
 
     async def test_diff_staged(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, "", "")) as mock_run:
-                await git_tools.git_diff(staged=True)
-                args = mock_run.call_args[0][0]
-                assert "--cached" in args
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "", "")) as mock_run,
+        ):
+            await git_tools.git_diff(staged=True)
+            args = mock_run.call_args[0][0]
+            assert "--cached" in args
 
     async def test_diff_with_commit(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(
-                git_tools, "_run_git", return_value=(0, "diff output", "")
-            ) as mock_run:
-                result = await git_tools.git_diff(commit="abc123")
-                args = mock_run.call_args[0][0]
-                assert "abc123" in args
-                assert "diff output" in result
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "diff output", "")) as mock_run,
+        ):
+            result = await git_tools.git_diff(commit="abc123")
+            args = mock_run.call_args[0][0]
+            assert "abc123" in args
+            assert "diff output" in result
 
     async def test_diff_invalid_commit(self, git_tools: GitTools) -> None:
         with patch.object(git_tools, "_check_is_git_repo", return_value=None):
@@ -173,38 +185,48 @@ class TestGitDiff:
 class TestGitLog:
     async def test_log_default(self, git_tools: GitTools) -> None:
         log_output = "abc1234 | Author | 2024-01-01 | Initial commit"
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, log_output, "")):
-                result = await git_tools.git_log()
-                assert "Initial commit" in result
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, log_output, "")),
+        ):
+            result = await git_tools.git_log()
+            assert "Initial commit" in result
 
     async def test_log_oneline(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, "abc Short", "")) as mock_run:
-                await git_tools.git_log(oneline=True)
-                args = mock_run.call_args[0][0]
-                assert "--oneline" in args
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "abc Short", "")) as mock_run,
+        ):
+            await git_tools.git_log(oneline=True)
+            args = mock_run.call_args[0][0]
+            assert "--oneline" in args
 
     async def test_log_count_clamped(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, "commit", "")) as mock_run:
-                await git_tools.git_log(count=999)
-                args = mock_run.call_args[0][0]
-                assert "-100" in args
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "commit", "")) as mock_run,
+        ):
+            await git_tools.git_log(count=999)
+            args = mock_run.call_args[0][0]
+            assert "-100" in args
 
     async def test_log_with_author_filter(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, "log", "")) as mock_run:
-                await git_tools.git_log(author="Alice")
-                args = mock_run.call_args[0][0]
-                assert "--author" in args
-                assert "Alice" in args
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "log", "")) as mock_run,
+        ):
+            await git_tools.git_log(author="Alice")
+            args = mock_run.call_args[0][0]
+            assert "--author" in args
+            assert "Alice" in args
 
     async def test_log_no_commits(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, "", "")):
-                result = await git_tools.git_log()
-                assert "Keine Commits" in result
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "", "")),
+        ):
+            result = await git_tools.git_log()
+            assert "Keine Commits" in result
 
 
 # ---------------------------------------------------------------------------
@@ -226,17 +248,19 @@ class TestGitCommit:
         test_file = workspace / "test.py"
         test_file.write_text("# test", encoding="utf-8")
 
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(
                 git_tools,
                 "_run_git",
                 side_effect=[
                     (0, "", ""),  # git add
                     (0, "[main abc123] fix bug\n 1 file changed", ""),  # git commit
                 ],
-            ):
-                result = await git_tools.git_commit(message="fix bug", files=["test.py"])
-                assert "fix bug" in result or "Commit erfolgreich" in result
+            ),
+        ):
+            result = await git_tools.git_commit(message="fix bug", files=["test.py"])
+            assert "fix bug" in result or "Commit erfolgreich" in result
 
     async def test_commit_file_outside_workspace(self, git_tools: GitTools) -> None:
         with patch.object(git_tools, "_check_is_git_repo", return_value=None):
@@ -251,18 +275,20 @@ class TestGitCommit:
         test_file = workspace / "a.txt"
         test_file.write_text("data", encoding="utf-8")
 
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(
                 git_tools,
                 "_run_git",
                 side_effect=[
                     (0, "", ""),
                     (0, "amended", ""),
                 ],
-            ) as mock_run:
-                await git_tools.git_commit(message="fix", files=["a.txt"], amend=True)
-                commit_args = mock_run.call_args_list[1][0][0]
-                assert "--amend" in commit_args
+            ) as mock_run,
+        ):
+            await git_tools.git_commit(message="fix", files=["a.txt"], amend=True)
+            commit_args = mock_run.call_args_list[1][0][0]
+            assert "--amend" in commit_args
 
 
 # ---------------------------------------------------------------------------
@@ -272,33 +298,41 @@ class TestGitCommit:
 
 class TestGitBranch:
     async def test_branch_list(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(
                 git_tools,
                 "_run_git",
                 return_value=(0, "* main\n  feature-x\n", ""),
-            ):
-                result = await git_tools.git_branch(action="list")
-                assert "main" in result
-                assert "feature-x" in result
+            ),
+        ):
+            result = await git_tools.git_branch(action="list")
+            assert "main" in result
+            assert "feature-x" in result
 
     async def test_branch_create(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, "", "")):
-                result = await git_tools.git_branch(action="create", name="feature-new")
-                assert "erstellt" in result
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "", "")),
+        ):
+            result = await git_tools.git_branch(action="create", name="feature-new")
+            assert "erstellt" in result
 
     async def test_branch_switch(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, "", "")):
-                result = await git_tools.git_branch(action="switch", name="main")
-                assert "gewechselt" in result
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "", "")),
+        ):
+            result = await git_tools.git_branch(action="switch", name="main")
+            assert "gewechselt" in result
 
     async def test_branch_delete(self, git_tools: GitTools) -> None:
-        with patch.object(git_tools, "_check_is_git_repo", return_value=None):
-            with patch.object(git_tools, "_run_git", return_value=(0, "", "")):
-                result = await git_tools.git_branch(action="delete", name="old")
-                assert "geloescht" in result
+        with (
+            patch.object(git_tools, "_check_is_git_repo", return_value=None),
+            patch.object(git_tools, "_run_git", return_value=(0, "", "")),
+        ):
+            result = await git_tools.git_branch(action="delete", name="old")
+            assert "geloescht" in result
 
     async def test_branch_no_name(self, git_tools: GitTools) -> None:
         with patch.object(git_tools, "_check_is_git_repo", return_value=None):

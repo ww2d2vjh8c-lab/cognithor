@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-import asyncio
 import sqlite3
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from typing import Any
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -83,7 +83,7 @@ class TestSetReminder:
 
     @pytest.mark.asyncio
     async def test_set_with_absolute_time(self, notification_tools):
-        future = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+        future = (datetime.now(UTC) + timedelta(hours=2)).isoformat()
         result = await notification_tools.set_reminder(text="Absolute", at=future)
         assert "id" in result
         assert result["text"] == "Absolute"
@@ -129,7 +129,7 @@ class TestSetReminder:
         from jarvis.mcp.notification_tools import _MAX_ACTIVE_REMINDERS
 
         # Insert max reminders directly into DB
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         future = (now + timedelta(hours=1)).isoformat()
         for i in range(_MAX_ACTIVE_REMINDERS):
             notification_tools._conn.execute(
@@ -236,7 +236,7 @@ class TestRepeatLogic:
         assert len(pending) == 1
         # Next due should be ~7 days out
         due = datetime.fromisoformat(pending[0]["due_at"])
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         diff = due - now
         assert diff.days >= 6
 
@@ -250,7 +250,7 @@ class TestRestorePending:
     @pytest.mark.asyncio
     async def test_restore_overdue(self, notification_tools):
         """Overdue reminders should fire immediately on restore."""
-        past = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+        past = (datetime.now(UTC) - timedelta(minutes=5)).isoformat()
         notification_tools._conn.execute(
             "INSERT INTO reminders (text, created_at, due_at, repeat, status) "
             "VALUES ('Overdue', ?, ?, 'none', 'pending')",
@@ -272,7 +272,7 @@ class TestRestorePending:
     @pytest.mark.asyncio
     async def test_restore_future(self, notification_tools):
         """Future reminders should be rescheduled."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         future = (now + timedelta(hours=1)).isoformat()
         notification_tools._conn.execute(
             "INSERT INTO reminders (text, created_at, due_at, repeat, status) "

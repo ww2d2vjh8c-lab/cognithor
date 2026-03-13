@@ -15,10 +15,8 @@ Testet:
 
 from __future__ import annotations
 
-import asyncio
-from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import TYPE_CHECKING
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -32,6 +30,8 @@ from jarvis.mcp.docker_tools import (
     register_docker_tools,
 )
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # =============================================================================
 # Fixtures

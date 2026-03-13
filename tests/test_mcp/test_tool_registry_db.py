@@ -6,10 +6,7 @@ Prompt-Generierung, Beispiel-Verwaltung, MCP-Sync und Prozedur-Deduplizierung.
 
 from __future__ import annotations
 
-import json
-import tempfile
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -18,13 +15,14 @@ from jarvis.mcp.tool_registry_db import (
     DEFAULT_EXAMPLES,
     TOOL_CATEGORIES,
     TOOL_ROLE_DEFAULTS,
-    ToolInfo,
     ToolRegistryDB,
-    _ProcedureEntry,
     _jaccard,
+    _ProcedureEntry,
     deduplicate_procedures,
 )
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ============================================================================
 # Fixtures

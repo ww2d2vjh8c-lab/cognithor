@@ -15,19 +15,19 @@ Tests cover:
 
 from __future__ import annotations
 
-import asyncio
 import email
 import os
 import time
 from email.mime.text import MIMEText
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from jarvis.config import JarvisConfig
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -351,7 +351,7 @@ class TestEmailReadInbox:
         mock_conn.search.return_value = ("OK", [b""])
 
         with patch.object(email_tools, "_get_imap_connection", return_value=mock_conn):
-            result = await email_tools.email_read_inbox(unread_only=True)
+            await email_tools.email_read_inbox(unread_only=True)
         mock_conn.search.assert_called_with(None, "UNSEEN")
 
 
@@ -378,7 +378,7 @@ class TestEmailSearch:
         mock_conn.search.return_value = ("OK", [b""])
 
         with patch.object(email_tools, "_get_imap_connection", return_value=mock_conn):
-            result = await email_tools.email_search(subject="Meeting")
+            await email_tools.email_search(subject="Meeting")
         call_args = mock_conn.search.call_args[0]
         assert 'SUBJECT "Meeting"' in call_args[1]
 
@@ -386,9 +386,11 @@ class TestEmailSearch:
         from jarvis.mcp.email_tools import EmailError
 
         mock_conn = MagicMock()
-        with patch.object(email_tools, "_get_imap_connection", return_value=mock_conn):
-            with pytest.raises(EmailError, match="Ungültiges Datum"):
-                await email_tools.email_search(since="not-a-date")
+        with (
+            patch.object(email_tools, "_get_imap_connection", return_value=mock_conn),
+            pytest.raises(EmailError, match="Ungültiges Datum"),
+        ):
+            await email_tools.email_search(since="not-a-date")
 
     async def test_search_all_criteria(self, email_tools: Any) -> None:
         mock_conn = MagicMock()
@@ -396,7 +398,7 @@ class TestEmailSearch:
         mock_conn.search.return_value = ("OK", [b""])
 
         with patch.object(email_tools, "_get_imap_connection", return_value=mock_conn):
-            result = await email_tools.email_search(
+            await email_tools.email_search(
                 query="project",
                 from_addr="boss@example.com",
                 subject="Update",

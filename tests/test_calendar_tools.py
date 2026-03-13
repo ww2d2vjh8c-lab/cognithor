@@ -13,16 +13,16 @@ Tests cover:
 
 from __future__ import annotations
 
-import os
-from datetime import datetime, time, timedelta, timezone
-from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING, Any
+from unittest.mock import MagicMock
 
 import pytest
 
 from jarvis.config import JarvisConfig
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -217,7 +217,7 @@ class TestIcsDatetimeParsing:
         assert dt.day == 15
         assert dt.hour == 10
         assert dt.minute == 30
-        assert dt.tzinfo == timezone.utc
+        assert dt.tzinfo == UTC
 
     def test_local_datetime(self) -> None:
         from jarvis.mcp.calendar_tools import _parse_ics_datetime
@@ -254,96 +254,96 @@ class TestRRuleRecurrence:
     """Tests for recurring event generation."""
 
     def test_daily_recurrence(self) -> None:
-        from jarvis.mcp.calendar_tools import _VEvent, _parse_rrule_instances
+        from jarvis.mcp.calendar_tools import _parse_rrule_instances, _VEvent
 
         event = _VEvent(
             uid="daily",
             summary="Daily Standup",
-            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 1, 15, 10, 30, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 1, 15, 10, 30, tzinfo=UTC),
             rrule="FREQ=DAILY;COUNT=5",
         )
-        range_start = datetime(2024, 1, 15, 0, 0, tzinfo=timezone.utc)
-        range_end = datetime(2024, 1, 25, 23, 59, tzinfo=timezone.utc)
+        range_start = datetime(2024, 1, 15, 0, 0, tzinfo=UTC)
+        range_end = datetime(2024, 1, 25, 23, 59, tzinfo=UTC)
 
         instances = list(_parse_rrule_instances(event, range_start, range_end))
         assert len(instances) == 5
 
     def test_weekly_recurrence(self) -> None:
-        from jarvis.mcp.calendar_tools import _VEvent, _parse_rrule_instances
+        from jarvis.mcp.calendar_tools import _parse_rrule_instances, _VEvent
 
         event = _VEvent(
             uid="weekly",
             summary="Weekly Review",
-            dtstart=datetime(2024, 1, 15, 14, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 1, 15, 15, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 1, 15, 14, 0, tzinfo=UTC),
+            dtend=datetime(2024, 1, 15, 15, 0, tzinfo=UTC),
             rrule="FREQ=WEEKLY;COUNT=3",
         )
-        range_start = datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc)
-        range_end = datetime(2024, 3, 1, 0, 0, tzinfo=timezone.utc)
+        range_start = datetime(2024, 1, 1, 0, 0, tzinfo=UTC)
+        range_end = datetime(2024, 3, 1, 0, 0, tzinfo=UTC)
 
         instances = list(_parse_rrule_instances(event, range_start, range_end))
         assert len(instances) == 3
 
     def test_monthly_recurrence(self) -> None:
-        from jarvis.mcp.calendar_tools import _VEvent, _parse_rrule_instances
+        from jarvis.mcp.calendar_tools import _parse_rrule_instances, _VEvent
 
         event = _VEvent(
             uid="monthly",
             summary="Monthly Report",
-            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 1, 15, 11, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 1, 15, 11, 0, tzinfo=UTC),
             rrule="FREQ=MONTHLY;COUNT=3",
         )
-        range_start = datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc)
-        range_end = datetime(2024, 6, 1, 0, 0, tzinfo=timezone.utc)
+        range_start = datetime(2024, 1, 1, 0, 0, tzinfo=UTC)
+        range_end = datetime(2024, 6, 1, 0, 0, tzinfo=UTC)
 
         instances = list(_parse_rrule_instances(event, range_start, range_end))
         assert len(instances) == 3
 
     def test_recurrence_with_until(self) -> None:
-        from jarvis.mcp.calendar_tools import _VEvent, _parse_rrule_instances
+        from jarvis.mcp.calendar_tools import _parse_rrule_instances, _VEvent
 
         event = _VEvent(
             uid="until",
             summary="Limited Event",
-            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 1, 15, 11, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 1, 15, 11, 0, tzinfo=UTC),
             rrule="FREQ=DAILY;UNTIL=20240118T235959Z",
         )
-        range_start = datetime(2024, 1, 15, 0, 0, tzinfo=timezone.utc)
-        range_end = datetime(2024, 1, 31, 0, 0, tzinfo=timezone.utc)
+        range_start = datetime(2024, 1, 15, 0, 0, tzinfo=UTC)
+        range_end = datetime(2024, 1, 31, 0, 0, tzinfo=UTC)
 
         instances = list(_parse_rrule_instances(event, range_start, range_end))
         assert len(instances) == 4  # 15, 16, 17, 18
 
     def test_no_rrule_single_event(self) -> None:
-        from jarvis.mcp.calendar_tools import _VEvent, _parse_rrule_instances
+        from jarvis.mcp.calendar_tools import _parse_rrule_instances, _VEvent
 
         event = _VEvent(
             uid="single",
             summary="One-off",
-            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 1, 15, 11, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 1, 15, 11, 0, tzinfo=UTC),
         )
-        range_start = datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc)
-        range_end = datetime(2024, 2, 1, 0, 0, tzinfo=timezone.utc)
+        range_start = datetime(2024, 1, 1, 0, 0, tzinfo=UTC)
+        range_end = datetime(2024, 2, 1, 0, 0, tzinfo=UTC)
 
         instances = list(_parse_rrule_instances(event, range_start, range_end))
         assert len(instances) == 1
 
     def test_recurrence_with_interval(self) -> None:
-        from jarvis.mcp.calendar_tools import _VEvent, _parse_rrule_instances
+        from jarvis.mcp.calendar_tools import _parse_rrule_instances, _VEvent
 
         event = _VEvent(
             uid="bi-weekly",
             summary="Bi-weekly",
-            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 1, 15, 11, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 1, 15, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 1, 15, 11, 0, tzinfo=UTC),
             rrule="FREQ=WEEKLY;INTERVAL=2;COUNT=3",
         )
-        range_start = datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc)
-        range_end = datetime(2024, 4, 1, 0, 0, tzinfo=timezone.utc)
+        range_start = datetime(2024, 1, 1, 0, 0, tzinfo=UTC)
+        range_end = datetime(2024, 4, 1, 0, 0, tzinfo=UTC)
 
         instances = list(_parse_rrule_instances(event, range_start, range_end))
         assert len(instances) == 3
@@ -636,8 +636,8 @@ class TestIcsFileManagement:
         event = _VEvent(
             uid="append-test",
             summary="Appended Event",
-            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 6, 15, 11, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 6, 15, 11, 0, tzinfo=UTC),
         )
         calendar_tools._append_event(event)
 
@@ -651,14 +651,14 @@ class TestIcsFileManagement:
         event1 = _VEvent(
             uid="first",
             summary="First",
-            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 6, 15, 11, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 6, 15, 11, 0, tzinfo=UTC),
         )
         event2 = _VEvent(
             uid="second",
             summary="Second",
-            dtstart=datetime(2024, 6, 16, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 6, 16, 11, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 6, 16, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 6, 16, 11, 0, tzinfo=UTC),
         )
         calendar_tools._append_event(event1)
         calendar_tools._append_event(event2)
@@ -681,8 +681,8 @@ class TestVEventToIcs:
         event = _VEvent(
             uid="block-test",
             summary="Test Event",
-            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 6, 15, 11, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 6, 15, 11, 0, tzinfo=UTC),
         )
         block = event.to_ics_block()
         assert "BEGIN:VEVENT" in block
@@ -696,7 +696,7 @@ class TestVEventToIcs:
         event = _VEvent(
             uid="allday-block",
             summary="Holiday",
-            dtstart=datetime(2024, 12, 25, 0, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 12, 25, 0, 0, tzinfo=UTC),
             all_day=True,
         )
         block = event.to_ics_block()
@@ -708,7 +708,7 @@ class TestVEventToIcs:
         event = _VEvent(
             uid="desc-test",
             summary="Described",
-            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=UTC),
             description="Line 1\nLine 2",
         )
         block = event.to_ics_block()
@@ -721,8 +721,8 @@ class TestVEventToIcs:
         event = _VEvent(
             uid="dict-test",
             summary="Dict Event",
-            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=timezone.utc),
-            dtend=datetime(2024, 6, 15, 11, 0, tzinfo=timezone.utc),
+            dtstart=datetime(2024, 6, 15, 10, 0, tzinfo=UTC),
+            dtend=datetime(2024, 6, 15, 11, 0, tzinfo=UTC),
             location="Room A",
         )
         d = event.to_dict()
@@ -741,7 +741,7 @@ class TestTimezoneHandling:
         from jarvis.mcp.calendar_tools import _get_configured_timezone
 
         tz = _get_configured_timezone("UTC")
-        assert tz == timezone.utc or tz.utcoffset(None) == timedelta(0)
+        assert tz == UTC or tz.utcoffset(None) == timedelta(0)
 
     def test_empty_timezone_returns_local(self) -> None:
         from jarvis.mcp.calendar_tools import _get_configured_timezone

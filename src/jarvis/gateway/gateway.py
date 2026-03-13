@@ -20,7 +20,7 @@ import re
 import signal
 import threading
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from jarvis.config import JarvisConfig, load_config
 from jarvis.core.agent_router import RouteDecision
@@ -58,7 +58,6 @@ from jarvis.models import (
     ToolResult,
     WorkingMemory,
 )
-
 from jarvis.utils.logging import get_logger, setup_logging
 
 if TYPE_CHECKING:
@@ -120,6 +119,7 @@ class Gateway:
         self._running = False
         self._context_pipeline = None
         self._message_queue: DurableMessageQueue | None = None
+        self._background_tasks: set[asyncio.Task[Any]] = set()
 
         # Declare all subsystem attributes via phase modules
         apply_phase(self, declare_core_attrs(self._config))
@@ -200,10 +200,10 @@ class Gateway:
         # --- Phase D.2: Message Queue (optional, durable message buffering) ---
         if self._config.queue.enabled:
             try:
-                from jarvis.core.message_queue import DurableMessageQueue as _DMQ
+                from jarvis.core.message_queue import DurableMessageQueue as _Dmq
 
                 queue_path = self._config.jarvis_home / "memory" / "message_queue.db"
-                self._message_queue = _DMQ(
+                self._message_queue = _Dmq(
                     queue_path,
                     max_size=self._config.queue.max_size,
                     max_retries=self._config.queue.max_retries,
@@ -244,9 +244,9 @@ class Gateway:
             try:
 
                 async def _agent_runner(
-                    config: "SubAgentConfig",
+                    config: SubAgentConfig,
                     agent_name: str,
-                ) -> "AgentResult":
+                ) -> AgentResult:
                     msg = IncomingMessage(
                         channel="sub_agent",
                         user_id=f"agent:{agent_name}",
@@ -268,7 +268,7 @@ class Gateway:
                             success=True,
                             model_used=config.model,
                         )
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         return AgentResult(
                             response="",
                             success=False,
@@ -426,8 +426,8 @@ class Gateway:
         try:
             from jarvis.mcp.tool_registry_db import (
                 _SECTION_HEADERS,
-                _ProcedureEntry,
                 ToolRegistryDB,
+                _ProcedureEntry,
                 deduplicate_procedures,
             )
 
@@ -636,7 +636,9 @@ class Gateway:
         if getattr(self._config.plugins, "auto_update", False) or getattr(
             self._config.marketplace, "auto_update", False
         ):
-            asyncio.create_task(self._auto_update_skills(), name="auto-update-skills")
+            _task = asyncio.create_task(self._auto_update_skills(), name="auto-update-skills")
+            self._background_tasks.add(_task)
+            _task.add_done_callback(self._background_tasks.discard)
 
         # Channels starten
         tasks = []
@@ -903,6 +905,7 @@ class Gateway:
             # Live-update i18n locale from config
             try:
                 import os
+
                 from jarvis.i18n import set_locale
 
                 _lang = (
@@ -930,7 +933,9 @@ class Gateway:
 
                     try:
                         loop = asyncio.get_running_loop()
-                        loop.create_task(self._model_router.initialize())
+                        _task = loop.create_task(self._model_router.initialize())
+                        self._background_tasks.add(_task)
+                        _task.add_done_callback(self._background_tasks.discard)
                     except RuntimeError:
                         pass  # no loop — model list refresh skipped
                     log.info("model_router_config_reloaded")
@@ -957,7 +962,9 @@ class Gateway:
 
                         try:
                             loop = asyncio.get_running_loop()
-                            loop.create_task(old_llm.close())
+                            _task = loop.create_task(old_llm.close())
+                            self._background_tasks.add(_task)
+                            _task.add_done_callback(self._background_tasks.discard)
                         except RuntimeError:
                             pass
                         log.info(
@@ -1134,9 +1141,9 @@ class Gateway:
         # ── Sentiment Detection (Modul 3) ──
         try:
             from jarvis.core.sentiment import (
+                Sentiment,
                 detect_sentiment,
                 get_sentiment_system_message,
-                Sentiment,
             )
 
             sentiment_result = detect_sentiment(msg.text)
@@ -1289,7 +1296,7 @@ class Gateway:
     async def _resolve_agent_route(
         self,
         msg: IncomingMessage,
-    ) -> tuple[RouteDecision | None, "SessionContext", "WorkingMemory", Any, Any, str]:
+    ) -> tuple[RouteDecision | None, SessionContext, WorkingMemory, Any, Any, str]:
         """Phase 1: Agent-Routing, Session, Working Memory, Skills, Workspace."""
         route_decision = None
         agent_workspace = None
@@ -1406,8 +1413,8 @@ class Gateway:
     async def _prepare_execution_context(
         self,
         msg: IncomingMessage,
-        session: "SessionContext",
-        wm: "WorkingMemory",
+        session: SessionContext,
+        wm: WorkingMemory,
         route_decision: RouteDecision | None,
     ) -> tuple[str | None, OutgoingMessage | None]:
         """Phase 2: Profiler, Budget, Run-Recording, Policy-Snapshot.
@@ -1493,8 +1500,8 @@ class Gateway:
     async def _run_pge_loop(
         self,
         msg: IncomingMessage,
-        session: "SessionContext",
-        wm: "WorkingMemory",
+        session: SessionContext,
+        wm: WorkingMemory,
         tool_schemas: dict[str, Any],
         route_decision: RouteDecision | None,
         agent_workspace: Any,
@@ -1510,7 +1517,7 @@ class Gateway:
         all_audit: list[AuditEntry] = []
         final_response = ""
         _consecutive_no_tool_iters = 0  # Detect stuck replan loops
-        _MAX_NO_TOOL_ITERS = 2  # After 2 iters without tool execution, stop
+        _max_no_tool_iters = 2  # After 2 iters without tool execution, stop
 
         # Status callback for progress feedback
         _status_cb = self._make_status_callback(msg.channel, session.session_id)
@@ -1738,7 +1745,7 @@ class Gateway:
                 _consecutive_no_tool_iters = 0
             else:
                 _consecutive_no_tool_iters += 1
-                if _consecutive_no_tool_iters >= _MAX_NO_TOOL_ITERS:
+                if _consecutive_no_tool_iters >= _max_no_tool_iters:
                     log.warning("pge_stuck_no_tools", iterations=session.iteration_count)
                     if all_results and any(r.success for r in all_results):
                         await _status_cb("finishing", "Formuliere Antwort...")
@@ -1765,14 +1772,14 @@ class Gateway:
 
             # Coding-Tools: Nicht sofort breaken -- Replan entscheidet
             # ob weitere Schritte noetig sind (Code testen, analysieren, fixen)
-            _CODING_TOOLS = {
+            _coding_tools = {
                 "run_python",
                 "exec_command",
                 "write_file",
                 "edit_file",
                 "analyze_code",
             }
-            used_coding_tool = any(r.tool_name in _CODING_TOOLS for r in results)
+            used_coding_tool = any(r.tool_name in _coding_tools for r in results)
 
             # ── Break conditions ─────────────────────────────────────────
             # Single-step non-coding tasks: respond immediately after success
@@ -1794,18 +1801,21 @@ class Gateway:
             _max_coding_iters = min(_max_coding_iters, session.max_iterations - 1)
             # Scale success threshold: ~30% of max_iterations (min 3)
             _success_threshold = max(3, int(session.max_iterations * 0.3))
-            if has_success and (used_coding_tool or _is_multi_step):
-                if (
+            if (
+                has_success
+                and (used_coding_tool or _is_multi_step)
+                and (
                     session.iteration_count >= _max_coding_iters
                     or _successful_iters >= _success_threshold
-                ):
-                    await _status_cb("finishing", "Formuliere Antwort...")
-                    final_response = await self._planner.formulate_response(
-                        user_message=msg.text,
-                        results=all_results,
-                        working_memory=wm,
-                    )
-                    break
+                )
+            ):
+                await _status_cb("finishing", "Formuliere Antwort...")
+                final_response = await self._planner.formulate_response(
+                    user_message=msg.text,
+                    results=all_results,
+                    working_memory=wm,
+                )
+                break
                 # Otherwise: continue to replan for more steps (normal)
 
             # Failure-Threshold: give planner room for alternative strategies
@@ -1831,8 +1841,8 @@ class Gateway:
 
     async def _run_post_processing(
         self,
-        session: "SessionContext",
-        wm: "WorkingMemory",
+        session: SessionContext,
+        wm: WorkingMemory,
         agent_result: AgentResult,
         active_skill: Any,
         run_id: str | None,
@@ -2021,8 +2031,8 @@ class Gateway:
 
     async def _persist_session(
         self,
-        session: "SessionContext",
-        wm: "WorkingMemory",
+        session: SessionContext,
+        wm: WorkingMemory,
     ) -> None:
         """Phase 5: Session persistieren."""
         if self._session_store:
@@ -2044,8 +2054,8 @@ class Gateway:
         from_agent: str,
         to_agent: str,
         task: str,
-        session: "SessionContext",
-        parent_wm: "WorkingMemory",
+        session: SessionContext,
+        parent_wm: WorkingMemory,
     ) -> str:
         """Führt eine echte Agent-zu-Agent-Delegation aus.
 
@@ -2216,8 +2226,8 @@ class Gateway:
 
     def _persist_key_tool_results(
         self,
-        wm: "WorkingMemory",
-        results: list["ToolResult"],
+        wm: WorkingMemory,
+        results: list[ToolResult],
     ) -> None:
         """Persistiert wichtige Tool-Ergebnisse als TOOL-Messages in der Chat-History.
 
@@ -2337,7 +2347,7 @@ class Gateway:
     # ── Automatische Vor-Suche für Faktenfragen ────────────────────
 
     # Regex-Patterns für Faktenfragen (Wann/Wo/Wer/Was + Verb)
-    _FACT_QUESTION_PATTERNS: list[re.Pattern[str]] = [
+    _FACT_QUESTION_PATTERNS: ClassVar[list[re.Pattern[str]]] = [
         re.compile(
             r"\b(wann|wo|wer|was|wie viele|welche[rsmn]?)\b"
             r".{3,}"
@@ -2364,7 +2374,7 @@ class Gateway:
     ]
 
     # Begriffe die KEINE Faktenfrage signalisieren (Smalltalk, Meinungen)
-    _SKIP_PRESEARCH_PATTERNS: list[re.Pattern[str]] = [
+    _SKIP_PRESEARCH_PATTERNS: ClassVar[list[re.Pattern[str]]] = [
         re.compile(
             r"\b(meinst du|findest du|was denkst du|erkläre mir|was ist ein|definier)",
             re.IGNORECASE,
@@ -2387,11 +2397,7 @@ class Gateway:
                 return False
 
         # Faktenfrage-Patterns prüfen
-        for fact_pat in self._FACT_QUESTION_PATTERNS:
-            if fact_pat.search(text):
-                return True
-
-        return False
+        return any(fact_pat.search(text) for fact_pat in self._FACT_QUESTION_PATTERNS)
 
     async def _classify_coding_task(self, user_message: str) -> tuple[bool, str]:
         """Klassifiziert ob eine Nachricht eine Coding-Aufgabe ist und deren Komplexitaet.
@@ -2463,7 +2469,7 @@ class Gateway:
         ]
 
         # Wochentags-basierte Auflösung: "nächsten Montag", "am Freitag", etc.
-        _WOCHENTAGE = {
+        _wochentage = {
             "montag": 0,
             "dienstag": 1,
             "mittwoch": 2,
@@ -2472,7 +2478,7 @@ class Gateway:
             "samstag": 5,
             "sonntag": 6,
         }
-        for tag_name, weekday_num in _WOCHENTAGE.items():
+        for tag_name, weekday_num in _wochentage.items():
             days_ahead = (weekday_num - today.weekday()) % 7
             if days_ahead == 0:
                 days_ahead = 7  # "am Montag" = nächster Montag
@@ -2503,7 +2509,7 @@ class Gateway:
 
         return text
 
-    async def _maybe_presearch(self, msg: IncomingMessage, wm: "WorkingMemory") -> str | None:
+    async def _maybe_presearch(self, msg: IncomingMessage, wm: WorkingMemory) -> str | None:
         """Führt automatisch eine Web-Suche durch wenn die Nachricht eine Faktenfrage ist.
 
         Returns:
