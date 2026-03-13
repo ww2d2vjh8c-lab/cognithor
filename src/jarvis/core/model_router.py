@@ -169,15 +169,19 @@ class OllamaClient:
             resp = await client.post("/api/chat", json=payload)
 
             if resp.status_code != 200:
-                body = resp.text[:500]
                 if resp.status_code == 404:
                     raise OllamaError(
-                        f"Modell '{model}' nicht gefunden. "
-                        f"Bitte zuerst herunterladen: ollama pull {model}",
+                        f"Model '{model}' not found. Please download it first: ollama pull {model}",
                         status_code=404,
                     )
+                if resp.status_code == 429:
+                    raise OllamaError(
+                        "Service is currently overloaded (rate limit). "
+                        "Please wait a moment and try again.",
+                        status_code=429,
+                    )
                 raise OllamaError(
-                    f"Ollama HTTP {resp.status_code}: {body}",
+                    f"Ollama HTTP {resp.status_code}",
                     status_code=resp.status_code,
                 )
 
@@ -351,7 +355,7 @@ class ModelRouter:
         self._coding_override: str | None = None
 
     @classmethod
-    def from_backend(cls, config: JarvisConfig, backend: Any) -> "ModelRouter":
+    def from_backend(cls, config: JarvisConfig, backend: Any) -> ModelRouter:
         """Erstellt einen ModelRouter mit einem LLMBackend statt OllamaClient.
 
         Args:

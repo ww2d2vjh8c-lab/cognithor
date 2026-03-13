@@ -71,14 +71,14 @@ class CliChannel(Channel):
                 expand=False,
             )
         )
-        self._console.print("[dim]Tippe eine Nachricht oder /quit zum Beenden.[/dim]\n")
+        self._console.print("[dim]Type a message or /quit to exit.[/dim]\n")
 
         # REPL-Loop
         while self._running:
             try:
                 user_input = await self._read_input()
             except (EOFError, KeyboardInterrupt):
-                self._console.print("\n[dim]Auf Wiedersehen![/dim]")
+                self._console.print("\n[dim]Goodbye![/dim]")
                 break
 
             if user_input is None:
@@ -104,7 +104,7 @@ class CliChannel(Channel):
 
             try:
                 with self._console.status(
-                    "[bold cyan]Jarvis denkt nach...[/bold cyan]",
+                    "[bold cyan]Jarvis is thinking...[/bold cyan]",
                     spinner="dots",
                 ):
                     response = await self._handler(msg)
@@ -115,7 +115,7 @@ class CliChannel(Channel):
 
                     friendly = classify_error_for_user(exc)
                 except Exception:
-                    friendly = f"Ein Fehler ist aufgetreten: {exc}"
+                    friendly = f"An error occurred: {exc}"
                 self._console.print(f"[{COLOR_ERROR}]{friendly}[/{COLOR_ERROR}]")
                 log.error("cli_handler_error", error=str(exc))
 
@@ -149,11 +149,11 @@ class CliChannel(Channel):
         self._console.print()
         self._console.print(
             Panel(
-                f"[{COLOR_APPROVAL}]🔐 Bestätigung erforderlich[/{COLOR_APPROVAL}]\n\n"
+                f"[{COLOR_APPROVAL}]🔐 Approval required[/{COLOR_APPROVAL}]\n\n"
                 f"Tool: [bold]{action.tool}[/bold]\n"
-                f"Parameter: {action.params}\n"
-                f"Grund: {reason}\n"
-                f"Begründung: {action.rationale}",
+                f"Parameters: {action.params}\n"
+                f"Reason: {reason}\n"
+                f"Rationale: {action.rationale}",
                 border_style="yellow",
                 title="Gatekeeper",
             )
@@ -161,17 +161,17 @@ class CliChannel(Channel):
 
         while True:
             try:
-                answer = await self._read_input(prompt="Erlauben? [j/n]: ")
+                answer = await self._read_input(prompt="Allow? [y/n]: ")
                 if answer is None:
                     return False
                 answer = answer.strip().lower()
                 if answer in ("j", "ja", "y", "yes"):
-                    self._console.print("[green]✓ Erlaubt[/green]")
+                    self._console.print("[green]✓ Allowed[/green]")
                     return True
                 if answer in ("n", "nein", "no"):
-                    self._console.print("[red]✗ Abgelehnt[/red]")
+                    self._console.print("[red]✗ Denied[/red]")
                     return False
-                self._console.print("[dim]Bitte 'j' oder 'n' eingeben.[/dim]")
+                self._console.print("[dim]Please enter 'y' or 'n'.[/dim]")
             except (EOFError, KeyboardInterrupt):
                 return False
 
@@ -190,7 +190,7 @@ class CliChannel(Channel):
         in den Thread-Pool auszulagern.
         """
         if prompt is None:
-            prompt = "Du: "
+            prompt = "You: "
 
         try:
             return await asyncio.to_thread(input, prompt)
@@ -208,20 +208,20 @@ class CliChannel(Channel):
         cmd = command.lower().strip()
 
         if cmd in ("/quit", "/exit", "/q"):
-            self._console.print("[dim]Auf Wiedersehen![/dim]")
+            self._console.print("[dim]Goodbye![/dim]")
             return False
 
         if cmd == "/help":
             self._console.print(
                 Panel(
-                    "[bold]Verfügbare Befehle:[/bold]\n\n"
-                    "/quit     -- Jarvis beenden\n"
-                    "/help     -- Diese Hilfe anzeigen\n"
-                    "/status   -- Systemstatus anzeigen\n"
-                    "/clear    -- Bildschirm leeren\n"
-                    "/version  -- Versionsinformation",
+                    "[bold]Available commands:[/bold]\n\n"
+                    "/quit     -- Exit Jarvis\n"
+                    "/help     -- Show this help\n"
+                    "/status   -- Show system status\n"
+                    "/clear    -- Clear screen\n"
+                    "/version  -- Version info",
                     border_style="dim",
-                    title="Hilfe",
+                    title="Help",
                 )
             )
             return True
@@ -236,9 +236,9 @@ class CliChannel(Channel):
 
         if cmd == "/status":
             self._console.print(
-                f"[dim]Status: Aktiv · Channel: CLI · Session: {self._session_id}[/dim]"
+                f"[dim]Status: Active · Channel: CLI · Session: {self._session_id}[/dim]"
             )
             return True
 
-        self._console.print(f"[dim]Unbekannter Befehl: {command}. Tippe /help für Hilfe.[/dim]")
+        self._console.print(f"[dim]Unknown command: {command}. Type /help for help.[/dim]")
         return True

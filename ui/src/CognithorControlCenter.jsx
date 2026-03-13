@@ -826,7 +826,7 @@ function LanguagePage({ cfg, set }) {
         </div>
 
         <SelectInput
-          label="Translation method"
+          label={t("lang.method_label")}
           value={method}
           onChange={setMethod}
           options={[
@@ -834,8 +834,8 @@ function LanguagePage({ cfg, set }) {
             { value: "ollama", label: t("lang.method_ollama") },
           ]}
           desc={method === "preset"
-            ? "Pre-verified translations — instant, no LLM needed. Available for: " + presetLocales.map(l => l.toUpperCase()).join(", ")
-            : "Uses your configured planner model to translate prompts on-the-fly. May take 30-60 seconds."
+            ? t("lang.desc_preset") + " " + presetLocales.map(l => l.toUpperCase()).join(", ")
+            : t("lang.desc_ollama")
           }
         />
 

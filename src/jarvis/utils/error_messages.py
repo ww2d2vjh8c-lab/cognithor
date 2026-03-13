@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from jarvis.i18n import t
 
-
 # ── Tool-Friendly-Names ─────────────────────────────────────────
 # Maps internal MCP tool names to human-readable names via i18n keys.
 
@@ -63,7 +62,11 @@ def classify_error_for_user(exc: BaseException) -> str:
         status_code = getattr(exc, "status_code", None)
         if status_code == 404:
             return t("error.model_not_installed", model="<modelname>") + f"\nDetails: {exc_str}"
-        if "nicht erreichbar" in exc_str.lower() or "connect" in exc_str.lower():
+        if (
+            "nicht erreichbar" in exc_str.lower()
+            or "unreachable" in exc_str.lower()
+            or "connect" in exc_str.lower()
+        ):
             return t("error.ollama_unreachable")
 
     if exc_type in ("TimeoutError", "asyncio.TimeoutError") or "timeout" in exc_str.lower():
@@ -87,8 +90,8 @@ def classify_error_for_user(exc: BaseException) -> str:
     if "memory" in exc_str.lower() or exc_type == "MemoryError":
         return t("error.memory_error")
 
-    # Generic fallback
-    return t("error.generic", exc_type=exc_type) + f"\nDetail: {exc_str[:300]}"
+    # Generic fallback — no raw exception text to avoid JSON/internal leaks
+    return t("error.generic", exc_type=exc_type)
 
 
 # ── Gatekeeper Block Messages ───────────────────────────────────

@@ -2108,13 +2108,13 @@ class Gateway:
         delegation = self._agent_router.create_delegation(from_agent, to_agent, task)
         if delegation is None:
             return (
-                f"Delegation von {from_agent} an {to_agent} nicht erlaubt. "
-                f"Ich bearbeite die Aufgabe selbst."
+                f"Delegation from {from_agent} to {to_agent} not allowed. "
+                f"I'll handle the task myself."
             )
 
         target = delegation.target_profile
         if not target:
-            return f"Agent {to_agent} nicht gefunden."
+            return f"Agent {to_agent} not found."
 
         log.info(
             "delegation_executing",
@@ -2633,26 +2633,26 @@ class Gateway:
         Nutzt den unified LLM-Client (funktioniert mit jedem Backend).
         """
         system = (
-            "Du bist ein Fakten-Assistent. Du beantwortest Fragen AUSSCHLIEẞLICH "
-            "basierend auf den bereitgestellten Suchergebnissen.\n\n"
-            "ABSOLUTE REGELN:\n"
-            "1. Verwende NUR Informationen aus den Suchergebnissen unten.\n"
-            "2. Die Suchergebnisse sind AKTUELLE FAKTEN aus dem Internet.\n"
-            "3. Wenn die Suchergebnisse ein Ereignis beschreiben, IST es passiert.\n"
-            "4. Sage NIEMALS 'es gibt keine Belege' oder 'das ist nicht passiert'.\n"
-            "5. Sage NIEMALS 'laut meinem Wissensstand' oder 'meines Wissens'.\n"
-            "6. Zitiere Daten, Namen und Fakten DIREKT aus den Ergebnissen.\n"
-            "7. Antworte auf Deutsch, prägnant und informativ.\n"
-            "8. Du hast KEIN eigenes Wissen. Du kennst NUR die Suchergebnisse.\n"
-            "9. Antworte DIREKT ohne Denkprozess. Kurz und sachlich."
+            "You are a fact assistant. You answer questions EXCLUSIVELY "
+            "based on the provided search results.\n\n"
+            "ABSOLUTE RULES:\n"
+            "1. Use ONLY information from the search results below.\n"
+            "2. The search results are CURRENT FACTS from the internet.\n"
+            "3. If the search results describe an event, it DID happen.\n"
+            "4. NEVER say 'there is no evidence' or 'that did not happen'.\n"
+            "5. NEVER say 'according to my knowledge' or 'as far as I know'.\n"
+            "6. Cite dates, names, and facts DIRECTLY from the results.\n"
+            "7. Answer in the same language as the user's question, concisely and informatively.\n"
+            "8. You have NO knowledge of your own. You know ONLY the search results.\n"
+            "9. Answer DIRECTLY without reasoning process. Brief and factual."
         )
 
         # /no_think deaktiviert qwen3's internen Reasoning-Modus für schnelle Antwort
         user_prompt = (
-            f"SUCHERGEBNISSE:\n\n{search_results}\n\n"
+            f"SEARCH RESULTS:\n\n{search_results}\n\n"
             f"---\n\n"
-            f"FRAGE: {user_message}\n\n"
-            f"Beantworte die Frage NUR basierend auf den obigen Suchergebnissen. /no_think"
+            f"QUESTION: {user_message}\n\n"
+            f"Answer the question ONLY based on the search results above. /no_think"
         )
 
         # Modell via ModelRouter wählen (Backend-agnostisch)

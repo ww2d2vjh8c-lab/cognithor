@@ -106,7 +106,7 @@ class TestSlashCommands:
         result = await cli_with_console._handle_command("/status")
         assert result is True
         call_args_str = str(cli_with_console._console.print.call_args)
-        assert "Aktiv" in call_args_str
+        assert "Active" in call_args_str
         assert "cli-session" in call_args_str
 
     @pytest.mark.asyncio
@@ -122,7 +122,7 @@ class TestSlashCommands:
         result = await cli_with_console._handle_command("/foobar")
         assert result is True
         call_args_str = str(cli_with_console._console.print.call_args)
-        assert "Unbekannter Befehl" in call_args_str
+        assert "Unknown command" in call_args_str
 
     @pytest.mark.asyncio
     async def test_case_insensitive(self, cli_with_console: CliChannel) -> None:
@@ -309,7 +309,7 @@ class TestRequestApproval:
                 # Panel.renderable enthält den formatierten String
                 panel_text = str(panel.renderable)
                 assert "exec_command" in panel_text
-                assert "Gatekeeper" in str(panel.title) or "Bestätigung" in panel_text
+                assert "Gatekeeper" in str(panel.title) or "Approval" in panel_text
                 panel_found = True
                 break
         assert panel_found, "Kein Panel in Console-Ausgabe gefunden"

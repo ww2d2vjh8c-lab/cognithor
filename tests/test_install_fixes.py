@@ -306,7 +306,7 @@ class TestFix5PipProgress:
 
     def test_duration_estimate_printed(self):
         text = _read(INSTALL_SH)
-        assert "2-5 Minuten" in text, "Must print duration estimate before pip install"
+        assert "2-5 minutes" in text, "Must print duration estimate before pip install"
 
 
 # =========================================================================
