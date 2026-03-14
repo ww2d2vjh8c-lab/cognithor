@@ -137,12 +137,15 @@ def verify_pack_integrity(locale: str) -> bool:
     Returns ``False`` only on mismatch (tampered pack).
     """
     locale = _safe_locale(locale)
-    pack_path = LOCALES_DIR / f"{locale}.json"
-    hash_path = LOCALES_DIR / f"{locale}.sha256"
+    locales_root = LOCALES_DIR.resolve()
+    pack_path = (LOCALES_DIR / f"{locale}.json").resolve()
+    hash_path = (LOCALES_DIR / f"{locale}.sha256").resolve()
 
+    if not pack_path.is_relative_to(locales_root):
+        return False
     if not pack_path.exists():
         return False
-    if not hash_path.exists():
+    if not hash_path.is_relative_to(locales_root) or not hash_path.exists():
         return True  # No hash file → unsigned, trust by default
 
     expected = hash_path.read_text(encoding="utf-8").strip().lower()
@@ -164,12 +167,13 @@ def generate_pack_hash(locale: str) -> str:
     Returns the hex digest. Writes ``<locale>.sha256`` sidecar file.
     """
     locale = _safe_locale(locale)
-    pack_path = LOCALES_DIR / f"{locale}.json"
-    if not pack_path.exists():
-        raise FileNotFoundError(f"Language pack not found: {pack_path}")
+    locales_root = LOCALES_DIR.resolve()
+    pack_path = (LOCALES_DIR / f"{locale}.json").resolve()
+    if not pack_path.is_relative_to(locales_root) or not pack_path.exists():
+        raise FileNotFoundError(f"Language pack not found: {locale}")
 
     digest = _compute_hash(pack_path)
-    hash_path = LOCALES_DIR / f"{locale}.sha256"
+    hash_path = (LOCALES_DIR / f"{locale}.sha256").resolve()
     hash_path.write_text(digest + "\n", encoding="utf-8")
     return digest
 
@@ -192,7 +196,13 @@ def _ensure_loaded(locale: str) -> None:
         return
 
     locale = _safe_locale(locale)
-    pack_path = LOCALES_DIR / f"{locale}.json"
+    pack_path = (LOCALES_DIR / f"{locale}.json").resolve()
+    # Guard against path traversal: resolved path must stay inside LOCALES_DIR
+    if not pack_path.is_relative_to(LOCALES_DIR.resolve()):
+        logger.warning("i18n_path_traversal_blocked locale=%s", locale)
+        with _lock:
+            _packs[locale] = {}
+        return
     if not pack_path.exists():
         if locale != _DEFAULT_LOCALE:
             logger.debug("i18n_pack_not_found locale=%s", locale)
