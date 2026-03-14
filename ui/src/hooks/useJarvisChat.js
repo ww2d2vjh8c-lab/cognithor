@@ -209,10 +209,14 @@ export function useJarvisChat() {
 
     ws.onmessage = (evt) => handleWsMsgRef.current(evt);
 
-    ws.onclose = () => {
+    ws.onclose = (ev) => {
       setIsConnected(false);
       stopHeartbeat();
       wsRef.current = null;
+      // 4001 = auth rejected — invalidate cached token so reconnect fetches a fresh one
+      if (ev.code === 4001) {
+        _wsTokenCache = null;
+      }
       // Auto-reconnect with backoff
       if (retriesRef.current < WS_MAX_RETRIES) {
         retriesRef.current++;
