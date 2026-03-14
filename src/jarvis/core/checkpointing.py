@@ -91,9 +91,7 @@ class CheckpointStore:
         checkpoints: list[PersistentCheckpoint] = []
         for f in session_dir.glob("*.json"):
             try:
-                checkpoints.append(
-                    PersistentCheckpoint.from_json(f.read_text(encoding="utf-8"))
-                )
+                checkpoints.append(PersistentCheckpoint.from_json(f.read_text(encoding="utf-8")))
             except Exception:
                 continue
         if not checkpoints:
