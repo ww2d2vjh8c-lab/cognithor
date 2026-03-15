@@ -71,6 +71,7 @@ TOOL_ROLE_DEFAULTS: dict[str, set[str]] = {
         "vault_list",
         "web_search",
         "search_and_read",
+        "verified_web_lookup",
         "web_news_search",
         "memory_stats",
         "list_skills",
@@ -167,6 +168,7 @@ TOOL_ROLE_DEFAULTS: dict[str, set[str]] = {
         "web_news_search",
         "web_fetch",
         "search_and_read",
+        "verified_web_lookup",
         "search_memory",
         "vault_search",
         "vault_read",
@@ -197,6 +199,7 @@ TOOL_CATEGORIES: dict[str, str] = {
     "web_news_search": "web",
     "web_fetch": "web",
     "search_and_read": "web",
+    "verified_web_lookup": "web",
     "http_request": "web",
     "search_memory": "memory",
     "save_to_memory": "memory",
@@ -371,6 +374,13 @@ DEFAULT_EXAMPLES: dict[str, tuple[str, str]] = {
         ' "title": "Async IO in Python",'
         ' "text": "asyncio is a library to write'
         ' concurrent code using async/await..."}',
+    ),
+    "verified_web_lookup": (
+        '{"query": "Wie viele GitHub Stars hat cognithor?", "num_sources": 3}',
+        '{"answer": "Cognithor hat 142 Stars auf GitHub.",'
+        ' "confidence": 0.92,'
+        ' "sources_checked": 3,'
+        ' "agreement": "87%"}',
     ),
     "web_fetch": (
         '{"url": "https://api.github.com/repos/python/cpython"}',
@@ -606,6 +616,7 @@ _TOOL_DESCRIPTIONS_DE: dict[str, str] = {
     "web_search": "Durchsucht das Internet nach Informationen.",
     "web_news_search": "Sucht aktuelle Nachrichten zu einem Thema.",
     "search_and_read": "Sucht im Internet und liest die besten Ergebnisse vollstaendig.",
+    "verified_web_lookup": "Mehrstufiges Fakten-Pruefverfahren mit Quellenvergleich und Konfidenz-Score.",
     "web_fetch": "Ruft den Inhalt einer URL ab.",
     "http_request": "Fuehrt einen HTTP-Request aus (GET/POST/PUT/PATCH/DELETE).",
     "read_file": "Liest den Inhalt einer Datei.",
@@ -667,6 +678,7 @@ _TOOL_DESCRIPTIONS_ZH: dict[str, str] = {
     "web_search": "搜索互联网信息。",
     "web_news_search": "搜索最新新闻。",
     "search_and_read": "搜索互联网并完整阅读最佳结果。",
+    "verified_web_lookup": "多阶段事实验证流程，包含来源比较和置信度评分。",
     "web_fetch": "获取URL的内容。",
     "read_file": "读取文件内容。",
     "write_file": "将内容写入文件。",
@@ -1048,6 +1060,21 @@ class ToolRegistryDB:
             if name in DEFAULT_EXAMPLES:
                 ex_in, ex_out = DEFAULT_EXAMPLES[name]
 
+            # Locked tools: nur Input-Schema aktualisieren (Code-Signatur kann
+            # sich aendern), Beschreibungen/Beispiele/Rollen bleiben geschuetzt.
+            if self.is_locked(name):
+                existing = self.get_tool(name)
+                if existing is not None:
+                    schema_str = json.dumps(input_schema or {}, ensure_ascii=False)
+                    self._conn.execute(
+                        "UPDATE tools SET input_schema = ?, updated_at = ? WHERE name = ?",
+                        (schema_str, datetime.now(UTC).isoformat(), name),
+                    )
+                    self._conn.commit()
+                    count += 1
+                    continue
+                # Tool existiert noch nicht -> normales Insert (locked=1 per Default)
+
             # Localized descriptions: use tool-specific overrides if available,
             # otherwise the MCP description (usually English) goes to all langs
             desc_de = _TOOL_DESCRIPTIONS_DE.get(name, desc)
@@ -1122,6 +1149,26 @@ class ToolRegistryDB:
         if row is None:
             return True  # Unknown tools are locked by default
         return bool(row[0])
+
+    def set_locked(self, tool_name: str, locked: bool = True) -> bool:
+        """Setzt den Lock-Status eines Tools.
+
+        Gesperrte Tools werden von ``sync_from_mcp`` nicht ueberschrieben
+        (ausser dem Input-Schema, da sich die Code-Signatur aendern kann).
+
+        Args:
+            tool_name: Name des Tools.
+            locked: True zum Sperren, False zum Entsperren.
+
+        Returns:
+            True wenn das Tool existiert und aktualisiert wurde.
+        """
+        cursor = self._conn.execute(
+            "UPDATE tools SET locked = ?, updated_at = ? WHERE name = ?",
+            (int(locked), datetime.now(UTC).isoformat(), tool_name),
+        )
+        self._conn.commit()
+        return cursor.rowcount > 0
 
     def close(self) -> None:
         """Schliesst die Datenbankverbindung."""

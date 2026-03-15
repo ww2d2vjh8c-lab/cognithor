@@ -450,3 +450,94 @@ class TestMaxParallelFromConfig:
         config = JarvisConfig(jarvis_home=tmp_path)
         executor = Executor(config, AsyncMock())
         assert executor._max_parallel == 4
+
+
+# ============================================================================
+# Test: Fact-Question Cross-Check Injection
+# ============================================================================
+
+
+class TestFactQuestionCrossCheck:
+    """Tests fuer die automatische cross_check-Injection bei Faktenfragen."""
+
+    @pytest.mark.asyncio
+    async def test_cross_check_injected_for_search_and_read(
+        self, executor: Executor, mock_mcp: AsyncMock
+    ) -> None:
+        """search_and_read bekommt cross_check=True bei Faktenfragen."""
+        executor.set_fact_question_context(True)
+        action = PlannedAction(
+            tool="search_and_read", params={"query": "cognithor github stars"}
+        )
+        await executor.execute([action], [_allow_decision(action)])
+
+        # Pruefen dass cross_check=True in den Params war
+        call_args = mock_mcp.call_tool.call_args
+        assert call_args is not None
+        actual_params = call_args[1] if call_args[1] else call_args[0][1]
+        # call_tool wird mit (tool_name, params) aufgerufen
+        # Parsen: call_tool("search_and_read", {"query": ..., "cross_check": True})
+        assert actual_params.get("cross_check") is True or (
+            len(call_args[0]) > 1 and call_args[0][1].get("cross_check") is True
+        )
+        executor.clear_agent_context()
+
+    @pytest.mark.asyncio
+    async def test_no_cross_check_without_fact_context(
+        self, executor: Executor, mock_mcp: AsyncMock
+    ) -> None:
+        """search_and_read bekommt KEIN cross_check ohne Faktenfrage-Kontext."""
+        action = PlannedAction(
+            tool="search_and_read", params={"query": "test"}
+        )
+        await executor.execute([action], [_allow_decision(action)])
+
+        call_args = mock_mcp.call_tool.call_args
+        assert call_args is not None
+        # Params duerfen kein cross_check enthalten
+        if len(call_args[0]) > 1:
+            assert "cross_check" not in call_args[0][1]
+
+    @pytest.mark.asyncio
+    async def test_cross_check_not_overridden_if_explicit(
+        self, executor: Executor, mock_mcp: AsyncMock
+    ) -> None:
+        """Explizites cross_check=False wird nicht ueberschrieben."""
+        executor.set_fact_question_context(True)
+        action = PlannedAction(
+            tool="search_and_read",
+            params={"query": "test", "cross_check": False},
+        )
+        await executor.execute([action], [_allow_decision(action)])
+
+        call_args = mock_mcp.call_tool.call_args
+        assert call_args is not None
+        # Explizites False bleibt erhalten (setdefault ueberschreibt nicht)
+        if len(call_args[0]) > 1:
+            assert call_args[0][1].get("cross_check") is False
+        executor.clear_agent_context()
+
+    @pytest.mark.asyncio
+    async def test_cross_check_not_injected_for_other_tools(
+        self, executor: Executor, mock_mcp: AsyncMock
+    ) -> None:
+        """Andere Tools bekommen kein cross_check."""
+        executor.set_fact_question_context(True)
+        action = PlannedAction(tool="web_search", params={"query": "test"})
+        await executor.execute([action], [_allow_decision(action)])
+
+        call_args = mock_mcp.call_tool.call_args
+        assert call_args is not None
+        if len(call_args[0]) > 1:
+            assert "cross_check" not in call_args[0][1]
+        executor.clear_agent_context()
+
+    def test_set_and_clear_fact_context(self, executor: Executor) -> None:
+        """Fact-Kontext wird korrekt gesetzt und aufgeraeumt."""
+        from jarvis.core.executor import _fact_question_var
+
+        assert _fact_question_var.get() is False  # Default
+        executor.set_fact_question_context(True)
+        assert _fact_question_var.get() is True
+        executor.clear_agent_context()
+        assert _fact_question_var.get() is False  # Zurueckgesetzt

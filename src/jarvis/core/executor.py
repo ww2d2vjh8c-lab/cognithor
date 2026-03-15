@@ -44,6 +44,9 @@ _agent_sandbox_var: contextvars.ContextVar[dict[str, Any] | None] = contextvars.
 )
 _agent_name_var: contextvars.ContextVar[str] = contextvars.ContextVar("agent_name", default="")
 _session_id_var: contextvars.ContextVar[str] = contextvars.ContextVar("session_id", default="")
+_fact_question_var: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "fact_question", default=False
+)
 
 log = get_logger(__name__)
 
@@ -185,6 +188,15 @@ class Executor:
             _agent_name_var.set(agent_name),
             _session_id_var.set(session_id),
         ]
+
+    def set_fact_question_context(self, is_fact: bool) -> None:
+        """Markiert den aktuellen Request als Faktenfrage.
+
+        Wenn True, wird bei ``search_and_read``-Aufrufen automatisch
+        ``cross_check=True`` injiziert, damit mehrere Quellen verglichen
+        werden.
+        """
+        self._ctx_tokens.append(_fact_question_var.set(is_fact))
 
     def clear_agent_context(self) -> None:
         """Löscht den Agent-Kontext nach der Ausführung."""
@@ -373,6 +385,15 @@ class Executor:
             and "working_dir" not in params
         ):
             params["working_dir"] = _agent_workspace_var.get()
+
+        # --- Faktenfrage: cross_check fuer search_and_read injizieren ---
+        if (
+            _fact_question_var.get()
+            and tool_name == "search_and_read"
+            and "cross_check" not in params
+        ):
+            params["cross_check"] = True
+            log.debug("fact_question_cross_check_injected", tool=tool_name)
 
         if _agent_sandbox_var.get() and tool_name == "exec_command":
             # Sandbox-Overrides als interne Params durchreichen

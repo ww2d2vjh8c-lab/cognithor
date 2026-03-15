@@ -479,6 +479,137 @@ class TestSetAgentRoles:
 
 
 # ============================================================================
+# Test: Locked Enforcement
+# ============================================================================
+
+
+class TestLockedEnforcement:
+    """Tests fuer die locked-Column und deren Enforcement in sync_from_mcp."""
+
+    def test_is_locked_default(self, populated_registry: ToolRegistryDB) -> None:
+        """Neue Tools sind standardmaessig gesperrt (locked=1)."""
+        assert populated_registry.is_locked("read_file") is True
+
+    def test_is_locked_unknown_tool(self, registry: ToolRegistryDB) -> None:
+        """Unbekannte Tools gelten als gesperrt."""
+        assert registry.is_locked("nonexistent") is True
+
+    def test_set_locked_unlock(self, populated_registry: ToolRegistryDB) -> None:
+        """Tool kann entsperrt und wieder gesperrt werden."""
+        assert populated_registry.set_locked("read_file", locked=False) is True
+        assert populated_registry.is_locked("read_file") is False
+
+        assert populated_registry.set_locked("read_file", locked=True) is True
+        assert populated_registry.is_locked("read_file") is True
+
+    def test_set_locked_nonexistent(self, registry: ToolRegistryDB) -> None:
+        """set_locked fuer nicht vorhandenes Tool gibt False zurueck."""
+        assert registry.set_locked("no_such_tool") is False
+
+    def test_sync_skips_locked_descriptions(self, registry: ToolRegistryDB) -> None:
+        """sync_from_mcp ueberschreibt Beschreibungen gesperrter Tools nicht."""
+        # Manuell kuratiertes Tool einfuegen (locked=1 per Default)
+        registry.upsert_tool(
+            name="web_search",
+            description_de="Manuell kuratiert",
+            description_en="Manually curated",
+            description_zh="手动策划",
+            example_input="curated_input",
+            example_output="curated_output",
+            category="web",
+            agent_roles=["planner"],
+        )
+        assert registry.is_locked("web_search") is True
+
+        # Sync mit neuen Werten
+        mock_client = _make_mock_mcp_client(
+            {
+                "web_search": {
+                    "description": "Auto-synced description",
+                    "inputSchema": {
+                        "properties": {"query": {"type": "string"}, "limit": {"type": "integer"}},
+                        "required": ["query"],
+                    },
+                },
+            }
+        )
+        registry.sync_from_mcp(mock_client)
+
+        tool = registry.get_tool("web_search")
+        # Beschreibungen unberuehrt
+        assert tool.description == "Manually curated"
+        # Beispiele unberuehrt
+        assert tool.example_input == "curated_input"
+        assert tool.example_output == "curated_output"
+        # Rollen unberuehrt
+        assert tool.agent_roles == ["planner"]
+        # Schema WURDE aktualisiert (Code-Signatur kann sich aendern)
+        assert "limit" in tool.input_schema.get("properties", {})
+
+    def test_sync_updates_unlocked_descriptions(self, registry: ToolRegistryDB) -> None:
+        """sync_from_mcp aktualisiert Beschreibungen entsperrter Tools."""
+        registry.upsert_tool(
+            name="web_search",
+            description_en="Old description",
+            category="web",
+        )
+        registry.set_locked("web_search", locked=False)
+
+        mock_client = _make_mock_mcp_client(
+            {
+                "web_search": {
+                    "description": "New from MCP",
+                    "inputSchema": {"properties": {"q": {"type": "string"}}},
+                },
+            }
+        )
+        registry.sync_from_mcp(mock_client)
+
+        tool = registry.get_tool("web_search")
+        assert tool.description == "New from MCP"
+
+    def test_sync_inserts_new_locked_tool(self, registry: ToolRegistryDB) -> None:
+        """Noch nicht existierendes Tool wird trotz locked=True-Default eingefuegt."""
+        mock_client = _make_mock_mcp_client(
+            {
+                "brand_new_tool": {
+                    "description": "Brand new",
+                    "inputSchema": {},
+                },
+            }
+        )
+        count = registry.sync_from_mcp(mock_client)
+        assert count == 1
+        tool = registry.get_tool("brand_new_tool")
+        assert tool is not None
+        assert tool.description == "Brand new"
+        # Nach Insert ist es gesperrt (Default)
+        assert registry.is_locked("brand_new_tool") is True
+
+    def test_sync_locked_preserves_category_and_roles(self, registry: ToolRegistryDB) -> None:
+        """Gesperrte Tools behalten Kategorie und Rollen bei Sync."""
+        registry.upsert_tool(
+            name="read_file",
+            description_en="Custom desc",
+            category="custom_cat",
+            agent_roles=["researcher"],
+        )
+        mock_client = _make_mock_mcp_client(
+            {
+                "read_file": {
+                    "description": "MCP desc",
+                    "inputSchema": {},
+                },
+            }
+        )
+        registry.sync_from_mcp(mock_client)
+
+        tool = registry.get_tool("read_file")
+        assert tool.category == "custom_cat"
+        assert tool.agent_roles == ["researcher"]
+
+
+# ============================================================================
 # Test: Procedure Deduplication
 # ============================================================================
 

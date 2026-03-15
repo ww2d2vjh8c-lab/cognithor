@@ -99,6 +99,37 @@ _TOOL_STATUS_MAP: dict[str, str] = {
 }
 
 
+def _sanitize_broken_llm_output(text: str) -> str:
+    """Entfernt JSON-Artefakte aus einer kaputten LLM-Antwort.
+
+    Wenn das LLM einen Mix aus Freitext und kaputtem JSON produziert hat,
+    extrahiert diese Funktion den lesbaren Textanteil.
+
+    Returns:
+        Bereinigter Text oder leerer String wenn nichts Brauchbares übrig bleibt.
+    """
+    if not text:
+        return ""
+
+    import re as _re
+
+    # 1. Code-Bloecke entfernen (```json ... ```)
+    cleaned = _re.sub(r"```(?:json)?\s*\n?.*?\n?\s*```", "", text, flags=_re.DOTALL)
+
+    # 2. JSON-Objekte entfernen ({ ... } Bloecke die JSON-Keys enthalten)
+    cleaned = _re.sub(r"\{[^{}]*\"[^{}]*\"[^{}]*\}", "", cleaned)
+
+    # 3. Stray JSON-Fragmente entfernen (Keys ohne zugehoerige Objekte)
+    cleaned = _re.sub(r"\"(?:goal|steps|tool|params|reasoning|confidence)\":\s*", "", cleaned)
+
+    # 4. Leere Klammern, Kommas und Whitespace aufraeumen
+    cleaned = _re.sub(r"[{}\[\]]", "", cleaned)
+    cleaned = _re.sub(r"\s*,\s*,\s*", " ", cleaned)
+    cleaned = _re.sub(r"\n{3,}", "\n\n", cleaned)
+
+    return cleaned.strip()
+
+
 class Gateway:
     """Central entry point. Connects all Jarvis subsystems. [B§9.1]"""
 
@@ -1564,18 +1595,35 @@ class Gateway:
                 except Exception:
                     log.debug("run_recorder_plan_failed", exc_info=True)
 
-            # JSON parse failed even after retry — inform user instead of
-            # silently returning garbled LLM output as a "direct response"
+            # JSON parse failed even after retry — recover gracefully
             if getattr(plan, "parse_failed", False):
                 log.warning(
                     "pge_plan_parse_failed",
                     iteration=session.iteration_count,
                     confidence=plan.confidence,
+                    preview=(plan.direct_response or "")[:200],
                 )
-                final_response = (
-                    "I couldn't process the language model's response correctly. "
-                    "Please try again or rephrase your request."
-                )
+                # Recovery: wenn bereits erfolgreiche Tool-Ergebnisse vorliegen,
+                # daraus eine saubere Antwort formulieren (statt aufzugeben)
+                if all_results and any(r.success for r in all_results):
+                    await _status_cb("finishing", "Composing response...")
+                    final_response = await self._planner.formulate_response(
+                        user_message=msg.text,
+                        results=all_results,
+                        working_memory=wm,
+                    )
+                else:
+                    # Kein Kontext → Sanitized-Fallback oder Fehlermeldung
+                    _raw = plan.direct_response or ""
+                    _sanitized = _sanitize_broken_llm_output(_raw)
+                    if _sanitized and len(_sanitized) > 20:
+                        # LLM hat brauchbaren Text produziert, nur JSON-Artefakte entfernt
+                        final_response = _sanitized
+                    else:
+                        final_response = (
+                            "Ich konnte die Antwort des Sprachmodells nicht verarbeiten. "
+                            "Bitte versuch es nochmal oder formuliere deine Anfrage anders."
+                        )
                 break
 
             # Direkte Antwort — but detect REPLAN text masquerading as response
@@ -1726,6 +1774,11 @@ class Gateway:
                 )
             else:
                 self._executor.set_agent_context(session_id=session.session_id)
+
+            # Faktenfrage: cross_check fuer search_and_read auto-injizieren
+            # (muss NACH set_agent_context, da dieses clear_agent_context aufruft)
+            if self._is_fact_question(msg.text):
+                self._executor.set_fact_question_context(True)
 
             try:
                 results = await self._executor.execute(plan.steps, approved_decisions)

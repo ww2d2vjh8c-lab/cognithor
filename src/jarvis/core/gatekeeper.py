@@ -412,6 +412,7 @@ class Gatekeeper:
             "web_fetch",
             "web_news_search",
             "search_and_read",
+            "verified_web_lookup",
             "browse_url",
             "search_procedures",
             "media_analyze_image",

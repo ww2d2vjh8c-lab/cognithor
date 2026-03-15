@@ -752,3 +752,100 @@ class TestFormatResults:
         # read_file only gets 1000 chars, so 3000 chars will be truncated
         assert "A" * 3000 not in formatted_non_search
         assert "[... Output" in formatted_non_search
+
+
+# ============================================================================
+# Test: _extract_plan — False-Positive-Reduktion
+# ============================================================================
+
+
+class TestExtractPlanFalsePositives:
+    """Tests dass _extract_plan bei Freitext mit Sonderzeichen korrekt arbeitet."""
+
+    def test_text_with_braces_no_json_keys(self, config: JarvisConfig) -> None:
+        """Text mit {} aber ohne JSON-Keys wird als direkte Antwort erkannt."""
+        planner = Planner(config, _mock_ollama(""), _mock_router())
+        # "Nutze Python mit {dict comprehensions}" — kein JSON!
+        plan = planner._extract_plan(
+            "Nutze Python mit {dict comprehensions} fuer schnelleren Code.",
+            "Erklaere Python",
+        )
+        assert plan.direct_response is not None
+        assert plan.parse_failed is False
+        assert "dict comprehensions" in plan.direct_response
+
+    def test_text_with_goal_key_triggers_parse_failed(self, config: JarvisConfig) -> None:
+        """Text mit 'goal' JSON-Key wird als kaputtes JSON erkannt."""
+        planner = Planner(config, _mock_ollama(""), _mock_router())
+        broken = '{"goal": "etwas tun", "steps": [{"tool": "broken'
+        plan = planner._extract_plan(broken, "test")
+        assert plan.parse_failed is True
+
+    def test_valid_json_plan_still_works(self, config: JarvisConfig) -> None:
+        """Gültiger JSON-Plan wird weiterhin korrekt geparsed."""
+        planner = Planner(config, _mock_ollama(""), _mock_router())
+        valid = (
+            '```json\n{"goal": "Test", "steps": '
+            '[{"tool": "web_search", "params": {"query": "test"}, '
+            '"rationale": "Suche"}], "confidence": 0.9}\n```'
+        )
+        plan = planner._extract_plan(valid, "test")
+        assert plan.parse_failed is False
+        assert plan.has_actions
+        assert plan.steps[0].tool == "web_search"
+
+
+# ============================================================================
+# Test: _sanitize_broken_llm_output
+# ============================================================================
+
+
+class TestSanitizeBrokenLlmOutput:
+    """Tests fuer die JSON-Sanitizer-Funktion in gateway.py."""
+
+    def test_pure_json_removed(self) -> None:
+        """Reines JSON wird komplett entfernt."""
+        from jarvis.gateway.gateway import _sanitize_broken_llm_output
+
+        text = '{"goal": "etwas", "steps": [{"tool": "x"}]}'
+        result = _sanitize_broken_llm_output(text)
+        assert '"goal"' not in result
+        assert '"steps"' not in result
+
+    def test_mixed_text_preserved(self) -> None:
+        """Freitext wird beibehalten, JSON-Artefakte entfernt."""
+        from jarvis.gateway.gateway import _sanitize_broken_llm_output
+
+        text = (
+            'Ich werde das recherchieren. ```json\n{"goal": "broken'
+            "\nDie Antwort ist 42."
+        )
+        result = _sanitize_broken_llm_output(text)
+        assert "recherchieren" in result
+        assert "42" in result
+        assert '"goal"' not in result
+
+    def test_empty_input(self) -> None:
+        """Leerer Input gibt leeren String zurueck."""
+        from jarvis.gateway.gateway import _sanitize_broken_llm_output
+
+        assert _sanitize_broken_llm_output("") == ""
+        assert _sanitize_broken_llm_output("   ") == ""
+
+    def test_clean_text_unchanged(self) -> None:
+        """Normaler Text ohne JSON bleibt unveraendert."""
+        from jarvis.gateway.gateway import _sanitize_broken_llm_output
+
+        text = "Das ist eine ganz normale Antwort auf Deutsch."
+        result = _sanitize_broken_llm_output(text)
+        assert result == text
+
+    def test_code_block_removed(self) -> None:
+        """JSON-Codeblock wird entfernt."""
+        from jarvis.gateway.gateway import _sanitize_broken_llm_output
+
+        text = 'Hier: ```json\n{"goal": "test", "steps": []}\n``` Ende.'
+        result = _sanitize_broken_llm_output(text)
+        assert "Hier:" in result
+        assert "Ende." in result
+        assert "```" not in result

@@ -444,4 +444,54 @@ async def init_tools(
     except Exception:
         log.debug("desktop_tools_not_registered", exc_info=True)
 
+    # Verified Web Lookup (multi-agent fact verification)
+    try:
+        from jarvis.mcp.verified_lookup import register_verified_lookup_tools
+
+        verified_lookup = register_verified_lookup_tools(mcp_client, config)
+
+        # Dependency Injection: WebTools
+        if web_tools is not None:
+            verified_lookup._set_web_tools(web_tools)
+
+        # Dependency Injection: BrowserTool
+        # browser_agent ist das v17-BrowserUse-Objekt; fuer verified_lookup
+        # brauchen wir das v14-BrowserTool (navigate + extract_text)
+        if browser_agent is not None and hasattr(browser_agent, "navigate"):
+            verified_lookup._set_browser_tool(browser_agent)
+        else:
+            try:
+                from jarvis.mcp.browser import BrowserTool
+
+                _browser_for_lookup = BrowserTool(config)
+                verified_lookup._set_browser_tool(_browser_for_lookup)
+            except Exception:
+                log.debug("verified_lookup_browser_skipped", exc_info=True)
+
+        # Dependency Injection: LLM (gleicher Pattern wie Synthesizer)
+        if synthesizer is not None and hasattr(synthesizer, "_llm_fn") and synthesizer._llm_fn:
+            verified_lookup._set_llm_fn(synthesizer._llm_fn, synthesizer._llm_model)
+        else:
+            try:
+                from jarvis.core.unified_llm import UnifiedLLMClient
+
+                _llm_vl = UnifiedLLMClient.create(config)
+                _model_vl = getattr(getattr(config, "models", None), "planner", None)
+                _model_vl = getattr(_model_vl, "name", "") if _model_vl else ""
+
+                async def _llm_for_verified(prompt: str, model: str = "") -> str:
+                    resp = await _llm_vl.chat(
+                        messages=[{"role": "user", "content": prompt}],
+                        model=model or _model_vl,
+                    )
+                    return resp.get("content", "") if isinstance(resp, dict) else str(resp)
+
+                verified_lookup._set_llm_fn(_llm_for_verified, _model_vl)
+            except Exception:
+                log.debug("verified_lookup_llm_skipped", exc_info=True)
+
+        log.info("verified_lookup_registered")
+    except Exception:
+        log.debug("verified_lookup_not_registered", exc_info=True)
+
     return result

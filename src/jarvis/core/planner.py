@@ -171,6 +171,7 @@ Direkte Textantwort (Option A): „Eine API ist eine Programmierschnittstelle...
 |---------------------|--------|----------------|
 | Allgemeine Erklärung, Smalltalk, Meinung | A | -- |
 | Aktuelle Ereignisse, Politik, Nachrichten, Fakten | B | search_and_read / web_news_search |
+| Konkrete Zahlen/Daten die verifiziert werden muessen | B | verified_web_lookup |
 | „Datei", „lesen", „erstellen", „schreiben" | B | read_file / write_file |
 | „Verzeichnis", „Ordner", „auflisten" | B | list_directory |
 | „Befehl", „ausführen", „Shell", „Code" | B | exec_command |
@@ -193,6 +194,8 @@ Antworte bei Faktenfragen NIEMALS aus dem Gedächtnis -- nutze IMMER ein Such-To
 ### Tipps für bessere Suchergebnisse
 - **Bevorzuge search_and_read** statt web_search -- es liest die Seiteninhalte und liefert \
 dir den vollen Text, nicht nur kurze Snippets. Nutze es für alle Faktenfragen.
+- **verified_web_lookup** fuer Fragen wo exakte Zahlen/Daten wichtig sind (Stars, Preise, \
+Einwohnerzahlen, Statistiken). Es prueft mehrere Quellen parallel und gibt einen Konfidenz-Score.
 - Bei aktuellen Nachrichten: web_news_search mit `"timelimit": "w"`.
 - Formuliere die Suchanfrage als KEYWORDS, NICHT als Frage. \
 Beispiel: Statt „Wann hat die USA den venezolanischen Präsidenten entführt?" → \
@@ -1237,12 +1240,18 @@ class Planner:
         # Detect if LLM *attempted* JSON but it was malformed:
         # presence of braces or json markers signals a parse failure,
         # not a genuine direct answer.
-        _has_json_markers = (
-            (first_brace is not None and first_brace >= 0)
-            or json_match is not None
-            or '"steps"' in text
-            or '"goal"' in text
+        # Tightened check: einzelne { in Freitext (z.B. "Python {dict}")
+        # sind KEIN Indikator fuer kaputtes JSON. Wir prüfen auf
+        # kombinierte Signale: { + JSON-Keys, oder ``` + json-Marker.
+        _has_plan_keys = '"steps"' in text or '"goal"' in text
+        _has_json_block = json_match is not None
+        _has_braces_with_keys = (
+            first_brace is not None
+            and first_brace >= 0
+            and last_brace > first_brace
+            and _has_plan_keys
         )
+        _has_json_markers = _has_json_block or _has_braces_with_keys or _has_plan_keys
 
         if _has_json_markers:
             log.warning(
