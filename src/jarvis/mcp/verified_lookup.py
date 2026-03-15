@@ -182,10 +182,7 @@ class VerifiedWebLookup:
         # ── Stage 3: Fakten-Extraktion per LLM ──────────────────────────
         all_facts: list[ExtractedFact] = []
         if self._llm_fn is not None:
-            fact_tasks = [
-                self._extract_facts(src.text, query, src.url)
-                for src in successful
-            ]
+            fact_tasks = [self._extract_facts(src.text, query, src.url) for src in successful]
             fact_results = await asyncio.gather(*fact_tasks, return_exceptions=True)
             for result in fact_results:
                 if isinstance(result, list):
@@ -193,7 +190,10 @@ class VerifiedWebLookup:
 
         # ── Stage 4: Konsens berechnen ───────────────────────────────────
         verification = await self._build_consensus(
-            query, all_facts, successful, language,
+            query,
+            all_facts,
+            successful,
+            language,
         )
         verification.duration_ms = (time.monotonic() - start) * 1000
 
@@ -213,27 +213,34 @@ class VerifiedWebLookup:
         async def _extract_trafilatura(url: str) -> SourceResult:
             start = time.monotonic()
             try:
-                text = await self._web_tools.web_fetch(
-                    url, max_chars=_DEFAULT_MAX_TEXT_PER_SOURCE
-                )
+                text = await self._web_tools.web_fetch(url, max_chars=_DEFAULT_MAX_TEXT_PER_SOURCE)
                 ms = (time.monotonic() - start) * 1000
                 success = bool(text and len(text.strip()) > 50)
                 return SourceResult(
-                    url=url, text=text[:_DEFAULT_MAX_TEXT_PER_SOURCE],
-                    method="trafilatura", success=success, duration_ms=ms,
+                    url=url,
+                    text=text[:_DEFAULT_MAX_TEXT_PER_SOURCE],
+                    method="trafilatura",
+                    success=success,
+                    duration_ms=ms,
                 )
             except Exception as exc:
                 ms = (time.monotonic() - start) * 1000
                 log.debug("trafilatura_extract_failed", url=url[:80], error=str(exc)[:100])
                 return SourceResult(
-                    url=url, text="", method="trafilatura",
-                    success=False, duration_ms=ms,
+                    url=url,
+                    text="",
+                    method="trafilatura",
+                    success=False,
+                    duration_ms=ms,
                 )
 
         async def _extract_browser(url: str) -> SourceResult:
             if self._browser_tool is None:
                 return SourceResult(
-                    url=url, text="", method="browser", success=False,
+                    url=url,
+                    text="",
+                    method="browser",
+                    success=False,
                 )
             start = time.monotonic()
             try:
@@ -245,22 +252,31 @@ class VerifiedWebLookup:
                 text = browser_result.text or ""
                 success = browser_result.success and len(text.strip()) > 50
                 return SourceResult(
-                    url=url, text=text[:_DEFAULT_MAX_TEXT_PER_SOURCE],
-                    method="browser", success=success, duration_ms=ms,
+                    url=url,
+                    text=text[:_DEFAULT_MAX_TEXT_PER_SOURCE],
+                    method="browser",
+                    success=success,
+                    duration_ms=ms,
                 )
             except (TimeoutError, asyncio.TimeoutError):
                 ms = (time.monotonic() - start) * 1000
                 log.debug("browser_extract_timeout", url=url[:80])
                 return SourceResult(
-                    url=url, text="", method="browser",
-                    success=False, duration_ms=ms,
+                    url=url,
+                    text="",
+                    method="browser",
+                    success=False,
+                    duration_ms=ms,
                 )
             except Exception as exc:
                 ms = (time.monotonic() - start) * 1000
                 log.debug("browser_extract_failed", url=url[:80], error=str(exc)[:100])
                 return SourceResult(
-                    url=url, text="", method="browser",
-                    success=False, duration_ms=ms,
+                    url=url,
+                    text="",
+                    method="browser",
+                    success=False,
+                    duration_ms=ms,
                 )
 
         # Trafilatura fuer ALLE URLs + Browser fuer die erste URL parallel
@@ -268,7 +284,7 @@ class VerifiedWebLookup:
         for url in urls:
             tasks.append(asyncio.ensure_future(_extract_trafilatura(url)))
         # Browser-Agent nur fuer Top-URLs (teurer, aber robuster)
-        browser_urls = urls[:min(2, len(urls))]
+        browser_urls = urls[: min(2, len(urls))]
         for url in browser_urls:
             tasks.append(asyncio.ensure_future(_extract_browser(url)))
 
@@ -286,9 +302,7 @@ class VerifiedWebLookup:
         for item in done:
             if isinstance(item, SourceResult):
                 existing = best_per_url.get(item.url)
-                if existing is None or (
-                    item.success and len(item.text) > len(existing.text)
-                ):
+                if existing is None or (item.success and len(item.text) > len(existing.text)):
                     best_per_url[item.url] = item
                 # Auch das "zweitbeste" Ergebnis aufheben wenn es eine
                 # andere Methode nutzt (fuer Cross-Check)
@@ -391,7 +405,9 @@ class VerifiedWebLookup:
         # LLM-basierter Konsens (wenn verfuegbar)
         if self._llm_fn is not None and facts:
             answer, confidence, llm_discrepancies = await self._llm_consensus(
-                query, facts, language,
+                query,
+                facts,
+                language,
             )
             discrepancies.extend(llm_discrepancies)
         else:
@@ -466,9 +482,7 @@ class VerifiedWebLookup:
         if successful:
             parts.append(f"\n### Quellen ({len(successful)} geprueft)")
             for i, src in enumerate(successful, 1):
-                parts.append(
-                    f"- [{i}] {src.url} ({src.method}, {src.duration_ms:.0f}ms)"
-                )
+                parts.append(f"- [{i}] {src.url} ({src.method}, {src.duration_ms:.0f}ms)")
 
         # Uebereinstimmung
         if result.facts:

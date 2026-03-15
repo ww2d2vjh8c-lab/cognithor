@@ -112,9 +112,7 @@ def mock_llm_fn() -> AsyncMock:
 
 
 @pytest.fixture()
-def lookup(
-    config, mock_web_tools, mock_browser, mock_llm_fn
-) -> VerifiedWebLookup:
+def lookup(config, mock_web_tools, mock_browser, mock_llm_fn) -> VerifiedWebLookup:
     """Vollstaendig konfiguriertes VerifiedWebLookup."""
     vl = VerifiedWebLookup(config)
     vl._set_web_tools(mock_web_tools)
@@ -152,9 +150,7 @@ class TestVerifiedLookup:
         assert "WebTools" in result
 
     @pytest.mark.asyncio
-    async def test_no_search_results(
-        self, config, mock_web_tools
-    ) -> None:
+    async def test_no_search_results(self, config, mock_web_tools) -> None:
         """Behandlung leerer Suchergebnisse."""
         mock_web_tools.web_search = AsyncMock(return_value="Keine Ergebnisse gefunden.")
         vl = VerifiedWebLookup(config)
@@ -200,9 +196,7 @@ class TestParallelExtraction:
         assert mock_browser.navigate.call_count >= 1
 
     @pytest.mark.asyncio
-    async def test_browser_failure_graceful(
-        self, lookup: VerifiedWebLookup, mock_browser
-    ) -> None:
+    async def test_browser_failure_graceful(self, lookup: VerifiedWebLookup, mock_browser) -> None:
         """Browser-Fehler fuehrt nicht zum Gesamtausfall."""
         mock_browser.navigate = AsyncMock(side_effect=RuntimeError("Browser crash"))
         result = await lookup.verified_lookup(query="test")
@@ -219,9 +213,7 @@ class TestParallelExtraction:
         assert "Verifizierte Antwort" in result
 
     @pytest.mark.asyncio
-    async def test_no_browser_tool_available(
-        self, config, mock_web_tools, mock_llm_fn
-    ) -> None:
+    async def test_no_browser_tool_available(self, config, mock_web_tools, mock_llm_fn) -> None:
         """Funktioniert auch ohne Browser-Tool (nur Trafilatura)."""
         vl = VerifiedWebLookup(config)
         vl._set_web_tools(mock_web_tools)
@@ -304,9 +296,7 @@ class TestConsensus:
     """Tests fuer den Konsens-Algorithmus."""
 
     @pytest.mark.asyncio
-    async def test_agreement_with_matching_facts(
-        self, lookup: VerifiedWebLookup
-    ) -> None:
+    async def test_agreement_with_matching_facts(self, lookup: VerifiedWebLookup) -> None:
         """Uebereinstimmende Fakten ergeben hohen Agreement-Score."""
         facts = [
             ExtractedFact("stars", "142", "number", "url1"),
@@ -317,15 +307,16 @@ class TestConsensus:
             SourceResult("url2", "text2", "browser", True),
         ]
         result = await lookup._build_consensus(
-            "how many stars?", facts, sources, "de",
+            "how many stars?",
+            facts,
+            sources,
+            "de",
         )
         assert result.agreement >= 0.8
         assert len(result.discrepancies) == 0
 
     @pytest.mark.asyncio
-    async def test_disagreement_detected(
-        self, lookup: VerifiedWebLookup
-    ) -> None:
+    async def test_disagreement_detected(self, lookup: VerifiedWebLookup) -> None:
         """Widersprueche werden erkannt."""
         facts = [
             ExtractedFact("stars", "142", "number", "url1"),
@@ -336,14 +327,15 @@ class TestConsensus:
             SourceResult("url2", "text2", "browser", True),
         ]
         result = await lookup._build_consensus(
-            "how many stars?", facts, sources, "de",
+            "how many stars?",
+            facts,
+            sources,
+            "de",
         )
         assert len(result.discrepancies) >= 1
 
     @pytest.mark.asyncio
-    async def test_empty_facts_and_sources(
-        self, lookup: VerifiedWebLookup
-    ) -> None:
+    async def test_empty_facts_and_sources(self, lookup: VerifiedWebLookup) -> None:
         """Leere Fakten und Quellen ergeben niedrige Konfidenz."""
         result = await lookup._build_consensus("query", [], [], "de")
         assert result.confidence == 0.0

@@ -816,10 +816,7 @@ class TestSanitizeBrokenLlmOutput:
         """Freitext wird beibehalten, JSON-Artefakte entfernt."""
         from jarvis.gateway.gateway import _sanitize_broken_llm_output
 
-        text = (
-            'Ich werde das recherchieren. ```json\n{"goal": "broken'
-            "\nDie Antwort ist 42."
-        )
+        text = 'Ich werde das recherchieren. ```json\n{"goal": "broken\nDie Antwort ist 42.'
         result = _sanitize_broken_llm_output(text)
         assert "recherchieren" in result
         assert "42" in result

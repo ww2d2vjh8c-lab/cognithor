@@ -466,9 +466,7 @@ class TestFactQuestionCrossCheck:
     ) -> None:
         """search_and_read bekommt cross_check=True bei Faktenfragen."""
         executor.set_fact_question_context(True)
-        action = PlannedAction(
-            tool="search_and_read", params={"query": "cognithor github stars"}
-        )
+        action = PlannedAction(tool="search_and_read", params={"query": "cognithor github stars"})
         await executor.execute([action], [_allow_decision(action)])
 
         # Pruefen dass cross_check=True in den Params war
@@ -487,9 +485,7 @@ class TestFactQuestionCrossCheck:
         self, executor: Executor, mock_mcp: AsyncMock
     ) -> None:
         """search_and_read bekommt KEIN cross_check ohne Faktenfrage-Kontext."""
-        action = PlannedAction(
-            tool="search_and_read", params={"query": "test"}
-        )
+        action = PlannedAction(tool="search_and_read", params={"query": "test"})
         await executor.execute([action], [_allow_decision(action)])
 
         call_args = mock_mcp.call_tool.call_args
