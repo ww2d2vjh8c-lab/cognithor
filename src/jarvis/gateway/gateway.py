@@ -1714,7 +1714,7 @@ class Gateway:
                             },
                         )
                     except Exception:
-                        pass
+                        log.debug("plan_detail_send_failed", exc_info=True)
 
             if run_id and self._run_recorder:
                 try:
