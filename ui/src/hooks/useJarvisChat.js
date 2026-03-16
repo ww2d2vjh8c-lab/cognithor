@@ -49,6 +49,8 @@ export function useJarvisChat() {
   const [pendingApproval, setPendingApproval] = useState(null);
   const [statusText, setStatusText] = useState("");
   const [pipelineState, setPipelineState] = useState(null);
+  const [agentLog, setAgentLog] = useState([]);
+  const [currentPlan, setCurrentPlan] = useState(null);
 
   const wsRef = useRef(null);
   const retriesRef = useRef(0);
@@ -64,6 +66,17 @@ export function useJarvisChat() {
       text,
       time: new Date(),
       ...meta,
+    }]);
+  }, []);
+
+  const appendLog = useCallback((data) => {
+    setAgentLog(prev => [...prev.slice(-200), {
+      id: Date.now() + Math.random(),
+      timestamp: new Date().toISOString(),
+      phase: data.phase || (data.status === "thinking" ? "plan" : data.status === "executing" ? "execute" : data.status === "finishing" ? "replan" : ""),
+      tool: data.tool || data.name || "",
+      status: data.status || "",
+      message: data.text || data.phase || data.type || "",
     }]);
   }, []);
 
@@ -155,6 +168,7 @@ export function useJarvisChat() {
         break;
 
       case "tool_start":
+        appendLog(data);
         setActiveTool({ name: data.tool || data.name, args: data.args });
         // Track sub-tool in pipeline state
         setPipelineState((prev) => {
@@ -170,6 +184,7 @@ export function useJarvisChat() {
         break;
 
       case "tool_result":
+        appendLog(data);
         setActiveTool(null);
         // Mark sub-tool as done in pipeline state
         setPipelineState((prev) => {
@@ -200,6 +215,7 @@ export function useJarvisChat() {
         break;
 
       case "pipeline_event":
+        appendLog(data);
         setPipelineState((prev) => {
           const phase = data.phase;
           const status = data.status;
@@ -300,6 +316,7 @@ export function useJarvisChat() {
         break;
 
       case "status_update":
+        appendLog(data);
         setStatusText(data.text || data.status || "");
         // Derive pipeline state from status_update events (fallback when
         // pipeline_event is not available — works with existing backend)
@@ -373,6 +390,11 @@ export function useJarvisChat() {
         streamAccRef.current = "";
         break;
 
+      case "plan_detail":
+        setCurrentPlan(data);
+        appendLog(data);
+        break;
+
       case "pong":
         // heartbeat response, ignore
         break;
@@ -380,7 +402,7 @@ export function useJarvisChat() {
       default:
         break;
     }
-  }, [addMessage]);
+  }, [addMessage, appendLog]);
 
   const startHeartbeat = useCallback((ws) => {
     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
@@ -488,6 +510,8 @@ export function useJarvisChat() {
 
   const sendMessage = useCallback((text) => {
     if (!text.trim()) return;
+    setAgentLog([]);
+    setCurrentPlan(null);
     // Start pipeline visualization immediately on send
     setPipelineState({
       active: true,
@@ -577,6 +601,8 @@ export function useJarvisChat() {
     setCanvasTitle("");
     setStatusText("");
     setPipelineState(null);
+    setAgentLog([]);
+    setCurrentPlan(null);
     try { sessionStorage.removeItem("jarvis-messages"); } catch {}
   }, []);
 
@@ -591,6 +617,8 @@ export function useJarvisChat() {
     pendingApproval,
     statusText,
     pipelineState,
+    agentLog,
+    currentPlan,
     sendMessage,
     sendFile,
     sendVoice,

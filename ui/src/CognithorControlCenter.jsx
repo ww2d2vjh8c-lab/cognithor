@@ -2413,6 +2413,75 @@ export default function App() {
         .cc-pipe-pulse { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pipeline-pulse 1s ease-in-out infinite; margin-left: 2px; }
         @keyframes pipeline-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
+        /* Observe Panel */
+        .cc-observe-panel { width: 420px; border-left: 1px solid var(--border); display: flex; flex-direction: column; background: var(--bg2); flex-shrink: 0; height: 100%; overflow: hidden; }
+        .cc-observe-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0; flex-shrink: 0; }
+        .cc-observe-tab { flex: 1; padding: 8px 4px; text-align: center; font-size: 11px; font-weight: 600; color: var(--text2); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; font-family: inherit; }
+        .cc-observe-tab:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+        .cc-observe-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .cc-observe-close { padding: 8px 12px; color: var(--text2); cursor: pointer; font-size: 14px; border: none; background: none; font-family: inherit; }
+        .cc-observe-close:hover { color: var(--text); }
+        .cc-observe-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+        /* Agent Log */
+        .cc-log-panel { flex: 1; overflow-y: auto; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11px; padding: 8px; background: var(--bg); }
+        .cc-log-entry { display: flex; gap: 6px; padding: 2px 0; align-items: baseline; }
+        .cc-log-ts { color: var(--text2); flex-shrink: 0; font-size: 10px; }
+        .cc-log-phase { padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
+        .cc-log-plan { background: rgba(0,212,255,0.15); color: #00d4ff; }
+        .cc-log-gate { background: rgba(255,171,64,0.15); color: #ffab40; }
+        .cc-log-execute { background: rgba(0,230,118,0.15); color: #00e676; }
+        .cc-log-replan { background: rgba(192,132,252,0.15); color: #c084fc; }
+        .cc-log-tool { color: var(--accent); font-weight: 600; flex-shrink: 0; }
+        .cc-log-msg { color: var(--text); opacity: 0.85; }
+        .cc-log-empty { color: var(--text2); text-align: center; padding: 40px 20px; font-style: italic; }
+
+        /* Kanban */
+        .cc-kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 8px; flex: 1; overflow-y: auto; }
+        .cc-kanban-col { display: flex; flex-direction: column; gap: 4px; min-height: 80px; }
+        .cc-kanban-header { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); padding: 4px 6px; border-bottom: 2px solid var(--border); margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .cc-kanban-count { background: var(--bg); border-radius: 8px; padding: 0 6px; font-size: 10px; }
+        .cc-kanban-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 11px; transition: all 0.3s ease; }
+        .cc-kanban-card.running { border-color: #00d4ff; background: rgba(0,212,255,0.06); }
+        .cc-kanban-card.done { border-color: #00e676; background: rgba(0,230,118,0.06); }
+        .cc-kanban-card.error { border-color: #ff5252; background: rgba(255,82,82,0.06); }
+        .cc-kanban-tool { font-weight: 600; margin-bottom: 2px; }
+        .cc-kanban-meta { font-size: 10px; color: var(--text2); }
+
+        /* Live DAG */
+        .cc-dag-panel { flex: 1; overflow: auto; padding: 8px; display: flex; align-items: center; justify-content: center; }
+        .cc-dag-empty { color: var(--text2); text-align: center; padding: 40px; font-style: italic; }
+
+        /* Plan Review */
+        .cc-plan-panel { flex: 1; overflow-y: auto; padding: 12px; }
+        .cc-plan-step { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+        .cc-plan-step-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .cc-plan-step-num { background: var(--accent); color: var(--bg); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+        .cc-plan-step-tool { font-weight: 600; font-size: 13px; }
+        .cc-plan-step-risk { padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+        .cc-plan-risk-green { background: rgba(0,230,118,0.15); color: #00e676; }
+        .cc-plan-risk-yellow { background: rgba(255,171,64,0.15); color: #ffab40; }
+        .cc-plan-risk-orange { background: rgba(255,152,0,0.15); color: #ff9800; }
+        .cc-plan-risk-red { background: rgba(255,82,82,0.15); color: #ff5252; }
+        .cc-plan-rationale { font-style: italic; color: var(--text2); font-size: 12px; margin-bottom: 4px; }
+        .cc-plan-params { font-family: monospace; font-size: 10px; color: var(--text2); background: var(--bg2); padding: 4px 8px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; }
+        .cc-plan-actions { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
+        .cc-plan-btn { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; font-family: inherit; }
+        .cc-plan-btn-approve { background: rgba(0,230,118,0.1); color: #00e676; border-color: #00e676; }
+        .cc-plan-btn-approve:hover { background: rgba(0,230,118,0.2); }
+        .cc-plan-btn-reject { background: rgba(255,82,82,0.1); color: #ff5252; border-color: #ff5252; }
+        .cc-plan-btn-reject:hover { background: rgba(255,82,82,0.2); }
+        .cc-plan-empty { color: var(--text2); text-align: center; padding: 40px 20px; font-style: italic; }
+
+        /* Observe toggle buttons */
+        .cc-chat-observe-btns { display: flex; gap: 2px; margin-left: auto; }
+        .cc-observe-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--text2); cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .cc-observe-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .cc-observe-btn.active { background: rgba(0,212,255,0.1); color: var(--accent); border-color: var(--accent); }
+
+        @media (max-width: 900px) { .cc-observe-panel { display: none; } }
+        @media (min-width: 901px) and (max-width: 1200px) { .cc-observe-panel { width: 320px; } }
+
         /* Approval Banner */
         .cc-approval { padding: 10px 16px; background: rgba(255,171,64,0.08); border-top: 1px solid rgba(255,171,64,0.2); flex-shrink: 0; }
         .cc-approval-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }

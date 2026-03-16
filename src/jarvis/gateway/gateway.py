@@ -1660,6 +1660,37 @@ class Gateway:
                 steps=len(plan.steps) if plan.has_actions else 0,
             )
 
+            # Emit plan detail for UI Plan Review panel
+            if plan.has_actions:
+                _plan_steps = []
+                for step in plan.steps:
+                    _plan_steps.append(
+                        {
+                            "tool": step.tool,
+                            "params": {k: str(v)[:100] for k, v in step.params.items()},
+                            "rationale": step.rationale,
+                            "risk_estimate": step.risk_estimate.value
+                            if hasattr(step.risk_estimate, "value")
+                            else str(step.risk_estimate),
+                            "depends_on": step.depends_on,
+                        }
+                    )
+                channel = self._channels.get(msg.channel)
+                if channel and hasattr(channel, "send_plan_detail"):
+                    try:
+                        await channel.send_plan_detail(
+                            msg.session_id,
+                            {
+                                "iteration": session.iteration_count,
+                                "goal": plan.goal,
+                                "reasoning": plan.reasoning,
+                                "confidence": plan.confidence,
+                                "steps": _plan_steps,
+                            },
+                        )
+                    except Exception:
+                        pass
+
             if run_id and self._run_recorder:
                 try:
                     self._run_recorder.record_plan(run_id, plan)

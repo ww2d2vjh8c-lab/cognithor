@@ -107,3 +107,9 @@ class Channel(ABC):
 
         Default: no-op. Nur WebUI implementiert dies.
         """
+
+    async def send_plan_detail(self, session_id: str, plan_data: dict[str, Any]) -> None:
+        """Plan detail for UI Plan Review panel.
+
+        Default: no-op. Only WebUI implements this.
+        """

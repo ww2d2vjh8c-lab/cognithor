@@ -748,6 +748,18 @@ def main() -> None:
                                 },
                             )
 
+                    async def send_plan_detail(self, session_id: str, plan_data: dict) -> None:
+                        ws = _ws_connections.get(session_id)
+                        if ws:
+                            await _ws_safe_send(
+                                ws,
+                                {
+                                    "type": "plan_detail",
+                                    "session_id": session_id,
+                                    **plan_data,
+                                },
+                            )
+
                 gateway.register_channel(_WebUIBridge())
                 log.info("webui_channel_bridge_registered")
 

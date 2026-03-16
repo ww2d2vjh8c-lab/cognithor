@@ -10,6 +10,14 @@ import { ToolIndicator } from "../components/chat/ToolIndicator";
 import { ApprovalBanner } from "../components/chat/ApprovalBanner";
 import { VoiceIndicator } from "../components/chat/VoiceIndicator";
 import PipelineCanvas from "../components/chat/PipelineCanvas";
+import ObservePanel from "../components/chat/ObservePanel";
+
+const OBSERVE_ICONS = {
+  log: "\uD83D\uDCCB",
+  kanban: "\uD83D\uDDC2\uFE0F",
+  dag: "\uD83D\uDD00",
+  plan: "\uD83D\uDCDD",
+};
 
 export default function ChatPage() {
   const {
@@ -22,12 +30,16 @@ export default function ChatPage() {
     activeTool,
     pendingApproval,
     pipelineState,
+    agentLog,
+    currentPlan,
     sendMessage,
     sendFile,
     sendVoice,
     respondApproval,
     clearMessages,
   } = useJarvisChat();
+
+  const [activePanel, setActivePanel] = useState(null);
 
   // Load wake word from config API
   const [wakeWord, setWakeWord] = useState("jarvis");
@@ -75,6 +87,13 @@ export default function ChatPage() {
     prevMsgCountRef.current = messages.length;
   }, [messages, voice.isActive, voice.speakResponse]);
 
+  // Auto-open canvas panel when canvasHtml arrives
+  useEffect(() => {
+    if (canvasHtml) {
+      setActivePanel("canvas");
+    }
+  }, [canvasHtml]);
+
   const showCanvas = !!canvasHtml;
 
   return (
@@ -88,6 +107,21 @@ export default function ChatPage() {
             <span className="cc-chat-title">{t("chat.title")}</span>
           </div>
           <div className="cc-chat-header-right">
+            {/* Observe Panel Toggle Buttons */}
+            <div className="cc-chat-observe-btns">
+              {Object.entries(OBSERVE_ICONS).map(([p, icon]) => (
+                <button
+                  key={p}
+                  className={`cc-observe-btn ${activePanel === p ? "active" : ""}`}
+                  onClick={() => setActivePanel(activePanel === p ? null : p)}
+                  type="button"
+                  title={`${p.charAt(0).toUpperCase() + p.slice(1)} panel`}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+
             {/* Voice Mode Toggle */}
             {voice.isSupported && (
               <button
@@ -103,12 +137,12 @@ export default function ChatPage() {
                 {voice.isActive ? t("chat.voice_on") : t("chat.voice")}
               </button>
             )}
-            {showCanvas && (
+            {showCanvas && !activePanel && (
               <button
                 className="cc-chat-header-btn"
-                onClick={() => {}}
+                onClick={() => setActivePanel("canvas")}
                 type="button"
-                title="Canvas is displayed on the right"
+                title="Show canvas panel"
               >
                 {t("chat.canvas_active")}
               </button>
@@ -168,8 +202,22 @@ export default function ChatPage() {
         />
       </div>
 
-      {/* Canvas Panel (conditional) */}
-      {showCanvas && (
+      {/* Observe Panel (right side, conditional) */}
+      {activePanel && (
+        <ObservePanel
+          activeTab={activePanel}
+          onTabChange={setActivePanel}
+          onClose={() => setActivePanel(null)}
+          pipelineState={pipelineState}
+          agentLog={agentLog}
+          currentPlan={currentPlan}
+          canvasHtml={canvasHtml}
+          canvasTitle={canvasTitle}
+        />
+      )}
+
+      {/* Canvas Panel (standalone, only if no observe panel showing canvas) */}
+      {showCanvas && !activePanel && (
         <ChatCanvas
           html={canvasHtml}
           title={canvasTitle}

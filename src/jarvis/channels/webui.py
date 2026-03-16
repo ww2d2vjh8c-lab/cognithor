@@ -62,6 +62,8 @@ class WSMessageType:
     APPROVAL_REQUEST = "approval_request"
     STATUS_UPDATE = "status_update"
     PIPELINE_EVENT = "pipeline_event"
+    PLAN_DETAIL = "plan_detail"
+    AGENT_LOG = "agent_log"
     ERROR = "error"
     PONG = "pong"
 
@@ -281,6 +283,23 @@ class WebUIChannel(Channel):
                     "type": WSMessageType.PIPELINE_EVENT,
                     "session_id": session_id,
                     **event,
+                },
+            )
+
+    async def send_plan_detail(
+        self,
+        session_id: str,
+        plan_data: dict[str, Any],
+    ) -> None:
+        """Sendet Plan-Details an den Client fuer das Plan Review Panel."""
+        ws = self._connections.get(session_id)
+        if ws:
+            await self._ws_send(
+                ws,
+                {
+                    "type": WSMessageType.PLAN_DETAIL,
+                    "session_id": session_id,
+                    **plan_data,
                 },
             )
 
