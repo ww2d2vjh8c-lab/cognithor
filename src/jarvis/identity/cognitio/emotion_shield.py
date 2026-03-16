@@ -16,6 +16,7 @@ Defense Mechanisms:
     4. Session rate limiting — too many high-emotion records in one session
 """
 
+import collections
 import logging
 import math
 from typing import Optional

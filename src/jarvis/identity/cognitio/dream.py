@@ -28,7 +28,10 @@ from __future__ import annotations
 import logging
 import random
 from datetime import datetime, timezone
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from jarvis.identity.cognitio.engine import CognitioEngine
 
 logger = logging.getLogger(__name__)
 
