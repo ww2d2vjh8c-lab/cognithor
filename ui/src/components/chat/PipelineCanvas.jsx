@@ -22,6 +22,7 @@ const STATUS_COLORS = {
   running: { bg: "#1a2a4a", border: "#00d4ff", text: "#00d4ff", dot: "#00d4ff" },
   done:    { bg: "#1a3a2a", border: "#00e676", text: "#00e676", dot: "#00e676" },
   error:   { bg: "#3a1a1a", border: "#ff5252", text: "#ff5252", dot: "#ff5252" },
+  skipped: { bg: "#2a2a2a", border: "#444", text: "#666", dot: "#444" },
 };
 
 const NODE_W = 200;
@@ -130,7 +131,9 @@ function Connector({ x, y1, y2 }) {
 
 // ── Main Component ──────────────────────────────────────────────────────────
 
-export default function PipelineCanvas({ pipeline, collapsed, onToggle }) {
+export default function PipelineCanvas({ pipeline }) {
+  const [collapsed, setCollapsed] = useState(false);
+
   if (!pipeline || !pipeline.iterations || pipeline.iterations.length === 0) {
     return null;
   }
@@ -163,7 +166,7 @@ export default function PipelineCanvas({ pipeline, collapsed, onToggle }) {
 
   return (
     <div className="cc-pipeline">
-      <div className="cc-pipeline-header" onClick={onToggle} role="button" tabIndex={0}>
+      <div className="cc-pipeline-header" onClick={() => setCollapsed((c) => !c)} role="button" tabIndex={0}>
         <span className="cc-pipeline-title">{headerText}</span>
         <span className="cc-pipeline-chevron">{collapsed ? "\u25B6" : "\u25BC"}</span>
       </div>

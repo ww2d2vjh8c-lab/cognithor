@@ -77,8 +77,7 @@ export function useJarvisChat() {
         setStreamText("");
         streamAccRef.current = "";
         addMessage("assistant", data.text || data.content || "");
-        // Auto-hide pipeline 2s after response arrives
-        setTimeout(() => setPipelineState(null), 2000);
+        // Pipeline bleibt sichtbar (collapsed) bis zur naechsten Nachricht
         break;
 
       case "stream_token":
@@ -169,9 +168,20 @@ export function useJarvisChat() {
             };
           }
 
-          // Complete event — mark inactive
+          // Complete event — mark inactive, skip remaining pending phases
           if (phase === "complete") {
-            return { ...prev, active: false, toolsUsed: data.tools_used };
+            const iters = [...prev.iterations];
+            const cur = iters[iters.length - 1];
+            if (cur) {
+              const updated = { ...cur, phases: { ...cur.phases } };
+              for (const p of ["plan", "gate", "execute", "replan"]) {
+                if (updated.phases[p] && updated.phases[p].status === "pending") {
+                  updated.phases[p] = { status: "skipped" };
+                }
+              }
+              iters[iters.length - 1] = updated;
+            }
+            return { ...prev, active: false, toolsUsed: data.tools_used, iterations: iters };
           }
 
           // Update phase status in current iteration
@@ -356,6 +366,8 @@ export function useJarvisChat() {
 
   const sendMessage = useCallback((text) => {
     if (!text.trim()) return;
+    // Reset pipeline state for new message
+    setPipelineState(null);
     addMessage("user", text.trim());
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({

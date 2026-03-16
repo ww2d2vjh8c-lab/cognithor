@@ -150,8 +150,6 @@ export default function ChatPage() {
         {pipelineState && (
           <PipelineCanvas
             pipeline={pipelineState}
-            collapsed={!pipelineState.active}
-            onToggle={() => {}}
           />
         )}
 
