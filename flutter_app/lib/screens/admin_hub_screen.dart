@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
+import 'package:jarvis_ui/widgets/staggered_list.dart';
 
 import 'package:jarvis_ui/screens/agents_screen.dart';
 import 'package:jarvis_ui/screens/config_screen.dart';
@@ -101,49 +102,52 @@ class _AdminHubScreenState extends State<AdminHubScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: JarvisTheme.spacingSm),
-      itemCount: sections.length,
-      itemBuilder: (context, index) {
-        final section = sections[index];
-        final selected = isWide && index == _selectedIndex;
+    final tiles = List.generate(sections.length, (index) {
+      final section = sections[index];
+      final selected = isWide && index == _selectedIndex;
 
-        return ListTile(
-          leading: Icon(
-            section.icon,
-            color: selected ? colorScheme.primary : JarvisTheme.textSecondary,
+      return ListTile(
+        leading: Icon(
+          section.icon,
+          color: selected ? colorScheme.primary : JarvisTheme.textSecondary,
+        ),
+        title: Text(
+          section.title,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+            color: selected
+                ? colorScheme.primary
+                : theme.textTheme.bodyLarge?.color,
           ),
-          title: Text(
-            section.title,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-              color: selected
-                  ? colorScheme.primary
-                  : theme.textTheme.bodyLarge?.color,
-            ),
-          ),
-          subtitle: Text(
-            section.subtitle,
-            style: theme.textTheme.bodySmall,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          selected: selected,
-          selectedTileColor: colorScheme.primary.withValues(alpha: 0.08),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(JarvisTheme.buttonRadius),
-          ),
-          onTap: () {
-            if (isWide) {
-              setState(() => _selectedIndex = index);
-            } else {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: section.builder),
-              );
-            }
-          },
-        );
-      },
+        ),
+        subtitle: Text(
+          section.subtitle,
+          style: theme.textTheme.bodySmall,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        selected: selected,
+        selectedTileColor: colorScheme.primary.withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JarvisTheme.buttonRadius),
+        ),
+        onTap: () {
+          if (isWide) {
+            setState(() => _selectedIndex = index);
+          } else {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: section.builder),
+            );
+          }
+        },
+      );
+    });
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: JarvisTheme.spacingSm),
+      children: [
+        StaggeredList(children: tiles),
+      ],
     );
   }
 

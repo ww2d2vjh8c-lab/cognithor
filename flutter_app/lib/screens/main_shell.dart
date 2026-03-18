@@ -3,15 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/theme_provider.dart';
-import 'package:jarvis_ui/theme/jarvis_theme.dart';
-import 'package:jarvis_ui/widgets/global_search_dialog.dart';
-
 import 'package:jarvis_ui/screens/admin_hub_screen.dart';
 import 'package:jarvis_ui/screens/chat_screen.dart';
 import 'package:jarvis_ui/screens/config_screen.dart';
 import 'package:jarvis_ui/screens/dashboard_screen.dart';
 import 'package:jarvis_ui/screens/identity_screen.dart';
 import 'package:jarvis_ui/screens/skills_screen.dart';
+import 'package:jarvis_ui/widgets/global_search_dialog.dart';
+import 'package:jarvis_ui/widgets/responsive_scaffold.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -56,7 +55,39 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final themeProvider = context.watch<ThemeProvider>();
-    final isDark = themeProvider.isDark;
+
+    final navItems = [
+      NavItem(
+        icon: Icons.chat_bubble_outline,
+        selectedIcon: Icons.chat_bubble,
+        label: l.chat,
+        shortcut: '^1',
+      ),
+      NavItem(
+        icon: Icons.dashboard_outlined,
+        selectedIcon: Icons.dashboard,
+        label: l.dashboard,
+        shortcut: '^2',
+      ),
+      NavItem(
+        icon: Icons.extension_outlined,
+        selectedIcon: Icons.extension,
+        label: l.skills,
+        shortcut: '^3',
+      ),
+      NavItem(
+        icon: Icons.admin_panel_settings_outlined,
+        selectedIcon: Icons.admin_panel_settings,
+        label: l.adminTitle,
+        shortcut: '^4',
+      ),
+      NavItem(
+        icon: Icons.psychology_outlined,
+        selectedIcon: Icons.psychology,
+        label: l.identity,
+        shortcut: '^5',
+      ),
+    ];
 
     return CallbackShortcuts(
       bindings: {
@@ -75,160 +106,14 @@ class _MainShellState extends State<MainShell> {
       },
       child: Focus(
         autofocus: true,
-        child: Scaffold(
-          body: IndexedStack(
-            index: _currentIndex,
-            children: _screens,
-          ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Theme.of(context).dividerColor
-                      : const Color(0xFFE0E0E8),
-                ),
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                child: Row(
-                  children: [
-                    // Main navigation tabs
-                    ..._buildNavItems(l),
-                    // Spacer
-                    const SizedBox(width: 4),
-                    // Divider
-                    Container(
-                      width: 1,
-                      height: 32,
-                      color: isDark
-                          ? Theme.of(context).dividerColor
-                          : const Color(0xFFE0E0E8),
-                    ),
-                    const SizedBox(width: 4),
-                    // Search button
-                    _BottomBarAction(
-                      icon: Icons.search,
-                      label: 'Search',
-                      color: JarvisTheme.accent,
-                      onTap: _openSearch,
-                    ),
-                    // Theme toggle
-                    _BottomBarAction(
-                      icon: isDark ? Icons.light_mode : Icons.dark_mode,
-                      label: isDark ? 'Light' : 'Dark',
-                      color: JarvisTheme.orange,
-                      onTap: () => themeProvider.toggle(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildNavItems(AppLocalizations l) {
-    final items = [
-      (Icons.chat_bubble_outline, Icons.chat_bubble, l.chat, '^1'),
-      (Icons.dashboard_outlined, Icons.dashboard, l.dashboard, '^2'),
-      (Icons.extension_outlined, Icons.extension, l.skills, '^3'),
-      (
-        Icons.admin_panel_settings_outlined,
-        Icons.admin_panel_settings,
-        l.adminTitle,
-        '^4',
-      ),
-      (Icons.psychology_outlined, Icons.psychology, l.identity, '^5'),
-    ];
-
-    return List.generate(items.length, (i) {
-      final (iconOutlined, iconFilled, label, shortcut) = items[i];
-      final selected = i == _currentIndex;
-      return Expanded(
-        child: InkWell(
-          onTap: () => setState(() => _currentIndex = i),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  selected ? iconFilled : iconOutlined,
-                  size: 22,
-                  color: selected
-                      ? JarvisTheme.accent
-                      : Theme.of(context).iconTheme.color,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight:
-                        selected ? FontWeight.w600 : FontWeight.normal,
-                    color: selected
-                        ? JarvisTheme.accent
-                        : Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  shortcut,
-                  style: TextStyle(
-                    fontSize: 8,
-                    color: JarvisTheme.textTertiary,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    });
-  }
-}
-
-class _BottomBarAction extends StatelessWidget {
-  const _BottomBarAction({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(fontSize: 9, color: color),
-            ),
-          ],
+        child: ResponsiveScaffold(
+          screens: _screens,
+          navItems: navItems,
+          currentIndex: _currentIndex,
+          onIndexChanged: _navigateTab,
+          onSearchTap: _openSearch,
+          onThemeToggle: () => themeProvider.toggle(),
+          isDark: themeProvider.isDark,
         ),
       ),
     );

@@ -9,10 +9,11 @@ import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/jarvis_card.dart';
 import 'package:jarvis_ui/widgets/jarvis_empty_state.dart';
-import 'package:jarvis_ui/widgets/jarvis_loading_skeleton.dart';
-import 'package:jarvis_ui/widgets/jarvis_metric_card.dart';
+import 'package:jarvis_ui/widgets/animated_counter.dart';
 import 'package:jarvis_ui/widgets/jarvis_section.dart';
 import 'package:jarvis_ui/widgets/jarvis_status_badge.dart';
+import 'package:jarvis_ui/widgets/shimmer_loading.dart';
+import 'package:jarvis_ui/widgets/staggered_list.dart';
 
 // ---------------------------------------------------------------------------
 // Dashboard Screen
@@ -113,48 +114,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ListView(
         padding: const EdgeInsets.all(JarvisTheme.spacing),
         children: [
-          // -- System Status --
-          JarvisSection(
-            title: l.systemStatus,
-            trailing: Text(
-              l.dashboardRefreshing,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+          StaggeredList(
+            children: [
+              // -- System Status --
+              JarvisSection(
+                title: l.systemStatus,
+                trailing: Text(
+                  l.dashboardRefreshing,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              SystemStatusCard(
+                status: _status,
+                dashboard: _dashboard,
+                backendVersion:
+                    context.watch<ConnectionProvider>().backendVersion,
+              ),
+              const SizedBox(height: JarvisTheme.spacingLg),
+
+              // -- Performance Metrics --
+              JarvisSection(title: l.performance),
+              PerformanceGrid(dashboard: _dashboard!),
+              const SizedBox(height: JarvisTheme.spacingLg),
+
+              // -- Model Info --
+              JarvisSection(title: l.modelInfo),
+              ModelInfoCard(models: _models),
+              const SizedBox(height: JarvisTheme.spacingLg),
+
+              // -- Recent Events --
+              JarvisSection(
+                title: l.recentEvents,
+                trailing: TextButton(
+                  onPressed: () {
+                    // TODO: Navigate to full events view
+                  },
+                  child: Text(l.viewAll),
+                ),
+              ),
+              RecentEventsCard(events: _events),
+              const SizedBox(height: JarvisTheme.spacingLg),
+
+              // -- Activity Chart --
+              JarvisSection(title: l.activityChart),
+              ActivityChart(dashboard: _dashboard),
+            ],
           ),
-          SystemStatusCard(
-            status: _status,
-            dashboard: _dashboard,
-            backendVersion:
-                context.watch<ConnectionProvider>().backendVersion,
-          ),
-          const SizedBox(height: JarvisTheme.spacingLg),
-
-          // -- Performance Metrics --
-          JarvisSection(title: l.performance),
-          PerformanceGrid(dashboard: _dashboard!),
-          const SizedBox(height: JarvisTheme.spacingLg),
-
-          // -- Model Info --
-          JarvisSection(title: l.modelInfo),
-          ModelInfoCard(models: _models),
-          const SizedBox(height: JarvisTheme.spacingLg),
-
-          // -- Recent Events --
-          JarvisSection(
-            title: l.recentEvents,
-            trailing: TextButton(
-              onPressed: () {
-                // TODO: Navigate to full events view
-              },
-              child: Text(l.viewAll),
-            ),
-          ),
-          RecentEventsCard(events: _events),
-          const SizedBox(height: JarvisTheme.spacingLg),
-
-          // -- Activity Chart --
-          JarvisSection(title: l.activityChart),
-          ActivityChart(dashboard: _dashboard),
         ],
       ),
     );
@@ -170,28 +175,20 @@ class _DashboardLoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(JarvisTheme.spacing),
+    return const Padding(
+      padding: EdgeInsets.all(JarvisTheme.spacing),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const JarvisLoadingSkeleton(height: 100, count: 1),
-          const SizedBox(height: JarvisTheme.spacingLg),
-          JarvisLoadingSkeleton(
-            height: 80,
-            count: 2,
-            width: MediaQuery.of(context).size.width * 0.9,
-          ),
-          const SizedBox(height: JarvisTheme.spacingLg),
-          const JarvisLoadingSkeleton(height: 60, count: 1),
-          const SizedBox(height: JarvisTheme.spacingLg),
-          const JarvisLoadingSkeleton(height: 40, count: 4),
-          const SizedBox(height: JarvisTheme.spacingLg),
-          JarvisLoadingSkeleton(
-            height: 160,
-            count: 1,
-            width: MediaQuery.of(context).size.width * 0.9,
-          ),
+          ShimmerLoading(count: 1, height: 100),
+          SizedBox(height: JarvisTheme.spacingLg),
+          ShimmerLoading(count: 2, height: 80),
+          SizedBox(height: JarvisTheme.spacingLg),
+          ShimmerLoading(count: 1, height: 60),
+          SizedBox(height: JarvisTheme.spacingLg),
+          ShimmerLoading(count: 4, height: 40),
+          SizedBox(height: JarvisTheme.spacingLg),
+          ShimmerLoading(count: 1, height: 160),
         ],
       ),
     );
@@ -331,14 +328,20 @@ class PerformanceGrid extends StatelessWidget {
 
   final Map<String, dynamic> dashboard;
 
+  double _toDouble(dynamic raw, [double fallback = 0]) {
+    if (raw == null) return fallback;
+    if (raw is num) return raw.toDouble();
+    return double.tryParse(raw.toString()) ?? fallback;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
 
-    final cpuUsage = dashboard['cpu_usage']?.toString() ?? '-';
-    final memoryUsage = dashboard['memory_usage']?.toString() ?? '-';
-    final responseTime = dashboard['response_time_ms']?.toString() ?? '-';
-    final toolExecs = dashboard['tool_executions']?.toString() ?? '0';
+    final cpuValue = _toDouble(dashboard['cpu_usage']);
+    final memValue = _toDouble(dashboard['memory_usage']);
+    final rtValue = _toDouble(dashboard['response_time_ms']);
+    final toolValue = _toDouble(dashboard['tool_executions']);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -350,36 +353,39 @@ class PerformanceGrid extends StatelessWidget {
           children: [
             SizedBox(
               width: cardWidth,
-              child: JarvisMetricCard(
+              child: _AnimatedMetricCard(
                 title: l.cpuUsage,
-                value: '$cpuUsage%',
+                numericValue: cpuValue,
+                suffix: '%',
                 icon: Icons.memory,
                 color: JarvisTheme.accent,
               ),
             ),
             SizedBox(
               width: cardWidth,
-              child: JarvisMetricCard(
+              child: _AnimatedMetricCard(
                 title: l.memoryUsage,
-                value: '$memoryUsage%',
+                numericValue: memValue,
+                suffix: '%',
                 icon: Icons.storage,
                 color: JarvisTheme.orange,
               ),
             ),
             SizedBox(
               width: cardWidth,
-              child: JarvisMetricCard(
+              child: _AnimatedMetricCard(
                 title: l.responseTime,
-                value: '${responseTime}ms',
+                numericValue: rtValue,
+                suffix: 'ms',
                 icon: Icons.speed,
                 color: JarvisTheme.info,
               ),
             ),
             SizedBox(
               width: cardWidth,
-              child: JarvisMetricCard(
+              child: _AnimatedMetricCard(
                 title: l.toolExecutions,
-                value: toolExecs,
+                numericValue: toolValue,
                 icon: Icons.build,
                 color: JarvisTheme.green,
               ),
@@ -387,6 +393,62 @@ class PerformanceGrid extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Animated Metric Card — wraps JarvisMetricCard layout with AnimatedCounter
+// ---------------------------------------------------------------------------
+
+class _AnimatedMetricCard extends StatelessWidget {
+  const _AnimatedMetricCard({
+    required this.title,
+    required this.numericValue,
+    this.suffix = '',
+    this.icon,
+    this.color,
+  });
+
+  final String title;
+  final double numericValue;
+  final String suffix;
+  final IconData? icon;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final effectiveColor = color ?? JarvisTheme.accent;
+
+    return JarvisCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: JarvisTheme.iconSizeMd, color: effectiveColor),
+                const SizedBox(width: JarvisTheme.spacingSm),
+              ],
+              Expanded(
+                child: Text(title, style: theme.textTheme.bodySmall),
+              ),
+            ],
+          ),
+          const SizedBox(height: JarvisTheme.spacingSm),
+          AnimatedCounter(
+            value: numericValue,
+            suffix: suffix,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: effectiveColor,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

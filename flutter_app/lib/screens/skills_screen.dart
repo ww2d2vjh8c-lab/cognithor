@@ -8,8 +8,9 @@ import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/jarvis_card.dart';
 import 'package:jarvis_ui/widgets/jarvis_chip.dart';
 import 'package:jarvis_ui/widgets/jarvis_empty_state.dart';
-import 'package:jarvis_ui/widgets/jarvis_loading_skeleton.dart';
 import 'package:jarvis_ui/widgets/jarvis_search_bar.dart';
+import 'package:jarvis_ui/widgets/shimmer_loading.dart';
+import 'package:jarvis_ui/widgets/staggered_list.dart';
 import 'package:jarvis_ui/widgets/jarvis_status_badge.dart';
 import 'package:jarvis_ui/widgets/jarvis_tab_bar.dart';
 
@@ -102,7 +103,7 @@ class _SkillsScreenState extends State<SkillsScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(32),
-          child: JarvisLoadingSkeleton(count: 6, height: 120),
+          child: ShimmerLoading(count: 6, height: 120),
         ),
       );
     }
@@ -206,17 +207,20 @@ class _SkillsScreenState extends State<SkillsScreen> {
     return RefreshIndicator(
       onRefresh: () => context.read<SkillsProvider>().loadInstalled(),
       color: JarvisTheme.accent,
-      child: ListView.builder(
+      child: ListView(
         padding: const EdgeInsets.all(16),
-        itemCount: skills.length,
-        itemBuilder: (context, index) {
-          final skill = skills[index] as Map<String, dynamic>;
-          return _SkillCard(
-            skill: skill,
-            isInstalled: true,
-            onUninstall: () => _uninstallSkill(skill),
-          );
-        },
+        children: [
+          StaggeredList(
+            children: skills.map<Widget>((s) {
+              final skill = s as Map<String, dynamic>;
+              return _SkillCard(
+                skill: skill,
+                isInstalled: true,
+                onUninstall: () => _uninstallSkill(skill),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
