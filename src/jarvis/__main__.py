@@ -297,7 +297,17 @@ def main() -> None:
                 # allow_credentials nur wenn Origins explizit eingeschränkt
                 _allow_creds = cors_origins != ["*"]
 
-                api_app = FastAPI(title="Cognithor Control Center API")
+                api_app = FastAPI(
+                    title="Cognithor Control Center API",
+                    version=config.version if hasattr(config, "version") else "0.40.0",
+                    description=(
+                        "Jarvis/Cognithor Backend-API fuer Flutter- und Web-Frontends. "
+                        "Authentifizierung via Bearer-Token (GET /api/v1/bootstrap)."
+                    ),
+                    docs_url="/api/docs",
+                    redoc_url="/api/redoc",
+                    openapi_url="/api/v1/openapi.json",
+                )
                 api_app.add_middleware(
                     CORSMiddleware,
                     allow_origins=cors_origins,
@@ -802,7 +812,7 @@ def main() -> None:
 
                     text = (body.get("text") or "").strip()
                     if not text:
-                        return {"error": "Kein Text angegeben"}
+                        return {"error": "Kein Text angegeben", "code": "MISSING_FIELD"}
 
                     voice = body.get("voice", _default_piper_voice)
                     length_scale = body.get("length_scale", _default_length_scale)
@@ -812,14 +822,15 @@ def main() -> None:
                     except ValueError as _val_exc:
                         # CWE-22: Invalid voice name (path traversal attempt)
                         log.warning("tts_voice_validation_failed", voice=voice, error=str(_val_exc))
-                        return {"error": "Ungueltiger Voice-Name"}
+                        return {"error": "Ungueltiger Voice-Name", "code": "INVALID_VOICE"}
                     except FileNotFoundError:
                         return {
-                            "error": "Piper TTS nicht installiert. Bitte: pip install piper-tts"
+                            "error": "Piper TTS nicht installiert. Bitte: pip install piper-tts",
+                            "code": "TTS_NOT_INSTALLED",
                         }
                     except Exception as _tts_exc:
                         log.error("tts_error", error=str(_tts_exc))
-                        return {"error": "TTS-Fehler aufgetreten"}
+                        return {"error": "TTS-Fehler aufgetreten", "code": "TTS_ERROR"}
 
                 @api_app.get("/api/v1/tts/voices")
                 async def _cc_tts_voices() -> dict[str, Any]:
@@ -1059,6 +1070,146 @@ def main() -> None:
 
                 log.info("cc_tts_endpoint_registered")
 
+                # ── Voice Transcription API ────────────────────────────
+                from starlette.requests import Request as _STRequest
+
+                @api_app.post("/api/v1/voice/transcribe", dependencies=[_Depends(_verify_cc_token)])
+                async def _voice_transcribe(request: _STRequest) -> dict[str, Any]:
+                    """Transkribiert hochgeladene Audio-Datei (multipart/form-data).
+
+                    Erwartet Feld 'audio' mit der Audio-Datei.
+                    """
+                    import tempfile
+
+                    try:
+                        form = await request.form()
+                        audio_field = form.get("audio")
+                        if audio_field is None:
+                            return {"error": "Feld 'audio' fehlt", "code": "MISSING_FIELD"}
+
+                        audio_bytes = await audio_field.read()
+                        if not audio_bytes:
+                            return {"error": "Leere Audio-Datei", "code": "EMPTY_FILE"}
+
+                        suffix = ".webm"
+                        if hasattr(audio_field, "filename") and audio_field.filename:
+                            import os.path as _ap
+                            suffix = _ap.splitext(audio_field.filename)[1] or ".webm"
+                        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+                            tmp.write(audio_bytes)
+                            tmp_path = tmp.name
+
+                        try:
+                            from jarvis.mcp.media import MediaPipeline
+
+                            media = MediaPipeline()
+                            result = await media.transcribe_audio(tmp_path, language="de")
+                            if result.success and result.text:
+                                return {"text": result.text.strip()}
+                            return {
+                                "error": result.error or "Transkription fehlgeschlagen",
+                                "code": "TRANSCRIPTION_FAILED",
+                            }
+                        finally:
+                            with contextlib.suppress(OSError):
+                                os.unlink(tmp_path)
+                    except Exception as exc:
+                        log.error("voice_transcribe_error", error=str(exc))
+                        return {"error": "Transkriptionsfehler", "code": "INTERNAL_ERROR"}
+
+                log.info("cc_voice_transcribe_endpoint_registered")
+
+                # ── Vision Analysis API ────────────────────────────────
+                @api_app.post("/api/v1/vision/analyze", dependencies=[_Depends(_verify_cc_token)])
+                async def _vision_analyze(request: _STRequest) -> dict[str, Any]:
+                    """Analysiert ein hochgeladenes Bild (multipart/form-data).
+
+                    Felder: 'image' (Datei), 'prompt' (optional, Text).
+                    """
+                    import tempfile
+
+                    try:
+                        form = await request.form()
+                        image_field = form.get("image")
+                        if image_field is None:
+                            return {"error": "Feld 'image' fehlt", "code": "MISSING_FIELD"}
+
+                        image_bytes = await image_field.read()
+                        if not image_bytes:
+                            return {"error": "Leere Bilddatei", "code": "EMPTY_FILE"}
+
+                        prompt = form.get("prompt", "Beschreibe dieses Bild detailliert.")
+                        if isinstance(prompt, bytes):
+                            prompt = prompt.decode("utf-8")
+
+                        # Dateiendung bestimmen
+                        suffix = ".png"
+                        if hasattr(image_field, "filename") and image_field.filename:
+                            import os.path as _ip
+                            suffix = _ip.splitext(image_field.filename)[1] or ".png"
+
+                        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+                            tmp.write(image_bytes)
+                            tmp_path = tmp.name
+
+                        try:
+                            from jarvis.mcp.media import MediaPipeline
+
+                            media = MediaPipeline()
+                            result = await media.analyze_image(tmp_path, prompt=str(prompt))
+                            if result.success and result.text:
+                                return {"text": result.text.strip()}
+                            return {
+                                "error": result.error or "Bildanalyse fehlgeschlagen",
+                                "code": "VISION_FAILED",
+                            }
+                        finally:
+                            with contextlib.suppress(OSError):
+                                os.unlink(tmp_path)
+                    except Exception as exc:
+                        log.error("vision_analyze_error", error=str(exc))
+                        return {"error": "Bildanalysefehler", "code": "INTERNAL_ERROR"}
+
+                log.info("cc_vision_endpoint_registered")
+
+                # ── Push Notifications API ─────────────────────────────
+                @api_app.get("/api/v1/push/vapid-key", dependencies=[_Depends(_verify_cc_token)])
+                async def _push_vapid_key() -> dict[str, Any]:
+                    """Gibt den VAPID Public Key fuer Push-Notifications zurueck."""
+                    vapid_key = os.environ.get("JARVIS_VAPID_PUBLIC_KEY", "")
+                    if not vapid_key:
+                        return {"error": "VAPID nicht konfiguriert", "code": "NOT_CONFIGURED"}
+                    return {"key": vapid_key}
+
+                @api_app.post("/api/v1/push/register", dependencies=[_Depends(_verify_cc_token)])
+                async def _push_register(body: dict[str, Any]) -> dict[str, Any]:
+                    """Registriert ein Geraet fuer Push-Notifications."""
+                    token = body.get("token", "").strip()
+                    push_type = body.get("type", "fcm")
+                    if not token:
+                        return {"error": "Token fehlt", "code": "MISSING_FIELD"}
+
+                    # Registrierung in DB speichern
+                    push_db = Path(config.jarvis_home) / "push_subscriptions.json"
+                    import json as _pj
+
+                    subs: list[dict[str, str]] = []
+                    if push_db.exists():
+                        try:
+                            subs = _pj.loads(push_db.read_text(encoding="utf-8"))
+                        except Exception:
+                            subs = []
+
+                    # Duplikate vermeiden
+                    if not any(s.get("token") == token for s in subs):
+                        subs.append({"token": token, "type": push_type})
+                        push_db.write_text(_pj.dumps(subs, indent=2), encoding="utf-8")
+                        log.info("push_device_registered", type=push_type)
+
+                    return {"status": "ok"}
+
+                log.info("cc_push_endpoints_registered")
+
                 # ── Identity Control API ────────────────────────────────
                 @api_app.get("/api/v1/identity/state")
                 async def _identity_state():
@@ -1069,48 +1220,57 @@ def main() -> None:
                         return state
                     except Exception as e:
                         log.debug("identity_api_error", exc_info=True)
-                        return {"error": "Internal identity error"}
+                        return {"error": "Internal identity error", "code": "INTERNAL_ERROR"}
 
                 @api_app.post("/api/v1/identity/freeze")
                 async def _identity_freeze():
                     if not hasattr(gateway, "_identity_layer") or gateway._identity_layer is None:
-                        return {"error": "Identity layer not available"}
+                        return {"error": "Identity layer not available", "code": "NOT_AVAILABLE"}
                     gateway._identity_layer.freeze()
                     return {"status": "frozen"}
 
                 @api_app.post("/api/v1/identity/unfreeze")
                 async def _identity_unfreeze():
                     if not hasattr(gateway, "_identity_layer") or gateway._identity_layer is None:
-                        return {"error": "Identity layer not available"}
+                        return {"error": "Identity layer not available", "code": "NOT_AVAILABLE"}
                     gateway._identity_layer.unfreeze()
                     return {"status": "unfrozen"}
 
                 @api_app.post("/api/v1/identity/reset")
                 async def _identity_reset():
                     if not hasattr(gateway, "_identity_layer") or gateway._identity_layer is None:
-                        return {"error": "Identity layer not available"}
+                        return {"error": "Identity layer not available", "code": "NOT_AVAILABLE"}
                     result = gateway._identity_layer.soft_reset()
                     return {"status": "reset", "details": result}
 
                 @api_app.post("/api/v1/identity/dream")
                 async def _identity_dream():
                     if not hasattr(gateway, "_identity_layer") or gateway._identity_layer is None:
-                        return {"error": "Identity layer not available"}
+                        return {"error": "Identity layer not available", "code": "NOT_AVAILABLE"}
                     try:
                         engine = gateway._identity_layer._engine
                         if engine is None:
-                            return {"error": "Engine not initialized"}
+                            return {"error": "Engine not initialized", "code": "NOT_INITIALIZED"}
                         stats = engine.dream.run(engine)
                         return {"status": "dream_completed", "stats": str(stats)}
                     except Exception as e:
                         log.debug("identity_api_error", exc_info=True)
-                        return {"error": "Internal identity error"}
+                        return {"error": "Internal identity error", "code": "INTERNAL_ERROR"}
 
                 log.info("cc_identity_endpoints_registered")
 
-                # Mount pre-built React UI at / (catch-all, MUSS als letztes)
-                _ui_dist = Path(__file__).resolve().parent.parent.parent / "ui" / "dist"
-                if _ui_dist.is_dir() and (_ui_dist / "index.html").exists():
+                # Mount pre-built UI at / (catch-all, MUSS als letztes)
+                # Prioritaet: Flutter-Build > React-Build
+                _repo_root = Path(__file__).resolve().parent.parent.parent
+                _flutter_dist = _repo_root / "flutter_app" / "build" / "web"
+                _react_dist = _repo_root / "ui" / "dist"
+                _ui_dist = None
+                if _flutter_dist.is_dir() and (_flutter_dist / "index.html").exists():
+                    _ui_dist = _flutter_dist
+                elif _react_dist.is_dir() and (_react_dist / "index.html").exists():
+                    _ui_dist = _react_dist
+
+                if _ui_dist is not None:
                     from fastapi.staticfiles import StaticFiles
 
                     api_app.mount("/", StaticFiles(directory=str(_ui_dist), html=True), name="ui")

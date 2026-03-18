@@ -144,6 +144,10 @@ class FeishuChannel(Channel):
             return True
 
         if not encrypt_key:
+            logger.warning(
+                "Feishu: No encrypt_key configured -- event signature "
+                "verification SKIPPED. Set encrypt_key for production use."
+            )
             return True
 
         # Signature Verification

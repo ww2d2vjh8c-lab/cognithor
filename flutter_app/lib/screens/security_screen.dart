@@ -1,0 +1,573 @@
+import 'package:flutter/material.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
+import 'package:provider/provider.dart';
+
+import 'package:jarvis_ui/providers/security_provider.dart';
+import 'package:jarvis_ui/theme/jarvis_theme.dart';
+import 'package:jarvis_ui/widgets/jarvis_card.dart';
+import 'package:jarvis_ui/widgets/jarvis_chip.dart';
+import 'package:jarvis_ui/widgets/jarvis_empty_state.dart';
+import 'package:jarvis_ui/widgets/jarvis_list_tile.dart';
+import 'package:jarvis_ui/widgets/jarvis_progress_bar.dart';
+import 'package:jarvis_ui/widgets/jarvis_section.dart';
+import 'package:jarvis_ui/widgets/jarvis_stat.dart';
+import 'package:jarvis_ui/widgets/jarvis_status_badge.dart';
+import 'package:jarvis_ui/widgets/jarvis_tab_bar.dart';
+
+class SecurityScreen extends StatefulWidget {
+  const SecurityScreen({super.key});
+
+  @override
+  State<SecurityScreen> createState() => _SecurityScreenState();
+}
+
+class _SecurityScreenState extends State<SecurityScreen> {
+  int _tabIndex = 0;
+  String? _severityFilter;
+  String? _actionFilter;
+  bool _initialLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAll());
+  }
+
+  Future<void> _loadAll() async {
+    final sec = context.read<SecurityProvider>();
+    // Load each independently - don't fail all if one endpoint is missing
+    await Future.wait([
+      sec.loadComplianceStats().catchError((_) {}),
+      sec.loadRemediations().catchError((_) {}),
+      sec.loadComplianceReport().catchError((_) {}),
+      sec.loadRoles().catchError((_) {}),
+      sec.loadAuthStats().catchError((_) {}),
+      sec.loadRedteamStatus().catchError((_) {}),
+      sec.loadAudit().catchError((_) {}),
+    ]);
+    if (mounted) setState(() => _initialLoaded = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final sec = context.watch<SecurityProvider>();
+
+    if (!_initialLoaded && sec.isLoading) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(l.loading),
+          ],
+        ),
+      );
+    }
+
+    if (sec.error != null && !_initialLoaded) {
+      return JarvisEmptyState(
+        icon: Icons.security,
+        title: l.securityTitle,
+        subtitle: sec.error,
+        action: ElevatedButton.icon(
+          onPressed: _loadAll,
+          icon: const Icon(Icons.refresh),
+          label: Text(l.retry),
+        ),
+      );
+    }
+
+    final tabs = [
+      l.complianceTitle,
+      l.rolesAccess,
+      l.redTeam,
+      l.auditLog,
+    ];
+    final icons = [
+      Icons.verified_user,
+      Icons.people,
+      Icons.bug_report,
+      Icons.list_alt,
+    ];
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: JarvisTabBar(
+            tabs: tabs,
+            icons: icons,
+            selectedIndex: _tabIndex,
+            onChanged: (i) => setState(() => _tabIndex = i),
+          ),
+        ),
+        Expanded(
+          child: IndexedStack(
+            index: _tabIndex,
+            children: [
+              _buildComplianceTab(l, sec),
+              _buildRolesTab(l, sec),
+              _buildRedTeamTab(l, sec),
+              _buildAuditTab(l, sec),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tab 1: Compliance
+  // ---------------------------------------------------------------------------
+
+  Widget _buildComplianceTab(AppLocalizations l, SecurityProvider sec) {
+    final stats = sec.complianceStats ?? {};
+    final totalDecisions = stats['total_decisions']?.toString() ?? '0';
+    final flagged = stats['flagged']?.toString() ?? '0';
+    final approvalRate = (stats['approval_rate'] as num?)?.toDouble() ?? 0.0;
+    final avgConfidence = stats['avg_confidence']?.toString() ?? '-';
+
+    final rems = sec.remediations ?? {};
+    final open = rems['open'] as int? ?? 0;
+    final inProgress = rems['in_progress'] as int? ?? 0;
+    final resolved = rems['resolved'] as int? ?? 0;
+    final overdue = rems['overdue'] as int? ?? 0;
+
+    final report = sec.complianceReport ?? {};
+    final euAiAct = report['eu_ai_act'] as bool? ?? false;
+    final dsgvo = report['dsgvo'] as bool? ?? false;
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Stats
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            JarvisStat(
+              label: l.decisionsTitle,
+              value: totalDecisions,
+              icon: Icons.gavel,
+              color: JarvisTheme.accent,
+            ),
+            JarvisStat(
+              label: l.flaggedCount,
+              value: flagged,
+              icon: Icons.flag,
+              color: JarvisTheme.orange,
+            ),
+            JarvisStat(
+              label: l.approvalRate,
+              value: '${(approvalRate * 100).toStringAsFixed(1)}%',
+              icon: Icons.check_circle,
+              color: JarvisTheme.green,
+            ),
+            JarvisStat(
+              label: l.confidence,
+              value: avgConfidence,
+              icon: Icons.speed,
+              color: JarvisTheme.accent,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Approval rate bar
+        JarvisCard(
+          title: l.approvalRate,
+          icon: Icons.bar_chart,
+          child: JarvisProgressBar(
+            value: approvalRate,
+            label: '${(approvalRate * 100).toStringAsFixed(1)}%',
+            color: JarvisTheme.green,
+          ),
+        ),
+
+        // Remediations
+        JarvisSection(title: l.remediations),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            JarvisStatusBadge(
+              label: '${l.openStatus}: $open',
+              color: JarvisTheme.accent,
+              icon: Icons.pending,
+            ),
+            JarvisStatusBadge(
+              label: '${l.inProgressStatus}: $inProgress',
+              color: JarvisTheme.orange,
+              icon: Icons.autorenew,
+            ),
+            JarvisStatusBadge(
+              label: '${l.resolvedStatus}: $resolved',
+              color: JarvisTheme.green,
+              icon: Icons.check,
+            ),
+            JarvisStatusBadge(
+              label: '${l.overdueStatus}: $overdue',
+              color: JarvisTheme.red,
+              icon: Icons.warning,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Compliance badges
+        JarvisSection(title: l.complianceReport),
+        Row(
+          children: [
+            JarvisStatusBadge(
+              label: l.euAiAct,
+              color: euAiAct ? JarvisTheme.green : JarvisTheme.red,
+              icon: euAiAct ? Icons.check_circle : Icons.cancel,
+            ),
+            const SizedBox(width: 8),
+            JarvisStatusBadge(
+              label: l.dsgvo,
+              color: dsgvo ? JarvisTheme.green : JarvisTheme.red,
+              icon: dsgvo ? Icons.check_circle : Icons.cancel,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tab 2: Roles & Access
+  // ---------------------------------------------------------------------------
+
+  Widget _buildRolesTab(AppLocalizations l, SecurityProvider sec) {
+    final rolesData = sec.roles ?? {};
+    final rolesList = rolesData['roles'] as List<dynamic>? ?? [];
+    final authData = sec.authStats ?? {};
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Auth stats summary
+        if (authData.isNotEmpty) ...[
+          JarvisSection(title: l.statusLabel),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              JarvisStat(
+                label: l.activeSessions,
+                value: authData['active_sessions']?.toString() ?? '0',
+                icon: Icons.people,
+                color: JarvisTheme.green,
+              ),
+              JarvisStat(
+                label: l.total,
+                value: authData['total_auth']?.toString() ?? '0',
+                icon: Icons.key,
+                color: JarvisTheme.accent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        JarvisSection(title: l.rolesTitle),
+        if (rolesList.isEmpty)
+          JarvisEmptyState(
+            icon: Icons.people_outline,
+            title: l.noData,
+          ),
+        ...rolesList.map<Widget>((role) {
+          final r = role as Map<String, dynamic>;
+          final name = r['name']?.toString() ?? '';
+          final perms = r['permissions'] as List<dynamic>? ?? [];
+          return _RoleCard(name: name, permissions: perms);
+        }),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tab 3: Red Team
+  // ---------------------------------------------------------------------------
+
+  Widget _buildRedTeamTab(AppLocalizations l, SecurityProvider sec) {
+    final status = sec.redteamStatus ?? {};
+    final available = status['available'] as bool? ?? false;
+    final lastScan = status['last_scan']?.toString();
+    final results = status['results'] as Map<String, dynamic>?;
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        JarvisSection(title: l.scanStatus),
+        JarvisCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  JarvisStatusBadge(
+                    label: available
+                        ? l.enabled
+                        : l.scanNotAvailable,
+                    color: available ? JarvisTheme.green : JarvisTheme.red,
+                    icon: available ? Icons.check_circle : Icons.cancel,
+                  ),
+                ],
+              ),
+              if (lastScan != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '${l.lastScan}: $lastScan',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton.icon(
+          onPressed: available
+              ? () => context
+                  .read<SecurityProvider>()
+                  .runRedteamScan({'scope': 'full'})
+              : null,
+          icon: const Icon(Icons.play_arrow),
+          label: Text(l.runScan),
+        ),
+        if (results != null) ...[
+          const SizedBox(height: 16),
+          JarvisSection(title: l.scanResults),
+          JarvisCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: results.entries.map<Widget>((e) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 140,
+                        child: Text(
+                          e.key,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          e.value.toString(),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tab 4: Audit
+  // ---------------------------------------------------------------------------
+
+  Widget _buildAuditTab(AppLocalizations l, SecurityProvider sec) {
+    final entries = sec.auditEntries;
+
+    return Column(
+      children: [
+        // Filter bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _severityFilter,
+                  decoration: InputDecoration(
+                    labelText: l.severityLabel,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                      value: null,
+                      child: Text(l.allSeverities),
+                    ),
+                    DropdownMenuItem(
+                      value: 'critical',
+                      child: Text(l.critical),
+                    ),
+                    DropdownMenuItem(
+                      value: 'error',
+                      child: Text(l.errorLabel),
+                    ),
+                    DropdownMenuItem(
+                      value: 'warning',
+                      child: Text(l.warningLabel),
+                    ),
+                    DropdownMenuItem(
+                      value: 'info',
+                      child: Text(l.infoLabel),
+                    ),
+                  ],
+                  onChanged: (v) {
+                    setState(() => _severityFilter = v);
+                    context.read<SecurityProvider>().loadAudit(
+                      severity: _severityFilter,
+                      action: _actionFilter,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    labelText: l.filter,
+                    hintText: l.allActions,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  onSubmitted: (v) {
+                    setState(() => _actionFilter = v.isEmpty ? null : v);
+                    context.read<SecurityProvider>().loadAudit(
+                      severity: _severityFilter,
+                      action: _actionFilter,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Entries list
+        Expanded(
+          child: entries.isEmpty
+              ? JarvisEmptyState(
+                  icon: Icons.list_alt,
+                  title: l.noAuditEntries,
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: entries.length,
+                  itemBuilder: (context, index) {
+                    final entry =
+                        entries[index] as Map<String, dynamic>? ?? {};
+                    final action = entry['action']?.toString() ?? '';
+                    final actor = entry['actor']?.toString() ?? '';
+                    final ts = entry['timestamp']?.toString() ?? '';
+                    final severity = entry['severity']?.toString() ?? 'info';
+
+                    return JarvisListTile(
+                      title: action,
+                      subtitle: '${l.actor}: $actor  |  $ts',
+                      leading: Icon(
+                        _severityIcon(severity),
+                        color: _severityColor(severity),
+                        size: 20,
+                      ),
+                      trailing: JarvisStatusBadge(
+                        label: severity,
+                        color: _severityColor(severity),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Color _severityColor(String severity) {
+    return switch (severity) {
+      'critical' => JarvisTheme.red,
+      'error' => JarvisTheme.red,
+      'warning' => JarvisTheme.orange,
+      'info' => JarvisTheme.info,
+      _ => JarvisTheme.textSecondary,
+    };
+  }
+
+  IconData _severityIcon(String severity) {
+    return switch (severity) {
+      'critical' => Icons.error,
+      'error' => Icons.error_outline,
+      'warning' => Icons.warning_amber,
+      'info' => Icons.info_outline,
+      _ => Icons.circle,
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Expandable role card
+// ---------------------------------------------------------------------------
+
+class _RoleCard extends StatefulWidget {
+  const _RoleCard({required this.name, required this.permissions});
+
+  final String name;
+  final List<dynamic> permissions;
+
+  @override
+  State<_RoleCard> createState() => _RoleCardState();
+}
+
+class _RoleCardState extends State<_RoleCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
+    return JarvisCard(
+      title: widget.name,
+      icon: Icons.shield,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          JarvisChip(
+            label: '${widget.permissions.length} ${l.permissions}',
+            color: JarvisTheme.accent,
+          ),
+          IconButton(
+            icon: Icon(
+              _expanded ? Icons.expand_less : Icons.expand_more,
+              size: 20,
+            ),
+            onPressed: () => setState(() => _expanded = !_expanded),
+          ),
+        ],
+      ),
+      child: _expanded
+          ? Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: widget.permissions
+                  .map<Widget>(
+                    (p) => JarvisChip(label: p.toString()),
+                  )
+                  .toList(),
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+}

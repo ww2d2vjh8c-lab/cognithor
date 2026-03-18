@@ -42,6 +42,10 @@ from datetime import datetime, timezone
 _KS_PBKDF2_SALT = b"IMP-kill-switch-salt-v1"
 _KS_PBKDF2_ITER = 100_000
 
+# Admin key hashing — same PBKDF2 strength, separate salt namespace
+_ADMIN_PBKDF2_SALT = b"IMP-admin-key-salt-v1"
+_ADMIN_PBKDF2_ITER = 100_000
+
 
 def _hash_kill_switch(passphrase: str) -> str:
     """Derive a secure hash from a kill switch passphrase using PBKDF2-HMAC-SHA256."""
@@ -50,6 +54,16 @@ def _hash_kill_switch(passphrase: str) -> str:
         passphrase.encode("utf-8"),
         _KS_PBKDF2_SALT,
         _KS_PBKDF2_ITER,
+    ).hex()
+
+
+def _hash_admin_key(key: str) -> str:
+    """Derive a secure hash from an admin key using PBKDF2-HMAC-SHA256."""
+    return hashlib.pbkdf2_hmac(
+        "sha256",
+        key.encode("utf-8"),
+        _ADMIN_PBKDF2_SALT,
+        _ADMIN_PBKDF2_ITER,
     ).hex()
 
 
@@ -251,6 +265,7 @@ class CognitioEngine:
         self._consolidation_queue: queue.Queue = queue.Queue()
         self._pending_notes: list[str] = []
         self._consolidation_lock = threading.Lock()
+        self._consolidation_thread: threading.Thread | None = None
         self._start_consolidation_worker()
 
         # Save / memory-store lock — prevents a concurrent save_state() from
@@ -303,14 +318,23 @@ class CognitioEngine:
     # ASYNC CONSOLIDATION WORKER
     # ─────────────────────────────────────────────
 
+    def _stop_consolidation_worker(self) -> None:
+        """Signal the consolidation worker to stop and wait for it."""
+        if self._consolidation_thread is not None and self._consolidation_thread.is_alive():
+            self._consolidation_queue.put(None)  # shutdown signal
+            self._consolidation_thread.join(timeout=5.0)
+            self._consolidation_thread = None
+
     def _start_consolidation_worker(self) -> None:
-        """Start the consolidation daemon thread."""
+        """Start the consolidation daemon thread (stops any existing one first)."""
+        self._stop_consolidation_worker()
         t = threading.Thread(
             target=self._consolidation_worker,
             daemon=True,
             name="consolidation-worker",
         )
         t.start()
+        self._consolidation_thread = t
         logger.debug("consolidation-worker thread started.")
 
     def _consolidation_worker(self) -> None:
@@ -1536,8 +1560,19 @@ class CognitioEngine:
             dict: {'success': bool, 'frozen': bool, 'by': str}
         """
         expected = os.getenv("IMP_ADMIN_KEY_HASH", "")
-        candidate = hashlib.sha256(admin_key.encode()).hexdigest()
-        if not hmac.compare_digest(candidate, expected):
+        candidate_pbkdf2 = _hash_admin_key(admin_key)
+        candidate_sha256 = hashlib.sha256(admin_key.encode()).hexdigest()
+        if hmac.compare_digest(candidate_pbkdf2, expected):
+            pass  # PBKDF2 match — preferred
+        elif hmac.compare_digest(candidate_sha256, expected):
+            logger.warning(
+                "Admin key matched via plain SHA-256. Please regenerate "
+                "IMP_ADMIN_KEY_HASH using PBKDF2: "
+                "python -c \"import hashlib; print(hashlib.pbkdf2_hmac("
+                "'sha256', b'YOUR_KEY', b'IMP-admin-key-salt-v1', 100_000"
+                ").hex())\""
+            )
+        else:
             logger.warning("Admin freeze: invalid key attempt.")
             return {"success": False, "reason": "Invalid admin key"}
 
@@ -1559,8 +1594,16 @@ class CognitioEngine:
             dict: {'success': bool, 'frozen': bool, 'by': str}
         """
         expected = os.getenv("IMP_ADMIN_KEY_HASH", "")
-        candidate = hashlib.sha256(admin_key.encode()).hexdigest()
-        if not hmac.compare_digest(candidate, expected):
+        candidate_pbkdf2 = _hash_admin_key(admin_key)
+        candidate_sha256 = hashlib.sha256(admin_key.encode()).hexdigest()
+        if hmac.compare_digest(candidate_pbkdf2, expected):
+            pass  # PBKDF2 match — preferred
+        elif hmac.compare_digest(candidate_sha256, expected):
+            logger.warning(
+                "Admin key matched via plain SHA-256. Please regenerate "
+                "IMP_ADMIN_KEY_HASH using PBKDF2."
+            )
+        else:
             logger.warning("Admin unfreeze: invalid key attempt.")
             return {"success": False, "reason": "Invalid admin key"}
 

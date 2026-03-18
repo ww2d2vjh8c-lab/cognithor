@@ -23,14 +23,14 @@ def summarizer(store: MagicMock) -> EpisodicSummarizer:
 class TestSummarizeDay:
     @pytest.mark.asyncio
     async def test_no_episodes(self, summarizer: EpisodicSummarizer, store: MagicMock) -> None:
-        store.search_episodes.return_value = []
+        store.list_episodes.return_value = []
         result = await summarizer.summarize_day(date(2025, 1, 15))
         assert "Keine Episoden" in result
         assert "2025-01-15" in result
 
     @pytest.mark.asyncio
     async def test_search_exception(self, summarizer: EpisodicSummarizer, store: MagicMock) -> None:
-        store.search_episodes.side_effect = RuntimeError("db error")
+        store.list_episodes.side_effect = RuntimeError("db error")
         result = await summarizer.summarize_day(date(2025, 1, 15))
         assert "Keine Episoden" in result
 
@@ -41,7 +41,7 @@ class TestSummarizeDay:
         ep.topic = "Task A"
         ep.outcome = "Success"
         ep.content = "Did something"
-        store.search_episodes.return_value = [ep]
+        store.list_episodes.return_value = [ep]
 
         result = await summarizer.summarize_day(date(2025, 1, 15))
         assert "Task A" in result
@@ -59,7 +59,7 @@ class TestSummarizeDay:
         ep.topic = "Work"
         ep.outcome = "Done"
         ep.content = "Worked on stuff"
-        store.search_episodes.return_value = [ep]
+        store.list_episodes.return_value = [ep]
 
         result = await summarizer.summarize_day(date(2025, 3, 1))
         assert result == "LLM Summary"
@@ -75,7 +75,7 @@ class TestSummarizeDay:
         ep.topic = "Task"
         ep.outcome = None
         ep.content = "Content text here for the summary"
-        store.search_episodes.return_value = [ep]
+        store.list_episodes.return_value = [ep]
 
         result = await summarizer.summarize_day(date(2025, 3, 1))
         # Should fall back to non-LLM summary
@@ -90,7 +90,7 @@ class TestSummarizeDay:
         ep.topic = "Failed Task"
         ep.outcome = None
         ep.content = "This is the content text that is quite long"
-        store.search_episodes.return_value = [ep]
+        store.list_episodes.return_value = [ep]
 
         result = await summarizer.summarize_day(date(2025, 1, 15))
         assert "Failed Task" in result

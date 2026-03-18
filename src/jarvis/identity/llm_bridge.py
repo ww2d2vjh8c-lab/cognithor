@@ -15,6 +15,7 @@ import asyncio
 import json
 import logging
 import re
+import threading
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
@@ -42,7 +43,10 @@ class CognithorLLMBridge:
         self._loop = loop
 
     def _run_async(self, coro: Any) -> Any:
-        """Run an async coroutine from a sync context (thread-safe)."""
+        """Run an async coroutine from a sync context (thread-safe).
+
+        Must be called from a worker thread, never from the event loop thread.
+        """
         loop = self._loop
         if loop is None:
             try:
@@ -52,6 +56,19 @@ class CognithorLLMBridge:
                 return asyncio.run(coro)
 
         if loop.is_running():
+            # Guard: detect if we're ON the event loop thread (would deadlock)
+            if threading.current_thread() is threading.main_thread():
+                import warnings
+                warnings.warn(
+                    "LLMBridge._run_async called from the main thread while "
+                    "the event loop is running — this would deadlock. "
+                    "Falling back to a new event loop in a thread.",
+                    RuntimeWarning,
+                    stacklevel=3,
+                )
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(1) as pool:
+                    return pool.submit(asyncio.run, coro).result(timeout=120)
             # Called from a different thread (e.g., consolidation worker)
             future = asyncio.run_coroutine_threadsafe(coro, loop)
             return future.result(timeout=120)

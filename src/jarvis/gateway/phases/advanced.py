@@ -56,6 +56,9 @@ def declare_advanced_attrs(config: Any) -> PhaseResult:
         "prompt_evolution": None,
         "session_analyzer": None,
         "dag_workflow_engine": None,
+        "curiosity_engine": None,
+        "confidence_manager": None,
+        "active_learner": None,
     }
 
     # Phase 5: Live-Monitoring
@@ -289,6 +292,33 @@ async def init_advanced(
         log.info("session_analyzer_initialized", data_dir=str(sa_dir))
     except Exception:
         log.debug("session_analyzer_init_skipped", exc_info=True)
+
+    # CuriosityEngine (Knowledge Gap Detection)
+    try:
+        from jarvis.learning.curiosity import CuriosityEngine
+
+        result["curiosity_engine"] = CuriosityEngine()
+        log.info("curiosity_engine_initialized")
+    except Exception:
+        log.debug("curiosity_engine_init_skipped", exc_info=True)
+
+    # KnowledgeConfidenceManager (Confidence Decay & Feedback)
+    try:
+        from jarvis.learning.confidence import KnowledgeConfidenceManager
+
+        result["confidence_manager"] = KnowledgeConfidenceManager()
+        log.info("confidence_manager_initialized")
+    except Exception:
+        log.debug("confidence_manager_init_skipped", exc_info=True)
+
+    # ActiveLearner (Background file watching & learning)
+    try:
+        from jarvis.learning.active_learner import ActiveLearner
+
+        result["active_learner"] = ActiveLearner()
+        log.info("active_learner_initialized")
+    except Exception:
+        log.debug("active_learner_init_skipped", exc_info=True)
 
     # ReplayEngine (needs Gatekeeper for policy re-evaluation)
     if gatekeeper is not None:

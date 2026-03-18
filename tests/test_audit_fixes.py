@@ -160,9 +160,9 @@ class TestC08_TokenStoreFallbackWarning:
 
         with patch("jarvis.security.token_store.logger") as mock_log:
             store.store("test_token", "my-secret-value")
-            mock_log.warning.assert_called()
-            call_args = str(mock_log.warning.call_args)
-            assert "base64" in call_args.lower() or "insecure" in call_args.lower()
+            mock_log.error.assert_called()
+            call_args = str(mock_log.error.call_args)
+            assert "base85" in call_args.lower() or "insecure" in call_args.lower()
 
 
 # ============================================================================

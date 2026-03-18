@@ -429,7 +429,6 @@ class IdentityLayer:
     def cognitive_shutdown(self, passphrase: str) -> dict:
         """Emergency cognitive shutdown (requires passphrase)."""
         if self._engine:
-            self._engine._kill_switch_hash = passphrase  # will be verified by check_kill_switch
             if self._engine.check_kill_switch(passphrase):
                 return self._engine.cognitive_shutdown()
         return {"error": "Invalid passphrase or engine not available"}

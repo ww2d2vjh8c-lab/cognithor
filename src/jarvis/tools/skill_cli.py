@@ -440,10 +440,15 @@ class SkillTester:
             if val:
                 base[key] = val
         if sys.platform == "win32":
+            _sysroot = _os.environ.get("SYSTEMROOT", r"C:\Windows")
             return {
                 **base,
-                "PATH": _os.environ.get("PATH", ""),
-                "SYSTEMROOT": _os.environ.get("SYSTEMROOT", r"C:\Windows"),
+                "PATH": _os.pathsep.join([
+                    _os.path.dirname(sys.executable),
+                    _os.path.join(_sysroot, "System32"),
+                    _sysroot,
+                ]),
+                "SYSTEMROOT": _sysroot,
                 "TEMP": _os.environ.get("TEMP", r"C:\Windows\Temp"),
                 "TMP": _os.environ.get("TMP", r"C:\Windows\Temp"),
                 "USERPROFILE": _os.environ.get("USERPROFILE", ""),

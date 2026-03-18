@@ -56,6 +56,7 @@ class TestWSMessageType:
         assert WSMessageType.USER_MESSAGE == "user_message"
         assert WSMessageType.APPROVAL_RESPONSE == "approval_response"
         assert WSMessageType.PING == "ping"
+        assert WSMessageType.CANCEL == "cancel"
 
     def test_server_message_types(self) -> None:
         assert WSMessageType.ASSISTANT_MESSAGE == "assistant_message"
@@ -63,6 +64,10 @@ class TestWSMessageType:
         assert WSMessageType.STREAM_END == "stream_end"
         assert WSMessageType.TOOL_START == "tool_start"
         assert WSMessageType.TOOL_RESULT == "tool_result"
+        assert WSMessageType.CANVAS_PUSH == "canvas_push"
+        assert WSMessageType.CANVAS_RESET == "canvas_reset"
+        assert WSMessageType.CANVAS_EVAL == "canvas_eval"
+        assert WSMessageType.TRANSCRIPTION == "transcription"
         assert WSMessageType.ERROR == "error"
         assert WSMessageType.PONG == "pong"
 
@@ -125,6 +130,29 @@ class TestWebUIChannelBasics:
 
 
 class TestWSMessageHandling:
+    @pytest.mark.asyncio
+    async def test_cancel_calls_callback(self, channel: WebUIChannel) -> None:
+        cancel_cb = MagicMock()
+        channel._cancel_callback = cancel_cb
+        mock_ws = AsyncMock()
+
+        await channel._handle_ws_message(mock_ws, "session-1", {"type": "cancel"})
+
+        cancel_cb.assert_called_once_with("session-1")
+        mock_ws.send_text.assert_called_once()
+        sent = json.loads(mock_ws.send_text.call_args[0][0])
+        assert sent["type"] == "status_update"
+        assert sent["status"] == "finishing"
+
+    @pytest.mark.asyncio
+    async def test_cancel_without_callback(self, channel: WebUIChannel) -> None:
+        mock_ws = AsyncMock()
+        # No cancel_callback set — should not crash
+        await channel._handle_ws_message(mock_ws, "session-1", {"type": "cancel"})
+        mock_ws.send_text.assert_called_once()
+        sent = json.loads(mock_ws.send_text.call_args[0][0])
+        assert sent["type"] == "status_update"
+
     @pytest.mark.asyncio
     async def test_ping_returns_pong(self, channel: WebUIChannel) -> None:
         mock_ws = AsyncMock()

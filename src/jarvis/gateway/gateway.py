@@ -639,6 +639,9 @@ class Gateway:
     def register_channel(self, channel: Channel) -> None:
         """Registriert einen Kommunikationskanal."""
         self._channels[channel.name] = channel
+        # Wire up cancel callback for channels that support it (e.g. WebUI)
+        if hasattr(channel, "_cancel_callback"):
+            channel._cancel_callback = self.cancel_session
         log.info("channel_registered", channel=channel.name)
 
     async def start(self) -> None:
@@ -699,7 +702,16 @@ class Gateway:
 
         if tasks:
             # Warte bis alle Channels beendet sind
-            await asyncio.gather(*tasks, return_exceptions=True)
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for task, result in zip(tasks, results):
+                if isinstance(result, BaseException):
+                    ch_name = task.get_name()
+                    log.error(
+                        "channel_start_failed",
+                        channel=ch_name,
+                        error=str(result),
+                        error_type=type(result).__name__,
+                    )
         else:
             log.warning("no_channels_registered")
 

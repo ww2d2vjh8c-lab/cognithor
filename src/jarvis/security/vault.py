@@ -78,11 +78,19 @@ class _SimpleEncryptor:
             fernet = self._build_fernet(self._raw_key, salt)
             return fernet.decrypt(fernet_token.encode("ascii")).decode("utf-8")
 
-        # Legacy fallback: old XOR-HMAC encrypted data (deprecated)
+        # Legacy fallback: old XOR-HMAC encrypted data (deprecated, insecure)
         import warnings
 
+        _legacy_log = logging.getLogger(__name__)
+        _legacy_log.warning(
+            "SECURITY: Legacy XOR-HMAC encryption detected. "
+            "This cipher is cryptographically weak and will be removed in a "
+            "future version. The entry will be auto-migrated to Fernet on "
+            "next vault read."
+        )
         warnings.warn(
-            "Legacy XOR-HMAC encryption detected. Entry will be auto-migrated to Fernet.",
+            "Legacy XOR-HMAC encryption is deprecated and insecure. "
+            "Entry will be auto-migrated to Fernet.",
             DeprecationWarning,
             stacklevel=2,
         )

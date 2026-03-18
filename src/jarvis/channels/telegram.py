@@ -217,8 +217,17 @@ class TelegramChannel(Channel):
         await self._app.start()
 
         if self._use_webhook and self._webhook_url:
-            await self._start_webhook()
-            logger.info("Telegram-Bot gestartet (Webhook-Modus)")
+            try:
+                await self._start_webhook()
+                logger.info("Telegram-Bot gestartet (Webhook-Modus)")
+            except Exception as wh_exc:
+                logger.warning(
+                    "Webhook fehlgeschlagen (%s), Fallback auf Polling-Modus",
+                    wh_exc,
+                )
+                if self._app.updater is not None:
+                    await self._app.updater.start_polling(drop_pending_updates=True)
+                logger.info("Telegram-Bot gestartet (Polling-Fallback)")
         else:
             if self._app.updater is not None:
                 await self._app.updater.start_polling(drop_pending_updates=True)

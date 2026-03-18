@@ -1,0 +1,313 @@
+/// Chat state management.
+///
+/// Manages messages, streaming tokens, tool indicators, approval
+/// requests, pipeline state, and canvas content.
+library;
+
+import 'package:flutter/foundation.dart';
+import 'package:jarvis_ui/services/websocket_service.dart';
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+enum MessageRole { user, assistant, system }
+
+class ChatMessage {
+  ChatMessage({
+    required this.role,
+    required this.text,
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now();
+
+  final MessageRole role;
+  String text;
+  final DateTime timestamp;
+}
+
+class ApprovalRequest {
+  const ApprovalRequest({
+    required this.requestId,
+    required this.tool,
+    required this.params,
+    required this.reason,
+  });
+
+  final String requestId;
+  final String tool;
+  final Map<String, dynamic> params;
+  final String reason;
+}
+
+class PipelinePhase {
+  const PipelinePhase({
+    required this.phase,
+    required this.status,
+    this.elapsedMs = 0,
+  });
+
+  final String phase;
+  final String status;
+  final int elapsedMs;
+}
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
+class ChatProvider extends ChangeNotifier {
+  ChatProvider({required this.ws}) {
+    _registerListeners();
+  }
+
+  final WebSocketService ws;
+
+  final List<ChatMessage> messages = [];
+  final StringBuffer _streamBuffer = StringBuffer();
+  bool isStreaming = false;
+  String? activeTool;
+  String statusText = '';
+  ApprovalRequest? pendingApproval;
+  List<PipelinePhase> pipeline = [];
+  String? canvasHtml;
+  String? canvasTitle;
+  Map<String, dynamic>? planDetail;
+  final List<Map<String, dynamic>> agentLog = [];
+
+  // ---------------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------------
+
+  void sendMessage(String text) {
+    messages.add(ChatMessage(role: MessageRole.user, text: text));
+    ws.sendMessage(text);
+    statusText = '';
+    notifyListeners();
+  }
+
+  void sendFile(String name, String type, String base64) {
+    messages.add(ChatMessage(role: MessageRole.user, text: '[File: $name]'));
+    ws.sendFile(name, type, base64);
+    notifyListeners();
+  }
+
+  void sendAudio(String base64, {String mime = 'audio/webm'}) {
+    messages.add(
+        ChatMessage(role: MessageRole.user, text: '[Voice message]'));
+    ws.sendAudio(base64, mimeType: mime);
+    notifyListeners();
+  }
+
+  void respondApproval(bool approved) {
+    if (pendingApproval == null) return;
+    ws.respondApproval(pendingApproval!.requestId, approved);
+    pendingApproval = null;
+    notifyListeners();
+  }
+
+  void cancelOperation() {
+    ws.cancelOperation();
+  }
+
+  void clearChat() {
+    messages.clear();
+    _streamBuffer.clear();
+    isStreaming = false;
+    activeTool = null;
+    statusText = '';
+    pendingApproval = null;
+    pipeline = [];
+    canvasHtml = null;
+    canvasTitle = null;
+    planDetail = null;
+    agentLog.clear();
+    notifyListeners();
+  }
+
+  void dismissCanvas() {
+    canvasHtml = null;
+    canvasTitle = null;
+    notifyListeners();
+  }
+
+  void dismissPlan() {
+    planDetail = null;
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Agent log helper
+  // ---------------------------------------------------------------------------
+
+  void _logAgent(String phase, String? tool, String message,
+      {String status = 'active'}) {
+    agentLog.add({
+      'phase': phase,
+      if (tool != null) 'tool': tool,
+      'status': status,
+      'message': message,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // WebSocket listeners
+  // ---------------------------------------------------------------------------
+
+  void _registerListeners() {
+    ws.on(WsType.assistantMessage, _onAssistantMessage);
+    ws.on(WsType.streamToken, _onStreamToken);
+    ws.on(WsType.streamEnd, _onStreamEnd);
+    ws.on(WsType.toolStart, _onToolStart);
+    ws.on(WsType.toolResult, _onToolResult);
+    ws.on(WsType.approvalRequest, _onApprovalRequest);
+    ws.on(WsType.statusUpdate, _onStatusUpdate);
+    ws.on(WsType.pipelineEvent, _onPipelineEvent);
+    ws.on(WsType.canvasPush, _onCanvasPush);
+    ws.on(WsType.canvasReset, _onCanvasReset);
+    ws.on(WsType.planDetail, _onPlanDetail);
+    ws.on(WsType.transcription, _onTranscription);
+    ws.on(WsType.error, _onError);
+  }
+
+  void _onAssistantMessage(Map<String, dynamic> msg) {
+    final text = msg['text'] as String? ?? '';
+    // If we were streaming, finalize the buffer instead.
+    if (isStreaming) {
+      _finalizeStream();
+    }
+    if (text.isNotEmpty) {
+      messages.add(ChatMessage(role: MessageRole.assistant, text: text));
+    }
+    _logAgent('complete', null, 'Response complete', status: 'done');
+    activeTool = null;
+    statusText = '';
+    pipeline = [];
+    notifyListeners();
+  }
+
+  void _onStreamToken(Map<String, dynamic> msg) {
+    final token = msg['token'] as String? ?? '';
+    if (!isStreaming) {
+      isStreaming = true;
+      _streamBuffer.clear();
+    }
+    _streamBuffer.write(token);
+    notifyListeners();
+  }
+
+  void _onStreamEnd(Map<String, dynamic> msg) {
+    _finalizeStream();
+    notifyListeners();
+  }
+
+  void _finalizeStream() {
+    if (_streamBuffer.isNotEmpty) {
+      messages.add(ChatMessage(
+        role: MessageRole.assistant,
+        text: _streamBuffer.toString(),
+      ));
+      _streamBuffer.clear();
+    }
+    isStreaming = false;
+  }
+
+  /// The current partial streaming text (for display while streaming).
+  String get streamingText => _streamBuffer.toString();
+
+  void _onToolStart(Map<String, dynamic> msg) {
+    activeTool = msg['tool'] as String?;
+    agentLog.add({
+      'phase': 'execute',
+      'tool': activeTool ?? '',
+      'message': 'Tool started: $activeTool',
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+    notifyListeners();
+  }
+
+  void _onToolResult(Map<String, dynamic> msg) {
+    final result = msg['result']?.toString() ?? '';
+    final summary = result.length > 80 ? '${result.substring(0, 80)}...' : result;
+    _logAgent('execute', activeTool, 'Tool result: $summary', status: 'done');
+    activeTool = null;
+    notifyListeners();
+  }
+
+  void _onApprovalRequest(Map<String, dynamic> msg) {
+    final tool = msg['tool'] as String? ?? 'unknown';
+    final reason = msg['reason'] as String? ?? '';
+    pendingApproval = ApprovalRequest(
+      requestId: msg['request_id'] as String? ?? '',
+      tool: tool,
+      params: msg['params'] as Map<String, dynamic>? ?? {},
+      reason: reason,
+    );
+    _logAgent('gate', tool, 'Approval required: $reason', status: 'pending');
+    notifyListeners();
+  }
+
+  void _onStatusUpdate(Map<String, dynamic> msg) {
+    statusText = msg['text'] as String? ?? msg['status'] as String? ?? '';
+    if (statusText.isNotEmpty) {
+      _logAgent('info', null, statusText);
+    }
+    notifyListeners();
+  }
+
+  void _onPipelineEvent(Map<String, dynamic> msg) {
+    final phase = msg['phase'] as String? ?? '';
+    final status = msg['status'] as String? ?? '';
+    final elapsed = msg['elapsed_ms'] as int? ?? 0;
+    pipeline = [
+      ...pipeline.where((p) => p.phase != phase),
+      PipelinePhase(phase: phase, status: status, elapsedMs: elapsed),
+    ];
+    agentLog.add({
+      'phase': phase,
+      'status': status,
+      'message': '$phase: $status',
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+    notifyListeners();
+  }
+
+  void _onCanvasPush(Map<String, dynamic> msg) {
+    canvasHtml = msg['html'] as String?;
+    canvasTitle = msg['title'] as String?;
+    notifyListeners();
+  }
+
+  void _onCanvasReset(Map<String, dynamic> msg) {
+    canvasHtml = null;
+    canvasTitle = null;
+    notifyListeners();
+  }
+
+  void _onPlanDetail(Map<String, dynamic> msg) {
+    planDetail = msg;
+    notifyListeners();
+  }
+
+  void _onTranscription(Map<String, dynamic> msg) {
+    final text = msg['text'] as String? ?? '';
+    // Update the last user "[Voice message]" placeholder.
+    for (var i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role == MessageRole.user &&
+          messages[i].text == '[Voice message]') {
+        messages[i].text = text;
+        break;
+      }
+    }
+    notifyListeners();
+  }
+
+  void _onError(Map<String, dynamic> msg) {
+    final err = msg['error'] as String? ?? 'Unknown error';
+    messages.add(ChatMessage(role: MessageRole.system, text: err));
+    _logAgent('error', null, err, status: 'error');
+    isStreaming = false;
+    _streamBuffer.clear();
+    notifyListeners();
+  }
+}

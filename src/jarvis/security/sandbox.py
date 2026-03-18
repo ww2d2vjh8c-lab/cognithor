@@ -817,10 +817,16 @@ class Sandbox:
         """Baut sichere Umgebungsvariablen zusammen."""
         # Minimales Environment
         if sys.platform == "win32":
+            _sysroot = os.environ.get("SYSTEMROOT", r"C:\Windows")
+            _minimal_path = os.pathsep.join([
+                os.path.dirname(sys.executable),
+                os.path.join(_sysroot, "System32"),
+                _sysroot,
+            ])
             safe_env: dict[str, str] = {
-                "PATH": os.environ.get("PATH", ""),
+                "PATH": _minimal_path,
                 "HOME": str(os.path.expanduser("~")),
-                "SYSTEMROOT": os.environ.get("SYSTEMROOT", r"C:\Windows"),
+                "SYSTEMROOT": _sysroot,
             }
         else:
             safe_env = {

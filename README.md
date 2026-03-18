@@ -7,7 +7,7 @@
     <em>Cognition + Thor — Intelligence with Power</em>
   </p>
   <p align="center">
-    <a href="#llm-providers">16 LLM Providers</a> &middot; <a href="#channels">17 Channels</a> &middot; <a href="#5-tier-cognitive-memory">5-Tier Memory</a> &middot; <a href="#knowledge-vault">Knowledge Vault</a> &middot; <a href="#security">Security</a> &middot; <a href="LICENSE">Apache 2.0</a>
+    <a href="#llm-providers">16 LLM Providers</a> &middot; <a href="#channels">17 Channels</a> &middot; <a href="#5-tier-cognitive-memory">5-Tier Memory</a> &middot; <a href="#knowledge-vault">Knowledge Vault</a> &middot; <a href="#flutter-ui">Flutter UI</a> &middot; <a href="#security">Security</a> &middot; <a href="LICENSE">Apache 2.0</a>
   </p>
   <p align="center">
     <a href="https://github.com/Alex8791-cyber/cognithor/stargazers"><img src="https://img.shields.io/github/stars/Alex8791-cyber/cognithor?style=flat-square&color=yellow" alt="GitHub Stars"></a>
@@ -44,7 +44,8 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 | **Core agent loop (PGE)** | Stable — well-tested and functional |
 | **Memory system** | Stable — 5-tier architecture works reliably |
 | **CLI channel** | Stable — primary development interface |
-| **Web UI / Control Center** | Beta — functional but may have rough edges |
+| **Flutter UI** | Beta — cross-platform, 18 config pages, chat, voice, learning dashboard |
+| **Web UI / Control Center (React)** | Stable — full-featured, legacy (Flutter replaces) |
 | **Messaging channels** (Telegram, Discord, etc.) | Beta — basic flows work, edge cases may break |
 | **Voice mode / TTS** | Alpha — experimental, hardware-dependent |
 | **Browser automation** | Alpha — requires Playwright setup |
@@ -95,6 +96,37 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 ---
 
 ## What's New
+
+### v0.41.0-beta — Flutter UI, Active Learning, Knowledge Curiosity Engine
+
+**Flutter UI — Full Feature Parity with React Control Center**
+- **48 new Flutter files** — Complete cross-platform UI replacing React for mobile/tablet/desktop
+- **18 editable config pages** — General, Language, Providers, Models, Planner, Executor, Memory, Channels, Security, Web, MCP, Cron, Database, Logging, Prompts, Agents, Bindings, System
+- **Form widget library** — 12 custom widgets: Text, Number, Slider, Select, Toggle, List, DomainList, TextArea, JSON Editor, ReadOnly, CollapsibleCard
+- **ConfigProvider** — Deep dot-path set, JSON snapshot dirty-tracking, parallel save, resilient loading with defaults
+- **Observe Panel** — 4-tab side panel (Agent Log, Kanban, DAG, Plan) with phase icons, elapsed time, pipeline status indicator
+- **Knowledge Graph** — Force-directed layout with 6 entity-type colors, node click details, search + type filter
+- **Voice Mode** — 5-state machine (OFF/LISTENING/CONVERSATION/PROCESSING/SPEAKING), German phonetic wake-word detection, speech_to_text + just_audio TTS
+- **Global Search** — Ctrl+K modal, 50 indexed terms across 18 pages
+- **Theme Toggle** — Light/Dark mode with SharedPreferences persistence
+- **Runtime Locale Switching** — LocaleProvider with 4 languages (EN/DE/ZH/AR), instant UI update
+- **Keyboard shortcuts** — Ctrl+1-0 for page navigation, Ctrl+S to save
+
+**Active Learning System (Issue #36)**
+- **CuriosityEngine** — Detects knowledge gaps from low-confidence (<0.5) and stale (>90 days) entities, proposes prioritized exploration tasks
+- **KnowledgeConfidenceManager** — Exponential time decay (180-day half-life), feedback-based adjustment (positive/negative/correction), verification boost, full audit history
+- **ActiveLearner** — Background file watcher for ~/Documents and ~/Downloads, idle-time processing, content-hash deduplication, configurable learning rate
+- **7 new API endpoints** — `/api/v1/learning/stats`, `/gaps`, `/gaps/{id}/dismiss`, `/confidence/history`, `/confidence/{id}/feedback`, `/queue`, `/explore`
+- **Flutter Learning Dashboard** — 3-tab screen (Overview, Knowledge Gaps, Exploration Queue) with stats cards, activity chart, confidence history
+
+**Issue #35 Bug Fixes**
+- **PDF Upload** — File picker with explicit extensions, upload spinner, error handling
+- **Version Display** — Reads from backend config, fallback "Unknown"
+- **Provider Clarity** — Active provider at top with "ACTIVE PROVIDER" badge, inactive dimmed
+- **Observe Panel** — Phase icons (brain/shield/play/refresh), elapsed time per entry, pipeline status indicator
+- **Search Button** — Moved from FAB to clean AppBar buttons
+- **Response Formatting** — Markdown with tappable links, styled code blocks
+- **Ollama Timeout** — 10s health check timeout, clear "Backend nicht erreichbar" message
 
 ### v0.36.0-beta — 9 New Features: Roles, Delegation, Resume, Context Windows, Parallel Tools
 
@@ -198,7 +230,9 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 - **Auto-Dependency Loading** — Missing optional packages detected and installed at startup
 - **Agent-to-Agent Protocol (A2A)** — Linux Foundation RC v1.0 with full JSON-RPC 2.0 server/client, Planner-level delegation via MCP tools, auto-discovery, SSE streaming
 - **Integrated Chat** — Full chat page in the Control Center with WebSocket streaming, tool indicators, canvas panel, approval banners, and voice mode
-- **React Control Center** — Full web dashboard (React 19 + Vite 7) with integrated backend launcher, live config editing, agent management, prompt editing, cron jobs, MCP servers, and A2A settings
+- **Flutter UI** — Cross-platform UI (Web/Desktop/Mobile) with 18 editable config pages, Observe panel, Knowledge Graph, Voice Mode, Learning Dashboard, Light/Dark theme, 4-language i18n
+- **Active Learning & Curiosity** — CuriosityEngine detects knowledge gaps, KnowledgeConfidenceManager with time decay and feedback, ActiveLearner processes files in background during idle time
+- **React Control Center** — Full web dashboard (React 19 + Vite 7) with integrated backend launcher, live config editing, agent management, prompt editing, cron jobs, MCP servers, and A2A settings [legacy]
 - **Human Feel** — Personality Engine (warmth, humor, greetings), sentiment detection (frustrated/urgent/confused/positive), user preference learning, real-time status callbacks, user-friendly German error messages
 - **Auto-Detect Channels** — Channels activate automatically when tokens are present in `.env` — no manual config flags needed
 - **Knowledge Synthesis** — Meta-analysis across Memory + Vault + Web with LLM fusion: `knowledge_synthesize` (full synthesis with confidence ratings), `knowledge_contradictions` (fact-checking), `knowledge_timeline` (causal chains), `knowledge_gaps` (completeness score + research suggestions)
@@ -224,12 +258,16 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
-│            Control Center UI (React 19 + Vite 7)                  │
+│          Flutter UI (Dart, cross-platform: Web/Desktop/Mobile)    │
+│   18 Config Pages · Chat · Voice · Observe · Knowledge Graph     │
+│   Learning Dashboard · Theme Toggle · i18n (EN/DE/ZH/AR)         │
+├───────────────────────────────────────────────────────────────────┤
+│            Control Center UI (React 19 + Vite 7) [legacy]         │
 │   Config · Agents · Chat · Voice · Prompts · Cron · MCP · A2A    │
 ├───────────────────────────────────────────────────────────────────┤
 │         Prometheus /metrics · Grafana Dashboard                    │
 ├───────────────────────────────────────────────────────────────────┤
-│           REST API (FastAPI, 20+ endpoints, port 8741)            │
+│           REST API (FastAPI, 48+ endpoints, port 8741)            │
 ├───────────────────────────────────────────────────────────────────┤
 │                       Channels (17)                                │
 │   CLI · Web · Telegram (poll+webhook) · Discord · Slack           │

@@ -83,6 +83,7 @@ def create_config_routes(
     _register_portal_routes(app, deps, gateway)
     _register_ui_routes(app, deps, config_manager, gateway)
     _register_workflow_graph_routes(app, deps, gateway)
+    _register_learning_routes(app, deps, gateway)
 
 
 # ======================================================================
@@ -3101,3 +3102,184 @@ def _register_workflow_graph_routes(
         if dag and dag._checkpoint_dir and dag._checkpoint_dir.exists():
             result["dag_runs"] = len(list(dag._checkpoint_dir.glob("*.json")))
         return result
+
+
+# ======================================================================
+# Learning / Curiosity / Confidence routes
+# ======================================================================
+
+
+def _register_learning_routes(
+    app: Any,
+    deps: list[Any],
+    gateway: Any,
+) -> None:
+    """REST endpoints for Active Learning, Curiosity Engine, and Confidence Manager."""
+
+    def _get_learner() -> Any:
+        return getattr(gateway, "_active_learner", None) if gateway else None
+
+    def _get_curiosity() -> Any:
+        return getattr(gateway, "_curiosity_engine", None) if gateway else None
+
+    def _get_confidence() -> Any:
+        return getattr(gateway, "_confidence_manager", None) if gateway else None
+
+    # -- Stats -------------------------------------------------------------
+
+    @app.get("/api/v1/learning/stats", dependencies=deps)
+    async def learning_stats() -> dict[str, Any]:
+        """Combined learning statistics."""
+        result: dict[str, Any] = {}
+
+        learner = _get_learner()
+        if learner:
+            result["active_learner"] = learner.stats()
+
+        curiosity = _get_curiosity()
+        if curiosity:
+            result["curiosity"] = {
+                "total_gaps": len(curiosity.gaps),
+                "open_gaps": curiosity.open_gap_count,
+            }
+
+        confidence = _get_confidence()
+        if confidence:
+            result["confidence"] = confidence.stats()
+
+        if not result:
+            result["message"] = "Learning subsystem not initialized"
+
+        return result
+
+    # -- Knowledge gaps ----------------------------------------------------
+
+    @app.get("/api/v1/learning/gaps", dependencies=deps)
+    async def learning_gaps() -> dict[str, Any]:
+        """List detected knowledge gaps."""
+        curiosity = _get_curiosity()
+        if not curiosity:
+            return {"gaps": [], "count": 0}
+
+        gaps = curiosity.gaps
+        return {
+            "gaps": [
+                {
+                    "id": g.id,
+                    "question": g.question,
+                    "topic": g.topic,
+                    "importance": g.importance,
+                    "curiosity": g.curiosity,
+                    "status": g.status,
+                    "created_at": g.created_at.isoformat(),
+                    "suggested_sources": g.suggested_sources,
+                }
+                for g in gaps
+            ],
+            "count": len(gaps),
+            "open": sum(1 for g in gaps if g.status == "open"),
+        }
+
+    @app.post("/api/v1/learning/gaps/{gap_id}/dismiss", dependencies=deps)
+    async def learning_dismiss_gap(gap_id: str) -> dict[str, Any]:
+        """Dismiss a knowledge gap."""
+        curiosity = _get_curiosity()
+        if not curiosity:
+            return {"error": "Curiosity engine not initialized", "status": 503}
+
+        found = curiosity.dismiss_gap(gap_id)
+        if not found:
+            return {"error": "Gap not found", "status": 404}
+        return {"status": "dismissed", "gap_id": gap_id}
+
+    # -- Confidence history ------------------------------------------------
+
+    @app.get("/api/v1/learning/confidence/history", dependencies=deps)
+    async def learning_confidence_history() -> dict[str, Any]:
+        """Return recent confidence changes."""
+        confidence = _get_confidence()
+        if not confidence:
+            return {"history": [], "stats": {}}
+
+        history = confidence.history
+        # Return last 100 entries
+        recent = history[-100:]
+        return {
+            "history": [
+                {
+                    "entity_id": h.entity_id,
+                    "old_confidence": round(h.old_confidence, 4),
+                    "new_confidence": round(h.new_confidence, 4),
+                    "reason": h.reason,
+                    "timestamp": h.timestamp.isoformat(),
+                }
+                for h in recent
+            ],
+            "stats": confidence.stats(),
+        }
+
+    @app.post("/api/v1/learning/confidence/{entity_id}/feedback", dependencies=deps)
+    async def learning_confidence_feedback(entity_id: str, request: Request) -> dict[str, Any]:
+        """Apply feedback to an entity's confidence."""
+        confidence = _get_confidence()
+        if not confidence:
+            return {"error": "Confidence manager not initialized", "status": 503}
+
+        body = await request.json()
+        feedback_type = body.get("type", "")
+        if feedback_type not in ("positive", "negative", "correction"):
+            return {"error": "Invalid feedback type. Must be: positive, negative, correction"}
+
+        # We need the current confidence -- attempt to read from semantic memory
+        current = body.get("current_confidence", 0.5)
+        new_conf = confidence.apply_feedback(entity_id, current, feedback_type)
+
+        return {
+            "entity_id": entity_id,
+            "old_confidence": current,
+            "new_confidence": round(new_conf, 4),
+            "feedback_type": feedback_type,
+        }
+
+    # -- Exploration queue -------------------------------------------------
+
+    @app.get("/api/v1/learning/queue", dependencies=deps)
+    async def learning_queue() -> dict[str, Any]:
+        """Return the exploration task queue."""
+        curiosity = _get_curiosity()
+        if not curiosity:
+            return {"tasks": [], "count": 0}
+
+        tasks = curiosity.propose_exploration()
+        return {
+            "tasks": [
+                {
+                    "gap_id": t.gap_id,
+                    "query": t.query,
+                    "sources": t.sources,
+                    "priority": t.priority,
+                    "max_depth": t.max_depth,
+                }
+                for t in tasks
+            ],
+            "count": len(tasks),
+        }
+
+    @app.post("/api/v1/learning/explore", dependencies=deps)
+    async def learning_explore(request: Request) -> dict[str, Any]:
+        """Trigger exploration of a specific gap."""
+        curiosity = _get_curiosity()
+        if not curiosity:
+            return {"error": "Curiosity engine not initialized", "status": 503}
+
+        body = await request.json()
+        gap_id = body.get("gap_id", "")
+
+        if not gap_id:
+            return {"error": "gap_id is required"}
+
+        found = curiosity.mark_exploring(gap_id)
+        if not found:
+            return {"error": "Gap not found", "status": 404}
+
+        return {"status": "exploring", "gap_id": gap_id}

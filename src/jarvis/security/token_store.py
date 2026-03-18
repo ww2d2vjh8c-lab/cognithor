@@ -63,9 +63,9 @@ class SecureTokenStore:
         if self._fernet is not None:
             encrypted = self._fernet.encrypt(data)
         else:
-            logger.warning(
-                "token_store_insecure_fallback: Token '%s' nur Base64-obfuskiert, "
-                "NICHT verschlüsselt. pip install cryptography",
+            logger.error(
+                "INSECURE: Token '%s' stored as Base85 (trivially reversible). "
+                "Install cryptography package: pip install cryptography",
                 name,
             )
             encrypted = base64.b85encode(data)

@@ -1,0 +1,53 @@
+import 'package:flutter/material.dart';
+import 'package:jarvis_ui/theme/jarvis_theme.dart';
+
+class JarvisChip extends StatelessWidget {
+  const JarvisChip({
+    super.key,
+    required this.label,
+    this.color,
+    this.icon,
+    this.onTap,
+    this.selected = false,
+  });
+
+  final String label;
+  final Color? color;
+  final IconData? icon;
+  final VoidCallback? onTap;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final chipColor = color ?? JarvisTheme.accent;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: chipColor.withAlpha(38),
+          borderRadius: BorderRadius.circular(JarvisTheme.chipRadius),
+          border: selected ? Border.all(color: chipColor, width: 1.5) : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: JarvisTheme.iconSizeSm, color: chipColor),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: chipColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

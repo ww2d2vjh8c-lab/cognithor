@@ -1,0 +1,48 @@
+import 'package:flutter/material.dart';
+import 'package:jarvis_ui/theme/jarvis_theme.dart';
+
+class JarvisReadOnlyField extends StatelessWidget {
+  const JarvisReadOnlyField({
+    super.key,
+    required this.label,
+    required this.value,
+    this.description,
+  });
+
+  final String label;
+  final String value;
+  final String? description;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: theme.textTheme.bodyMedium),
+          if (description != null) ...[
+            const SizedBox(height: 2),
+            Text(description!,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: JarvisTheme.textSecondary)),
+          ],
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: JarvisTheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: JarvisTheme.border),
+            ),
+            child: Text(value,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: JarvisTheme.textSecondary)),
+          ),
+        ],
+      ),
+    );
+  }
+}

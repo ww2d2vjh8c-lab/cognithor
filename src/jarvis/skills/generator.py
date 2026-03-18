@@ -621,11 +621,11 @@ class SkillGenerator:
         # Alte Version archivieren
         self._archive_if_exists(skill)
 
-        # Code schreiben
+        # Code schreiben (reference only — NOT imported by the registry)
         code_file = self._skills_dir / f"{skill.module_name}.py"
         code_file.write_text(skill.code, encoding="utf-8")
 
-        # Skill-Markdown schreiben
+        # Skill-Markdown schreiben (registry loads only .md files)
         md_file = self._skills_dir / f"{skill.module_name}.md"
         md_file.write_text(skill.skill_markdown, encoding="utf-8")
 

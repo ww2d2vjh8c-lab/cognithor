@@ -121,6 +121,32 @@ class EpisodicStore:
             conn.commit()
         return eid
 
+    def list_episodes(
+        self,
+        date_range: tuple[str, str] | None = None,
+        limit: int = 100,
+    ) -> list[EpisodicEntry]:
+        """List episodes by date range without full-text search."""
+        conditions = []
+        params: list[Any] = []
+        if date_range:
+            conditions.append("timestamp >= ? AND timestamp <= ?")
+            params.extend(date_range)
+        where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        params.append(limit)
+        try:
+            with self._write_lock:
+                conn = self._get_conn()
+                cursor = conn.execute(
+                    f"SELECT * FROM episodes {where} "
+                    f"ORDER BY timestamp DESC LIMIT ?",
+                    params,
+                )
+                return [self._row_to_entry(row) for row in cursor.fetchall()]
+        except Exception as exc:
+            log.warning("list_episodes_error", error=str(exc))
+            return []
+
     def search_episodes(
         self,
         query: str,

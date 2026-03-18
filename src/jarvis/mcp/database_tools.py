@@ -31,6 +31,8 @@ log = get_logger(__name__)
 # Constants
 # --------------------------------------------------------------------------- #
 
+_SAFE_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_ ]*$")
+
 _DEFAULT_ROW_LIMIT = 500
 _MAX_ROW_LIMIT = 5000
 _CONN_TIMEOUT = 10
@@ -221,8 +223,13 @@ class DatabaseTools:
         conn = self._sqlite_connect(db_path, read_only=True)
         try:
             if table:
+                if not _SAFE_IDENTIFIER_RE.match(table):
+                    raise DatabaseError(
+                        f"Ungueltiger Tabellenname: {table!r}"
+                    )
+                safe_table = f"[{table}]"
                 # Detailed column info for a specific table
-                cursor = conn.execute(f"PRAGMA table_info({table})")
+                cursor = conn.execute(f"PRAGMA table_info({safe_table})")
                 cols = cursor.fetchall()
                 if not cols:
                     raise DatabaseError(f"Tabelle nicht gefunden: {table}")
@@ -243,7 +250,7 @@ class DatabaseTools:
                     )
 
                 # Also show indexes
-                idx_cursor = conn.execute(f"PRAGMA index_list({table})")
+                idx_cursor = conn.execute(f"PRAGMA index_list({safe_table})")
                 indexes = idx_cursor.fetchall()
                 if indexes:
                     lines.append("")

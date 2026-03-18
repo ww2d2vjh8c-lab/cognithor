@@ -1,13 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-
-const api = async (method, path, body) => {
-  const token = sessionStorage.getItem("jarvis-token") || "";
-  const opts = { method, headers: { "Content-Type": "application/json" } };
-  if (token) opts.headers.Authorization = `Bearer ${token}`;
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(path, opts);
-  return res.json();
-};
+import { api } from "../utils/api.js";
 
 export default function IdentityPage() {
   const [state, setState] = useState(null);
@@ -16,7 +8,7 @@ export default function IdentityPage() {
 
   const fetchState = useCallback(async () => {
     try {
-      const data = await api("GET", "/api/v1/identity/state");
+      const data = await api("GET", "/identity/state");
       setState(data);
     } catch { setState(null); }
     setLoading(false);
@@ -27,7 +19,7 @@ export default function IdentityPage() {
   const doAction = async (action) => {
     setActionResult("...");
     try {
-      const res = await api("POST", `/api/v1/identity/${action}`);
+      const res = await api("POST", `/identity/${action}`);
       setActionResult(JSON.stringify(res));
       fetchState();
     } catch (e) { setActionResult(e.message); }

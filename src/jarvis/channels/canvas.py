@@ -152,10 +152,22 @@ class CanvasManager:
     async def eval_js(self, session_id: str, js: str) -> None:
         """Führt JavaScript im Canvas-Client aus.
 
+        Note: The client renders the canvas in an iframe with sandbox=""
+        which blocks script execution. This method is kept for future use
+        with explicitly allow-listed sandbox permissions.
+
         Args:
             session_id: Die Session-ID.
             js: JavaScript-Code zur Ausführung im Canvas-iframe.
         """
+        _MAX_JS_LEN = 50_000
+        if len(js) > _MAX_JS_LEN:
+            logger.warning(
+                "Canvas eval_js rejected: payload too large (%d > %d)",
+                len(js), _MAX_JS_LEN,
+            )
+            return
+
         if self._broadcaster:
             await self._broadcaster(
                 session_id,

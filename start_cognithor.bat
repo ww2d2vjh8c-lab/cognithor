@@ -7,6 +7,20 @@ color 0F
 ::  COGNITHOR ONE-CLICK LAUNCHER
 ::  Prueft Abhaengigkeiten, bootstrappt beim ersten Start,
 ::  startet dann die Web-UI.
+::
+::  Alle Logik in :main, damit das pause am Ende IMMER greift.
+:: ============================================================
+
+call :main
+echo.
+echo   ============================================================
+echo   Press any key to close this window...
+echo   ============================================================
+pause >nul
+exit /b 0
+
+:: ============================================================
+:main
 :: ============================================================
 
 :: UTF-8 fuer Python-Output aktivieren
@@ -25,95 +39,23 @@ set "REPO_ROOT=%~dp0"
 if "%REPO_ROOT:~-1%"=="\" set "REPO_ROOT=%REPO_ROOT:~0,-1%"
 
 :: ============================================================
-::  1. Python im PATH? (versucht python, dann py Launcher)
+::  1. Python im PATH?
 :: ============================================================
-set "PYTHON_CMD="
-where python >nul 2>&1
-if not errorlevel 1 (
-    REM Teste ob es echtes Python ist, nicht Microsoft Store Stub
-    python -c "import sys" >nul 2>&1
-    if not errorlevel 1 (
-        set "PYTHON_CMD=python"
-    )
-)
-
-if "%PYTHON_CMD%"=="" (
-    where py >nul 2>&1
-    if not errorlevel 1 (
-        py -c "import sys" >nul 2>&1
-        if not errorlevel 1 (
-            set "PYTHON_CMD=py"
-        )
-    )
-)
-
-if "%PYTHON_CMD%"=="" (
-    echo   Python not found.
-    echo.
-    :: Pruefen ob winget verfuegbar ist
-    where winget >nul 2>&1
-    if errorlevel 1 goto :no_winget_python
-    echo   Python 3.12 can be installed automatically.
-    echo.
-    CHOICE /C YN /M "  Install Python 3.12 now? (Y=Yes, N=No)"
-    if errorlevel 2 goto :no_winget_python
-    echo.
-    echo   Installing Python 3.12 via winget...
-    winget install --id Python.Python.3.12 -e --accept-source-agreements --accept-package-agreements
-    if errorlevel 1 (
-        echo.
-        echo   [WARNING] winget installation failed.
-        goto :no_winget_python
-    )
-    echo.
-    echo   Python installed. Refreshing PATH...
-    :: PATH aus Registry refreshen (delayed expansion noetig innerhalb Block)
-    for /f "tokens=2*" %%A in ('reg query "HKCU\Environment" /v Path 2^>nul') do set "USER_PATH=%%B"
-    for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul') do set "SYS_PATH=%%B"
-    if defined USER_PATH set "PATH=!USER_PATH!;!PATH!"
-    if defined SYS_PATH set "PATH=!SYS_PATH!;!PATH!"
-    :: Python erneut suchen
-    where python >nul 2>&1
-    if not errorlevel 1 (
-        python -c "import sys" >nul 2>&1
-        if not errorlevel 1 set "PYTHON_CMD=python"
-    )
-    if "!PYTHON_CMD!"=="" (
-        where py >nul 2>&1
-        if not errorlevel 1 (
-            py -c "import sys" >nul 2>&1
-            if not errorlevel 1 set "PYTHON_CMD=py"
-        )
-    )
-    if "!PYTHON_CMD!"=="" (
-        echo.
-        echo   [INFO] Python was installed but is not yet in PATH.
-        echo   Please close this window and reopen it.
-        echo.
-        pause
-        exit /b 1
-    )
-    goto :python_found
-)
-
-:no_winget_python
-if "%PYTHON_CMD%"=="" (
+call :find_python
+if "!PYTHON_CMD!"=="" (
     echo   [ERROR] Python not found!
     echo.
     echo   Please install Python 3.12+:
     echo   https://www.python.org/downloads/
     echo.
     echo   IMPORTANT: Check "Add Python to PATH" during installation!
-    echo.
-    pause
-    exit /b 1
+    goto :eof
 )
-:python_found
 
 :: ============================================================
-::  2. Python ^>= 3.12?
+::  2. Python >= 3.12?
 :: ============================================================
-%PYTHON_CMD% -c "import sys; exit(0 if sys.version_info >= (3,12) else 1)" 2>nul
+%PYTHON_CMD% -c "import sys; sys.exit(0 if sys.version_info >= (3,12) else 1)" 2>nul
 if errorlevel 1 (
     echo   [ERROR] Python 3.12 or newer is required!
     echo.
@@ -121,17 +63,14 @@ if errorlevel 1 (
     echo.
     echo   Please upgrade Python:
     echo   https://www.python.org/downloads/
-    echo.
-    pause
-    exit /b 1
+    goto :eof
 )
 
 :: ============================================================
-::  3. Node.js im PATH?
+::  3. Flutter / Node.js erkennen
 :: ============================================================
-set "HAS_NODE=0"
-where node >nul 2>&1
-if not errorlevel 1 set "HAS_NODE=1"
+call :detect_flutter
+call :detect_node
 
 :: ============================================================
 ::  4. Bootstrap ausfuehren
@@ -144,45 +83,85 @@ if errorlevel 1 (
     echo.
     echo   [ERROR] Bootstrap failed!
     echo   Please check the output above for details.
-    echo.
-    pause
-    exit /b 1
+    goto :eof
 )
 
 :: ============================================================
-::  5. UI-Modus waehlen: Vite Dev -> Pre-built -> CLI
+::  5. UI-Modus waehlen
 :: ============================================================
 
-:: Modus A: Node.js vorhanden -> Vite Dev Server
-if "%HAS_NODE%"=="0" goto :check_prebuilt
+:: --- Modus A: Flutter vorhanden ---
+if "!HAS_FLUTTER!"=="0" goto :check_node_ui
+if not exist "%REPO_ROOT%\flutter_app\pubspec.yaml" goto :check_node_ui
+echo.
+echo   Flutter detected.
+
+:: Flutter Dependencies holen (nur einmal noetig)
+if not exist "%REPO_ROOT%\flutter_app\.dart_tool" (
+    echo   [INFO] Fetching Flutter dependencies...
+    cd /d "%REPO_ROOT%\flutter_app"
+    cmd /c flutter pub get >nul 2>&1
+    cd /d "%REPO_ROOT%"
+)
+
+:: Pre-built Flutter Web vorhanden? Backend serviert es direkt
+if exist "%REPO_ROOT%\flutter_app\build\web\index.html" (
+    echo   Starting backend with Flutter UI...
+    echo   Backend + UI at http://localhost:8741
+    echo.
+    cd /d "%REPO_ROOT%"
+    start "" http://localhost:8741
+    %PYTHON_CMD% -m jarvis --no-cli
+    echo.
+    echo   Cognithor stopped.
+    goto :eof
+)
+
+:: Flutter Dev-Modus: Backend im Hintergrund, Flutter im Vordergrund
+echo   Starting backend...
+cd /d "%REPO_ROOT%"
+start "" /b %PYTHON_CMD% -m jarvis --no-cli
+
+:: Warten bis Backend antwortet
+call :wait_for_backend
+
+echo   Starting Flutter Web UI (dev mode)...
+echo   Open http://127.0.0.1:5173 in your browser.
+echo.
+cd /d "%REPO_ROOT%\flutter_app"
+cmd /c flutter run -d chrome --web-port 5173
+if errorlevel 1 (
+    echo.
+    echo   [INFO] Chrome mode failed. Trying web-server mode...
+    cmd /c flutter run -d web-server --web-port 5173
+)
+call :stop_backend
+goto :eof
+
+:: --- Modus B: Node.js vorhanden -> Vite Dev Server (Legacy) ---
+:check_node_ui
+if "!HAS_NODE!"=="0" goto :check_prebuilt
 if not exist "%REPO_ROOT%\ui\node_modules" (
     echo.
     echo   [INFO] node_modules not found. Trying npm install...
     cd /d "%REPO_ROOT%\ui"
-    call npm install >nul 2>&1
+    cmd /c npm install >nul 2>&1
     if errorlevel 1 goto :check_prebuilt
     cd /d "%REPO_ROOT%"
 )
-
-:: ============================================================
-::  6a. Web-UI starten (Vite Dev Server)
-:: ============================================================
 echo.
 echo   Starting Web UI (Vite Dev Server)...
 echo   Open http://127.0.0.1:5173 in your browser.
 echo.
 cd /d "%REPO_ROOT%\ui"
-call npm run dev
+cmd /c npm run dev
 echo.
 echo   Web UI stopped.
-pause
-exit /b 0
+goto :eof
 
-:: ============================================================
-::  6b. Pre-built UI (kein Node.js, aber ui/dist/ vorhanden)
-:: ============================================================
+:: --- Modus C: Pre-built React UI ---
 :check_prebuilt
-if not exist "%REPO_ROOT%\ui\dist\index.html" goto :cli_fallback
+if not exist "%REPO_ROOT%\ui\dist\index.html" goto :check_flutter_prebuilt
 echo.
 echo   Node.js not found -- starting pre-built UI.
 echo   Backend + UI at http://localhost:8741
@@ -192,21 +171,104 @@ start "" http://localhost:8741
 %PYTHON_CMD% -m jarvis --no-cli
 echo.
 echo   Cognithor stopped.
-pause
-exit /b 0
+goto :eof
 
-:: ============================================================
-::  6c. CLI-Fallback (kein Node.js, kein Pre-built UI)
-:: ============================================================
+:: --- Modus D: Flutter pre-built Web (ohne Flutter SDK) ---
+:check_flutter_prebuilt
+if not exist "%REPO_ROOT%\flutter_app\build\web\index.html" goto :cli_fallback
+echo.
+echo   Starting with pre-built Flutter UI...
+echo   Backend + UI at http://localhost:8741
+echo.
+cd /d "%REPO_ROOT%"
+start "" http://localhost:8741
+%PYTHON_CMD% -m jarvis --no-cli
+echo.
+echo   Cognithor stopped.
+goto :eof
+
+:: --- Modus E: CLI-Fallback ---
 :cli_fallback
 echo.
-echo   Node.js not found and no pre-built UI available.
-echo   Starting in CLI mode.
-echo   For the Web UI, install Node.js 18+: https://nodejs.org/
+echo   No UI toolkit found. Starting in CLI mode.
+echo.
+echo   For the Flutter UI (recommended):
+echo     1. Install Flutter: https://docs.flutter.dev/get-started/install
+echo     2. Run: flutter pub get (in flutter_app/)
 echo.
 echo   ============================================================
 cd /d "%REPO_ROOT%"
 %PYTHON_CMD% -m jarvis
 echo.
 echo   Cognithor stopped.
-pause
+goto :eof
+
+:: ============================================================
+::  SUBROUTINEN
+:: ============================================================
+
+:find_python
+set "PYTHON_CMD="
+where python >nul 2>&1
+if not errorlevel 1 (
+    python -c "import sys" >nul 2>&1
+    if not errorlevel 1 set "PYTHON_CMD=python"
+)
+if "!PYTHON_CMD!"=="" (
+    where py >nul 2>&1
+    if not errorlevel 1 (
+        py -c "import sys" >nul 2>&1
+        if not errorlevel 1 set "PYTHON_CMD=py"
+    )
+)
+goto :eof
+
+:detect_flutter
+set "HAS_FLUTTER=0"
+where flutter >nul 2>&1
+if not errorlevel 1 (
+    cmd /c flutter --version >nul 2>&1
+    if not errorlevel 1 set "HAS_FLUTTER=1"
+)
+if "!HAS_FLUTTER!"=="0" (
+    if exist "C:\flutter\bin\flutter.bat" (
+        set "PATH=C:\flutter\bin;!PATH!"
+        cmd /c C:\flutter\bin\flutter.bat --version >nul 2>&1
+        if not errorlevel 1 set "HAS_FLUTTER=1"
+    )
+)
+goto :eof
+
+:detect_node
+set "HAS_NODE=0"
+where node >nul 2>&1
+if not errorlevel 1 set "HAS_NODE=1"
+goto :eof
+
+:wait_for_backend
+echo   Waiting for backend...
+for /l %%i in (1,1,15) do (
+    if "!BACKEND_READY!" neq "1" (
+        curl -sf http://localhost:8741/api/v1/health >nul 2>&1
+        if not errorlevel 1 (
+            set "BACKEND_READY=1"
+        ) else (
+            timeout /t 1 /nobreak >nul
+        )
+    )
+)
+if "!BACKEND_READY!" neq "1" (
+    echo   [WARNING] Backend did not respond within 15s. Continuing...
+) else (
+    echo   Backend ready.
+)
+echo.
+goto :eof
+
+:stop_backend
+echo.
+echo   Stopping backend...
+taskkill /f /fi "WINDOWTITLE eq Cognithor*" >nul 2>&1
+%PYTHON_CMD% -c "import os,signal;[os.kill(int(l.split()[1]),signal.SIGTERM) for l in __import__('subprocess').check_output('tasklist /fi \"IMAGENAME eq python.exe\" /fo list /nh',shell=True).decode().split('PID:')[1:] if 'jarvis' in l.lower()]" >nul 2>&1
+echo   Cognithor stopped.
+goto :eof

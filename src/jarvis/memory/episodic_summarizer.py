@@ -25,12 +25,11 @@ class EpisodicSummarizer:
         start = target_date.isoformat()
         end = (target_date + timedelta(days=1)).isoformat()
 
-        # Get episodes for this day
+        # Get episodes for this day (plain date-range query, no FTS)
         try:
-            episodes = self._store.search_episodes(
-                query="*",
-                limit=100,
+            episodes = self._store.list_episodes(
                 date_range=(start, end),
+                limit=100,
             )
         except Exception:
             episodes = []

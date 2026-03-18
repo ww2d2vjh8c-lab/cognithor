@@ -24,6 +24,7 @@ import os
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 from uuid import uuid4
 
@@ -52,6 +53,7 @@ class WSMessageType:
     USER_MESSAGE = "user_message"
     APPROVAL_RESPONSE = "approval_response"
     PING = "ping"
+    CANCEL = "cancel"
 
     # Server → Client
     ASSISTANT_MESSAGE = "assistant_message"
@@ -63,6 +65,10 @@ class WSMessageType:
     STATUS_UPDATE = "status_update"
     PIPELINE_EVENT = "pipeline_event"
     PLAN_DETAIL = "plan_detail"
+    CANVAS_PUSH = "canvas_push"
+    CANVAS_RESET = "canvas_reset"
+    CANVAS_EVAL = "canvas_eval"
+    TRANSCRIPTION = "transcription"
     AGENT_LOG = "agent_log"
     ERROR = "error"
     PONG = "pong"
@@ -106,12 +112,25 @@ class WebUIChannel(Channel):
         self._static_dir = static_dir
         self._config_manager = config_manager
         self._config = config  # JarvisConfig (optional, für ConfigManager)
-        # Default: eingebautes WebChat-Widget ausliefern
+        # Default: Flutter-Build bevorzugen, dann eingebautes WebChat-Widget
         if self._static_dir is None:
-            builtin_webchat = Path(__file__).parent / "webchat"
-            if builtin_webchat.is_dir():
-                self._static_dir = str(builtin_webchat)
+            # 1. Flutter-Build (flutter_app/build/web/)
+            repo_root = Path(__file__).resolve().parent.parent.parent.parent
+            flutter_web = repo_root / "flutter_app" / "build" / "web"
+            if flutter_web.is_dir() and (flutter_web / "index.html").exists():
+                self._static_dir = str(flutter_web)
+            else:
+                # 2. Legacy React-Build (ui/dist/)
+                react_dist = repo_root / "ui" / "dist"
+                if react_dist.is_dir() and (react_dist / "index.html").exists():
+                    self._static_dir = str(react_dist)
+                else:
+                    # 3. Eingebautes WebChat-Widget
+                    builtin_webchat = Path(__file__).parent / "webchat"
+                    if builtin_webchat.is_dir():
+                        self._static_dir = str(builtin_webchat)
         self._handler: MessageHandler | None = None
+        self._cancel_callback: Callable[[str], Any] | None = None
         self._app: Any = None
         self._start_time = 0.0
 
@@ -545,6 +564,20 @@ class WebUIChannel(Channel):
             await self._ws_send(ws, {"type": WSMessageType.PONG})
             return
 
+        if msg_type == WSMessageType.CANCEL:
+            if self._cancel_callback:
+                self._cancel_callback(session_id)
+            await self._ws_send(
+                ws,
+                {
+                    "type": WSMessageType.STATUS_UPDATE,
+                    "status": "finishing",
+                    "text": "Abgebrochen...",
+                    "session_id": session_id,
+                },
+            )
+            return
+
         if msg_type == WSMessageType.APPROVAL_RESPONSE:
             request_id = msg.get("request_id", "")
             future = self._pending_approvals.get(request_id)
@@ -917,7 +950,10 @@ def create_app() -> Any:
     """
     host = os.environ.get("JARVIS_WEBUI_HOST", "127.0.0.1")
     api_token = os.environ.get("JARVIS_API_TOKEN") or None
-    cors_raw = os.environ.get("JARVIS_WEBUI_CORS_ORIGINS", "http://localhost:8741")
+    cors_raw = os.environ.get(
+        "JARVIS_WEBUI_CORS_ORIGINS",
+        "http://localhost:8741,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:8741",
+    )
     cors_origins = [o.strip() for o in cors_raw.split(",") if o.strip()]
     ssl_cert = os.environ.get("JARVIS_SSL_CERTFILE", "")
     ssl_key = os.environ.get("JARVIS_SSL_KEYFILE", "")

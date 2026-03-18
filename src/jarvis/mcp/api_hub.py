@@ -18,6 +18,8 @@ import base64
 import contextlib
 import json
 import os
+import subprocess
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -180,9 +182,22 @@ def _get_or_create_fernet(config: Any) -> Any | None:
             key = _FernetClass.generate_key()
             key_path.parent.mkdir(parents=True, exist_ok=True)
             key_path.write_bytes(key)
-            # Nur Owner darf lesen (Unix)
-            with contextlib.suppress(OSError):
+            # Restrict file access to owner only
+            try:
                 key_path.chmod(0o600)
+            except OSError:
+                pass
+            if sys.platform == "win32":
+                try:
+                    username = os.environ.get("USERNAME", "")
+                    if username:
+                        subprocess.run(
+                            ["icacls", str(key_path), "/inheritance:r",
+                             "/grant:r", f"{username}:(R,W)"],
+                            capture_output=True, timeout=10,
+                        )
+                except Exception:
+                    pass  # Best-effort ACL restriction
         return _FernetClass(key)
     except Exception as exc:
         log.warning("fernet_key_error", error=str(exc))

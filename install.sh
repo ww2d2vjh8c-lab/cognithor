@@ -326,6 +326,42 @@ check_prerequisites() {
         info "Start with: ollama serve"
     fi
 
+    # Flutter SDK (optional, for Flutter UI)
+    if check_command flutter; then
+        local flutter_ver
+        flutter_ver=$(flutter --version 2>/dev/null | head -1 | awk '{print $2}')
+        success "Flutter $flutter_ver found"
+    else
+        warn "Flutter SDK not found (optional -- needed for Flutter UI)"
+        info "Install: https://docs.flutter.dev/get-started/install"
+        read -rp "  Install Flutter SDK now? [y/N] " _flutter_answer
+        if [[ "$_flutter_answer" =~ ^[yY]$ ]]; then
+            info "Installing Flutter SDK..."
+            if check_command git; then
+                local flutter_dir="$HOME/.flutter"
+                if [[ -d "$flutter_dir" ]]; then
+                    info "Existing Flutter dir found at $flutter_dir"
+                else
+                    git clone https://github.com/flutter/flutter.git -b stable --depth 1 "$flutter_dir"
+                fi
+                export PATH="$flutter_dir/bin:$PATH"
+                if check_command flutter; then
+                    flutter precache --web 2>/dev/null || true
+                    success "Flutter installed at $flutter_dir"
+                    info "Add to PATH permanently:"
+                    info "  echo 'export PATH=\"\$HOME/.flutter/bin:\$PATH\"' >> ~/.bashrc"
+                else
+                    error "Flutter installation failed"
+                fi
+            else
+                error "git is required to install Flutter"
+                info "Install git first, then retry"
+            fi
+        else
+            info "Install later: https://docs.flutter.dev/get-started/install"
+        fi
+    fi
+
     if [[ $errors -gt 0 ]]; then
         fatal "$errors critical prerequisite(s) missing"
     fi
@@ -583,53 +619,55 @@ install_jarvis() {
         warn "CLI 'jarvis' not in PATH -- use: $VENV_DIR/bin/jarvis"
     fi
 
-    # Web-UI Build (Node.js optional)
+    # Flutter UI Build (preferred)
+    local flutter_app_dir="$REPO_DIR/flutter_app"
+    local flutter_web_dist="$flutter_app_dir/build/web/index.html"
+    if check_command flutter && [[ -f "$flutter_app_dir/pubspec.yaml" ]]; then
+        info "Building Flutter Web UI..."
+        if (cd "$flutter_app_dir" && flutter pub get --no-example 2>&1 | tail -3 && flutter build web --release 2>&1 | tail -5); then
+            success "Flutter Web UI built (flutter_app/build/web/)"
+        else
+            warn "Flutter build failed -- falling back to legacy UI"
+        fi
+    elif [[ -f "$flutter_web_dist" ]]; then
+        success "Pre-built Flutter UI available"
+    fi
+
+    # Legacy Web-UI Build (Node.js fallback)
     local ui_dir="$REPO_DIR/ui"
     local ui_dist="$ui_dir/dist/index.html"
-    if check_command node && check_command npm; then
-        if [[ ! -d "$ui_dir/node_modules" ]]; then
-            info "Installing UI dependencies (npm install)..."
-            (cd "$ui_dir" && npm install --silent 2>&1 | tail -5) || true
-        fi
-        if [[ ! -f "$ui_dist" ]]; then
-            info "Building UI (npm run build)..."
-            if (cd "$ui_dir" && npm run build --silent 2>&1 | tail -5); then
-                success "UI build created (ui/dist/)"
-            else
-                warn "npm run build failed -- CLI mode available"
+    if [[ ! -f "$flutter_web_dist" ]]; then
+        if check_command node && check_command npm; then
+            if [[ ! -d "$ui_dir/node_modules" ]]; then
+                info "Installing legacy UI dependencies (npm install)..."
+                (cd "$ui_dir" && npm install --silent 2>&1 | tail -5) || true
             fi
+            if [[ ! -f "$ui_dist" ]]; then
+                info "Building legacy UI (npm run build)..."
+                if (cd "$ui_dir" && npm run build --silent 2>&1 | tail -5); then
+                    success "Legacy UI build created (ui/dist/)"
+                else
+                    warn "npm run build failed -- CLI mode available"
+                fi
+            else
+                success "Legacy UI build exists (ui/dist/)"
+            fi
+        elif [[ -f "$ui_dist" ]]; then
+            success "Pre-built legacy UI available (Node.js not needed)"
         else
-            success "UI build exists (ui/dist/)"
+            echo ""
+            warn "No UI toolkit found"
+            info "CLI mode is fully available"
+            echo ""
+            info "For the Flutter UI (recommended):"
+            echo "    https://docs.flutter.dev/get-started/install"
+            echo "    cd $flutter_app_dir && flutter pub get && flutter build web"
+            echo ""
+            info "Or install Node.js for the legacy React UI:"
+            echo "    https://nodejs.org/en/download/"
+            echo "    cd $ui_dir && npm install && npm run build"
+            echo ""
         fi
-    elif [[ -f "$ui_dist" ]]; then
-        success "Pre-built UI available (Node.js not needed)"
-    else
-        echo ""
-        warn "Node.js not found -- Web-UI cannot be built"
-        info "CLI mode is fully available (no Node.js needed)"
-        echo ""
-        info "To add Web-UI later, install Node.js:"
-        local _distro_id=""
-        if [[ -f /etc/os-release ]]; then
-            _distro_id=$(. /etc/os-release && echo "${ID:-}")
-        fi
-        case "$_distro_id" in
-            ubuntu|debian)
-                echo "    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -"
-                echo "    sudo apt install -y nodejs"
-                ;;
-            fedora|rhel|centos|rocky|alma)
-                echo "    sudo dnf install nodejs"
-                ;;
-            arch|manjaro)
-                echo "    sudo pacman -S nodejs npm"
-                ;;
-            *)
-                echo "    https://nodejs.org/en/download/"
-                ;;
-        esac
-        echo "    cd $ui_dir && npm install && npm run build"
-        echo ""
     fi
 }
 
@@ -1067,8 +1105,14 @@ DONE
     echo "  Next steps:"
     echo "    1. Review and customize config.yaml"
     echo "    2. Start jarvis and test"
-    echo "    3. Optional: Enable Telegram/WebUI"
+    echo "    3. Optional: Enable Telegram/WebUI/Flutter"
     echo ""
+    if check_command flutter && [[ -f "$REPO_DIR/flutter_app/pubspec.yaml" ]]; then
+        echo "  Flutter UI:"
+        echo "    cd flutter_app && flutter run -d chrome    # Dev mode"
+        echo "    cd flutter_app && flutter build web        # Production build"
+        echo ""
+    fi
 }
 
 # ============================================================================
