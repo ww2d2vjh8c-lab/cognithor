@@ -716,7 +716,7 @@ class Gateway:
                                     e if isinstance(e, dict) else {"id": str(e)} for e in raw
                                 ]
                             except Exception:
-                                pass
+                                log.debug("curiosity_entity_list_failed", exc_info=True)
                             if entities:
                                 await self._curiosity_engine.detect_gaps("", entities)
                                 log.debug(
