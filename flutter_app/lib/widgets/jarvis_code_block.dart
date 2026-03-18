@@ -19,7 +19,7 @@ class JarvisCodeBlock extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF080810),
+        color: JarvisTheme.codeBlockBg,
         borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
         border: Border.all(color: JarvisTheme.border),
       ),
@@ -75,10 +75,10 @@ class JarvisCodeBlock extends StatelessWidget {
             child: SelectableText(
               code,
               maxLines: maxLines,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 13,
-                color: Colors.white,
+                color: JarvisTheme.textPrimary,
                 height: 1.5,
               ),
             ),

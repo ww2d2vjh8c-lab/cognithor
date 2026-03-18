@@ -60,7 +60,7 @@ class _JarvisSearchBarState extends State<JarvisSearchBar> {
   Widget build(BuildContext context) {
     return TextField(
       controller: _controller,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: JarvisTheme.textPrimary),
       decoration: InputDecoration(
         hintText: widget.hintText,
         filled: true,

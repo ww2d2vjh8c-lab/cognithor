@@ -182,14 +182,7 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
     return list;
   }
 
-  static const _typeColors = {
-    'person': Colors.blue,
-    'organization': Colors.purple,
-    'location': Colors.green,
-    'product': Colors.orange,
-    'concept': Colors.grey,
-    'unknown': Colors.blueGrey,
-  };
+  static const _typeColors = JarvisTheme.entityColors;
 
   @override
   Widget build(BuildContext context) {
@@ -445,7 +438,7 @@ class _ForceGraphPainter extends CustomPainter {
 
     // Draw edges
     final edgePaint = Paint()
-      ..color = (brightness == Brightness.dark ? Colors.white : Colors.black)
+      ..color = (brightness == Brightness.dark ? JarvisTheme.textPrimary : JarvisTheme.textTertiary)
           .withValues(alpha: 0.1)
       ..strokeWidth = 1;
 
@@ -463,7 +456,7 @@ class _ForceGraphPainter extends CustomPainter {
       final pos = positions[id];
       if (pos == null) continue;
       final type = (e['type'] ?? 'unknown').toString();
-      final color = typeColors[type] ?? Colors.blueGrey;
+      final color = typeColors[type] ?? JarvisTheme.entityColors['unknown']!;
       final name = (e['name'] ?? e['label'] ?? '').toString();
 
       // Node circle
@@ -481,7 +474,7 @@ class _ForceGraphPainter extends CustomPainter {
         text: TextSpan(
           text: name.length > 12 ? '${name.substring(0, 12)}...' : name,
           style: TextStyle(
-            color: brightness == Brightness.dark ? Colors.white70 : Colors.black87,
+            color: brightness == Brightness.dark ? JarvisTheme.textSecondary : JarvisTheme.textTertiary,
             fontSize: 9,
           ),
         ),

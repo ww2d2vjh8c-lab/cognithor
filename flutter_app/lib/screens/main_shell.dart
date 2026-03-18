@@ -36,7 +36,6 @@ class _MainShellState extends State<MainShell> {
       context: context,
       builder: (_) => GlobalSearchDialog(
         onNavigate: (pageIndex) {
-          // Navigate to config screen with the selected page
           Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => const ConfigScreen(),
@@ -47,21 +46,11 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  String _titleForIndex(int index, AppLocalizations l) {
-    return switch (index) {
-      0 => l.chat,
-      1 => l.dashboard,
-      2 => l.skills,
-      3 => l.adminTitle,
-      4 => l.identity,
-      _ => '',
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.isDark;
 
     return CallbackShortcuts(
       bindings: {
@@ -71,73 +60,149 @@ class _MainShellState extends State<MainShell> {
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          appBar: AppBar(
-            title: Text(_titleForIndex(_currentIndex, l)),
-            actions: [
-              // Search (Ctrl+K)
-              IconButton(
-                icon: const Icon(Icons.search),
-                tooltip: 'Search (Ctrl+K)',
-                onPressed: _openSearch,
-              ),
-              // Theme toggle
-              IconButton(
-                icon: Icon(
-                  themeProvider.isDark ? Icons.light_mode : Icons.dark_mode,
-                ),
-                tooltip: themeProvider.isDark
-                    ? 'Switch to light mode'
-                    : 'Switch to dark mode',
-                onPressed: () => themeProvider.toggle(),
-              ),
-            ],
-          ),
           body: IndexedStack(
             index: _currentIndex,
             children: _screens,
           ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: _currentIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            backgroundColor: Theme.of(context).cardColor,
-            indicatorColor: JarvisTheme.accent.withValues(alpha: 0.15),
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.chat_bubble_outline),
-                selectedIcon:
-                    Icon(Icons.chat_bubble, color: JarvisTheme.accent),
-                label: l.chat,
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              border: Border(
+                top: BorderSide(
+                  color: isDark
+                      ? JarvisTheme.border
+                      : const Color(0xFFE0E0E8),
+                ),
               ),
-              NavigationDestination(
-                icon: const Icon(Icons.dashboard_outlined),
-                selectedIcon:
-                    Icon(Icons.dashboard, color: JarvisTheme.accent),
-                label: l.dashboard,
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Row(
+                  children: [
+                    // Main navigation tabs
+                    ..._buildNavItems(l),
+                    // Spacer
+                    const SizedBox(width: 4),
+                    // Divider
+                    Container(
+                      width: 1,
+                      height: 32,
+                      color: isDark
+                          ? JarvisTheme.border
+                          : const Color(0xFFE0E0E8),
+                    ),
+                    const SizedBox(width: 4),
+                    // Search button
+                    _BottomBarAction(
+                      icon: Icons.search,
+                      label: 'Search',
+                      color: JarvisTheme.accent,
+                      onTap: _openSearch,
+                    ),
+                    // Theme toggle
+                    _BottomBarAction(
+                      icon: isDark ? Icons.light_mode : Icons.dark_mode,
+                      label: isDark ? 'Light' : 'Dark',
+                      color: JarvisTheme.orange,
+                      onTap: () => themeProvider.toggle(),
+                    ),
+                  ],
+                ),
               ),
-              NavigationDestination(
-                icon: const Icon(Icons.extension_outlined),
-                selectedIcon:
-                    Icon(Icons.extension, color: JarvisTheme.accent),
-                label: l.skills,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.admin_panel_settings_outlined),
-                selectedIcon: Icon(Icons.admin_panel_settings,
-                    color: JarvisTheme.accent),
-                label: l.adminTitle,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.psychology_outlined),
-                selectedIcon:
-                    Icon(Icons.psychology, color: JarvisTheme.accent),
-                label: l.identity,
-              ),
-            ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildNavItems(AppLocalizations l) {
+    final items = [
+      (Icons.chat_bubble_outline, Icons.chat_bubble, l.chat),
+      (Icons.dashboard_outlined, Icons.dashboard, l.dashboard),
+      (Icons.extension_outlined, Icons.extension, l.skills),
+      (
+        Icons.admin_panel_settings_outlined,
+        Icons.admin_panel_settings,
+        l.adminTitle
+      ),
+      (Icons.psychology_outlined, Icons.psychology, l.identity),
+    ];
+
+    return List.generate(items.length, (i) {
+      final (iconOutlined, iconFilled, label) = items[i];
+      final selected = i == _currentIndex;
+      return Expanded(
+        child: InkWell(
+          onTap: () => setState(() => _currentIndex = i),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  selected ? iconFilled : iconOutlined,
+                  size: 22,
+                  color: selected
+                      ? JarvisTheme.accent
+                      : Theme.of(context).iconTheme.color,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight:
+                        selected ? FontWeight.w600 : FontWeight.normal,
+                    color: selected
+                        ? JarvisTheme.accent
+                        : Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
+  }
+}
+
+class _BottomBarAction extends StatelessWidget {
+  const _BottomBarAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(fontSize: 9, color: color),
+            ),
+          ],
         ),
       ),
     );

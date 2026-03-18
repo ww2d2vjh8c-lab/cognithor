@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
-import 'package:jarvis_ui/widgets/jarvis_card.dart';
 
 import 'package:jarvis_ui/screens/agents_screen.dart';
 import 'package:jarvis_ui/screens/config_screen.dart';
@@ -127,47 +126,101 @@ class _AdminTile {
   final WidgetBuilder builder;
 }
 
-class _AdminGridTile extends StatelessWidget {
+class _AdminGridTile extends StatefulWidget {
   const _AdminGridTile({required this.tile});
 
   final _AdminTile tile;
 
   @override
+  State<_AdminGridTile> createState() => _AdminGridTileState();
+}
+
+class _AdminGridTileState extends State<_AdminGridTile> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return JarvisCard(
-      padding: const EdgeInsets.all(JarvisTheme.spacing),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
+    final theme = Theme.of(context);
+    final tile = widget.tile;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(builder: tile.builder),
           );
         },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              tile.icon,
-              size: JarvisTheme.iconSizeXl,
-              color: JarvisTheme.accent,
+        child: AnimatedContainer(
+          duration: JarvisTheme.animDuration,
+          curve: JarvisTheme.animCurve,
+          transform: _hovered
+              ? Matrix4.diagonal3Values(1.03, 1.03, 1.0)
+              : Matrix4.identity(),
+          transformAlignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _hovered ? JarvisTheme.surfaceHover : theme.cardColor,
+            borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
+            border: Border.all(
+              color: _hovered ? JarvisTheme.accent.withAlpha(100) : theme.dividerColor,
             ),
-            const SizedBox(height: JarvisTheme.spacingSm),
-            Text(
-              tile.title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 16,
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: JarvisTheme.accent.withAlpha(30),
+                      blurRadius: 16,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : [],
+          ),
+          padding: const EdgeInsets.all(JarvisTheme.spacing),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Icon in a rounded, gradient-tinted container
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      JarvisTheme.accent.withAlpha(25),
+                      JarvisTheme.accent.withAlpha(8),
+                    ],
                   ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              tile.subtitle,
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+                  border: Border.all(
+                    color: JarvisTheme.accent.withAlpha(40),
+                  ),
+                ),
+                child: Icon(
+                  tile.icon,
+                  size: JarvisTheme.iconSizeLg,
+                  color: JarvisTheme.accent,
+                ),
+              ),
+              const SizedBox(height: JarvisTheme.spacingSm + 4),
+              Text(
+                tile.title,
+                style: theme.textTheme.titleLarge?.copyWith(fontSize: 14),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                tile.subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );

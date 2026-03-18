@@ -160,7 +160,7 @@ class DagGraphPainter extends CustomPainter {
       text: TextSpan(
         text: node.label,
         style: TextStyle(
-          color: brightness == Brightness.dark ? Colors.white : Colors.black87,
+          color: brightness == Brightness.dark ? JarvisTheme.textPrimary : const Color(0xFF1A1A2E),
           fontSize: 10,
         ),
       ),
