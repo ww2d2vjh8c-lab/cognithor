@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:jarvis_ui/theme/jarvis_theme.dart';
 
 /// Wraps a child widget with long-press actions (copy, select all).
 class MessageActions extends StatelessWidget {
@@ -24,7 +23,7 @@ class MessageActions extends StatelessWidget {
   void _showActions(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: JarvisTheme.surface,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -37,7 +36,7 @@ class MessageActions extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: JarvisTheme.border,
+                color: Theme.of(context).dividerColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

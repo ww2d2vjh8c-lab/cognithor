@@ -18,10 +18,10 @@ class JarvisConfirmationDialog {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: JarvisTheme.surface,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
-          side: BorderSide(color: JarvisTheme.border),
+          side: BorderSide(color: Theme.of(context).dividerColor),
         ),
         icon: icon != null
             ? Icon(icon, color: effectiveColor, size: JarvisTheme.iconSizeLg)

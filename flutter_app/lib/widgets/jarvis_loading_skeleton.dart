@@ -19,8 +19,8 @@ class JarvisLoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: JarvisTheme.surface,
-      highlightColor: JarvisTheme.border,
+      baseColor: Theme.of(context).cardColor,
+      highlightColor: Theme.of(context).dividerColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -31,7 +31,7 @@ class JarvisLoadingSkeleton extends StatelessWidget {
               width: width,
               height: height,
               decoration: BoxDecoration(
-                color: JarvisTheme.surface,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(borderRadius),
               ),
             ),

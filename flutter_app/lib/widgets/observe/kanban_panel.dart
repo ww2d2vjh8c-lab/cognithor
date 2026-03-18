@@ -96,9 +96,9 @@ class KanbanPanel extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 4),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: JarvisTheme.surface,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: JarvisTheme.border),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

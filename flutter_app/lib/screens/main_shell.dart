@@ -86,7 +86,7 @@ class _MainShellState extends State<MainShell> {
               border: Border(
                 top: BorderSide(
                   color: isDark
-                      ? JarvisTheme.border
+                      ? Theme.of(context).dividerColor
                       : const Color(0xFFE0E0E8),
                 ),
               ),
@@ -106,7 +106,7 @@ class _MainShellState extends State<MainShell> {
                       width: 1,
                       height: 32,
                       color: isDark
-                          ? JarvisTheme.border
+                          ? Theme.of(context).dividerColor
                           : const Color(0xFFE0E0E8),
                     ),
                     const SizedBox(width: 4),

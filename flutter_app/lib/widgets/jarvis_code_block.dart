@@ -21,7 +21,7 @@ class JarvisCodeBlock extends StatelessWidget {
       decoration: BoxDecoration(
         color: JarvisTheme.codeBlockBg,
         borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
-        border: Border.all(color: JarvisTheme.border),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -31,7 +31,7 @@ class JarvisCodeBlock extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: JarvisTheme.surface,
+              color: Theme.of(context).cardColor,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(JarvisTheme.cardRadius),
               ),

@@ -46,9 +46,9 @@ class _JarvisCollapsibleCardState extends State<JarvisCollapsibleCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: JarvisTheme.surface,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
-        border: Border.all(color: JarvisTheme.border),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         children: [

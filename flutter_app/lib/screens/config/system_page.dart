@@ -147,9 +147,9 @@ class SystemConfigPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: JarvisTheme.surface,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
-                border: Border.all(color: JarvisTheme.border),
+                border: Border.all(color: theme.dividerColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,12 +209,12 @@ class _ActionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: JarvisTheme.surface,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
         border: Border.all(
           color: isDanger
               ? JarvisTheme.red.withValues(alpha: 0.3)
-              : JarvisTheme.border,
+              : Theme.of(context).dividerColor,
         ),
       ),
       child: Row(

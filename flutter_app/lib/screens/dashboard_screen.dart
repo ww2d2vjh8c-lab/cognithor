@@ -663,7 +663,7 @@ class ActivityChart extends StatelessWidget {
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
                     getTooltipColor: (_) =>
-                        JarvisTheme.surface.withValues(alpha: 0.9),
+                        theme.cardColor.withValues(alpha: 0.9),
                     getTooltipItems: (spots) => spots.map((spot) {
                       return LineTooltipItem(
                         spot.y.toStringAsFixed(0),

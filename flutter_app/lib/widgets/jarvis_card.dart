@@ -40,10 +40,14 @@ class _JarvisCardState extends State<JarvisCard> {
             ? Matrix4.translationValues(0.0, -2.0, 0.0)
             : Matrix4.identity(),
         decoration: BoxDecoration(
-          color: _hovered ? JarvisTheme.surfaceHover : theme.cardColor,
+          color: _hovered
+              ? theme.cardColor.withValues(alpha: 0.85)
+              : theme.cardColor,
           borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
           border: Border.all(
-            color: _hovered ? JarvisTheme.borderHover : theme.dividerColor,
+            color: _hovered
+                ? theme.colorScheme.primary.withValues(alpha: 0.2)
+                : theme.dividerColor,
           ),
         ),
         child: Column(

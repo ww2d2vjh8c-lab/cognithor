@@ -33,9 +33,9 @@ class JarvisReadOnlyField extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: JarvisTheme.surface,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: JarvisTheme.border),
+              border: Border.all(color: theme.dividerColor),
             ),
             child: Text(value,
                 style: theme.textTheme.bodyMedium

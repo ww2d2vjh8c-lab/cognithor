@@ -311,9 +311,9 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
                       Container(
                         width: 280,
                         decoration: BoxDecoration(
-                          color: JarvisTheme.surface,
+                          color: theme.cardColor,
                           border: Border(
-                              left: BorderSide(color: JarvisTheme.border)),
+                              left: BorderSide(color: theme.dividerColor)),
                         ),
                         child: _buildDetailPanel(theme),
                       ),
@@ -387,7 +387,7 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: JarvisTheme.bg,
+                    color: theme.scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(

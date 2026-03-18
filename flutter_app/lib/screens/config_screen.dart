@@ -290,8 +290,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: JarvisTheme.surface,
-        border: Border(top: BorderSide(color: JarvisTheme.border)),
+        color: Theme.of(context).cardColor,
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
         children: [

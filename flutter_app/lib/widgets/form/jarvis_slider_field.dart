@@ -92,9 +92,9 @@ class _JarvisSliderFieldState extends State<JarvisSliderField> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: JarvisTheme.surface,
+                      color: theme.cardColor,
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: JarvisTheme.border),
+                      border: Border.all(color: theme.dividerColor),
                     ),
                     child: Text(
                       clamped.toStringAsFixed(2),

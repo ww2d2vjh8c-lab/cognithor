@@ -34,7 +34,7 @@ class JarvisProgressBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: value.clamp(0.0, 1.0),
             minHeight: height,
-            backgroundColor: JarvisTheme.border,
+            backgroundColor: theme.dividerColor,
             valueColor: AlwaysStoppedAnimation<Color>(barColor),
           ),
         ),

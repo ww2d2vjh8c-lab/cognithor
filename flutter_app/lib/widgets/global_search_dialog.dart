@@ -63,7 +63,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
     final theme = Theme.of(context);
 
     return Dialog(
-      backgroundColor: JarvisTheme.surface,
+      backgroundColor: theme.cardColor,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(JarvisTheme.cardRadius)),
       child: ConstrainedBox(

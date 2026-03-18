@@ -89,9 +89,9 @@ class _JarvisListFieldState extends State<JarvisListField> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: JarvisTheme.surface,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: JarvisTheme.border),
+                  border: Border.all(color: theme.dividerColor),
                 ),
                 child: Row(
                   children: [

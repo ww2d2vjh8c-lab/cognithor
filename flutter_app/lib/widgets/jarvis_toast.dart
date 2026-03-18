@@ -117,9 +117,9 @@ class _ToastWidgetState extends State<_ToastWidget>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: JarvisTheme.surface,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(JarvisTheme.cardRadius),
-                    border: Border.all(color: JarvisTheme.border),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                     boxShadow: [
                       BoxShadow(
                         color: _borderColor.withValues(alpha: 0.15),

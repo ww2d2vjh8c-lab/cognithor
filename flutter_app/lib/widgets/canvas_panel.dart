@@ -19,7 +19,7 @@ class CanvasPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: JarvisTheme.surface,
+        color: Theme.of(context).cardColor,
         border: Border(top: BorderSide(color: JarvisTheme.accent, width: 2)),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -51,7 +51,7 @@ class CanvasPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: JarvisTheme.border)),
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
         children: [

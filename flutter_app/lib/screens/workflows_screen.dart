@@ -297,7 +297,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
                 LinearProgressIndicator(
                     value: progress,
                     color: JarvisTheme.accent,
-                    backgroundColor: JarvisTheme.border),
+                    backgroundColor: Theme.of(context).dividerColor),
                 const SizedBox(height: 4),
                 if (duration.isNotEmpty)
                   Text('Duration: $duration',

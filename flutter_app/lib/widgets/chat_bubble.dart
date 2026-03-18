@@ -171,7 +171,7 @@ class ChatBubble extends StatelessWidget {
           color: JarvisTheme.textPrimary,
           fontWeight: FontWeight.bold,
         ),
-        tableBorder: TableBorder.all(color: JarvisTheme.border),
+        tableBorder: TableBorder.all(color: Theme.of(context).dividerColor),
         tableHeadAlign: TextAlign.left,
         tableCellsPadding: const EdgeInsets.symmetric(
           horizontal: 8,
@@ -221,7 +221,7 @@ class _CodeBlockWithCopyState extends State<CodeBlockWithCopy> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: JarvisTheme.border.withAlpha(80),
+              color: Theme.of(context).dividerColor.withAlpha(80),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(JarvisTheme.spacingSm),
               ),

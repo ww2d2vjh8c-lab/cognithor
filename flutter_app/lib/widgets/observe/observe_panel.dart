@@ -106,8 +106,8 @@ class _ObservePanelState extends State<ObservePanel>
     return Container(
       width: 360,
       decoration: BoxDecoration(
-        color: JarvisTheme.surface,
-        border: Border(left: BorderSide(color: JarvisTheme.border)),
+        color: Theme.of(context).cardColor,
+        border: Border(left: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Column(
         children: [

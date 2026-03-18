@@ -109,7 +109,7 @@ class _JarvisJsonEditorState extends State<JarvisJsonEditor> {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: _error != null ? JarvisTheme.red : JarvisTheme.border,
+                  color: _error != null ? JarvisTheme.red : theme.dividerColor,
                 ),
               ),
             ),
