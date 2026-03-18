@@ -838,5 +838,11 @@
   "correction": "Correction",
   "@correction": {},
   "adminLearningSubtitle": "Active learning & curiosity",
-  "@adminLearningSubtitle": {}
+  "@adminLearningSubtitle": {},
+  "watchDirectories": "Watch Directories",
+  "@watchDirectories": {},
+  "directoryExists": "Directory exists",
+  "@directoryExists": {},
+  "directoryMissing": "Directory not found",
+  "@directoryMissing": {}
 }

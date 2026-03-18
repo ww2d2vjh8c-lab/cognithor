@@ -691,6 +691,79 @@ class Gateway:
             self._background_tasks.add(_task)
             _task.add_done_callback(self._background_tasks.discard)
 
+        # Start active learning (background file watcher)
+        if self._active_learner is not None:
+            try:
+                self._active_learner._memory = getattr(self, "_memory_manager", None)
+                await self._active_learner.start()
+                log.info("active_learner_started")
+            except Exception:
+                log.debug("active_learner_start_failed", exc_info=True)
+
+        # Start curiosity gap detection (runs every 5 minutes)
+        if self._curiosity_engine is not None:
+
+            async def _curiosity_loop() -> None:
+                while True:
+                    await asyncio.sleep(300)  # 5 minutes
+                    try:
+                        mm = getattr(self, "_memory_manager", None)
+                        if mm and hasattr(mm, "semantic") and mm.semantic:
+                            entities: list[dict[str, Any]] = []
+                            try:
+                                raw = mm.semantic.list_entities(limit=100)
+                                entities = [
+                                    e if isinstance(e, dict) else {"id": str(e)} for e in raw
+                                ]
+                            except Exception:
+                                pass
+                            if entities:
+                                await self._curiosity_engine.detect_gaps("", entities)
+                                log.debug(
+                                    "curiosity_gaps_detected",
+                                    count=self._curiosity_engine.open_gap_count,
+                                )
+                    except Exception:
+                        log.debug("curiosity_loop_error", exc_info=True)
+
+            task = asyncio.create_task(_curiosity_loop())
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
+
+        # Start confidence decay (runs every 24 hours)
+        if self._confidence_manager is not None:
+
+            async def _decay_loop() -> None:
+                while True:
+                    await asyncio.sleep(86400)  # 24 hours
+                    try:
+                        mm = getattr(self, "_memory_manager", None)
+                        idx = getattr(mm, "_indexer", None) if mm else None
+                        if idx and hasattr(idx, "list_entities_for_decay"):
+                            decay_entities = idx.list_entities_for_decay()
+                            for ent in decay_entities:
+                                eid = ent.get("id", "")
+                                conf = ent.get("confidence", 1.0)
+                                updated = ent.get("updated_at", "")
+                                if updated:
+                                    from datetime import UTC, datetime
+
+                                    try:
+                                        dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+                                        days = (datetime.now(UTC) - dt).days
+                                        new_conf = self._confidence_manager.decay(conf, days)
+                                        if abs(new_conf - conf) > 0.01:
+                                            idx.update_entity_confidence(eid, new_conf)
+                                    except (ValueError, TypeError):
+                                        pass
+                            log.info("confidence_decay_applied")
+                    except Exception:
+                        log.debug("decay_loop_error", exc_info=True)
+
+            task = asyncio.create_task(_decay_loop())
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
+
         # Channels starten
         tasks = []
         for channel in self._channels.values():
@@ -744,6 +817,11 @@ class Gateway:
         # Audit log BEFORE closing resources
         if self._audit_logger:
             self._audit_logger.log_system("shutdown", description="Jarvis heruntergefahren")
+
+        # Active learner stoppen
+        if self._active_learner is not None:
+            with contextlib.suppress(Exception):
+                self._active_learner.stop()
 
         # Cron-Engine stoppen
         if self._cron_engine:
@@ -1370,6 +1448,10 @@ class Gateway:
 
         # Attachments aus Tool-Ergebnissen extrahieren (z.B. document_export)
         attachments = self._extract_attachments(all_results)
+
+        # Notify active learner of user activity (resets idle timer)
+        if self._active_learner is not None:
+            self._active_learner.notify_activity()
 
         return OutgoingMessage(
             channel=msg.channel,

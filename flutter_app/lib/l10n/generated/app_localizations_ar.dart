@@ -1644,4 +1644,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminLearningSubtitle => 'التعلم النشط والفضول';
+
+  @override
+  String get watchDirectories => 'مجلدات المراقبة';
+
+  @override
+  String get directoryExists => 'المجلد موجود';
+
+  @override
+  String get directoryMissing => 'المجلد غير موجود';
 }

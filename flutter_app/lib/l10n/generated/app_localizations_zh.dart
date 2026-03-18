@@ -1641,4 +1641,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminLearningSubtitle => '主动学习与好奇心';
+
+  @override
+  String get watchDirectories => '监控目录';
+
+  @override
+  String get directoryExists => '目录存在';
+
+  @override
+  String get directoryMissing => '目录未找到';
 }

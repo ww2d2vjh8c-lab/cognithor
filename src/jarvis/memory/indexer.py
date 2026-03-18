@@ -547,6 +547,44 @@ class MemoryIndex:
         row = self.conn.execute("SELECT COUNT(*) as cnt FROM entities").fetchone()
         return row["cnt"] if row else 0
 
+    def update_entity_confidence(self, entity_id: str, new_confidence: float) -> bool:
+        """Update the confidence score of an entity. Returns True if found.
+
+        Thread-safe: Geschützt über Write-Lock.
+        """
+        with self._write_lock:
+            cur = self.conn.execute(
+                "UPDATE entities SET confidence = ?, updated_at = ? WHERE id = ?",
+                (new_confidence, datetime.now().timestamp(), entity_id),
+            )
+            self.conn.commit()
+            return cur.rowcount > 0
+
+    def update_relation_confidence(self, relation_id: str, new_confidence: float) -> bool:
+        """Update the confidence score of a relation.
+
+        Thread-safe: Geschützt über Write-Lock.
+        """
+        with self._write_lock:
+            cur = self.conn.execute(
+                "UPDATE relations SET confidence = ? WHERE id = ?",
+                (new_confidence, relation_id),
+            )
+            self.conn.commit()
+            return cur.rowcount > 0
+
+    def list_entities_for_decay(self, limit: int = 500) -> list[dict]:
+        """Return entities with their confidence and updated_at for decay processing."""
+        rows = self.conn.execute(
+            "SELECT id, confidence, updated_at FROM entities "
+            "WHERE confidence > 0.05 ORDER BY updated_at ASC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [
+            {"id": r["id"], "confidence": r["confidence"], "updated_at": r["updated_at"]}
+            for r in rows
+        ]
+
     # ── Relation Operations ──────────────────────────────────────
 
     def upsert_relation(self, relation: Relation) -> None:

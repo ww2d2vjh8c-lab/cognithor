@@ -3341,6 +3341,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Active learning & curiosity'**
   String get adminLearningSubtitle;
+
+  /// No description provided for @watchDirectories.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Directories'**
+  String get watchDirectories;
+
+  /// No description provided for @directoryExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Directory exists'**
+  String get directoryExists;
+
+  /// No description provided for @directoryMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Directory not found'**
+  String get directoryMissing;
 }
 
 class _AppLocalizationsDelegate

@@ -1645,4 +1645,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLearningSubtitle => 'Active learning & curiosity';
+
+  @override
+  String get watchDirectories => 'Watch Directories';
+
+  @override
+  String get directoryExists => 'Directory exists';
+
+  @override
+  String get directoryMissing => 'Directory not found';
 }

@@ -548,5 +548,8 @@
   "positive": "إيجابي",
   "negative": "سلبي",
   "correction": "تصحيح",
-  "adminLearningSubtitle": "التعلم النشط والفضول"
+  "adminLearningSubtitle": "التعلم النشط والفضول",
+  "watchDirectories": "مجلدات المراقبة",
+  "directoryExists": "المجلد موجود",
+  "directoryMissing": "المجلد غير موجود"
 }

@@ -548,5 +548,8 @@
   "positive": "正面",
   "negative": "负面",
   "correction": "纠正",
-  "adminLearningSubtitle": "主动学习与好奇心"
+  "adminLearningSubtitle": "主动学习与好奇心",
+  "watchDirectories": "监控目录",
+  "directoryExists": "目录存在",
+  "directoryMissing": "目录未找到"
 }

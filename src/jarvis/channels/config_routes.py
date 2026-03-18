@@ -3230,13 +3230,28 @@ def _register_learning_routes(
         if feedback_type not in ("positive", "negative", "correction"):
             return {"error": "Invalid feedback type. Must be: positive, negative, correction"}
 
-        # We need the current confidence -- attempt to read from semantic memory
-        current = body.get("current_confidence", 0.5)
+        # Read current confidence from entity DB
+        current = 0.5  # fallback
+        mm = getattr(gateway, "_memory_manager", None)
+        idx = getattr(mm, "_index", None) if mm else None
+        if idx:
+            try:
+                ent = idx.get_entity_by_id(entity_id)
+                if ent:
+                    current = ent.confidence
+            except Exception:
+                pass
+
         new_conf = confidence.apply_feedback(entity_id, current, feedback_type)
+
+        # Persist updated confidence to database
+        if idx:
+            with contextlib.suppress(Exception):
+                idx.update_entity_confidence(entity_id, new_conf)
 
         return {
             "entity_id": entity_id,
-            "old_confidence": current,
+            "old_confidence": round(current, 4),
             "new_confidence": round(new_conf, 4),
             "feedback_type": feedback_type,
         }
@@ -3283,3 +3298,29 @@ def _register_learning_routes(
             return {"error": "Gap not found", "status": 404}
 
         return {"status": "exploring", "gap_id": gap_id}
+
+    # -- Watch directories -------------------------------------------------
+
+    @app.get("/api/v1/learning/directories", dependencies=deps)
+    async def learning_directories() -> dict[str, Any]:
+        """Return watched directories configuration."""
+        learner = _get_learner()
+        if not learner:
+            return {"directories": []}
+        dirs = learner.stats().get("watch_dirs", [])
+        return {"directories": dirs}
+
+    @app.post("/api/v1/learning/directories", dependencies=deps)
+    async def learning_update_directories(request: Request) -> dict[str, Any]:
+        """Update watched directories (enable/disable, add new)."""
+        learner = _get_learner()
+        if not learner:
+            return {"error": "Active learner not initialized", "status": 503}
+        body = await request.json()
+        dirs = body.get("directories", [])
+        for d in dirs:
+            path = d.get("path", "")
+            enabled = d.get("enabled", True)
+            if path:
+                learner.add_directory(path, enabled=enabled)
+        return {"status": "updated", "count": len(dirs)}

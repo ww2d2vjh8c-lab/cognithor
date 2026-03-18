@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
+import 'package:jarvis_ui/widgets/form/jarvis_toggle_field.dart';
 import 'package:jarvis_ui/widgets/jarvis_card.dart';
 import 'package:jarvis_ui/widgets/jarvis_empty_state.dart';
 import 'package:jarvis_ui/widgets/jarvis_stat.dart';
@@ -31,6 +32,9 @@ class _LearningScreenState extends State<LearningScreen> {
   // Exploration queue data
   List<Map<String, dynamic>> _queue = [];
 
+  // Watch directories data
+  List<Map<String, dynamic>> _directories = [];
+
   bool _loading = true;
   String? _error;
 
@@ -52,6 +56,7 @@ class _LearningScreenState extends State<LearningScreen> {
         api.getLearningGaps(),
         api.getConfidenceHistory(),
         api.getLearningQueue(),
+        api.getLearningDirectories(),
       ]);
 
       if (!mounted) return;
@@ -60,12 +65,14 @@ class _LearningScreenState extends State<LearningScreen> {
       final gapsResult = results[1];
       final historyResult = results[2];
       final queueResult = results[3];
+      final dirsResult = results[4];
 
       setState(() {
         _stats = statsResult.containsKey('error') ? null : statsResult;
         _gaps = _parseList(gapsResult, 'gaps');
         _confidenceHistory = _parseList(historyResult, 'history');
         _queue = _parseList(queueResult, 'tasks');
+        _directories = _parseList(dirsResult, 'directories');
         _loading = false;
       });
     } catch (e) {
@@ -101,6 +108,20 @@ class _LearningScreenState extends State<LearningScreen> {
       await api.triggerExploration(gapId);
       await _loadAll();
     } catch (_) {}
+  }
+
+  Future<void> _toggleDirectory(int index, bool enabled) async {
+    final dir = Map<String, dynamic>.from(_directories[index]);
+    dir['enabled'] = enabled;
+    setState(() => _directories[index] = dir);
+    try {
+      final api = context.read<ConnectionProvider>().api;
+      await api.updateLearningDirectories(_directories);
+    } catch (_) {
+      // Revert on failure.
+      dir['enabled'] = !enabled;
+      if (mounted) setState(() => _directories[index] = dir);
+    }
   }
 
   @override
@@ -264,7 +285,59 @@ class _LearningScreenState extends State<LearningScreen> {
                   }).toList(),
                 ),
         ),
+
+        // Watch directories
+        JarvisCard(
+          title: l.watchDirectories,
+          icon: Icons.folder_open,
+          child: _directories.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(JarvisTheme.spacing),
+                  child: Text(l.noData,
+                      style: theme.textTheme.bodySmall),
+                )
+              : Column(
+                  children: [
+                    for (var i = 0; i < _directories.length; i++)
+                      _buildDirectoryRow(theme, l, i),
+                  ],
+                ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildDirectoryRow(
+      ThemeData theme, AppLocalizations l, int index) {
+    final dir = _directories[index];
+    final path = (dir['path'] ?? '').toString();
+    final enabled = dir['enabled'] == true;
+    final exists = dir['exists'] == true;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: JarvisTheme.spacingSm,
+      ),
+      child: Row(
+        children: [
+          Tooltip(
+            message: exists ? l.directoryExists : l.directoryMissing,
+            child: Icon(
+              exists ? Icons.check_circle : Icons.error_outline,
+              color: exists ? JarvisTheme.green : JarvisTheme.red,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: JarvisTheme.spacingSm),
+          Expanded(
+            child: JarvisToggleField(
+              label: path,
+              value: enabled,
+              onChanged: (v) => _toggleDirectory(index, v),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

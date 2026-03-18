@@ -556,5 +556,8 @@
   "positive": "Positiv",
   "negative": "Negativ",
   "correction": "Korrektur",
-  "adminLearningSubtitle": "Aktives Lernen & Neugier"
+  "adminLearningSubtitle": "Aktives Lernen & Neugier",
+  "watchDirectories": "Ueberwachte Verzeichnisse",
+  "directoryExists": "Verzeichnis vorhanden",
+  "directoryMissing": "Verzeichnis nicht gefunden"
 }

@@ -473,6 +473,11 @@ class ApiClient {
   Future<Map<String, dynamic>> getLearningQueue() => get('learning/queue');
   Future<Map<String, dynamic>> triggerExploration(String gapId) =>
       post('learning/explore', {'gap_id': gapId});
+  Future<Map<String, dynamic>> getLearningDirectories() =>
+      get('learning/directories');
+  Future<Map<String, dynamic>> updateLearningDirectories(
+          List<Map<String, dynamic>> dirs) =>
+      post('learning/directories', {'directories': dirs});
 
   // ---------------------------------------------------------------------------
   // Internal

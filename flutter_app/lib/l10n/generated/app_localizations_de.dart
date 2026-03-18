@@ -1646,4 +1646,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get adminLearningSubtitle => 'Aktives Lernen & Neugier';
+
+  @override
+  String get watchDirectories => 'Ueberwachte Verzeichnisse';
+
+  @override
+  String get directoryExists => 'Verzeichnis vorhanden';
+
+  @override
+  String get directoryMissing => 'Verzeichnis nicht gefunden';
 }
