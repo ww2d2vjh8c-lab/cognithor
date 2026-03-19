@@ -124,6 +124,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Expanded(
                     child: Consumer2<ChatProvider, HackerModeProvider>(
                       builder: (context, chat, hackerMode, _) {
+                        debugPrint('[Chat] Consumer2 rebuild: messages=${chat.messages.length} streaming=${chat.isStreaming} id=${identityHashCode(chat)}');
                         _scrollToBottom();
 
                         if (chat.messages.isEmpty && !chat.isStreaming) {

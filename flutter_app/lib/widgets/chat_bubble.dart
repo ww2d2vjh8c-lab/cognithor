@@ -42,17 +42,11 @@ class ChatBubble extends StatelessWidget {
   // ── User Bubble ──────────────────────────────────────────────────────
   Widget _buildUserBubble(BuildContext context) {
     const baseColor = JarvisTheme.sectionChat;
-    // 20% darker shade
-    final darkerColor = Color.lerp(baseColor, Colors.black, 0.2)!;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [baseColor.withValues(alpha: 0.18), darkerColor.withValues(alpha: 0.12)],
-        ),
+        color: baseColor.withValues(alpha: 0.15),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
@@ -60,7 +54,7 @@ class ChatBubble extends StatelessWidget {
           bottomRight: Radius.circular(4), // chat tail
         ),
         border: Border.all(
-          color: baseColor.withValues(alpha: 0.20),
+          color: baseColor.withValues(alpha: 0.30),
         ),
       ),
       child: Row(
@@ -95,17 +89,20 @@ class ChatBubble extends StatelessWidget {
 
   // ── Assistant Bubble ─────────────────────────────────────────────────
   Widget _buildAssistantBubble(BuildContext context) {
-    return GlassPanel(
-      tint: JarvisTheme.sectionChat,
-      borderRadius: 16,
-      padding: EdgeInsets.zero,
-      child: ClipRRect(
+    const tint = JarvisTheme.sectionChat;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.06),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
-          bottomLeft: Radius.circular(4), // chat tail
+          bottomLeft: Radius.circular(4),
           bottomRight: Radius.circular(16),
         ),
+        border: Border.all(color: tint.withValues(alpha: 0.15)),
+      ),
+      child: IntrinsicHeight(
         child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -114,7 +111,7 @@ class ChatBubble extends StatelessWidget {
             Container(
               width: 3,
               decoration: const BoxDecoration(
-                color: JarvisTheme.sectionChat,
+                color: tint,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(16),
                   bottomLeft: Radius.circular(4),
@@ -138,7 +135,7 @@ class ChatBubble extends StatelessWidget {
                         height: 8,
                         child: CircularProgressIndicator(
                           strokeWidth: 1.5,
-                          color: JarvisTheme.sectionChat,
+                          color: tint,
                         ),
                       ),
                     ],
