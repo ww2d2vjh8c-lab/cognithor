@@ -465,7 +465,7 @@ class _RobotStatusOverlay extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                '$taskCount Tasks',
+                AppLocalizations.of(context).taskCount(taskCount),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: JarvisTheme.sectionDashboard,
                   fontWeight: FontWeight.w600,
@@ -509,7 +509,7 @@ class _RobotOfficePipNotice extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Robot Office is in Picture-in-Picture mode',
+              AppLocalizations.of(context).robotOfficePipMode,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: isDark ? Colors.white70 : Colors.black87,
               ),
@@ -518,7 +518,7 @@ class _RobotOfficePipNotice extends StatelessWidget {
           TextButton.icon(
             onPressed: onShowFullscreen,
             icon: const Icon(Icons.fullscreen, size: 18),
-            label: const Text('Fullscreen'),
+            label: Text(AppLocalizations.of(context).fullscreen),
             style: TextButton.styleFrom(
               foregroundColor: JarvisTheme.sectionDashboard,
               visualDensity: VisualDensity.compact,
@@ -559,7 +559,7 @@ class _PipModeButton extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                'PiP',
+                AppLocalizations.of(context).pipLabel,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,

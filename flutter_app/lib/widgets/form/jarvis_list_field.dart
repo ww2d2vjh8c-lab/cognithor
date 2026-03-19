@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 
 class JarvisListField extends StatefulWidget {
@@ -77,7 +78,7 @@ class _JarvisListFieldState extends State<JarvisListField> {
               IconButton(
                 icon: Icon(Icons.add, color: JarvisTheme.accent),
                 onPressed: _add,
-                tooltip: 'Add',
+                tooltip: AppLocalizations.of(context).addItem,
               ),
             ],
           ),

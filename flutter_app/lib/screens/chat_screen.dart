@@ -331,7 +331,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ? const Color(0xFF00FF41)
                     : null,
               ),
-              tooltip: 'Hacker Mode',
+              tooltip: l.hackerMode,
               onPressed: () => hackerMode.toggle(),
             );
           },
@@ -342,7 +342,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Icons.analytics_outlined,
             color: _showObserve ? JarvisTheme.accent : null,
           ),
-          tooltip: 'Observe',
+          tooltip: l.observe,
           onPressed: () => setState(() => _showObserve = !_showObserve),
         ),
         // Canvas toggle

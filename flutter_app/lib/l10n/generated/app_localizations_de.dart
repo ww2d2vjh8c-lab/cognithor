@@ -1892,4 +1892,247 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get cannotDeleteDefault =>
       'Standard-Agent kann nicht geloescht werden';
+
+  @override
+  String get robotOfficePipMode => 'Robot Office ist im Bild-in-Bild-Modus';
+
+  @override
+  String get fullscreen => 'Vollbild';
+
+  @override
+  String get pipLabel => 'PiP';
+
+  @override
+  String taskCount(int count) {
+    return '$count Aufgaben';
+  }
+
+  @override
+  String get hackerMode => 'Hacker-Modus';
+
+  @override
+  String get entityVisualization => 'Entitaets-Visualisierung';
+
+  @override
+  String get manageSecrets => 'Geheimnisse verwalten';
+
+  @override
+  String get channelToggles => 'Kanal-Schalter';
+
+  @override
+  String get channelSettings => 'Kanal-Einstellungen';
+
+  @override
+  String get tapToSelect => 'Tippen zum Auswaehlen...';
+
+  @override
+  String get selectModel => 'Modell auswaehlen';
+
+  @override
+  String get searchModels => 'Modelle suchen...';
+
+  @override
+  String get remove => 'Entfernen';
+
+  @override
+  String get stopBackend => 'Backend stoppen';
+
+  @override
+  String get stopBackendDescription =>
+      'Das Jarvis-Backend stoppen. Du musst es manuell neu starten.';
+
+  @override
+  String get stopBackendConfirmBody =>
+      'Dies stoppt den Jarvis-Backend-Prozess. Du musst ihn manuell ueber die Kommandozeile neu starten.';
+
+  @override
+  String get backendStopped => 'Backend gestoppt. Bitte manuell neu starten.';
+
+  @override
+  String get downloadConfigDesc =>
+      'Aktuelle Konfiguration als JSON herunterladen';
+
+  @override
+  String get loadConfigDesc => 'Konfiguration aus JSON-Datei laden';
+
+  @override
+  String get resetAllDesc =>
+      'Alle Einstellungen auf Standard zuruecksetzen. Dies kann nicht rueckgaengig gemacht werden.';
+
+  @override
+  String get factoryResetNotImpl =>
+      'Werkseinstellungen sind noch nicht im Backend implementiert. Zum manuellen Zuruecksetzen loesche deine config.yaml und starte Jarvis neu.';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get wizardSubtitle => 'Dein persoenlicher KI-Assistent';
+
+  @override
+  String get chooseLlmProvider => 'Waehle deinen LLM-Anbieter';
+
+  @override
+  String get localOllama => 'Lokal (Ollama)';
+
+  @override
+  String get localOllamaDesc =>
+      'Modelle auf eigener Hardware ausfuehren. Volle Privatsphaere, keine API-Kosten. Erfordert installiertes Ollama.';
+
+  @override
+  String get cloudProviderLabel => 'Cloud-Anbieter';
+
+  @override
+  String get cloudProviderDesc =>
+      'OpenAI, Anthropic oder andere Cloud-APIs nutzen. Schnellere Einrichtung, erfordert API-Schluessel.';
+
+  @override
+  String get next => 'Weiter';
+
+  @override
+  String get ollamaConfiguration => 'Ollama-Konfiguration';
+
+  @override
+  String get cloudApiConfiguration => 'Cloud-API-Konfiguration';
+
+  @override
+  String get ollamaConfigHint => 'Gib die URL ein, unter der Ollama laeuft.';
+
+  @override
+  String get cloudConfigHint =>
+      'Waehle deinen Cloud-Anbieter und gib deinen API-Schluessel ein.';
+
+  @override
+  String get ollamaUrl => 'Ollama-URL';
+
+  @override
+  String get testConnection => 'Verbindung testen';
+
+  @override
+  String get testingConnection => 'Teste...';
+
+  @override
+  String get youreAllSet => 'Alles bereit!';
+
+  @override
+  String get ollamaReadyMsg =>
+      'Ollama ist verbunden und bereit. Cognithor nutzt deine lokalen Modelle fuer Planung und Ausfuehrung.';
+
+  @override
+  String cloudReadyMsg(String provider) {
+    return '$provider ist konfiguriert. Cognithor nutzt deine Cloud-API fuer Planung und Ausfuehrung.';
+  }
+
+  @override
+  String get changeSettingsAnytime =>
+      'Du kannst diese Einstellungen jederzeit aendern.';
+
+  @override
+  String get startUsingCognithor => 'Cognithor starten';
+
+  @override
+  String get ollamaNoModels =>
+      'Verbunden mit Ollama. Noch keine Modelle installiert — fuehre \"ollama pull qwen3:8b\" aus, um zu starten.';
+
+  @override
+  String ollamaModelsAvailable(int count) {
+    return 'Verbunden mit Ollama. $count Modell(e) verfuegbar.';
+  }
+
+  @override
+  String ollamaStatusError(int code) {
+    return 'Ollama antwortete mit Status $code. Stelle sicher, dass der Server laeuft.';
+  }
+
+  @override
+  String get enterApiKey => 'Bitte gib einen API-Schluessel ein.';
+
+  @override
+  String apiKeyTooShort(String provider) {
+    return 'Der Schluessel scheint zu kurz. Ueberpreufe deinen $provider-API-Schluessel.';
+  }
+
+  @override
+  String apiKeySaved(String provider) {
+    return '$provider-API-Schluessel gespeichert. Du kannst ihn spaeter in den Einstellungen aendern.';
+  }
+
+  @override
+  String connectionFailed(String error) {
+    return 'Verbindung fehlgeschlagen: $error';
+  }
+
+  @override
+  String get minimize => 'Minimieren';
+
+  @override
+  String get shrink => 'Verkleinern';
+
+  @override
+  String get expandLabel => 'Vergroessern';
+
+  @override
+  String get robotOffice => 'Robot Office';
+
+  @override
+  String get copy => 'Kopieren';
+
+  @override
+  String get share => 'Teilen';
+
+  @override
+  String get noLogEntries => 'Keine Protokolleintraege';
+
+  @override
+  String get noPlanData => 'Keine Plandaten';
+
+  @override
+  String get noDagData => 'Keine DAG-Daten';
+
+  @override
+  String get log => 'Protokoll';
+
+  @override
+  String get fileReadError => 'Datei konnte nicht gelesen werden';
+
+  @override
+  String uploadError(String error) {
+    return 'Fehler beim Hochladen: $error';
+  }
+
+  @override
+  String get toolSpecificTimeouts => 'Tool-spezifische Zeitlimits';
+
+  @override
+  String get required => 'Erforderlich';
+
+  @override
+  String get stopLabel => 'Stoppen';
+
+  @override
+  String get resetLabel => 'Zuruecksetzen';
+
+  @override
+  String get exportLabel => 'Exportieren';
+
+  @override
+  String get importLabel => 'Importieren';
+
+  @override
+  String get catAiEngine => 'KI-Engine';
+
+  @override
+  String get catChannels => 'Kanaele';
+
+  @override
+  String get catKnowledge => 'Wissen';
+
+  @override
+  String get catSecurity => 'Sicherheit';
+
+  @override
+  String get catSystem => 'System';
+
+  @override
+  String get saved => 'Gespeichert';
 }

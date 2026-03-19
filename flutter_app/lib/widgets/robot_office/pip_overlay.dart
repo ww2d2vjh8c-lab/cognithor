@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/pip_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/robot_office/glass_reflection_painter.dart';
@@ -315,7 +316,7 @@ class _RobotOfficePipState extends State<RobotOfficePip>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Robot Office',
+                          AppLocalizations.of(context).robotOffice,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -361,28 +362,33 @@ class _PipControlBar extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ControlButton(
-            icon: Icons.minimize,
-            tooltip: 'Minimize',
-            onTap: onMinimize,
-          ),
-          _ControlButton(
-            icon: isExpanded
-                ? Icons.close_fullscreen
-                : Icons.open_in_full,
-            tooltip: isExpanded ? 'Shrink' : 'Expand',
-            onTap: onExpand,
-          ),
-          _ControlButton(
-            icon: Icons.close,
-            tooltip: 'Close',
-            onTap: onClose,
-            color: JarvisTheme.red,
-          ),
-        ],
+      child: Builder(
+        builder: (context) {
+          final l = AppLocalizations.of(context);
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ControlButton(
+                icon: Icons.minimize,
+                tooltip: l.minimize,
+                onTap: onMinimize,
+              ),
+              _ControlButton(
+                icon: isExpanded
+                    ? Icons.close_fullscreen
+                    : Icons.open_in_full,
+                tooltip: isExpanded ? l.shrink : l.expandLabel,
+                onTap: onExpand,
+              ),
+              _ControlButton(
+                icon: Icons.close,
+                tooltip: l.close,
+                onTap: onClose,
+                color: JarvisTheme.red,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

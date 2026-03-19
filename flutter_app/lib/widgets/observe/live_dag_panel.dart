@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/widgets/dag_graph_painter.dart';
 
 class LiveDagPanel extends StatelessWidget {
@@ -9,7 +10,7 @@ class LiveDagPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
-      return const Center(child: Text('No DAG data'));
+      return Center(child: Text(AppLocalizations.of(context).noDagData));
     }
 
     // Build nodes and edges from pipeline entries

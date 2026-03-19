@@ -78,13 +78,13 @@ class _AdminHubScreenState extends State<AdminHubScreen> {
         _AdminSection(
           icon: Icons.scatter_plot,
           title: l.knowledgeGraph,
-          subtitle: 'Entity visualization',
+          subtitle: l.entityVisualization,
           builder: (_) => const KnowledgeGraphScreen(),
         ),
         _AdminSection(
           icon: Icons.vpn_key,
           title: l.credentialsTitle,
-          subtitle: 'Manage secrets',
+          subtitle: l.manageSecrets,
           builder: (_) => const CredentialsScreen(),
         ),
         _AdminSection(

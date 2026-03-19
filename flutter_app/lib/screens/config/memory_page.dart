@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/config_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/form/form_widgets.dart';
@@ -47,7 +48,7 @@ class MemoryPage extends StatelessWidget {
             const Divider(height: 32),
             Row(
               children: [
-                Text('Search Weights',
+                Text(AppLocalizations.of(context).searchWeights,
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge

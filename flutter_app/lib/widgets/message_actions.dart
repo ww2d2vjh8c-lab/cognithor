@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 
 /// Wraps a child widget with long-press actions (copy, select all).
 class MessageActions extends StatelessWidget {
@@ -21,6 +22,7 @@ class MessageActions extends StatelessWidget {
   }
 
   void _showActions(BuildContext context) {
+    final l = AppLocalizations.of(context);
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Theme.of(context).cardColor,
@@ -42,28 +44,28 @@ class MessageActions extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.copy),
-              title: const Text('Copy'),
+              title: Text(l.copy),
               onTap: () {
                 Clipboard.setData(ClipboardData(text: text));
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Copied!'),
-                    duration: Duration(seconds: 1),
+                  SnackBar(
+                    content: Text(l.copied),
+                    duration: const Duration(seconds: 1),
                   ),
                 );
               },
             ),
             ListTile(
               leading: const Icon(Icons.share),
-              title: const Text('Share'),
+              title: Text(l.share),
               onTap: () {
                 Clipboard.setData(ClipboardData(text: text));
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Copied to clipboard'),
-                    duration: Duration(seconds: 1),
+                  SnackBar(
+                    content: Text(l.copyToClipboard),
+                    duration: const Duration(seconds: 1),
                   ),
                 );
               },

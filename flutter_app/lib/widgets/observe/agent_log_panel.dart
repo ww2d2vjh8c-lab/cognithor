@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 
 class AgentLogPanel extends StatefulWidget {
@@ -71,7 +72,7 @@ class _AgentLogPanelState extends State<AgentLogPanel> {
     final theme = Theme.of(context);
 
     if (widget.entries.isEmpty) {
-      return const Center(child: Text('No log entries'));
+      return Center(child: Text(AppLocalizations.of(context).noLogEntries));
     }
 
     return ListView.builder(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 
 class JarvisTextField extends StatefulWidget {
@@ -81,7 +82,7 @@ class _JarvisTextFieldState extends State<JarvisTextField> {
                     color: JarvisTheme.green.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text('Saved',
+                  child: Text(AppLocalizations.of(context).saved,
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: JarvisTheme.green, fontSize: 10)),
                 ),

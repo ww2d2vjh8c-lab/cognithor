@@ -1888,4 +1888,244 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cannotDeleteDefault => 'لا يمكن حذف الوكيل الافتراضي';
+
+  @override
+  String get robotOfficePipMode => 'Robot Office في وضع صورة داخل صورة';
+
+  @override
+  String get fullscreen => 'ملء الشاشة';
+
+  @override
+  String get pipLabel => 'صورة مصغرة';
+
+  @override
+  String taskCount(int count) {
+    return '$count مهام';
+  }
+
+  @override
+  String get hackerMode => 'وضع القرصنة';
+
+  @override
+  String get entityVisualization => 'تصور الكيانات';
+
+  @override
+  String get manageSecrets => 'إدارة الأسرار';
+
+  @override
+  String get channelToggles => 'مفاتيح القنوات';
+
+  @override
+  String get channelSettings => 'إعدادات القنوات';
+
+  @override
+  String get tapToSelect => 'اضغط للاختيار...';
+
+  @override
+  String get selectModel => 'اختر نموذجًا';
+
+  @override
+  String get searchModels => 'البحث عن نماذج...';
+
+  @override
+  String get remove => 'إزالة';
+
+  @override
+  String get stopBackend => 'إيقاف الخادم';
+
+  @override
+  String get stopBackendDescription =>
+      'إيقاف خادم Jarvis. ستحتاج إلى إعادة تشغيله يدويًا.';
+
+  @override
+  String get stopBackendConfirmBody =>
+      'سيؤدي هذا إلى إيقاف عملية خادم Jarvis. ستحتاج إلى إعادة تشغيلها يدويًا من سطر الأوامر.';
+
+  @override
+  String get backendStopped => 'تم إيقاف الخادم. يرجى إعادة التشغيل يدويًا.';
+
+  @override
+  String get downloadConfigDesc => 'تنزيل التكوين الحالي بصيغة JSON';
+
+  @override
+  String get loadConfigDesc => 'تحميل التكوين من ملف JSON';
+
+  @override
+  String get resetAllDesc =>
+      'إعادة تعيين جميع الإعدادات إلى الافتراضي. لا يمكن التراجع عن هذا.';
+
+  @override
+  String get factoryResetNotImpl =>
+      'لم يتم تنفيذ إعادة ضبط المصنع بعد في الخادم. لإعادة التعيين يدويًا، احذف config.yaml وأعد تشغيل Jarvis.';
+
+  @override
+  String get ok => 'موافق';
+
+  @override
+  String get wizardSubtitle => 'مساعدك الشخصي بالذكاء الاصطناعي';
+
+  @override
+  String get chooseLlmProvider => 'اختر مزود LLM الخاص بك';
+
+  @override
+  String get localOllama => 'محلي (Ollama)';
+
+  @override
+  String get localOllamaDesc =>
+      'تشغيل النماذج على أجهزتك. خصوصية كاملة، بدون تكاليف API. يتطلب تثبيت Ollama.';
+
+  @override
+  String get cloudProviderLabel => 'مزود سحابي';
+
+  @override
+  String get cloudProviderDesc =>
+      'استخدام OpenAI أو Anthropic أو واجهات API سحابية أخرى. إعداد أسرع، يتطلب مفتاح API.';
+
+  @override
+  String get next => 'التالي';
+
+  @override
+  String get ollamaConfiguration => 'تكوين Ollama';
+
+  @override
+  String get cloudApiConfiguration => 'تكوين API السحابي';
+
+  @override
+  String get ollamaConfigHint => 'أدخل عنوان URL حيث يعمل Ollama.';
+
+  @override
+  String get cloudConfigHint => 'اختر مزود السحابة وأدخل مفتاح API الخاص بك.';
+
+  @override
+  String get ollamaUrl => 'عنوان Ollama';
+
+  @override
+  String get testConnection => 'اختبار الاتصال';
+
+  @override
+  String get testingConnection => 'جارٍ الاختبار...';
+
+  @override
+  String get youreAllSet => 'كل شيء جاهز!';
+
+  @override
+  String get ollamaReadyMsg =>
+      'Ollama متصل وجاهز. سيستخدم Cognithor نماذجك المحلية للتخطيط والتنفيذ.';
+
+  @override
+  String cloudReadyMsg(String provider) {
+    return 'تم تكوين $provider. سيستخدم Cognithor واجهة API السحابية للتخطيط والتنفيذ.';
+  }
+
+  @override
+  String get changeSettingsAnytime => 'يمكنك تغيير هذه الإعدادات في أي وقت.';
+
+  @override
+  String get startUsingCognithor => 'ابدأ باستخدام Cognithor';
+
+  @override
+  String get ollamaNoModels =>
+      'متصل بـ Ollama. لم يتم تثبيت نماذج بعد — شغّل \"ollama pull qwen3:8b\" للبدء.';
+
+  @override
+  String ollamaModelsAvailable(int count) {
+    return 'متصل بـ Ollama. $count نموذج(نماذج) متاحة.';
+  }
+
+  @override
+  String ollamaStatusError(int code) {
+    return 'استجاب Ollama بالحالة $code. تأكد من أن الخادم يعمل.';
+  }
+
+  @override
+  String get enterApiKey => 'يرجى إدخال مفتاح API.';
+
+  @override
+  String apiKeyTooShort(String provider) {
+    return 'يبدو أن المفتاح قصير جدًا. تحقق من مفتاح API الخاص بـ $provider.';
+  }
+
+  @override
+  String apiKeySaved(String provider) {
+    return 'تم حفظ مفتاح API لـ $provider. يمكنك تغييره لاحقًا في الإعدادات.';
+  }
+
+  @override
+  String connectionFailed(String error) {
+    return 'فشل الاتصال: $error';
+  }
+
+  @override
+  String get minimize => 'تصغير';
+
+  @override
+  String get shrink => 'تقليص';
+
+  @override
+  String get expandLabel => 'توسيع';
+
+  @override
+  String get robotOffice => 'Robot Office';
+
+  @override
+  String get copy => 'نسخ';
+
+  @override
+  String get share => 'مشاركة';
+
+  @override
+  String get noLogEntries => 'لا توجد سجلات';
+
+  @override
+  String get noPlanData => 'لا توجد بيانات خطة';
+
+  @override
+  String get noDagData => 'لا توجد بيانات DAG';
+
+  @override
+  String get log => 'السجل';
+
+  @override
+  String get fileReadError => 'تعذر قراءة الملف';
+
+  @override
+  String uploadError(String error) {
+    return 'خطأ في الرفع: $error';
+  }
+
+  @override
+  String get toolSpecificTimeouts => 'مهل الأدوات المحددة';
+
+  @override
+  String get required => 'مطلوب';
+
+  @override
+  String get stopLabel => 'إيقاف';
+
+  @override
+  String get resetLabel => 'إعادة تعيين';
+
+  @override
+  String get exportLabel => 'تصدير';
+
+  @override
+  String get importLabel => 'استيراد';
+
+  @override
+  String get catAiEngine => 'محرك الذكاء الاصطناعي';
+
+  @override
+  String get catChannels => 'القنوات';
+
+  @override
+  String get catKnowledge => 'المعرفة';
+
+  @override
+  String get catSecurity => 'الأمان';
+
+  @override
+  String get catSystem => 'النظام';
+
+  @override
+  String get saved => 'تم الحفظ';
 }

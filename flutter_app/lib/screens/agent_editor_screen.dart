@@ -69,6 +69,7 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
   }
 
   Future<void> _showModelPicker(BuildContext pickerContext) async {
+    final l = AppLocalizations.of(context);
     // Fetch available models from backend
     List<String> models = [];
     try {
@@ -92,16 +93,16 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
                 ? models
                 : models.where((m) => m.toLowerCase().contains(search.toLowerCase())).toList();
             return AlertDialog(
-              title: const Text('Select Model'),
+              title: Text(l.selectModel),
               content: SizedBox(
                 width: 400,
                 height: 500,
                 child: Column(
                   children: [
                     TextField(
-                      decoration: const InputDecoration(
-                        hintText: 'Search models...',
-                        prefixIcon: Icon(Icons.search, size: 20),
+                      decoration: InputDecoration(
+                        hintText: l.searchModels,
+                        prefixIcon: const Icon(Icons.search, size: 20),
                         isDense: true,
                       ),
                       onChanged: (v) => setState(() => search = v),
@@ -134,7 +135,7 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel'),
+                  child: Text(l.cancel),
                 ),
               ],
             );
@@ -411,15 +412,15 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
                 // Name
                 TextFormField(
                   controller: _nameCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    prefixIcon: Icon(Icons.label_outline),
+                  decoration: InputDecoration(
+                    labelText: l.skillName,
+                    prefixIcon: const Icon(Icons.label_outline),
                     hintText: 'my-agent',
                   ),
                   readOnly: _isEditing,
                   enabled: !_isEditing,
                   validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      (v == null || v.trim().isEmpty) ? l.required : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -477,7 +478,7 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
                         labelText: l.preferredModel,
                         prefixIcon: const Icon(Icons.memory_outlined),
                         suffixIcon: const Icon(Icons.arrow_drop_down),
-                        hintText: 'Tap to select...',
+                        hintText: l.tapToSelect,
                       ),
                     ),
                   ),
@@ -695,11 +696,12 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
   }
 
   String _languageLabel(String code) {
+    final l = AppLocalizations.of(context);
     return switch (code) {
-      'en' => 'English',
-      'de' => 'Deutsch',
-      'zh' => 'Chinese',
-      'ar' => 'Arabic',
+      'en' => l.languageEnglish,
+      'de' => l.languageGerman,
+      'zh' => l.languageChinese,
+      'ar' => l.languageArabic,
       _ => code,
     };
   }

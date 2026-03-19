@@ -1007,5 +1007,199 @@
   "canDelegateTo": "Can Delegate To",
   "@canDelegateTo": {},
   "cannotDeleteDefault": "Cannot delete the default agent",
-  "@cannotDeleteDefault": {}
+  "@cannotDeleteDefault": {},
+
+  "robotOfficePipMode": "Robot Office is in Picture-in-Picture mode",
+  "@robotOfficePipMode": {},
+  "fullscreen": "Fullscreen",
+  "@fullscreen": {},
+  "pipLabel": "PiP",
+  "@pipLabel": {},
+  "taskCount": "{count} Tasks",
+  "@taskCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hackerMode": "Hacker Mode",
+  "@hackerMode": {},
+  "entityVisualization": "Entity visualization",
+  "@entityVisualization": {},
+  "manageSecrets": "Manage secrets",
+  "@manageSecrets": {},
+  "channelToggles": "Channel Toggles",
+  "@channelToggles": {},
+  "channelSettings": "Channel Settings",
+  "@channelSettings": {},
+  "tapToSelect": "Tap to select...",
+  "@tapToSelect": {},
+  "selectModel": "Select Model",
+  "@selectModel": {},
+  "searchModels": "Search models...",
+  "@searchModels": {},
+  "remove": "Remove",
+  "@remove": {},
+  "stopBackend": "Stop Backend",
+  "@stopBackend": {},
+  "stopBackendDescription": "Stop the Jarvis backend. You will need to restart it manually.",
+  "@stopBackendDescription": {},
+  "stopBackendConfirmBody": "This will stop the Jarvis backend process. You will need to restart it manually from the command line.",
+  "@stopBackendConfirmBody": {},
+  "backendStopped": "Backend stopped. Please restart manually.",
+  "@backendStopped": {},
+  "downloadConfigDesc": "Download current config as JSON",
+  "@downloadConfigDesc": {},
+  "loadConfigDesc": "Load config from a JSON file",
+  "@loadConfigDesc": {},
+  "resetAllDesc": "Reset all settings to defaults. This cannot be undone.",
+  "@resetAllDesc": {},
+  "factoryResetNotImpl": "Factory reset is not yet implemented on the backend. To reset manually, delete your config.yaml and restart Jarvis.",
+  "@factoryResetNotImpl": {},
+  "ok": "OK",
+  "@ok": {},
+  "wizardSubtitle": "Your Personal AI Assistant",
+  "@wizardSubtitle": {},
+  "chooseLlmProvider": "Choose your LLM provider",
+  "@chooseLlmProvider": {},
+  "localOllama": "Local (Ollama)",
+  "@localOllama": {},
+  "localOllamaDesc": "Run models on your own hardware. Full privacy, no API costs. Requires Ollama installed.",
+  "@localOllamaDesc": {},
+  "cloudProviderLabel": "Cloud Provider",
+  "@cloudProviderLabel": {},
+  "cloudProviderDesc": "Use OpenAI, Anthropic, or other cloud APIs. Faster setup, requires an API key.",
+  "@cloudProviderDesc": {},
+  "next": "Next",
+  "@next": {},
+  "ollamaConfiguration": "Ollama Configuration",
+  "@ollamaConfiguration": {},
+  "cloudApiConfiguration": "Cloud API Configuration",
+  "@cloudApiConfiguration": {},
+  "ollamaConfigHint": "Enter the URL where Ollama is running.",
+  "@ollamaConfigHint": {},
+  "cloudConfigHint": "Select your cloud provider and enter your API key.",
+  "@cloudConfigHint": {},
+  "ollamaUrl": "Ollama URL",
+  "@ollamaUrl": {},
+  "testConnection": "Test Connection",
+  "@testConnection": {},
+  "testingConnection": "Testing...",
+  "@testingConnection": {},
+  "youreAllSet": "You're All Set!",
+  "@youreAllSet": {},
+  "ollamaReadyMsg": "Ollama is connected and ready. Cognithor will use your local models for planning and execution.",
+  "@ollamaReadyMsg": {},
+  "cloudReadyMsg": "{provider} is configured. Cognithor will use your cloud API for planning and execution.",
+  "@cloudReadyMsg": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "changeSettingsAnytime": "You can change these settings at any time.",
+  "@changeSettingsAnytime": {},
+  "startUsingCognithor": "Start Using Cognithor",
+  "@startUsingCognithor": {},
+  "ollamaNoModels": "Connected to Ollama. No models installed yet — run \"ollama pull qwen3:8b\" to get started.",
+  "@ollamaNoModels": {},
+  "ollamaModelsAvailable": "Connected to Ollama. {count} model(s) available.",
+  "@ollamaModelsAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ollamaStatusError": "Ollama responded with status {code}. Make sure the server is running.",
+  "@ollamaStatusError": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "enterApiKey": "Please enter an API key.",
+  "@enterApiKey": {},
+  "apiKeyTooShort": "That key looks too short. Double-check your {provider} API key.",
+  "@apiKeyTooShort": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeySaved": "{provider} API key saved. You can change it later in Settings.",
+  "@apiKeySaved": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "connectionFailed": "Connection failed: {error}",
+  "@connectionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "minimize": "Minimize",
+  "@minimize": {},
+  "shrink": "Shrink",
+  "@shrink": {},
+  "expandLabel": "Expand",
+  "@expandLabel": {},
+  "robotOffice": "Robot Office",
+  "@robotOffice": {},
+  "copy": "Copy",
+  "@copy": {},
+  "share": "Share",
+  "@share": {},
+  "noLogEntries": "No log entries",
+  "@noLogEntries": {},
+  "noPlanData": "No plan data",
+  "@noPlanData": {},
+  "noDagData": "No DAG data",
+  "@noDagData": {},
+  "log": "Log",
+  "@log": {},
+  "fileReadError": "File could not be read",
+  "@fileReadError": {},
+  "uploadError": "Upload error: {error}",
+  "@uploadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "toolSpecificTimeouts": "Tool-Specific Timeouts",
+  "@toolSpecificTimeouts": {},
+  "required": "Required",
+  "@required": {},
+  "stopLabel": "Stop",
+  "@stopLabel": {},
+  "resetLabel": "Reset",
+  "@resetLabel": {},
+  "exportLabel": "Export",
+  "@exportLabel": {},
+  "importLabel": "Import",
+  "@importLabel": {},
+
+  "catAiEngine": "AI Engine",
+  "@catAiEngine": {},
+  "catChannels": "Channels",
+  "@catChannels": {},
+  "catKnowledge": "Knowledge",
+  "@catKnowledge": {},
+  "catSecurity": "Security",
+  "@catSecurity": {},
+  "catSystem": "System",
+  "@catSystem": {},
+  "saved": "Saved",
+  "@saved": {}
 }

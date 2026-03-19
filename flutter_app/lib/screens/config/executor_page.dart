@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/config_provider.dart';
 import 'package:jarvis_ui/widgets/form/form_widgets.dart';
 
@@ -50,7 +51,7 @@ class ExecutorPage extends StatelessWidget {
               max: 20,
             ),
             const Divider(height: 32),
-            Text('Tool-Specific Timeouts',
+            Text(AppLocalizations.of(context).toolSpecificTimeouts,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16)),
             const SizedBox(height: 12),
             JarvisNumberField(

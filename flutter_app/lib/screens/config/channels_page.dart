@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/config_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/form/form_widgets.dart';
@@ -38,7 +39,7 @@ class ChannelsPage extends StatelessWidget {
             // Compact toggle grid
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text('Channel Toggles',
+              child: Text(AppLocalizations.of(context).channelToggles,
                   style: Theme.of(context).textTheme.titleMedium),
             ),
             Wrap(
@@ -59,7 +60,7 @@ class ChannelsPage extends StatelessWidget {
             // Detailed config per channel (collapsible)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text('Channel Settings',
+              child: Text(AppLocalizations.of(context).channelSettings,
                   style: Theme.of(context).textTheme.titleMedium),
             ),
             _channelCard(cfg, ch, 'webui', 'Web UI', Icons.web, extra: [

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/observe/agent_log_panel.dart';
 import 'package:jarvis_ui/widgets/observe/kanban_panel.dart';
@@ -116,7 +117,7 @@ class _ObservePanelState extends State<ObservePanel>
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: [
-                Text('Observe',
+                Text(AppLocalizations.of(context).observe,
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge
@@ -188,7 +189,7 @@ class _ObservePanelState extends State<ObservePanel>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Log'),
+                    Text(AppLocalizations.of(context).log),
                     if (widget.agentLog.isNotEmpty) ...[
                       const SizedBox(width: 4),
                       _CountBadge(count: widget.agentLog.length),
@@ -200,7 +201,7 @@ class _ObservePanelState extends State<ObservePanel>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Kanban'),
+                    Text(AppLocalizations.of(context).kanban),
                     if (totalKanban > 0) ...[
                       const SizedBox(width: 4),
                       _CountBadge(count: totalKanban),
@@ -208,8 +209,8 @@ class _ObservePanelState extends State<ObservePanel>
                   ],
                 ),
               ),
-              const Tab(text: 'DAG'),
-              const Tab(text: 'Plan'),
+              Tab(text: AppLocalizations.of(context).dag),
+              Tab(text: AppLocalizations.of(context).plan),
             ],
           ),
           Expanded(
@@ -224,7 +225,7 @@ class _ObservePanelState extends State<ObservePanel>
                         plan: widget.planDetail!,
                         onClose: () {},
                       )
-                    : const Center(child: Text('No plan data')),
+                    : Center(child: Text(AppLocalizations.of(context).noPlanData)),
               ],
             ),
           ),

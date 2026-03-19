@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/config_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/form/form_widgets.dart';
@@ -69,7 +70,7 @@ class CronPage extends StatelessWidget {
             const Divider(height: 32),
             Row(
               children: [
-                Text('Cron Jobs',
+                Text(AppLocalizations.of(context).cronJobs,
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge
@@ -125,7 +126,7 @@ class CronPage extends StatelessWidget {
                       onPressed: () => cfg.removeCronJob(i),
                       icon: Icon(Icons.delete,
                           size: 16, color: JarvisTheme.red),
-                      label: Text('Remove',
+                      label: Text(AppLocalizations.of(context).remove,
                           style: TextStyle(color: JarvisTheme.red)),
                     ),
                   ),

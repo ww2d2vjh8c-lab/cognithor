@@ -3821,6 +3821,438 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cannot delete the default agent'**
   String get cannotDeleteDefault;
+
+  /// No description provided for @robotOfficePipMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Robot Office is in Picture-in-Picture mode'**
+  String get robotOfficePipMode;
+
+  /// No description provided for @fullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Fullscreen'**
+  String get fullscreen;
+
+  /// No description provided for @pipLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PiP'**
+  String get pipLabel;
+
+  /// No description provided for @taskCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Tasks'**
+  String taskCount(int count);
+
+  /// No description provided for @hackerMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Hacker Mode'**
+  String get hackerMode;
+
+  /// No description provided for @entityVisualization.
+  ///
+  /// In en, this message translates to:
+  /// **'Entity visualization'**
+  String get entityVisualization;
+
+  /// No description provided for @manageSecrets.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage secrets'**
+  String get manageSecrets;
+
+  /// No description provided for @channelToggles.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel Toggles'**
+  String get channelToggles;
+
+  /// No description provided for @channelSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel Settings'**
+  String get channelSettings;
+
+  /// No description provided for @tapToSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to select...'**
+  String get tapToSelect;
+
+  /// No description provided for @selectModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Model'**
+  String get selectModel;
+
+  /// No description provided for @searchModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Search models...'**
+  String get searchModels;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @stopBackend.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Backend'**
+  String get stopBackend;
+
+  /// No description provided for @stopBackendDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop the Jarvis backend. You will need to restart it manually.'**
+  String get stopBackendDescription;
+
+  /// No description provided for @stopBackendConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will stop the Jarvis backend process. You will need to restart it manually from the command line.'**
+  String get stopBackendConfirmBody;
+
+  /// No description provided for @backendStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend stopped. Please restart manually.'**
+  String get backendStopped;
+
+  /// No description provided for @downloadConfigDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Download current config as JSON'**
+  String get downloadConfigDesc;
+
+  /// No description provided for @loadConfigDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Load config from a JSON file'**
+  String get loadConfigDesc;
+
+  /// No description provided for @resetAllDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all settings to defaults. This cannot be undone.'**
+  String get resetAllDesc;
+
+  /// No description provided for @factoryResetNotImpl.
+  ///
+  /// In en, this message translates to:
+  /// **'Factory reset is not yet implemented on the backend. To reset manually, delete your config.yaml and restart Jarvis.'**
+  String get factoryResetNotImpl;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @wizardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Personal AI Assistant'**
+  String get wizardSubtitle;
+
+  /// No description provided for @chooseLlmProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your LLM provider'**
+  String get chooseLlmProvider;
+
+  /// No description provided for @localOllama.
+  ///
+  /// In en, this message translates to:
+  /// **'Local (Ollama)'**
+  String get localOllama;
+
+  /// No description provided for @localOllamaDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Run models on your own hardware. Full privacy, no API costs. Requires Ollama installed.'**
+  String get localOllamaDesc;
+
+  /// No description provided for @cloudProviderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Provider'**
+  String get cloudProviderLabel;
+
+  /// No description provided for @cloudProviderDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use OpenAI, Anthropic, or other cloud APIs. Faster setup, requires an API key.'**
+  String get cloudProviderDesc;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// No description provided for @ollamaConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama Configuration'**
+  String get ollamaConfiguration;
+
+  /// No description provided for @cloudApiConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud API Configuration'**
+  String get cloudApiConfiguration;
+
+  /// No description provided for @ollamaConfigHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the URL where Ollama is running.'**
+  String get ollamaConfigHint;
+
+  /// No description provided for @cloudConfigHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your cloud provider and enter your API key.'**
+  String get cloudConfigHint;
+
+  /// No description provided for @ollamaUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama URL'**
+  String get ollamaUrl;
+
+  /// No description provided for @testConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Connection'**
+  String get testConnection;
+
+  /// No description provided for @testingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing...'**
+  String get testingConnection;
+
+  /// No description provided for @youreAllSet.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re All Set!'**
+  String get youreAllSet;
+
+  /// No description provided for @ollamaReadyMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama is connected and ready. Cognithor will use your local models for planning and execution.'**
+  String get ollamaReadyMsg;
+
+  /// No description provided for @cloudReadyMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} is configured. Cognithor will use your cloud API for planning and execution.'**
+  String cloudReadyMsg(String provider);
+
+  /// No description provided for @changeSettingsAnytime.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change these settings at any time.'**
+  String get changeSettingsAnytime;
+
+  /// No description provided for @startUsingCognithor.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Using Cognithor'**
+  String get startUsingCognithor;
+
+  /// No description provided for @ollamaNoModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to Ollama. No models installed yet — run \"ollama pull qwen3:8b\" to get started.'**
+  String get ollamaNoModels;
+
+  /// No description provided for @ollamaModelsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to Ollama. {count} model(s) available.'**
+  String ollamaModelsAvailable(int count);
+
+  /// No description provided for @ollamaStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama responded with status {code}. Make sure the server is running.'**
+  String ollamaStatusError(int code);
+
+  /// No description provided for @enterApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an API key.'**
+  String get enterApiKey;
+
+  /// No description provided for @apiKeyTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'That key looks too short. Double-check your {provider} API key.'**
+  String apiKeyTooShort(String provider);
+
+  /// No description provided for @apiKeySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} API key saved. You can change it later in Settings.'**
+  String apiKeySaved(String provider);
+
+  /// No description provided for @connectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed: {error}'**
+  String connectionFailed(String error);
+
+  /// No description provided for @minimize.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize'**
+  String get minimize;
+
+  /// No description provided for @shrink.
+  ///
+  /// In en, this message translates to:
+  /// **'Shrink'**
+  String get shrink;
+
+  /// No description provided for @expandLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get expandLabel;
+
+  /// No description provided for @robotOffice.
+  ///
+  /// In en, this message translates to:
+  /// **'Robot Office'**
+  String get robotOffice;
+
+  /// No description provided for @copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy;
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @noLogEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'No log entries'**
+  String get noLogEntries;
+
+  /// No description provided for @noPlanData.
+  ///
+  /// In en, this message translates to:
+  /// **'No plan data'**
+  String get noPlanData;
+
+  /// No description provided for @noDagData.
+  ///
+  /// In en, this message translates to:
+  /// **'No DAG data'**
+  String get noDagData;
+
+  /// No description provided for @log.
+  ///
+  /// In en, this message translates to:
+  /// **'Log'**
+  String get log;
+
+  /// No description provided for @fileReadError.
+  ///
+  /// In en, this message translates to:
+  /// **'File could not be read'**
+  String get fileReadError;
+
+  /// No description provided for @uploadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload error: {error}'**
+  String uploadError(String error);
+
+  /// No description provided for @toolSpecificTimeouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool-Specific Timeouts'**
+  String get toolSpecificTimeouts;
+
+  /// No description provided for @required.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get required;
+
+  /// No description provided for @stopLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stopLabel;
+
+  /// No description provided for @resetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get resetLabel;
+
+  /// No description provided for @exportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get exportLabel;
+
+  /// No description provided for @importLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get importLabel;
+
+  /// No description provided for @catAiEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Engine'**
+  String get catAiEngine;
+
+  /// No description provided for @catChannels.
+  ///
+  /// In en, this message translates to:
+  /// **'Channels'**
+  String get catChannels;
+
+  /// No description provided for @catKnowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge'**
+  String get catKnowledge;
+
+  /// No description provided for @catSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get catSecurity;
+
+  /// No description provided for @catSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get catSystem;
+
+  /// No description provided for @saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saved;
 }
 
 class _AppLocalizationsDelegate

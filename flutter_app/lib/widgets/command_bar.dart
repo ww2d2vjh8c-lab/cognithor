@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/navigation_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/glass_panel.dart';
@@ -53,15 +54,9 @@ class CommandBar extends StatelessWidget {
                     Icon(Icons.search,
                         size: 14, color: JarvisTheme.textSecondary),
                     const SizedBox(width: 6),
-                    Text('Search...',
+                    Text(AppLocalizations.of(context).globalSearch,
                         style: TextStyle(
                             color: JarvisTheme.textSecondary, fontSize: 12)),
-                    const SizedBox(width: 12),
-                    Text('Ctrl+K',
-                        style: TextStyle(
-                            color: JarvisTheme.textTertiary,
-                            fontSize: 10,
-                            fontFamily: 'monospace')),
                   ],
                 ),
               ),
@@ -82,7 +77,7 @@ class CommandBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text('Running',
+            Text(AppLocalizations.of(context).running,
                 style: TextStyle(
                     color: JarvisTheme.textSecondary, fontSize: 11)),
           ],

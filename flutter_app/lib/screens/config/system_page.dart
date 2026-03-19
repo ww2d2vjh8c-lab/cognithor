@@ -27,18 +27,15 @@ class SystemConfigPage extends StatelessWidget {
             _ActionCard(
               icon: Icons.stop_circle_outlined,
               title: l.restartBackend,
-              description: 'Stop the Jarvis backend. You will need to restart it manually.',
-              buttonLabel: 'Stop',
+              description: l.stopBackendDescription,
+              buttonLabel: l.stopLabel,
               onPressed: () async {
                 final api = context.read<ConnectionProvider>().api;
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Stop Backend'),
-                    content: const Text(
-                      'This will stop the Jarvis backend process. '
-                      'You will need to restart it manually from the command line.',
-                    ),
+                    title: Text(l.stopBackend),
+                    content: Text(l.stopBackendConfirmBody),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(false),
@@ -46,7 +43,7 @@ class SystemConfigPage extends StatelessWidget {
                       ),
                       ElevatedButton(
                         onPressed: () => Navigator.of(ctx).pop(true),
-                        child: const Text('Stop'),
+                        child: Text(l.stopLabel),
                       ),
                     ],
                   ),
@@ -56,7 +53,7 @@ class SystemConfigPage extends StatelessWidget {
                   if (context.mounted) {
                     JarvisToast.show(
                       context,
-                      'Backend stopped. Please restart manually.',
+                      l.backendStopped,
                       type: ToastType.warning,
                     );
                   }
@@ -68,8 +65,8 @@ class SystemConfigPage extends StatelessWidget {
             _ActionCard(
               icon: Icons.download,
               title: l.exportConfig,
-              description: 'Download current config as JSON',
-              buttonLabel: 'Export',
+              description: l.downloadConfigDesc,
+              buttonLabel: l.exportLabel,
               onPressed: () async {
                 final json = cfg.exportJson();
                 final date = DateTime.now().toIso8601String().split('T').first;
@@ -99,8 +96,8 @@ class SystemConfigPage extends StatelessWidget {
             _ActionCard(
               icon: Icons.upload,
               title: l.importConfig,
-              description: 'Load config from a JSON file',
-              buttonLabel: 'Import',
+              description: l.loadConfigDesc,
+              buttonLabel: l.importLabel,
               onPressed: () async {
                 final result = await FilePicker.platform.pickFiles(
                   type: FileType.custom,
@@ -125,22 +122,19 @@ class SystemConfigPage extends StatelessWidget {
             _ActionCard(
               icon: Icons.warning_amber,
               title: l.factoryReset,
-              description: 'Reset all settings to defaults. This cannot be undone.',
-              buttonLabel: 'Reset',
+              description: l.resetAllDesc,
+              buttonLabel: l.resetLabel,
               isDanger: true,
               onPressed: () async {
                 await showDialog<void>(
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: Text(l.factoryReset),
-                    content: const Text(
-                      'Factory reset is not yet implemented on the backend. '
-                      'To reset manually, delete your config.yaml and restart Jarvis.',
-                    ),
+                    content: Text(l.factoryResetNotImpl),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text('OK'),
+                        child: Text(l.ok),
                       ),
                     ],
                   ),

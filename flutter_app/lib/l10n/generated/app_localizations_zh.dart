@@ -1883,4 +1883,239 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cannotDeleteDefault => '无法删除默认代理';
+
+  @override
+  String get robotOfficePipMode => 'Robot Office 处于画中画模式';
+
+  @override
+  String get fullscreen => '全屏';
+
+  @override
+  String get pipLabel => '画中画';
+
+  @override
+  String taskCount(int count) {
+    return '$count 个任务';
+  }
+
+  @override
+  String get hackerMode => '黑客模式';
+
+  @override
+  String get entityVisualization => '实体可视化';
+
+  @override
+  String get manageSecrets => '管理密钥';
+
+  @override
+  String get channelToggles => '频道开关';
+
+  @override
+  String get channelSettings => '频道设置';
+
+  @override
+  String get tapToSelect => '点击选择...';
+
+  @override
+  String get selectModel => '选择模型';
+
+  @override
+  String get searchModels => '搜索模型...';
+
+  @override
+  String get remove => '移除';
+
+  @override
+  String get stopBackend => '停止后端';
+
+  @override
+  String get stopBackendDescription => '停止 Jarvis 后端。你需要手动重新启动。';
+
+  @override
+  String get stopBackendConfirmBody => '这将停止 Jarvis 后端进程。你需要通过命令行手动重新启动。';
+
+  @override
+  String get backendStopped => '后端已停止。请手动重新启动。';
+
+  @override
+  String get downloadConfigDesc => '以 JSON 格式下载当前配置';
+
+  @override
+  String get loadConfigDesc => '从 JSON 文件加载配置';
+
+  @override
+  String get resetAllDesc => '将所有设置恢复为默认值。此操作不可撤销。';
+
+  @override
+  String get factoryResetNotImpl =>
+      '后端尚未实现恢复出厂设置功能。要手动重置，请删除 config.yaml 并重新启动 Jarvis。';
+
+  @override
+  String get ok => '确定';
+
+  @override
+  String get wizardSubtitle => '你的个人 AI 助手';
+
+  @override
+  String get chooseLlmProvider => '选择你的 LLM 提供商';
+
+  @override
+  String get localOllama => '本地 (Ollama)';
+
+  @override
+  String get localOllamaDesc => '在自己的硬件上运行模型。完全隐私，无 API 费用。需要安装 Ollama。';
+
+  @override
+  String get cloudProviderLabel => '云提供商';
+
+  @override
+  String get cloudProviderDesc =>
+      '使用 OpenAI、Anthropic 或其他云 API。更快的设置，需要 API 密钥。';
+
+  @override
+  String get next => '下一步';
+
+  @override
+  String get ollamaConfiguration => 'Ollama 配置';
+
+  @override
+  String get cloudApiConfiguration => '云 API 配置';
+
+  @override
+  String get ollamaConfigHint => '输入 Ollama 运行的 URL。';
+
+  @override
+  String get cloudConfigHint => '选择你的云提供商并输入 API 密钥。';
+
+  @override
+  String get ollamaUrl => 'Ollama URL';
+
+  @override
+  String get testConnection => '测试连接';
+
+  @override
+  String get testingConnection => '测试中...';
+
+  @override
+  String get youreAllSet => '一切就绪！';
+
+  @override
+  String get ollamaReadyMsg => 'Ollama 已连接并准备就绪。Cognithor 将使用你的本地模型进行规划和执行。';
+
+  @override
+  String cloudReadyMsg(String provider) {
+    return '$provider 已配置。Cognithor 将使用你的云 API 进行规划和执行。';
+  }
+
+  @override
+  String get changeSettingsAnytime => '你可以随时更改这些设置。';
+
+  @override
+  String get startUsingCognithor => '开始使用 Cognithor';
+
+  @override
+  String get ollamaNoModels =>
+      '已连接到 Ollama。尚未安装模型 - 运行 \"ollama pull qwen3:8b\" 开始使用。';
+
+  @override
+  String ollamaModelsAvailable(int count) {
+    return '已连接到 Ollama。$count 个模型可用。';
+  }
+
+  @override
+  String ollamaStatusError(int code) {
+    return 'Ollama 响应状态 $code。请确保服务器正在运行。';
+  }
+
+  @override
+  String get enterApiKey => '请输入 API 密钥。';
+
+  @override
+  String apiKeyTooShort(String provider) {
+    return '密钥看起来太短了。请仔细检查你的 $provider API 密钥。';
+  }
+
+  @override
+  String apiKeySaved(String provider) {
+    return '$provider API 密钥已保存。你可以稍后在设置中更改。';
+  }
+
+  @override
+  String connectionFailed(String error) {
+    return '连接失败：$error';
+  }
+
+  @override
+  String get minimize => '最小化';
+
+  @override
+  String get shrink => '缩小';
+
+  @override
+  String get expandLabel => '展开';
+
+  @override
+  String get robotOffice => 'Robot Office';
+
+  @override
+  String get copy => '复制';
+
+  @override
+  String get share => '分享';
+
+  @override
+  String get noLogEntries => '暂无日志记录';
+
+  @override
+  String get noPlanData => '暂无计划数据';
+
+  @override
+  String get noDagData => '暂无 DAG 数据';
+
+  @override
+  String get log => '日志';
+
+  @override
+  String get fileReadError => '文件无法读取';
+
+  @override
+  String uploadError(String error) {
+    return '上传错误：$error';
+  }
+
+  @override
+  String get toolSpecificTimeouts => '工具专用超时';
+
+  @override
+  String get required => '必填';
+
+  @override
+  String get stopLabel => '停止';
+
+  @override
+  String get resetLabel => '重置';
+
+  @override
+  String get exportLabel => '导出';
+
+  @override
+  String get importLabel => '导入';
+
+  @override
+  String get catAiEngine => 'AI 引擎';
+
+  @override
+  String get catChannels => '频道';
+
+  @override
+  String get catKnowledge => '知识';
+
+  @override
+  String get catSecurity => '安全';
+
+  @override
+  String get catSystem => '系统';
+
+  @override
+  String get saved => '已保存';
 }

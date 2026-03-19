@@ -1889,4 +1889,246 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cannotDeleteDefault => 'Cannot delete the default agent';
+
+  @override
+  String get robotOfficePipMode => 'Robot Office is in Picture-in-Picture mode';
+
+  @override
+  String get fullscreen => 'Fullscreen';
+
+  @override
+  String get pipLabel => 'PiP';
+
+  @override
+  String taskCount(int count) {
+    return '$count Tasks';
+  }
+
+  @override
+  String get hackerMode => 'Hacker Mode';
+
+  @override
+  String get entityVisualization => 'Entity visualization';
+
+  @override
+  String get manageSecrets => 'Manage secrets';
+
+  @override
+  String get channelToggles => 'Channel Toggles';
+
+  @override
+  String get channelSettings => 'Channel Settings';
+
+  @override
+  String get tapToSelect => 'Tap to select...';
+
+  @override
+  String get selectModel => 'Select Model';
+
+  @override
+  String get searchModels => 'Search models...';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get stopBackend => 'Stop Backend';
+
+  @override
+  String get stopBackendDescription =>
+      'Stop the Jarvis backend. You will need to restart it manually.';
+
+  @override
+  String get stopBackendConfirmBody =>
+      'This will stop the Jarvis backend process. You will need to restart it manually from the command line.';
+
+  @override
+  String get backendStopped => 'Backend stopped. Please restart manually.';
+
+  @override
+  String get downloadConfigDesc => 'Download current config as JSON';
+
+  @override
+  String get loadConfigDesc => 'Load config from a JSON file';
+
+  @override
+  String get resetAllDesc =>
+      'Reset all settings to defaults. This cannot be undone.';
+
+  @override
+  String get factoryResetNotImpl =>
+      'Factory reset is not yet implemented on the backend. To reset manually, delete your config.yaml and restart Jarvis.';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get wizardSubtitle => 'Your Personal AI Assistant';
+
+  @override
+  String get chooseLlmProvider => 'Choose your LLM provider';
+
+  @override
+  String get localOllama => 'Local (Ollama)';
+
+  @override
+  String get localOllamaDesc =>
+      'Run models on your own hardware. Full privacy, no API costs. Requires Ollama installed.';
+
+  @override
+  String get cloudProviderLabel => 'Cloud Provider';
+
+  @override
+  String get cloudProviderDesc =>
+      'Use OpenAI, Anthropic, or other cloud APIs. Faster setup, requires an API key.';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get ollamaConfiguration => 'Ollama Configuration';
+
+  @override
+  String get cloudApiConfiguration => 'Cloud API Configuration';
+
+  @override
+  String get ollamaConfigHint => 'Enter the URL where Ollama is running.';
+
+  @override
+  String get cloudConfigHint =>
+      'Select your cloud provider and enter your API key.';
+
+  @override
+  String get ollamaUrl => 'Ollama URL';
+
+  @override
+  String get testConnection => 'Test Connection';
+
+  @override
+  String get testingConnection => 'Testing...';
+
+  @override
+  String get youreAllSet => 'You\'re All Set!';
+
+  @override
+  String get ollamaReadyMsg =>
+      'Ollama is connected and ready. Cognithor will use your local models for planning and execution.';
+
+  @override
+  String cloudReadyMsg(String provider) {
+    return '$provider is configured. Cognithor will use your cloud API for planning and execution.';
+  }
+
+  @override
+  String get changeSettingsAnytime =>
+      'You can change these settings at any time.';
+
+  @override
+  String get startUsingCognithor => 'Start Using Cognithor';
+
+  @override
+  String get ollamaNoModels =>
+      'Connected to Ollama. No models installed yet — run \"ollama pull qwen3:8b\" to get started.';
+
+  @override
+  String ollamaModelsAvailable(int count) {
+    return 'Connected to Ollama. $count model(s) available.';
+  }
+
+  @override
+  String ollamaStatusError(int code) {
+    return 'Ollama responded with status $code. Make sure the server is running.';
+  }
+
+  @override
+  String get enterApiKey => 'Please enter an API key.';
+
+  @override
+  String apiKeyTooShort(String provider) {
+    return 'That key looks too short. Double-check your $provider API key.';
+  }
+
+  @override
+  String apiKeySaved(String provider) {
+    return '$provider API key saved. You can change it later in Settings.';
+  }
+
+  @override
+  String connectionFailed(String error) {
+    return 'Connection failed: $error';
+  }
+
+  @override
+  String get minimize => 'Minimize';
+
+  @override
+  String get shrink => 'Shrink';
+
+  @override
+  String get expandLabel => 'Expand';
+
+  @override
+  String get robotOffice => 'Robot Office';
+
+  @override
+  String get copy => 'Copy';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get noLogEntries => 'No log entries';
+
+  @override
+  String get noPlanData => 'No plan data';
+
+  @override
+  String get noDagData => 'No DAG data';
+
+  @override
+  String get log => 'Log';
+
+  @override
+  String get fileReadError => 'File could not be read';
+
+  @override
+  String uploadError(String error) {
+    return 'Upload error: $error';
+  }
+
+  @override
+  String get toolSpecificTimeouts => 'Tool-Specific Timeouts';
+
+  @override
+  String get required => 'Required';
+
+  @override
+  String get stopLabel => 'Stop';
+
+  @override
+  String get resetLabel => 'Reset';
+
+  @override
+  String get exportLabel => 'Export';
+
+  @override
+  String get importLabel => 'Import';
+
+  @override
+  String get catAiEngine => 'AI Engine';
+
+  @override
+  String get catChannels => 'Channels';
+
+  @override
+  String get catKnowledge => 'Knowledge';
+
+  @override
+  String get catSecurity => 'Security';
+
+  @override
+  String get catSystem => 'System';
+
+  @override
+  String get saved => 'Saved';
 }

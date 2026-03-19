@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/glass_panel.dart';
 import 'package:jarvis_ui/widgets/gradient_background.dart';
@@ -75,6 +76,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   // ── Connection Test ──────────────────────────────────────────────────────
 
   Future<void> _testConnection() async {
+    final l = AppLocalizations.of(context);
     setState(() {
       _testState = _TestState.testing;
       _testMessage = null;
@@ -93,16 +95,13 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           setState(() {
             _testState = _TestState.success;
             _testMessage = models.isEmpty
-                ? 'Connected to Ollama. No models installed yet — '
-                    'run "ollama pull qwen3:8b" to get started.'
-                : 'Connected to Ollama. ${models.length} model(s) available.';
+                ? l.ollamaNoModels
+                : l.ollamaModelsAvailable(models.length);
           });
         } else {
           setState(() {
             _testState = _TestState.error;
-            _testMessage =
-                'Ollama responded with status ${res.statusCode}. '
-                'Make sure the server is running.';
+            _testMessage = l.ollamaStatusError(res.statusCode);
           });
         }
       } else {
@@ -111,28 +110,26 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         if (key.isEmpty) {
           setState(() {
             _testState = _TestState.error;
-            _testMessage = 'Please enter an API key.';
+            _testMessage = l.enterApiKey;
           });
           return;
         }
         if (key.length < 20) {
           setState(() {
             _testState = _TestState.error;
-            _testMessage =
-                'That key looks too short. Double-check your $_cloudProvider API key.';
+            _testMessage = l.apiKeyTooShort(_cloudProvider);
           });
           return;
         }
         setState(() {
           _testState = _TestState.success;
-          _testMessage =
-              '$_cloudProvider API key saved. You can change it later in Settings.';
+          _testMessage = l.apiKeySaved(_cloudProvider);
         });
       }
     } catch (e) {
       setState(() {
         _testState = _TestState.error;
-        _testMessage = 'Connection failed: $e';
+        _testMessage = l.connectionFailed(e.toString());
       });
     }
   }
@@ -211,6 +208,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   // ── Step 1: Welcome + Provider Selection ─────────────────────────────────
 
   Widget _buildStep1() {
+    final l = AppLocalizations.of(context);
     return Column(
       key: const ValueKey('step1'),
       children: [
@@ -226,14 +224,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Your Personal AI Assistant',
+          l.wizardSubtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: JarvisTheme.textSecondary,
               ),
         ),
         const SizedBox(height: 40),
         Text(
-          'Choose your LLM provider',
+          l.chooseLlmProvider,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 20),
@@ -241,10 +239,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         // Provider cards
         _ProviderCard(
           icon: Icons.computer,
-          title: 'Local (Ollama)',
-          subtitle:
-              'Run models on your own hardware. '
-              'Full privacy, no API costs. Requires Ollama installed.',
+          title: l.localOllama,
+          subtitle: l.localOllamaDesc,
           selected: _provider == _LlmProvider.local,
           tint: JarvisTheme.matrix,
           onTap: () => setState(() => _provider = _LlmProvider.local),
@@ -252,10 +248,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         const SizedBox(height: 12),
         _ProviderCard(
           icon: Icons.cloud,
-          title: 'Cloud Provider',
-          subtitle:
-              'Use OpenAI, Anthropic, or other cloud APIs. '
-              'Faster setup, requires an API key.',
+          title: l.cloudProviderLabel,
+          subtitle: l.cloudProviderDesc,
           selected: _provider == _LlmProvider.cloud,
           tint: JarvisTheme.sectionChat,
           onTap: () => setState(() => _provider = _LlmProvider.cloud),
@@ -268,7 +262,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           width: double.infinity,
           height: 48,
           child: _NeonButton(
-            label: 'Next',
+            label: l.next,
             onPressed: _provider != null ? _next : null,
           ),
         ),
@@ -279,6 +273,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   // ── Step 2: Model Configuration ──────────────────────────────────────────
 
   Widget _buildStep2() {
+    final l = AppLocalizations.of(context);
     final isLocal = _provider == _LlmProvider.local;
 
     return Column(
@@ -286,20 +281,18 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isLocal ? 'Ollama Configuration' : 'Cloud API Configuration',
+          isLocal ? l.ollamaConfiguration : l.cloudApiConfiguration,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 8),
         Text(
-          isLocal
-              ? 'Enter the URL where Ollama is running.'
-              : 'Select your cloud provider and enter your API key.',
+          isLocal ? l.ollamaConfigHint : l.cloudConfigHint,
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 24),
 
         if (isLocal) ...[
-          Text('Ollama URL', style: Theme.of(context).textTheme.labelLarge),
+          Text(l.ollamaUrl, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           TextField(
             controller: _ollamaUrlController,
@@ -309,7 +302,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             ),
           ),
         ] else ...[
-          Text('Provider', style: Theme.of(context).textTheme.labelLarge),
+          Text(l.provider, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             initialValue: _cloudProvider,
@@ -325,7 +318,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             },
           ),
           const SizedBox(height: 16),
-          Text('API Key', style: Theme.of(context).textTheme.labelLarge),
+          Text(l.apiKey, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           TextField(
             controller: _apiKeyController,
@@ -355,8 +348,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 : const Icon(Icons.wifi_tethering),
             label: Text(
               _testState == _TestState.testing
-                  ? 'Testing...'
-                  : 'Test Connection',
+                  ? l.testingConnection
+                  : l.testConnection,
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: JarvisTheme.accent,
@@ -404,13 +397,13 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             TextButton.icon(
               onPressed: _back,
               icon: const Icon(Icons.arrow_back),
-              label: const Text('Back'),
+              label: Text(l.back),
             ),
             const Spacer(),
             SizedBox(
               height: 48,
               child: _NeonButton(
-                label: 'Next',
+                label: l.next,
                 onPressed: _testState == _TestState.success ? _next : null,
               ),
             ),
@@ -423,6 +416,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   // ── Step 3: Success ──────────────────────────────────────────────────────
 
   Widget _buildStep3() {
+    final l = AppLocalizations.of(context);
     return Column(
       key: const ValueKey('step3'),
       children: [
@@ -434,7 +428,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         ),
         const SizedBox(height: 24),
         Text(
-          'You\'re All Set!',
+          l.youreAllSet,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
@@ -443,10 +437,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         const SizedBox(height: 12),
         Text(
           _provider == _LlmProvider.local
-              ? 'Ollama is connected and ready. Cognithor will use your '
-                  'local models for planning and execution.'
-              : '$_cloudProvider is configured. Cognithor will use your '
-                  'cloud API for planning and execution.',
+              ? l.ollamaReadyMsg
+              : l.cloudReadyMsg(_cloudProvider),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: JarvisTheme.textSecondary,
@@ -454,7 +446,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'You can change these settings at any time.',
+          l.changeSettingsAnytime,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -465,7 +457,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           width: double.infinity,
           height: 52,
           child: _NeonButton(
-            label: 'Start Using Cognithor',
+            label: l.startUsingCognithor,
             onPressed: _finish,
             glow: true,
           ),
@@ -474,7 +466,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         TextButton.icon(
           onPressed: _back,
           icon: const Icon(Icons.arrow_back),
-          label: const Text('Back'),
+          label: Text(l.back),
         ),
       ],
     );

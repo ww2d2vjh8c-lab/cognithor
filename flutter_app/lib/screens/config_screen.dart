@@ -31,26 +31,26 @@ import 'package:jarvis_ui/screens/config/system_page.dart';
 // ── Category definition ──────────────────────────────────────────────────────
 
 class _Category {
-  const _Category(this.name, this.icon, this.pageKeys);
-  final String name;
+  const _Category(this.labelKey, this.icon, this.pageKeys);
+  final String Function(AppLocalizations l) labelKey;
   final IconData icon;
   final List<String> pageKeys;
 }
 
-const _categories = [
-  _Category('AI Engine', Icons.psychology, [
+final _categories = [
+  _Category((l) => l.catAiEngine, Icons.psychology, [
     'providers', 'models', 'planner', 'executor', 'prompts',
   ]),
-  _Category('Channels', Icons.cell_tower, [
+  _Category((l) => l.catChannels, Icons.cell_tower, [
     'channels',
   ]),
-  _Category('Knowledge', Icons.storage, [
+  _Category((l) => l.catKnowledge, Icons.storage, [
     'memory', 'agents', 'bindings', 'web',
   ]),
-  _Category('Security', Icons.shield, [
+  _Category((l) => l.catSecurity, Icons.shield, [
     'security', 'database',
   ]),
-  _Category('System', Icons.settings, [
+  _Category((l) => l.catSystem, Icons.settings, [
     'general', 'language', 'logging', 'cron', 'mcp', 'system',
   ]),
 ];
@@ -221,7 +221,7 @@ class _ConfigScreenState extends State<ConfigScreen>
               Consumer<ConfigProvider>(
                 builder: (context, cfg, _) => IconButton(
                   icon: const Icon(Icons.refresh, size: 20),
-                  tooltip: 'Reload config from backend',
+                  tooltip: AppLocalizations.of(context).reloadFromBackend,
                   onPressed: cfg.loading ? null : () => cfg.loadAll(),
                 ),
               ),
@@ -324,6 +324,7 @@ class _ConfigScreenState extends State<ConfigScreen>
         dividerColor: Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         tabs: _categories.map((cat) {
+          final l = AppLocalizations.of(context);
           final isActive = _categories.indexOf(cat) == _selectedCategory;
           return Tab(
             height: 48,
@@ -332,7 +333,7 @@ class _ConfigScreenState extends State<ConfigScreen>
               children: [
                 Icon(cat.icon, size: 18),
                 const SizedBox(width: 8),
-                Text(cat.name),
+                Text(cat.labelKey(l)),
                 if (isActive) ...[
                   const SizedBox(width: 6),
                   Container(

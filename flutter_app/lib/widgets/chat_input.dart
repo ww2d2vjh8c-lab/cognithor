@@ -56,7 +56,7 @@ class _ChatInputState extends State<ChatInput> {
       if (file.bytes == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Datei konnte nicht gelesen werden')),
+            SnackBar(content: Text(AppLocalizations.of(context).fileReadError)),
           );
         }
         return;
@@ -67,7 +67,7 @@ class _ChatInputState extends State<ChatInput> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Hochladen: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).uploadError(e.toString()))),
         );
       }
     } finally {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 
 class JarvisCodeBlock extends StatelessWidget {
@@ -56,15 +57,15 @@ class JarvisCodeBlock extends StatelessWidget {
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: code));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Copied to clipboard'),
-                        duration: Duration(seconds: 2),
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context).copied),
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                   },
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   padding: EdgeInsets.zero,
-                  tooltip: 'Copy',
+                  tooltip: AppLocalizations.of(context).copy,
                 ),
               ],
             ),

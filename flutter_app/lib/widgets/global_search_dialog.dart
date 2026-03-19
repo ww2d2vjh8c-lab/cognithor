@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 
 /// Indexed terms for all config pages.
@@ -113,7 +114,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
             if (_results.isEmpty && _ctrl.text.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('No matching pages',
+                child: Text(AppLocalizations.of(context).noMatchingPages,
                     style: theme.textTheme.bodySmall),
               ),
           ],
