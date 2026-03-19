@@ -2802,6 +2802,12 @@ abstract class AppLocalizations {
   /// **'No credentials'**
   String get noCredentials;
 
+  /// No description provided for @deleteCredential.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Credential'**
+  String get deleteCredential;
+
   /// No description provided for @lightMode.
   ///
   /// In en, this message translates to:

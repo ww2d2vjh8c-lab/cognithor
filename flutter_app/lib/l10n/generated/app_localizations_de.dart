@@ -1375,6 +1375,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noCredentials => 'Keine Zugangsdaten';
 
   @override
+  String get deleteCredential => 'Zugangsdaten loeschen';
+
+  @override
   String get lightMode => 'Heller Modus';
 
   @override

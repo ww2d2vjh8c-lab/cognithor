@@ -204,7 +204,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.bar_chart, size: 18, color: JarvisTheme.sectionAdmin),
+                  const Icon(Icons.bar_chart, size: 18, color: JarvisTheme.sectionAdmin),
                   const SizedBox(width: 8),
                   Text(l.approvalRate, style: Theme.of(context).textTheme.titleMedium),
                 ],
@@ -590,7 +590,7 @@ class _RoleCardState extends State<_RoleCard> {
           children: [
             Row(
               children: [
-                Icon(Icons.shield, size: 18, color: JarvisTheme.sectionAdmin),
+                const Icon(Icons.shield, size: 18, color: JarvisTheme.sectionAdmin),
                 const SizedBox(width: 8),
                 Expanded(child: Text(widget.name, style: Theme.of(context).textTheme.titleMedium)),
                 JarvisChip(

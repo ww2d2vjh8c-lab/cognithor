@@ -68,11 +68,11 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
     _sandboxTimeoutCtrl.addListener(_markDirty);
   }
 
-  Future<void> _showModelPicker(BuildContext context) async {
+  Future<void> _showModelPicker(BuildContext pickerContext) async {
     // Fetch available models from backend
     List<String> models = [];
     try {
-      final api = context.read<ConnectionProvider>().api;
+      final api = pickerContext.read<ConnectionProvider>().api;
       final data = await api.get('models/available');
       final raw = data['models'];
       if (raw is List) {

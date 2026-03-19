@@ -178,7 +178,7 @@ class _AgentCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.smart_toy, size: 18, color: JarvisTheme.sectionAdmin),
+                const Icon(Icons.smart_toy, size: 18, color: JarvisTheme.sectionAdmin),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(name, style: theme.textTheme.titleMedium),

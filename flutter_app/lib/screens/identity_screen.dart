@@ -256,7 +256,7 @@ class _IdentityScreenState extends State<IdentityScreen> {
           // Genesis anchors
           if (anchors.isNotEmpty) ...[
             const SizedBox(height: 24),
-            const JarvisSection(title: 'Genesis Anchors'),
+            JarvisSection(title: l.identityGenesisAnchors),
             NeonCard(
               tint: JarvisTheme.sectionIdentity,
               child: Column(
@@ -267,7 +267,7 @@ class _IdentityScreenState extends State<IdentityScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.anchor,
                           size: 14,
                           color: JarvisTheme.sectionIdentity,

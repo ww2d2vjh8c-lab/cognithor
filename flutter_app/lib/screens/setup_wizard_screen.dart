@@ -312,7 +312,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           Text('Provider', style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _cloudProvider,
+            initialValue: _cloudProvider,
             decoration: const InputDecoration(
               prefixIcon: Icon(Icons.cloud),
             ),

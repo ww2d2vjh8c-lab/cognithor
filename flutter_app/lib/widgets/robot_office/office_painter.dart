@@ -522,10 +522,10 @@ class OfficePainter extends CustomPainter {
 
     // Text
     final tp = TextPainter(
-      text: TextSpan(
+      text: const TextSpan(
         text: text,
         style: TextStyle(
-          color: const Color(0xFFFFD700),
+          color: Color(0xFFFFD700),
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 2,

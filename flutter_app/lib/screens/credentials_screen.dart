@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/neon_card.dart';
@@ -65,15 +66,16 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
   }
 
   Future<void> _delete(String service, String key) async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Credential'),
-        content: Text('Delete $service / $key?'),
+        title: Text(l.deleteCredential),
+        content: Text('${l.delete} $service / $key?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -81,7 +83,7 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
               backgroundColor: JarvisTheme.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Delete'),
+            child: Text(l.delete),
           ),
         ],
       ),
@@ -96,9 +98,10 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Credentials'),
+        title: Text(l.credentialsTitle),
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: JarvisTheme.accent),
@@ -111,16 +114,16 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
           : _error != null
               ? JarvisEmptyState(
                   icon: Icons.error_outline,
-                  title: 'Error',
+                  title: l.errorLabel,
                   subtitle: _error,
                   action: ElevatedButton(
-                      onPressed: _load, child: const Text('Retry')),
+                      onPressed: _load, child: Text(l.retry)),
                 )
               : _credentials.isEmpty
-                  ? const JarvisEmptyState(
+                  ? JarvisEmptyState(
                       icon: Icons.vpn_key_off,
-                      title: 'No Credentials',
-                      subtitle: 'Add credentials with the + button',
+                      title: l.noCredentials,
+                      subtitle: l.addCredential,
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
@@ -137,7 +140,7 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
                             glowOnHover: true,
                             child: Row(
                               children: [
-                                Icon(Icons.vpn_key, size: 18, color: JarvisTheme.sectionAdmin),
+                                const Icon(Icons.vpn_key, size: 18, color: JarvisTheme.sectionAdmin),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
@@ -190,31 +193,32 @@ class _AddCredentialDialogState extends State<_AddCredentialDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Add Credential'),
+      title: Text(l.addCredential),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: _service,
-            decoration: const InputDecoration(
-              labelText: 'Service',
+            decoration: InputDecoration(
+              labelText: l.service,
               hintText: 'e.g. openai',
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _key,
-            decoration: const InputDecoration(
-              labelText: 'Key',
+            decoration: InputDecoration(
+              labelText: l.key,
               hintText: 'e.g. api_key',
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _value,
-            decoration: const InputDecoration(
-              labelText: 'Value',
+            decoration: InputDecoration(
+              labelText: l.value,
             ),
             obscureText: true,
           ),
@@ -223,7 +227,7 @@ class _AddCredentialDialogState extends State<_AddCredentialDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l.cancel),
         ),
         ElevatedButton(
           onPressed: () {
@@ -235,7 +239,7 @@ class _AddCredentialDialogState extends State<_AddCredentialDialog> {
               });
             }
           },
-          child: const Text('Add'),
+          child: Text(l.addCredential),
         ),
       ],
     );

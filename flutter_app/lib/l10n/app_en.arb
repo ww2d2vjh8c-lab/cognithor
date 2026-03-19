@@ -715,6 +715,7 @@
   "key": "Key",
   "value": "Value",
   "noCredentials": "No credentials",
+  "deleteCredential": "Delete Credential",
 
   "lightMode": "Light Mode",
   "darkMode": "Dark Mode",

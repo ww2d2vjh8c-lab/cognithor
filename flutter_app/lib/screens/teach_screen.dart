@@ -280,7 +280,7 @@ class _TeachScreenState extends State<TeachScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.cloud_upload, color: JarvisTheme.sectionDashboard),
+                const Icon(Icons.cloud_upload, color: JarvisTheme.sectionDashboard),
                 const SizedBox(width: 8),
                 Text(l.uploadFile, style: theme.textTheme.titleMedium),
               ],
@@ -384,7 +384,7 @@ class _TeachScreenState extends State<TeachScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.link, color: JarvisTheme.sectionDashboard),
+                const Icon(Icons.link, color: JarvisTheme.sectionDashboard),
                 const SizedBox(width: 8),
                 Text(l.learnFromUrl, style: theme.textTheme.titleMedium),
               ],
@@ -449,7 +449,7 @@ class _TeachScreenState extends State<TeachScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.play_circle, color: JarvisTheme.sectionDashboard),
+                const Icon(Icons.play_circle, color: JarvisTheme.sectionDashboard),
                 const SizedBox(width: 8),
                 Text(l.learnFromYoutube, style: theme.textTheme.titleMedium),
               ],

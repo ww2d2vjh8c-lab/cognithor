@@ -261,7 +261,7 @@ class _LearningScreenState extends State<LearningScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.show_chart, size: 18, color: JarvisTheme.sectionDashboard),
+                  const Icon(Icons.show_chart, size: 18, color: JarvisTheme.sectionDashboard),
                   const SizedBox(width: 8),
                   Text(l.learningTitle, style: theme.textTheme.titleMedium),
                 ],
@@ -284,7 +284,7 @@ class _LearningScreenState extends State<LearningScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.history, size: 18, color: JarvisTheme.sectionDashboard),
+                  const Icon(Icons.history, size: 18, color: JarvisTheme.sectionDashboard),
                   const SizedBox(width: 8),
                   Text(l.confidenceHistory, style: theme.textTheme.titleMedium),
                 ],
@@ -345,7 +345,7 @@ class _LearningScreenState extends State<LearningScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.folder_open, size: 18, color: JarvisTheme.sectionDashboard),
+                  const Icon(Icons.folder_open, size: 18, color: JarvisTheme.sectionDashboard),
                   const SizedBox(width: 8),
                   Text(l.watchDirectories, style: theme.textTheme.titleMedium),
                 ],

@@ -163,7 +163,7 @@ class _ModelsScreenState extends State<ModelsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   children: [
-                    Icon(Icons.model_training, size: 16, color: JarvisTheme.sectionAdmin),
+                    const Icon(Icons.model_training, size: 16, color: JarvisTheme.sectionAdmin),
                     const SizedBox(width: 10),
                     Expanded(child: Text(name, style: Theme.of(context).textTheme.bodyMedium)),
                   ],
@@ -271,17 +271,18 @@ class _ConfiguredModelCard extends StatelessWidget {
                 ? models
                 : models.where((m) => m.toLowerCase().contains(search!.toLowerCase())).toList();
 
+            final ml = AppLocalizations.of(ctx);
             return AlertDialog(
-              title: Text('Select $label'),
+              title: Text('${ml.selectTemplate}: $label'),
               content: SizedBox(
                 width: 400,
                 height: 500,
                 child: Column(
                   children: [
                     TextField(
-                      decoration: const InputDecoration(
-                        hintText: 'Search models...',
-                        prefixIcon: Icon(Icons.search, size: 20),
+                      decoration: InputDecoration(
+                        hintText: ml.search,
+                        prefixIcon: const Icon(Icons.search, size: 20),
                         isDense: true,
                       ),
                       onChanged: (v) => setState(() => search = v),
@@ -314,7 +315,7 @@ class _ConfiguredModelCard extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel'),
+                  child: Text(ml.cancel),
                 ),
               ],
             );
@@ -322,7 +323,7 @@ class _ConfiguredModelCard extends StatelessWidget {
         );
       },
     ).then((selected) {
-      if (selected != null && selected != currentName) {
+      if (selected != null && selected != currentName && context.mounted) {
         _saveModelSelection(context, selected);
       }
     });
@@ -336,8 +337,8 @@ class _ConfiguredModelCard extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(ok
-                ? '$label changed to $modelName'
-                : 'Failed to save — check backend logs'),
+                ? '$label: $modelName'
+                : AppLocalizations.of(context).saveFailed),
             backgroundColor: ok ? JarvisTheme.green : JarvisTheme.red,
           ),
         );

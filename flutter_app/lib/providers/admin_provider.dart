@@ -29,10 +29,10 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadSystemStatus() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       systemStatus = await _api!.getSystemStatus();
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -43,11 +43,11 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadAgents() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       final data = await _api!.getAgents();
       agents = data['agents'] as List<dynamic>? ?? [];
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -121,10 +121,10 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadModels() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       models = await _api!.getModels();
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -135,10 +135,10 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadModelStats() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       modelStats = await _api!.getModelStats();
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -149,10 +149,10 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadVaultStats() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       vaultStats = await _api!.getVaultStats();
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -163,11 +163,11 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadVaultAgents() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       final data = await _api!.getVaultAgents();
       vaultAgents = data['agents'] as List<dynamic>? ?? [];
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -178,11 +178,11 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadCredentials() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       final data = await _api!.getCredentials();
       credentials = data['credentials'] as List<dynamic>? ?? [];
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -193,11 +193,11 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadBindings() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       final data = await _api!.getBindings();
       bindings = data['bindings'] as List<dynamic>? ?? [];
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -208,11 +208,11 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadCommands() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       final data = await _api!.getCommands();
       commands = data['commands'] as List<dynamic>? ?? [];
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -223,11 +223,11 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadConnectors() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       final data = await _api!.getConnectors();
       connectors = data['connectors'] as List<dynamic>? ?? [];
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -238,10 +238,10 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadIsolationStats() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       isolationStats = await _api!.getIsolationStats();
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -252,10 +252,10 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadCircles() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       circles = await _api!.getCircles();
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -266,10 +266,10 @@ class AdminProvider extends ChangeNotifier {
   Future<void> reloadConfig() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       await _api!.reloadConfig();
+      error = null;
     } catch (e) {
       error = e.toString();
     }
@@ -280,10 +280,10 @@ class AdminProvider extends ChangeNotifier {
   Future<void> shutdown() async {
     if (_api == null) return;
     isLoading = true;
-    error = null;
     notifyListeners();
     try {
       await _api!.shutdownServer();
+      error = null;
     } catch (e) {
       error = e.toString();
     }

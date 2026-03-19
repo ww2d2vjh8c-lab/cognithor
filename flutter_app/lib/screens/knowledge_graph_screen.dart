@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/neon_card.dart';
@@ -193,9 +194,10 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Knowledge Graph')),
+      appBar: AppBar(title: Text(l.knowledgeGraphTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -206,7 +208,7 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
                       Text(_error!, style: TextStyle(color: JarvisTheme.red)),
                       const SizedBox(height: 12),
                       ElevatedButton(
-                          onPressed: _loadGraph, child: const Text('Retry')),
+                          onPressed: _loadGraph, child: Text(l.retry)),
                     ],
                   ),
                 )
@@ -224,11 +226,11 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
                               children: [
                                 Expanded(
                                   child: TextField(
-                                    decoration: const InputDecoration(
-                                      hintText: 'Search entities...',
-                                      prefixIcon: Icon(Icons.search),
+                                    decoration: InputDecoration(
+                                      hintText: l.searchEntities,
+                                      prefixIcon: const Icon(Icons.search),
                                       isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(
+                                      contentPadding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 8),
                                     ),
                                     onChanged: (v) {
@@ -241,8 +243,8 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
                                 DropdownButton<String>(
                                   value: _typeFilter,
                                   items: [
-                                    const DropdownMenuItem(
-                                        value: 'all', child: Text('All Types')),
+                                    DropdownMenuItem(
+                                        value: 'all', child: Text(l.allTypes)),
                                     ..._typeColors.keys.map((t) =>
                                         DropdownMenuItem(
                                             value: t,
@@ -350,6 +352,7 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
   }
 
   Widget _buildDetailPanel(ThemeData theme) {
+    final l = AppLocalizations.of(context);
     final e = _selectedEntity!;
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -358,7 +361,7 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
           children: [
             Expanded(
               child: Text(
-                (e['name'] ?? e['label'] ?? 'Entity').toString(),
+                (e['name'] ?? e['label'] ?? l.entities).toString(),
                 style: theme.textTheme.titleLarge?.copyWith(fontSize: 16),
               ),
             ),
@@ -370,12 +373,12 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
         ),
         const SizedBox(height: 8),
         _detailRow(theme, 'ID', (e['id'] ?? '-').toString()),
-        _detailRow(theme, 'Type', (e['type'] ?? 'unknown').toString()),
+        _detailRow(theme, l.entityTypes, (e['type'] ?? l.unknownLabel).toString()),
         _detailRow(
-            theme, 'Confidence', (e['confidence'] ?? '-').toString()),
+            theme, l.confidence, (e['confidence'] ?? '-').toString()),
         if (e['attributes'] is Map) ...[
           const SizedBox(height: 12),
-          Text('Attributes', style: theme.textTheme.bodyMedium?.copyWith(
+          Text(l.attributes, style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           ...(e['attributes'] as Map).entries.map((kv) =>
@@ -383,7 +386,7 @@ class _KnowledgeGraphScreenState extends State<KnowledgeGraphScreen> {
         ],
         if (_selectedRelations.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Text('Relations (${_selectedRelations.length})',
+          Text('${l.relations} (${_selectedRelations.length})',
               style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),

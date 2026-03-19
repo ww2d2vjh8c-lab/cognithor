@@ -384,6 +384,7 @@
   "key": "المفتاح",
   "value": "القيمة",
   "noCredentials": "لا توجد بيانات اعتماد",
+  "deleteCredential": "حذف بيانات الاعتماد",
   "lightMode": "الوضع الفاتح",
   "darkMode": "الوضع الداكن",
   "globalSearch": "بحث (Ctrl+K)",

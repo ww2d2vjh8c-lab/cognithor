@@ -1373,6 +1373,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noCredentials => 'لا توجد بيانات اعتماد';
 
   @override
+  String get deleteCredential => 'حذف بيانات الاعتماد';
+
+  @override
   String get lightMode => 'الوضع الفاتح';
 
   @override

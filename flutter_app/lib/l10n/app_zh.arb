@@ -418,6 +418,7 @@
   "key": "密钥",
   "value": "值",
   "noCredentials": "没有凭证",
+  "deleteCredential": "删除凭证",
   "lightMode": "浅色模式",
   "darkMode": "深色模式",
   "globalSearch": "搜索 (Ctrl+K)",

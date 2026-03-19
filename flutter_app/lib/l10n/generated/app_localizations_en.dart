@@ -1374,6 +1374,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noCredentials => 'No credentials';
 
   @override
+  String get deleteCredential => 'Delete Credential';
+
+  @override
   String get lightMode => 'Light Mode';
 
   @override

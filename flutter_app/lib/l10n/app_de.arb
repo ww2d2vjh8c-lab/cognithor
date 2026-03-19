@@ -459,6 +459,7 @@
   "key": "Schluessel",
   "value": "Wert",
   "noCredentials": "Keine Zugangsdaten",
+  "deleteCredential": "Zugangsdaten loeschen",
 
   "lightMode": "Heller Modus",
   "darkMode": "Dunkler Modus",

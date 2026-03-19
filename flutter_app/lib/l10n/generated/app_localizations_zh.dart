@@ -1371,6 +1371,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noCredentials => '没有凭证';
 
   @override
+  String get deleteCredential => '删除凭证';
+
+  @override
   String get lightMode => '浅色模式';
 
   @override

@@ -83,7 +83,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
       });
     } catch (_) {
       setState(() {
-        _instancesError = 'Could not reach the instances endpoint';
+        _instancesError = 'Instances endpoint not reachable';
         _instancesLoading = false;
       });
     }
@@ -111,7 +111,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
       });
     } catch (_) {
       setState(() {
-        _dagError = 'Could not reach the DAG runs endpoint';
+        _dagError = 'DAG runs endpoint not reachable';
         _dagLoading = false;
       });
     }
@@ -128,10 +128,10 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
           controller: _tabCtrl,
           labelColor: JarvisTheme.accent,
           indicatorColor: JarvisTheme.accent,
-          tabs: const [
-            Tab(text: 'Templates'),
-            Tab(text: 'Instances'),
-            Tab(text: 'DAG Runs'),
+          tabs: [
+            Tab(text: l.templates),
+            Tab(text: l.instances),
+            Tab(text: l.dagRuns),
           ],
         ),
       ),
@@ -211,7 +211,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
           children: [
             Row(
               children: [
-                Icon(Icons.category, size: 18, color: JarvisTheme.sectionAdmin),
+                const Icon(Icons.category, size: 18, color: JarvisTheme.sectionAdmin),
                 const SizedBox(width: 8),
                 Expanded(child: Text(name, style: Theme.of(context).textTheme.titleMedium)),
               ],
@@ -260,6 +260,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
   }
 
   Widget _buildInstancesTab() {
+    final l = AppLocalizations.of(context);
     if (_instancesLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -272,7 +273,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
               height: MediaQuery.of(context).size.height * 0.6,
               child: JarvisEmptyState(
                 icon: Icons.cloud_off,
-                title: 'Instances not available',
+                title: l.notAvailable,
                 subtitle: _instancesError,
               ),
             ),
@@ -287,10 +288,10 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
           children: [
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.6,
-              child: const JarvisEmptyState(
+              child: JarvisEmptyState(
                 icon: Icons.history,
-                title: 'No Instances',
-                subtitle: 'Start a workflow to see instances here',
+                title: l.noInstances,
+                subtitle: l.startWorkflow,
               ),
             ),
           ],
@@ -319,7 +320,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.play_circle_outline, size: 18, color: JarvisTheme.sectionAdmin),
+                      const Icon(Icons.play_circle_outline, size: 18, color: JarvisTheme.sectionAdmin),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -344,7 +345,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
                       backgroundColor: Theme.of(context).dividerColor),
                   const SizedBox(height: 4),
                   if (duration.isNotEmpty)
-                    Text('Duration: $duration',
+                    Text('${l.duration}: $duration',
                         style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
@@ -356,6 +357,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
   }
 
   Widget _buildDagTab() {
+    final l = AppLocalizations.of(context);
     if (_dagLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -368,7 +370,7 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
               height: MediaQuery.of(context).size.height * 0.6,
               child: JarvisEmptyState(
                 icon: Icons.cloud_off,
-                title: 'DAG Runs not available',
+                title: l.notAvailable,
                 subtitle: _dagError,
               ),
             ),
@@ -383,10 +385,10 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
           children: [
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.6,
-              child: const JarvisEmptyState(
+              child: JarvisEmptyState(
                 icon: Icons.account_tree,
-                title: 'No DAG Runs',
-                subtitle: 'DAG execution history will appear here',
+                title: l.noDagRuns,
+                subtitle: l.comingSoon,
               ),
             ),
           ],
