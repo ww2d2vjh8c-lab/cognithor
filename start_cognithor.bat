@@ -93,12 +93,16 @@ if errorlevel 1 (
 :: ============================================================
 %PYTHON_CMD% -c "import jarvis.identity" >nul 2>&1
 if errorlevel 1 (
-    echo   [INFO] Installing identity module...
-    %PYTHON_CMD% -m pip install -e "%REPO_ROOT%[identity]" --quiet >nul 2>&1
+    echo   [INFO] Installing identity module (this may take a few minutes^)...
+    echo.
+    %PYTHON_CMD% -m pip install -e "%REPO_ROOT%.[identity]"
+    echo.
+    %PYTHON_CMD% -c "import jarvis.identity" >nul 2>&1
     if not errorlevel 1 (
-        echo   [OK] Identity module installed.
+        echo   [OK] Identity module installed successfully.
     ) else (
         echo   [WARNING] Identity install failed. Identity features may not work.
+        echo   You can try manually: pip install -e ".[identity]"
     )
 )
 
