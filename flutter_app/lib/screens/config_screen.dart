@@ -308,8 +308,8 @@ class _ConfigScreenState extends State<ConfigScreen>
         indicatorWeight: 3,
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: const UnderlineTabIndicator(
-          borderSide: BorderSide(color: tint, width: 3),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(3)),
+          borderSide: BorderSide(color: tint, width: 4),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
         ),
         labelColor: tint,
         unselectedLabelColor: JarvisTheme.textSecondary,
@@ -339,8 +339,8 @@ class _ConfigScreenState extends State<ConfigScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: tint.withValues(alpha: 0.6),
-                          blurRadius: 6,
+                          color: tint.withValues(alpha: 0.8),
+                          blurRadius: 10,
                         ),
                       ],
                     ),
@@ -492,7 +492,7 @@ class _NeonPulseWrapperState extends State<_NeonPulseWrapper>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    _opacity = Tween<double>(begin: 0.15, end: 0.4).animate(
+    _opacity = Tween<double>(begin: 0.25, end: 0.55).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
     if (widget.active) _controller.repeat(reverse: true);
@@ -526,7 +526,7 @@ class _NeonPulseWrapperState extends State<_NeonPulseWrapper>
           boxShadow: [
             BoxShadow(
               color: widget.color.withValues(alpha: _opacity.value),
-              blurRadius: 16,
+              blurRadius: 22,
               spreadRadius: -2,
             ),
           ],

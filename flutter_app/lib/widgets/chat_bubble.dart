@@ -46,7 +46,7 @@ class ChatBubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: baseColor.withValues(alpha: 0.15),
+        color: baseColor.withValues(alpha: 0.20),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
@@ -54,7 +54,7 @@ class ChatBubble extends StatelessWidget {
           bottomRight: Radius.circular(4), // chat tail
         ),
         border: Border.all(
-          color: baseColor.withValues(alpha: 0.30),
+          color: baseColor.withValues(alpha: 0.40),
         ),
       ),
       child: Row(
@@ -93,14 +93,14 @@ class ChatBubble extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.06),
+        color: tint.withValues(alpha: 0.10),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
           bottomLeft: Radius.circular(4),
           bottomRight: Radius.circular(16),
         ),
-        border: Border.all(color: tint.withValues(alpha: 0.15)),
+        border: Border.all(color: tint.withValues(alpha: 0.25)),
       ),
       child: IntrinsicHeight(
         child: Row(

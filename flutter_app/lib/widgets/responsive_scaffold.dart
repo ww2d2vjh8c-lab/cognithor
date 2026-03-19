@@ -477,9 +477,9 @@ class _RailNavItemState extends State<_RailNavItem> {
 
     // Active: Neon pill at 20% opacity
     final bgColor = selected
-        ? sectionColor.withValues(alpha: 0.20)
+        ? sectionColor.withValues(alpha: 0.28)
         : _hovered
-            ? sectionColor.withValues(alpha: 0.08)
+            ? sectionColor.withValues(alpha: 0.14)
             : Colors.transparent;
 
     final iconColor = selected
@@ -513,8 +513,8 @@ class _RailNavItemState extends State<_RailNavItem> {
                 boxShadow: _hovered && !selected
                     ? [
                         BoxShadow(
-                          color: sectionColor.withValues(alpha: 0.15),
-                          blurRadius: 12,
+                          color: sectionColor.withValues(alpha: 0.25),
+                          blurRadius: 18,
                           spreadRadius: -2,
                         ),
                       ]
@@ -536,8 +536,8 @@ class _RailNavItemState extends State<_RailNavItem> {
                         borderRadius: BorderRadius.circular(2),
                         boxShadow: [
                           BoxShadow(
-                            color: sectionColor.withValues(alpha: 0.4),
-                            blurRadius: 6,
+                            color: sectionColor.withValues(alpha: 0.6),
+                            blurRadius: 10,
                           ),
                         ],
                       ),

@@ -43,16 +43,16 @@ class _NeonCardState extends State<NeonCard> {
           duration: JarvisTheme.animDuration,
           curve: JarvisTheme.animCurve,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: isHovered ? 0.08 : 0.04),
+            color: color.withValues(alpha: isHovered ? 0.14 : 0.08),
             borderRadius: BorderRadius.circular(widget.borderRadius),
             border: Border.all(
-              color: color.withValues(alpha: isHovered ? 0.35 : 0.12),
+              color: color.withValues(alpha: isHovered ? 0.50 : 0.22),
             ),
             boxShadow: isHovered
                 ? [
                     BoxShadow(
-                      color: color.withValues(alpha: 0.15),
-                      blurRadius: 20,
+                      color: color.withValues(alpha: 0.25),
+                      blurRadius: 28,
                       spreadRadius: -2,
                     ),
                   ]

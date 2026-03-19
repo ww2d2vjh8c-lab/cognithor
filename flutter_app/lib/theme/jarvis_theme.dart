@@ -106,13 +106,13 @@ abstract final class JarvisTheme {
 
   // ── Component-Specific ────────────────────────────────────
   /// Semi-transparent accent for button backgrounds
-  static Color get accentSurface => _violet.withValues(alpha: 0.12);
+  static Color get accentSurface => _violet.withValues(alpha: 0.18);
 
   /// Accent border (subtle)
-  static Color get accentBorder => _violet.withValues(alpha: 0.15);
+  static Color get accentBorder => _violet.withValues(alpha: 0.25);
 
   /// Accent border hover
-  static Color get accentBorderHover => _violet.withValues(alpha: 0.3);
+  static Color get accentBorderHover => _violet.withValues(alpha: 0.45);
 
   // ── Section Color Helpers ─────────────────────────────────
   /// Returns the neon color for a navigation tab index.
@@ -149,7 +149,7 @@ abstract final class JarvisTheme {
   }) {
     final color = tint ?? _violet;
     return BoxDecoration(
-      color: color.withValues(alpha: 0.04),
+      color: color.withValues(alpha: 0.07),
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
         color: color.withValues(alpha: glowBorder ? 0.3 : 0.12),

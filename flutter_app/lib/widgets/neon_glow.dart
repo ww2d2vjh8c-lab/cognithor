@@ -9,9 +9,9 @@ class NeonGlow extends StatefulWidget {
     super.key,
     required this.child,
     required this.color,
-    this.intensity = 0.3,
+    this.intensity = 0.5,
     this.pulse = false, // breathing animation
-    this.blurRadius = 12,
+    this.blurRadius = 18,
     this.spreadRadius = 0,
   });
 

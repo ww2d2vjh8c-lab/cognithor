@@ -369,10 +369,10 @@ class _EventTicker extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: color.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(JarvisTheme.chipRadius),
               border: Border.all(
-                color: color.withValues(alpha: 0.3),
+                color: color.withValues(alpha: 0.40),
               ),
             ),
             child: Row(

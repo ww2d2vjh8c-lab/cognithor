@@ -42,10 +42,10 @@ class CommandBar extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
+                  color: Colors.white.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08)),
+                      color: Colors.white.withValues(alpha: 0.14)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -76,8 +76,8 @@ class CommandBar extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                      color: JarvisTheme.green.withValues(alpha: 0.4),
-                      blurRadius: 6),
+                      color: JarvisTheme.green.withValues(alpha: 0.6),
+                      blurRadius: 10),
                 ],
               ),
             ),
