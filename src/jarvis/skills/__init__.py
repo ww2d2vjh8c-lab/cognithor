@@ -25,6 +25,7 @@ from .governance import (
     ReputationEngine,
     SkillRecallManager,
 )
+from .hermes_compat import HermesCompatLayer, HermesSkill
 from .manager import create_skill, list_skills
 from .marketplace import SkillMarketplace
 from .persistence import MarketplaceStore

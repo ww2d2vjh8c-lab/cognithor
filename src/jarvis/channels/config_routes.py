@@ -84,6 +84,8 @@ def create_config_routes(
     _register_ui_routes(app, deps, config_manager, gateway)
     _register_workflow_graph_routes(app, deps, gateway)
     _register_learning_routes(app, deps, gateway)
+    _register_hermes_routes(app, deps, gateway)
+    _register_self_improvement_routes(app, deps, gateway)
 
 
 # ======================================================================
@@ -3542,3 +3544,141 @@ def _register_learning_routes(
             "count": len(results),
             "stats": explorer.stats(),
         }
+
+
+# ======================================================================
+# Hermes / agentskills.io compatibility routes
+# ======================================================================
+
+
+def _register_hermes_routes(
+    app: Any,
+    deps: list[Any],
+    gateway: Any,
+) -> None:
+    """REST endpoints for Hermes SKILL.md import/export."""
+
+    def _get_compat() -> Any:
+        return getattr(gateway, "_hermes_compat", None) if gateway else None
+
+    def _get_registry() -> Any:
+        return getattr(gateway, "_skill_registry", None) if gateway else None
+
+    @app.get("/api/v1/skills/hermes/export/{skill_name}", dependencies=deps)
+    async def hermes_export_skill(skill_name: str) -> dict[str, Any]:
+        """Export a Cognithor skill to SKILL.md format."""
+        compat = _get_compat()
+        if not compat:
+            return {"error": "Hermes compatibility layer not initialized", "status": 503}
+
+        registry = _get_registry()
+        if not registry:
+            return {"error": "Skill registry not initialized", "status": 503}
+
+        skill = registry.get(skill_name)
+        if not skill:
+            return {"error": f"Skill '{skill_name}' not found", "status": 404}
+
+        # Convert Cognithor Skill dataclass to dict for conversion
+        skill_dict = {
+            "name": skill.name,
+            "description": skill.description,
+            "tags": [],
+            "prompt": skill.body,
+            "version": "1.0.0",
+            "author": "cognithor",
+        }
+        if skill.manifest:
+            skill_dict["version"] = skill.manifest.version
+            skill_dict["author"] = skill.manifest.author_github or "cognithor"
+
+        hermes_skill = compat.cognithor_to_hermes(skill_dict)
+        content = compat.to_skill_md(hermes_skill)
+        return {"skill_name": skill_name, "skill_md": content}
+
+    @app.post("/api/v1/skills/hermes/import", dependencies=deps)
+    async def hermes_import_skill(request: Request) -> dict[str, Any]:
+        """Import a SKILL.md into Cognithor."""
+        compat = _get_compat()
+        if not compat:
+            return {"error": "Hermes compatibility layer not initialized", "status": 503}
+
+        body = await request.json()
+        content = body.get("content", "")
+        if not content:
+            return {"error": "Missing 'content' field with SKILL.md text", "status": 400}
+
+        try:
+            hermes_skill = compat.parse_skill_md(content)
+        except ValueError as exc:
+            return {"error": f"Invalid SKILL.md format: {exc}", "status": 400}
+
+        cognithor_dict = compat.hermes_to_cognithor(hermes_skill)
+        return {
+            "imported": True,
+            "skill": cognithor_dict,
+        }
+
+
+# ======================================================================
+# Self-improvement routes
+# ======================================================================
+
+
+def _register_self_improvement_routes(
+    app: Any,
+    deps: list[Any],
+    gateway: Any,
+) -> None:
+    """REST endpoints for the self-improvement engine."""
+
+    def _get_improver() -> Any:
+        return getattr(gateway, "_self_improver", None) if gateway else None
+
+    @app.get("/api/v1/learning/self-improvement/stats", dependencies=deps)
+    async def self_improvement_stats() -> dict[str, Any]:
+        """Return self-improvement engine statistics."""
+        improver = _get_improver()
+        if not improver:
+            return {"error": "Self-improvement engine not initialized", "status": 503}
+        return improver.stats()
+
+    @app.get("/api/v1/learning/self-improvement/pending", dependencies=deps)
+    async def self_improvement_pending() -> dict[str, Any]:
+        """Return pending improvement proposals."""
+        improver = _get_improver()
+        if not improver:
+            return {"error": "Self-improvement engine not initialized", "status": 503}
+
+        pending = improver.pending_improvements
+        return {
+            "pending": [
+                {
+                    "id": imp.id,
+                    "pattern_id": imp.pattern_id,
+                    "improvement_type": imp.improvement_type,
+                    "before": imp.before,
+                    "after": imp.after,
+                    "confidence": round(imp.confidence, 3),
+                    "created_at": imp.created_at.isoformat(),
+                }
+                for imp in pending
+            ],
+            "count": len(pending),
+        }
+
+    @app.post(
+        "/api/v1/learning/self-improvement/{improvement_id}/apply",
+        dependencies=deps,
+    )
+    async def self_improvement_apply(improvement_id: str) -> dict[str, Any]:
+        """Apply a pending improvement."""
+        improver = _get_improver()
+        if not improver:
+            return {"error": "Self-improvement engine not initialized", "status": 503}
+
+        success = improver.apply_improvement(improvement_id)
+        if not success:
+            return {"error": f"Improvement '{improvement_id}' not found", "status": 404}
+
+        return {"applied": True, "improvement_id": improvement_id}

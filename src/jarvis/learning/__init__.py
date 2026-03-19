@@ -6,6 +6,7 @@ from jarvis.learning.curiosity import CuriosityEngine
 from jarvis.learning.explorer import ExplorationExecutor, ExplorationResult
 from jarvis.learning.knowledge_qa import KnowledgeQAStore, QAPair
 from jarvis.learning.lineage import KnowledgeLineageTracker, LineageEntry
+from jarvis.learning.self_improver import SelfImprover
 from jarvis.learning.session_analyzer import SessionAnalyzer
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     "KnowledgeQAStore",
     "LineageEntry",
     "QAPair",
+    "SelfImprover",
     "SessionAnalyzer",
 ]

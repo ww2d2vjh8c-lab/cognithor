@@ -63,6 +63,8 @@ def declare_advanced_attrs(config: Any) -> PhaseResult:
         "exploration_executor": None,
         "knowledge_qa": None,
         "knowledge_lineage": None,
+        "self_improver": None,
+        "hermes_compat": None,
     }
 
     # Phase 5: Live-Monitoring
@@ -207,6 +209,22 @@ def declare_advanced_attrs(config: Any) -> PhaseResult:
         result["perf_manager"] = PerformanceManager()
     except Exception:
         log.debug("perf_manager_init_skipped", exc_info=True)
+
+    # SelfImprover (Error-pattern learning)
+    try:
+        from jarvis.learning.self_improver import SelfImprover
+
+        result["self_improver"] = SelfImprover()
+    except Exception:
+        log.debug("self_improver_init_skipped", exc_info=True)
+
+    # HermesCompatLayer (agentskills.io SKILL.md import/export)
+    try:
+        from jarvis.skills.hermes_compat import HermesCompatLayer
+
+        result["hermes_compat"] = HermesCompatLayer()
+    except Exception:
+        log.debug("hermes_compat_init_skipped", exc_info=True)
 
     # RunRecorder (Forensic Run Recording)
     try:
