@@ -12,6 +12,14 @@ import 'package:jarvis_ui/widgets/jarvis_section.dart';
 import 'package:jarvis_ui/widgets/jarvis_stat.dart';
 import 'package:jarvis_ui/widgets/jarvis_status_badge.dart';
 
+/// Safely convert a model config value to Map.
+/// API may return either a Map or a plain String (just the model name).
+Map<String, dynamic> _asModelMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is String) return {'model': value};
+  return {};
+}
+
 class ModelsScreen extends StatefulWidget {
   const ModelsScreen({super.key});
 
@@ -82,10 +90,10 @@ class _ModelsScreenState extends State<ModelsScreen> {
     final providerCount = stats['providers']?.toString() ?? '-';
     final capCount = stats['capabilities']?.toString() ?? '-';
 
-    final planner = configured['planner'] as Map<String, dynamic>? ?? {};
-    final executor = configured['executor'] as Map<String, dynamic>? ?? {};
-    final coder = configured['coder'] as Map<String, dynamic>? ?? {};
-    final embedding = configured['embedding'] as Map<String, dynamic>? ?? {};
+    final planner = _asModelMap(configured['planner']);
+    final executor = _asModelMap(configured['executor']);
+    final coder = _asModelMap(configured['coder']);
+    final embedding = _asModelMap(configured['embedding']);
 
     return RefreshIndicator(
       onRefresh: () async {
