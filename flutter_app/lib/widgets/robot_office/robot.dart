@@ -1,5 +1,23 @@
 import 'package:flutter/material.dart';
 
+/// All possible robot states for the living office.
+enum RobotState {
+  idle,
+  walking,
+  working,
+  carrying,
+  napping,
+  chatting,
+  playing,
+  pranking,
+  celebrating,
+  coffeeBreak,
+  stretching,
+  highFive,
+  dancing,
+  thinking,
+}
+
 /// Mutable data class representing one robot agent in the office scene.
 class Robot {
   Robot({
@@ -53,6 +71,21 @@ class Robot {
 
   String emoji;
   double emojiTimer;
-}
 
-enum RobotState { idle, walking, working }
+  // ── Paired interaction fields ──────────────────────────────────────
+  /// The other robot involved in a paired interaction (chat, highFive, tag, prank).
+  Robot? interactionPartner;
+
+  /// For chatting: current chat bubble text.
+  String chatBubble = '';
+  double chatBubbleTimer = 0;
+
+  /// For pranking: who is the pranker vs target.
+  bool isPranker = false;
+
+  /// For celebrating: confetti trigger time.
+  double celebratePhase = 0;
+
+  /// For dancing: dance phase offset.
+  double dancePhase = 0;
+}
