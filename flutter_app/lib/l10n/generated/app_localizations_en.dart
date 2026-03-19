@@ -1755,4 +1755,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminTeachSubtitle => 'Upload files, URLs, videos';
+
+  @override
+  String get newSkill => 'New Skill';
+
+  @override
+  String get editSkill => 'Edit Skill';
+
+  @override
+  String get createSkill => 'Create Skill';
+
+  @override
+  String get deleteSkill => 'Delete Skill';
+
+  @override
+  String get skillName => 'Name';
+
+  @override
+  String get skillBody => 'Skill Body (Markdown)';
+
+  @override
+  String get triggerKeywords => 'Trigger Keywords';
+
+  @override
+  String get requiredTools => 'Required Tools';
+
+  @override
+  String get modelPreference => 'Model Preference';
+
+  @override
+  String get skillSaved => 'Skill saved successfully';
+
+  @override
+  String get skillCreated => 'Skill created successfully';
+
+  @override
+  String get skillDeleted => 'Skill deleted';
+
+  @override
+  String get confirmDeleteSkill =>
+      'Are you sure you want to delete this skill? This cannot be undone.';
+
+  @override
+  String get discardChanges => 'Discard changes?';
+
+  @override
+  String get discardChangesBody => 'You have unsaved changes. Discard them?';
+
+  @override
+  String get totalUses => 'Total Uses';
+
+  @override
+  String get lastUsed => 'Last Used';
+
+  @override
+  String get commaSeparated => 'Comma-separated';
+
+  @override
+  String get skillBodyHint => 'Write skill instructions in Markdown...';
+
+  @override
+  String get metadata => 'Metadata';
+
+  @override
+  String get statistics => 'Statistics';
+
+  @override
+  String get builtInSkill => 'Built-in skill (read-only)';
+
+  @override
+  String get exportSkillMd => 'Export as SKILL.md';
+
+  @override
+  String get skillExported => 'Skill exported to clipboard';
+
+  @override
+  String get general => 'General';
+
+  @override
+  String get productivity => 'Productivity';
+
+  @override
+  String get research => 'Research';
+
+  @override
+  String get analysis => 'Analysis';
+
+  @override
+  String get development => 'Development';
+
+  @override
+  String get automation => 'Automation';
 }

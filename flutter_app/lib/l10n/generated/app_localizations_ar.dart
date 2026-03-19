@@ -1754,4 +1754,95 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminTeachSubtitle => 'رفع الملفات وعناوين URL والفيديو';
+
+  @override
+  String get newSkill => 'مهارة جديدة';
+
+  @override
+  String get editSkill => 'تعديل المهارة';
+
+  @override
+  String get createSkill => 'إنشاء مهارة';
+
+  @override
+  String get deleteSkill => 'حذف المهارة';
+
+  @override
+  String get skillName => 'الاسم';
+
+  @override
+  String get skillBody => 'محتوى المهارة (Markdown)';
+
+  @override
+  String get triggerKeywords => 'كلمات التشغيل';
+
+  @override
+  String get requiredTools => 'الأدوات المطلوبة';
+
+  @override
+  String get modelPreference => 'تفضيل النموذج';
+
+  @override
+  String get skillSaved => 'تم حفظ المهارة بنجاح';
+
+  @override
+  String get skillCreated => 'تم إنشاء المهارة بنجاح';
+
+  @override
+  String get skillDeleted => 'تم حذف المهارة';
+
+  @override
+  String get confirmDeleteSkill =>
+      'هل أنت متأكد من حذف هذه المهارة؟ لا يمكن التراجع.';
+
+  @override
+  String get discardChanges => 'تجاهل التغييرات؟';
+
+  @override
+  String get discardChangesBody => 'لديك تغييرات غير محفوظة. تجاهلها؟';
+
+  @override
+  String get totalUses => 'إجمالي الاستخدامات';
+
+  @override
+  String get lastUsed => 'آخر استخدام';
+
+  @override
+  String get commaSeparated => 'مفصولة بفاصلة';
+
+  @override
+  String get skillBodyHint => 'اكتب تعليمات المهارة بصيغة Markdown...';
+
+  @override
+  String get metadata => 'البيانات الوصفية';
+
+  @override
+  String get statistics => 'الإحصائيات';
+
+  @override
+  String get builtInSkill => 'مهارة مدمجة (للقراءة فقط)';
+
+  @override
+  String get exportSkillMd => 'تصدير كـ SKILL.md';
+
+  @override
+  String get skillExported => 'تم تصدير المهارة إلى الحافظة';
+
+  @override
+  String get general => 'عام';
+
+  @override
+  String get productivity => 'إنتاجية';
+
+  @override
+  String get research => 'بحث';
+
+  @override
+  String get analysis => 'تحليل';
+
+  @override
+  String get development => 'تطوير';
+
+  @override
+  String get automation => 'أتمتة';
 }

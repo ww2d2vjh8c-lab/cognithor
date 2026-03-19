@@ -3757,6 +3757,220 @@ def _register_skill_registry_routes(
             "count": len(skills),
         }
 
+    @app.get("/api/v1/skill-registry/{slug}", dependencies=deps)
+    async def get_skill_detail(slug: str) -> dict[str, Any]:
+        """Get full skill detail including body."""
+        reg = _get_registry()
+        if not reg:
+            raise HTTPException(404, "Skill registry not available")
+        skill = reg.get(slug)
+        if not skill:
+            raise HTTPException(404, f"Skill '{slug}' not found")
+        return {
+            "name": skill.name,
+            "slug": skill.slug,
+            "description": skill.description,
+            "category": skill.category,
+            "trigger_keywords": skill.trigger_keywords,
+            "tools_required": skill.tools_required,
+            "priority": skill.priority,
+            "enabled": skill.enabled,
+            "model_preference": skill.model_preference,
+            "agent": skill.agent,
+            "body": skill.body,
+            "source": getattr(skill, "source", "builtin"),
+            "file_path": str(skill.file_path),
+            "total_uses": skill.total_uses,
+            "success_count": skill.success_count,
+            "failure_count": skill.failure_count,
+            "success_rate": round(skill.success_rate, 2) if skill.total_uses > 0 else None,
+            "avg_score": skill.avg_score,
+            "last_used": skill.last_used,
+        }
+
+    @app.post("/api/v1/skill-registry/create", dependencies=deps)
+    async def create_skill(request: Request) -> dict[str, Any]:
+        """Create a new skill from JSON body."""
+        from pathlib import Path
+        import re
+        import yaml
+
+        body = await request.json()
+        name = body.get("name", "").strip()
+        if not name:
+            raise HTTPException(400, "Name is required")
+
+        reg = _get_registry()
+        if not reg:
+            raise HTTPException(503, "Skill registry not available")
+
+        # Generate slug from name
+        slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+        if not slug:
+            raise HTTPException(400, "Invalid skill name")
+
+        # Check for duplicate
+        if reg.get(slug):
+            raise HTTPException(409, f"Skill '{slug}' already exists")
+
+        # Build skill file content
+        frontmatter = {
+            "name": name,
+            "description": body.get("description", ""),
+            "category": body.get("category", "general"),
+            "trigger_keywords": body.get("trigger_keywords", []),
+            "tools_required": body.get("tools_required", []),
+            "priority": body.get("priority", 0),
+            "enabled": body.get("enabled", True),
+        }
+        if body.get("model_preference"):
+            frontmatter["model_preference"] = body["model_preference"]
+        if body.get("agent"):
+            frontmatter["agent"] = body["agent"]
+
+        skill_body = body.get("body", "")
+        content = f"---\n{yaml.dump(frontmatter, default_flow_style=False, allow_unicode=True)}---\n\n{skill_body}\n"
+
+        # Determine save directory
+        config = getattr(gateway, "_config", None)
+        jarvis_home = Path(getattr(config, "jarvis_home", Path.home() / ".jarvis"))
+        skills_dir = jarvis_home / "skills"
+        skills_dir.mkdir(parents=True, exist_ok=True)
+        file_path = skills_dir / f"{slug}.md"
+
+        file_path.write_text(content, encoding="utf-8")
+
+        # Reload registry
+        reg.load_from_directories([skills_dir, Path("data/procedures")])
+
+        return {"status": "created", "slug": slug, "file_path": str(file_path)}
+
+    @app.put("/api/v1/skill-registry/{slug}", dependencies=deps)
+    async def update_skill(slug: str, request: Request) -> dict[str, Any]:
+        """Update an existing skill (metadata and/or body)."""
+        import yaml
+
+        reg = _get_registry()
+        if not reg:
+            raise HTTPException(503, "Skill registry not available")
+
+        skill = reg.get(slug)
+        if not skill:
+            raise HTTPException(404, f"Skill '{slug}' not found")
+
+        body = await request.json()
+
+        # Read current file
+        file_path = skill.file_path
+        if not file_path.exists():
+            raise HTTPException(500, "Skill file not found on disk")
+
+        # Build updated frontmatter
+        frontmatter = {
+            "name": body.get("name", skill.name),
+            "description": body.get("description", skill.description),
+            "category": body.get("category", skill.category),
+            "trigger_keywords": body.get("trigger_keywords", skill.trigger_keywords),
+            "tools_required": body.get("tools_required", skill.tools_required),
+            "priority": body.get("priority", skill.priority),
+            "enabled": body.get("enabled", skill.enabled),
+        }
+        if skill.model_preference or body.get("model_preference"):
+            frontmatter["model_preference"] = body.get("model_preference", skill.model_preference)
+        if skill.agent or body.get("agent"):
+            frontmatter["agent"] = body.get("agent", skill.agent)
+        # Preserve stats
+        frontmatter["success_count"] = skill.success_count
+        frontmatter["failure_count"] = skill.failure_count
+        frontmatter["total_uses"] = skill.total_uses
+        frontmatter["avg_score"] = skill.avg_score
+        if skill.last_used:
+            frontmatter["last_used"] = skill.last_used
+
+        skill_body = body.get("body", skill.body)
+        content = f"---\n{yaml.dump(frontmatter, default_flow_style=False, allow_unicode=True)}---\n\n{skill_body}\n"
+
+        file_path.write_text(content, encoding="utf-8")
+
+        # Reload registry from the skill's parent directory
+        from pathlib import Path as P
+        config = getattr(gateway, "_config", None)
+        jarvis_home = P(getattr(config, "jarvis_home", P.home() / ".jarvis"))
+        reg.load_from_directories([jarvis_home / "skills", P("data/procedures")])
+
+        return {"status": "updated", "slug": slug}
+
+    @app.delete("/api/v1/skill-registry/{slug}", dependencies=deps)
+    async def delete_skill(slug: str) -> dict[str, Any]:
+        """Delete a skill file from disk and reload registry."""
+        reg = _get_registry()
+        if not reg:
+            raise HTTPException(503, "Skill registry not available")
+
+        skill = reg.get(slug)
+        if not skill:
+            raise HTTPException(404, f"Skill '{slug}' not found")
+
+        # Don't allow deleting built-in procedure skills
+        file_path = skill.file_path
+        if "data/procedures" in str(file_path):
+            raise HTTPException(403, "Cannot delete built-in procedure skills")
+
+        if file_path.exists():
+            file_path.unlink()
+
+        # Reload registry
+        from pathlib import Path as P
+        config = getattr(gateway, "_config", None)
+        jarvis_home = P(getattr(config, "jarvis_home", P.home() / ".jarvis"))
+        reg.load_from_directories([jarvis_home / "skills", P("data/procedures")])
+
+        return {"status": "deleted", "slug": slug}
+
+    @app.put("/api/v1/skill-registry/{slug}/toggle", dependencies=deps)
+    async def toggle_skill(slug: str) -> dict[str, Any]:
+        """Enable or disable a skill."""
+        reg = _get_registry()
+        if not reg:
+            raise HTTPException(503, "Skill registry not available")
+
+        skill = reg.get(slug)
+        if not skill:
+            raise HTTPException(404, f"Skill '{slug}' not found")
+
+        if skill.enabled:
+            reg.disable(slug)
+            return {"slug": slug, "enabled": False}
+        else:
+            reg.enable(slug)
+            return {"slug": slug, "enabled": True}
+
+    @app.get("/api/v1/skill-registry/{slug}/export", dependencies=deps)
+    async def export_skill_md(slug: str) -> dict[str, Any]:
+        """Export a skill in SKILL.md (agentskills.io) format."""
+        reg = _get_registry()
+        if not reg:
+            raise HTTPException(503, "Skill registry not available")
+
+        skill = reg.get(slug)
+        if not skill:
+            raise HTTPException(404, f"Skill '{slug}' not found")
+
+        try:
+            from jarvis.skills.hermes_compat import HermesCompatLayer
+            skill_dict = {
+                "name": skill.name,
+                "description": skill.description,
+                "tags": skill.trigger_keywords,
+                "prompt": skill.body,
+                "version": "1.0.0",
+            }
+            hermes = HermesCompatLayer.cognithor_to_hermes(skill_dict)
+            content = HermesCompatLayer.to_skill_md(hermes)
+            return {"slug": slug, "skill_md": content}
+        except Exception as e:
+            raise HTTPException(500, f"Export failed: {e}")
+
 
 def _register_hermes_routes(
     app: Any,

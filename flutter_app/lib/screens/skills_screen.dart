@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/providers/skills_provider.dart';
+import 'package:jarvis_ui/screens/skill_editor_screen.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/neon_card.dart';
 import 'package:jarvis_ui/widgets/neon_glow.dart';
@@ -66,33 +67,52 @@ class _SkillsScreenState extends State<SkillsScreen> {
 
     return Consumer<SkillsProvider>(
       builder: (context, provider, _) {
-        return Column(
+        return Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: JarvisSearchBar(
-                hintText: l.searchSkills,
-                onChanged: _onSearch,
-                onClear: _onClearSearch,
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: JarvisSearchBar(
+                    hintText: l.searchSkills,
+                    onChanged: _onSearch,
+                    onClear: _onClearSearch,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: JarvisTabBar(
+                    tabs: [l.featured, l.trending, l.installed],
+                    icons: const [
+                      Icons.star_outline,
+                      Icons.trending_up,
+                      Icons.check_circle_outline,
+                    ],
+                    selectedIndex: _tabIndex,
+                    onChanged: (i) => setState(() => _tabIndex = i),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: _buildTabContent(provider, l),
+                ),
+              ],
+            ),
+            // FAB: New Skill (only on Installed tab)
+            if (_tabIndex == 2)
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: FloatingActionButton.extended(
+                  onPressed: _openNewSkill,
+                  backgroundColor: JarvisTheme.sectionSkills,
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: Text(
+                    l.newSkill,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: JarvisTabBar(
-                tabs: [l.featured, l.trending, l.installed],
-                icons: const [
-                  Icons.star_outline,
-                  Icons.trending_up,
-                  Icons.check_circle_outline,
-                ],
-                selectedIndex: _tabIndex,
-                onChanged: (i) => setState(() => _tabIndex = i),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: _buildTabContent(provider, l),
-            ),
           ],
         );
       },
@@ -218,12 +238,44 @@ class _SkillsScreenState extends State<SkillsScreen> {
                 skill: skill,
                 isInstalled: true,
                 onUninstall: () => _uninstallSkill(skill),
+                onEdit: () => _openEditSkill(skill),
+                onToggle: () => _toggleSkill(skill),
               );
             }).toList(),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _openNewSkill() async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => const SkillEditorScreen(),
+      ),
+    );
+    if (result == true && mounted) {
+      context.read<SkillsProvider>().loadInstalled();
+    }
+  }
+
+  Future<void> _openEditSkill(Map<String, dynamic> skill) async {
+    final slug = skill['slug']?.toString() ?? skill['id']?.toString() ?? '';
+    if (slug.isEmpty) return;
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => SkillEditorScreen(slug: slug),
+      ),
+    );
+    if (result == true && mounted) {
+      context.read<SkillsProvider>().loadInstalled();
+    }
+  }
+
+  Future<void> _toggleSkill(Map<String, dynamic> skill) async {
+    final slug = skill['slug']?.toString() ?? skill['id']?.toString() ?? '';
+    if (slug.isEmpty) return;
+    await context.read<SkillsProvider>().toggleSkill(slug);
   }
 
   Future<void> _installSkill(Map<String, dynamic> skill) async {
@@ -268,12 +320,16 @@ class _SkillCard extends StatelessWidget {
     required this.isInstalled,
     this.onInstall,
     this.onUninstall,
+    this.onEdit,
+    this.onToggle,
   });
 
   final Map<String, dynamic> skill;
   final bool isInstalled;
   final VoidCallback? onInstall;
   final VoidCallback? onUninstall;
+  final VoidCallback? onEdit;
+  final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -286,6 +342,7 @@ class _SkillCard extends StatelessWidget {
     final rating = (skill['rating'] as num?)?.toDouble() ?? 0.0;
     final downloadCount = skill['downloads']?.toString() ?? '0';
     final isVerified = skill['verified'] as bool? ?? false;
+    final isEnabled = skill['enabled'] as bool? ?? true;
 
     return NeonCard(
       tint: JarvisTheme.sectionSkills,
@@ -306,6 +363,31 @@ class _SkillCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (isInstalled) ...[
+                // Toggle switch for installed skills
+                SizedBox(
+                  height: 24,
+                  child: Switch(
+                    value: isEnabled,
+                    onChanged: (_) => onToggle?.call(),
+                    activeThumbColor: JarvisTheme.sectionSkills,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // Edit button for installed skills
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: IconButton(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    padding: EdgeInsets.zero,
+                    tooltip: l.editSkill,
+                    color: JarvisTheme.sectionSkills,
+                  ),
+                ),
+              ],
               if (isVerified)
                 JarvisStatusBadge(
                   label: l.verified,

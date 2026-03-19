@@ -3557,6 +3557,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upload files, URLs, videos'**
   String get adminTeachSubtitle;
+
+  /// No description provided for @newSkill.
+  ///
+  /// In en, this message translates to:
+  /// **'New Skill'**
+  String get newSkill;
+
+  /// No description provided for @editSkill.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Skill'**
+  String get editSkill;
+
+  /// No description provided for @createSkill.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Skill'**
+  String get createSkill;
+
+  /// No description provided for @deleteSkill.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Skill'**
+  String get deleteSkill;
+
+  /// No description provided for @skillName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get skillName;
+
+  /// No description provided for @skillBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Skill Body (Markdown)'**
+  String get skillBody;
+
+  /// No description provided for @triggerKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger Keywords'**
+  String get triggerKeywords;
+
+  /// No description provided for @requiredTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Required Tools'**
+  String get requiredTools;
+
+  /// No description provided for @modelPreference.
+  ///
+  /// In en, this message translates to:
+  /// **'Model Preference'**
+  String get modelPreference;
+
+  /// No description provided for @skillSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Skill saved successfully'**
+  String get skillSaved;
+
+  /// No description provided for @skillCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Skill created successfully'**
+  String get skillCreated;
+
+  /// No description provided for @skillDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Skill deleted'**
+  String get skillDeleted;
+
+  /// No description provided for @confirmDeleteSkill.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this skill? This cannot be undone.'**
+  String get confirmDeleteSkill;
+
+  /// No description provided for @discardChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get discardChanges;
+
+  /// No description provided for @discardChangesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Discard them?'**
+  String get discardChangesBody;
+
+  /// No description provided for @totalUses.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Uses'**
+  String get totalUses;
+
+  /// No description provided for @lastUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Used'**
+  String get lastUsed;
+
+  /// No description provided for @commaSeparated.
+  ///
+  /// In en, this message translates to:
+  /// **'Comma-separated'**
+  String get commaSeparated;
+
+  /// No description provided for @skillBodyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write skill instructions in Markdown...'**
+  String get skillBodyHint;
+
+  /// No description provided for @metadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata'**
+  String get metadata;
+
+  /// No description provided for @statistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get statistics;
+
+  /// No description provided for @builtInSkill.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in skill (read-only)'**
+  String get builtInSkill;
+
+  /// No description provided for @exportSkillMd.
+  ///
+  /// In en, this message translates to:
+  /// **'Export as SKILL.md'**
+  String get exportSkillMd;
+
+  /// No description provided for @skillExported.
+  ///
+  /// In en, this message translates to:
+  /// **'Skill exported to clipboard'**
+  String get skillExported;
+
+  /// No description provided for @general.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get general;
+
+  /// No description provided for @productivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Productivity'**
+  String get productivity;
+
+  /// No description provided for @research.
+  ///
+  /// In en, this message translates to:
+  /// **'Research'**
+  String get research;
+
+  /// No description provided for @analysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis'**
+  String get analysis;
+
+  /// No description provided for @development.
+  ///
+  /// In en, this message translates to:
+  /// **'Development'**
+  String get development;
+
+  /// No description provided for @automation.
+  ///
+  /// In en, this message translates to:
+  /// **'Automation'**
+  String get automation;
 }
 
 class _AppLocalizationsDelegate

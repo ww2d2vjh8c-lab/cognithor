@@ -1756,4 +1756,96 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get adminTeachSubtitle => 'Dateien, URLs, Videos hochladen';
+
+  @override
+  String get newSkill => 'Neuer Skill';
+
+  @override
+  String get editSkill => 'Skill bearbeiten';
+
+  @override
+  String get createSkill => 'Skill erstellen';
+
+  @override
+  String get deleteSkill => 'Skill loeschen';
+
+  @override
+  String get skillName => 'Name';
+
+  @override
+  String get skillBody => 'Skill-Inhalt (Markdown)';
+
+  @override
+  String get triggerKeywords => 'Trigger-Schluesselwoerter';
+
+  @override
+  String get requiredTools => 'Benoetigte Tools';
+
+  @override
+  String get modelPreference => 'Modell-Praeferenz';
+
+  @override
+  String get skillSaved => 'Skill erfolgreich gespeichert';
+
+  @override
+  String get skillCreated => 'Skill erfolgreich erstellt';
+
+  @override
+  String get skillDeleted => 'Skill geloescht';
+
+  @override
+  String get confirmDeleteSkill =>
+      'Bist du sicher, dass du diesen Skill loeschen moechtest? Dies kann nicht rueckgaengig gemacht werden.';
+
+  @override
+  String get discardChanges => 'Aenderungen verwerfen?';
+
+  @override
+  String get discardChangesBody =>
+      'Du hast ungespeicherte Aenderungen. Verwerfen?';
+
+  @override
+  String get totalUses => 'Gesamtnutzungen';
+
+  @override
+  String get lastUsed => 'Zuletzt verwendet';
+
+  @override
+  String get commaSeparated => 'Komma-getrennt';
+
+  @override
+  String get skillBodyHint => 'Skill-Anweisungen in Markdown schreiben...';
+
+  @override
+  String get metadata => 'Metadaten';
+
+  @override
+  String get statistics => 'Statistiken';
+
+  @override
+  String get builtInSkill => 'Eingebauter Skill (nur lesen)';
+
+  @override
+  String get exportSkillMd => 'Als SKILL.md exportieren';
+
+  @override
+  String get skillExported => 'Skill in Zwischenablage exportiert';
+
+  @override
+  String get general => 'Allgemein';
+
+  @override
+  String get productivity => 'Produktivitaet';
+
+  @override
+  String get research => 'Recherche';
+
+  @override
+  String get analysis => 'Analyse';
+
+  @override
+  String get development => 'Entwicklung';
+
+  @override
+  String get automation => 'Automatisierung';
 }

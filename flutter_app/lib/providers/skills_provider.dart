@@ -125,4 +125,79 @@ class SkillsProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Skill Editor CRUD
+  // ---------------------------------------------------------------------------
+
+  Future<Map<String, dynamic>?> getSkillDetail(String slug) async {
+    if (_api == null) return null;
+    try {
+      return await _api!.get('skill-registry/$slug');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> createSkill(Map<String, dynamic> data) async {
+    if (_api == null) return false;
+    try {
+      await _api!.post('skill-registry/create', data);
+      await loadInstalled();
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateSkill(String slug, Map<String, dynamic> data) async {
+    if (_api == null) return false;
+    try {
+      await _api!.put('skill-registry/$slug', data);
+      await loadInstalled();
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteSkill(String slug) async {
+    if (_api == null) return false;
+    try {
+      await _api!.delete('skill-registry/$slug');
+      await loadInstalled();
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> toggleSkill(String slug) async {
+    if (_api == null) return false;
+    try {
+      await _api!.put('skill-registry/$slug/toggle', {});
+      await loadInstalled();
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<String?> exportSkill(String slug) async {
+    if (_api == null) return null;
+    try {
+      final data = await _api!.get('skill-registry/$slug/export');
+      return data['skill_md'] as String?;
+    } catch (e) {
+      return null;
+    }
+  }
 }

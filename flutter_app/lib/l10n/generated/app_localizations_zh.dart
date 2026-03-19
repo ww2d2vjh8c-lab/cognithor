@@ -1751,4 +1751,94 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminTeachSubtitle => '上传文件、URL、视频';
+
+  @override
+  String get newSkill => '新技能';
+
+  @override
+  String get editSkill => '编辑技能';
+
+  @override
+  String get createSkill => '创建技能';
+
+  @override
+  String get deleteSkill => '删除技能';
+
+  @override
+  String get skillName => '名称';
+
+  @override
+  String get skillBody => '技能内容 (Markdown)';
+
+  @override
+  String get triggerKeywords => '触发关键词';
+
+  @override
+  String get requiredTools => '所需工具';
+
+  @override
+  String get modelPreference => '模型偏好';
+
+  @override
+  String get skillSaved => '技能保存成功';
+
+  @override
+  String get skillCreated => '技能创建成功';
+
+  @override
+  String get skillDeleted => '技能已删除';
+
+  @override
+  String get confirmDeleteSkill => '确定要删除此技能吗？此操作不可撤销。';
+
+  @override
+  String get discardChanges => '放弃更改？';
+
+  @override
+  String get discardChangesBody => '你有未保存的更改。放弃吗？';
+
+  @override
+  String get totalUses => '总使用次数';
+
+  @override
+  String get lastUsed => '最后使用';
+
+  @override
+  String get commaSeparated => '逗号分隔';
+
+  @override
+  String get skillBodyHint => '用Markdown编写技能说明...';
+
+  @override
+  String get metadata => '元数据';
+
+  @override
+  String get statistics => '统计';
+
+  @override
+  String get builtInSkill => '内置技能（只读）';
+
+  @override
+  String get exportSkillMd => '导出为 SKILL.md';
+
+  @override
+  String get skillExported => '技能已导出到剪贴板';
+
+  @override
+  String get general => '通用';
+
+  @override
+  String get productivity => '生产力';
+
+  @override
+  String get research => '研究';
+
+  @override
+  String get analysis => '分析';
+
+  @override
+  String get development => '开发';
+
+  @override
+  String get automation => '自动化';
 }
