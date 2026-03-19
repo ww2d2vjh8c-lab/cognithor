@@ -383,12 +383,13 @@ class IdentityLayer:
 
     def get_state_summary(self) -> dict:
         """Returns a summary of the cognitive state."""
-        if not self.available:
+        if self._engine is None:
             return {"available": False}
         try:
             state = self._engine.get_cognitive_state()
             state["identity_id"] = self._identity_id
             state["available"] = True
+            state["is_frozen"] = self._frozen
             return state
         except Exception:
             return {"available": False, "identity_id": self._identity_id}
