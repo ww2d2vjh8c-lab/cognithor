@@ -45,7 +45,6 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 | **Memory system** | Stable — 5-tier architecture works reliably |
 | **CLI channel** | Stable — primary development interface |
 | **Flutter UI** | Beta — cross-platform, 18 config pages, chat, voice, learning dashboard |
-| **Web UI / Control Center (React)** | Stable — full-featured, legacy (Flutter replaces) |
 | **Messaging channels** (Telegram, Discord, etc.) | Beta — basic flows work, edge cases may break |
 | **Voice mode / TTS** | Alpha — experimental, hardware-dependent |
 | **Browser automation** | Alpha — requires Playwright setup |
@@ -266,7 +265,6 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 - **Integrated Chat** — Full chat page in the Control Center with WebSocket streaming, tool indicators, canvas panel, approval banners, and voice mode
 - **Flutter UI** — Cross-platform UI (Web/Desktop/Mobile) with 18 editable config pages, Observe panel, Knowledge Graph, Voice Mode, Learning Dashboard, Light/Dark theme, 4-language i18n
 - **Active Learning & Curiosity** — CuriosityEngine detects knowledge gaps, KnowledgeConfidenceManager with time decay and feedback, ActiveLearner processes files in background during idle time
-- **React Control Center** — Full web dashboard (React 19 + Vite 7) with integrated backend launcher, live config editing, agent management, prompt editing, cron jobs, MCP servers, and A2A settings [legacy]
 - **Human Feel** — Personality Engine (warmth, humor, greetings), sentiment detection (frustrated/urgent/confused/positive), user preference learning, real-time status callbacks, user-friendly German error messages
 - **Auto-Detect Channels** — Channels activate automatically when tokens are present in `.env` — no manual config flags needed
 - **Knowledge Synthesis** — Meta-analysis across Memory + Vault + Web with LLM fusion: `knowledge_synthesize` (full synthesis with confidence ratings), `knowledge_contradictions` (fact-checking), `knowledge_timeline` (causal chains), `knowledge_gaps` (completeness score + research suggestions)
@@ -296,8 +294,6 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 51 MCP
 │   18 Config Pages · Chat · Voice · Observe · Knowledge Graph     │
 │   Learning Dashboard · Theme Toggle · i18n (EN/DE/ZH/AR)         │
 ├───────────────────────────────────────────────────────────────────┤
-│            Control Center UI (React 19 + Vite 7) [legacy]         │
-│   Config · Agents · Chat · Voice · Prompts · Cron · MCP · A2A    │
 ├───────────────────────────────────────────────────────────────────┤
 │         Prometheus /metrics · Grafana Dashboard                    │
 ├───────────────────────────────────────────────────────────────────┤

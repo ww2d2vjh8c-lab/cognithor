@@ -775,56 +775,39 @@ def first_start(repo_root: str, *, skip_models: bool = False) -> bool:
         except Exception as e:
             warn(f"Venv sync check failed: {e}")
 
-    # ── 6. Web-UI (Node.js optional) ──────────────────────────────────
-    header("6/14  Web-UI")
-    ui_dir = os.path.join(repo_root, "ui")
-    ui_dist = os.path.join(ui_dir, "dist", "index.html")
-    npm_cmd = "npm.cmd" if sys.platform == "win32" else "npm"
-    has_node = shutil.which("node") is not None
-
-    if has_node:
-        # Node.js vorhanden → npm install + npm run build
-        node_modules = os.path.join(ui_dir, "node_modules")
-        if not os.path.isdir(node_modules):
-            info("Installing Node dependencies (npm install)...")
-            npm_proc = subprocess.run(
-                [npm_cmd, "install"],
-                capture_output=True,
-                text=True,
-                timeout=300,
-                cwd=ui_dir,
-            )
-            if npm_proc.returncode == 0:
-                ok("Node dependencies installed")
-            else:
-                stderr = npm_proc.stderr.strip()[-300:] if npm_proc.stderr else ""
-                result.add_warn(f"npm install failed: {stderr}")
-        else:
-            ok("node_modules present")
-
-        # Build erstellen falls nicht vorhanden
-        if not os.path.isfile(ui_dist):
-            info("Building UI (npm run build)...")
-            build_proc = subprocess.run(
-                [npm_cmd, "run", "build"],
-                capture_output=True,
-                text=True,
-                timeout=300,
-                cwd=ui_dir,
-            )
-            if build_proc.returncode == 0:
-                ok("UI build created (ui/dist/)")
-            else:
-                result.add_warn("npm run build failed -- Vite Dev Server will be needed")
-        else:
-            ok("UI build present (ui/dist/)")
-    elif os.path.isfile(ui_dist):
-        ok("Pre-built UI present (Node.js not needed)")
+    # ── 6. Flutter Web UI ──────────────────────────────────────────────
+    header("6/14  Flutter Web UI")
+    flutter_index = os.path.join(
+        repo_root,
+        "flutter_app",
+        "build",
+        "web",
+        "index.html",
+    )
+    if os.path.isfile(flutter_index):
+        ok("Flutter Web UI present (bundled)")
     else:
-        result.add_warn(
-            "Node.js not found and no pre-built UI available. "
-            "CLI mode active. For Web UI: https://nodejs.org/"
-        )
+        # Try to build if Flutter SDK is available
+        flutter_cmd = shutil.which("flutter")
+        if flutter_cmd:
+            info("Building Flutter Web UI...")
+            flutter_dir = os.path.join(repo_root, "flutter_app")
+            build_proc = subprocess.run(
+                [flutter_cmd, "build", "web", "--release"],
+                capture_output=True,
+                text=True,
+                timeout=600,
+                cwd=flutter_dir,
+            )
+            if build_proc.returncode == 0 and os.path.isfile(flutter_index):
+                ok("Flutter Web UI built successfully")
+            else:
+                result.add_warn("Flutter build failed. UI will run in CLI mode.")
+        else:
+            result.add_warn(
+                "Flutter Web UI not found (flutter_app/build/web/). "
+                "Re-clone the repo or install Flutter SDK to build."
+            )
 
     # ── 7. Verzeichnisstruktur ─────────────────────────────────────────
     header("7/14  Directory Structure")

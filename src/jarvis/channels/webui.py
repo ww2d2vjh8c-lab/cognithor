@@ -114,23 +114,24 @@ class WebUIChannel(Channel):
         self._static_dir = static_dir
         self._config_manager = config_manager
         self._config = config  # JarvisConfig (optional, für ConfigManager)
-        # Default: Flutter-Build bevorzugen, dann eingebautes WebChat-Widget
+        # Locate Flutter Web build — try multiple paths for robustness
         if self._static_dir is None:
-            # 1. Flutter-Build (flutter_app/build/web/)
-            repo_root = Path(__file__).resolve().parent.parent.parent.parent
-            flutter_web = repo_root / "flutter_app" / "build" / "web"
-            if flutter_web.is_dir() and (flutter_web / "index.html").exists():
-                self._static_dir = str(flutter_web)
-            else:
-                # 2. Legacy React-Build (ui/dist/)
-                react_dist = repo_root / "ui" / "dist"
-                if react_dist.is_dir() and (react_dist / "index.html").exists():
-                    self._static_dir = str(react_dist)
-                else:
-                    # 3. Eingebautes WebChat-Widget
-                    builtin_webchat = Path(__file__).parent / "webchat"
-                    if builtin_webchat.is_dir():
-                        self._static_dir = str(builtin_webchat)
+            candidates = []
+            # 1. Relative to this source file (works in dev mode / editable install)
+            src_root = Path(__file__).resolve().parent.parent.parent.parent
+            candidates.append(src_root / "flutter_app" / "build" / "web")
+            # 2. Relative to CWD (works when started from repo root)
+            candidates.append(Path.cwd() / "flutter_app" / "build" / "web")
+            # 3. JARVIS_HOME (works in any install mode)
+            jarvis_home = Path(os.environ.get("JARVIS_HOME", Path.home() / ".jarvis"))
+            candidates.append(jarvis_home / "flutter_web")
+            # 4. Fallback: built-in webchat widget
+            candidates.append(Path(__file__).parent / "webchat")
+
+            for candidate in candidates:
+                if candidate.is_dir() and (candidate / "index.html").exists():
+                    self._static_dir = str(candidate)
+                    break
         self._handler: MessageHandler | None = None
         self._cancel_callback: Callable[[str], Any] | None = None
         self._app: Any = None
