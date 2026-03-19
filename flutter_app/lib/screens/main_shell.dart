@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
+import 'package:jarvis_ui/providers/navigation_provider.dart';
 import 'package:jarvis_ui/providers/pip_provider.dart';
 import 'package:jarvis_ui/providers/theme_provider.dart';
 import 'package:jarvis_ui/screens/admin_hub_screen.dart';
@@ -22,8 +23,6 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _currentIndex = 0;
-
   final List<Widget> _screens = const [
     ChatScreen(),
     DashboardScreen(),
@@ -49,7 +48,7 @@ class _MainShellState extends State<MainShell> {
 
   void _navigateTab(int index) {
     if (index >= 0 && index < _screens.length) {
-      setState(() => _currentIndex = index);
+      context.read<NavigationProvider>().setTab(index);
     }
   }
 
@@ -65,6 +64,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final themeProvider = context.watch<ThemeProvider>();
+    final nav = context.watch<NavigationProvider>();
 
     final navItems = [
       NavItem(
@@ -123,7 +123,7 @@ class _MainShellState extends State<MainShell> {
           ResponsiveScaffold(
             screens: _screens,
             navItems: navItems,
-            currentIndex: _currentIndex,
+            currentIndex: nav.currentTab,
             onIndexChanged: _navigateTab,
             onSearchTap: _openSearch,
             onThemeToggle: () => themeProvider.toggle(),

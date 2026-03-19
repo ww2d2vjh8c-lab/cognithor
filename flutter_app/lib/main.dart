@@ -8,6 +8,7 @@ import 'package:jarvis_ui/providers/config_provider.dart';
 import 'package:jarvis_ui/providers/locale_provider.dart';
 import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/providers/memory_provider.dart';
+import 'package:jarvis_ui/providers/navigation_provider.dart';
 import 'package:jarvis_ui/providers/security_provider.dart';
 import 'package:jarvis_ui/providers/skills_provider.dart';
 import 'package:jarvis_ui/providers/theme_provider.dart';
@@ -39,6 +40,7 @@ class JarvisApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => VoiceProvider()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => PipProvider()),
       ],
       child: Consumer2<ThemeProvider, LocaleProvider>(

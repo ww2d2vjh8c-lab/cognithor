@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/providers/navigation_provider.dart';
 import 'package:jarvis_ui/providers/pip_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/animated_indexed_stack.dart';
+import 'package:jarvis_ui/widgets/command_bar.dart';
 
-// ─── Data model ─────────────────────────────────────────────────────────────
+// ── Data model ─────────────────────────────────────────────────────────────
 
 /// Describes a single navigation destination.
 class NavItem {
@@ -21,7 +23,7 @@ class NavItem {
   final String? shortcut;
 }
 
-// ─── Breakpoints ────────────────────────────────────────────────────────────
+// ── Breakpoints ────────────────────────────────────────────────────────────
 
 enum _Layout { mobile, tablet, desktop }
 
@@ -31,14 +33,12 @@ _Layout _layoutFor(double width) {
   return _Layout.mobile;
 }
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────
 
-const double _railExpandedWidth = 220;
-const double _railCollapsedWidth = 64;
-const Duration _railAnimDuration = Duration(milliseconds: 200);
+const Duration _railAnimDuration = Duration(milliseconds: 300);
 const Curve _railAnimCurve = Curves.easeOutQuart;
 
-// ─── ResponsiveScaffold ─────────────────────────────────────────────────────
+// ── ResponsiveScaffold ─────────────────────────────────────────────────────
 
 class ResponsiveScaffold extends StatefulWidget {
   const ResponsiveScaffold({
@@ -69,9 +69,6 @@ class ResponsiveScaffold extends StatefulWidget {
 }
 
 class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
-  /// Desktop rail expanded / collapsed state.
-  bool _desktopExpanded = true;
-
   /// Tablet hover expansion.
   bool _tabletHovered = false;
 
@@ -82,9 +79,9 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
         final layout = _layoutFor(constraints.maxWidth);
         return switch (layout) {
           _Layout.mobile => _buildMobile(context),
-          _Layout.tablet => _buildSideLayout(context, expanded: _tabletHovered),
-          _Layout.desktop =>
-            _buildSideLayout(context, expanded: _desktopExpanded),
+          _Layout.tablet =>
+            _buildSideLayout(context, expanded: _tabletHovered),
+          _Layout.desktop => _buildSideLayout(context, expanded: true),
         };
       },
     );
@@ -94,10 +91,19 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
 
   Widget _buildMobile(BuildContext context) {
     final isDark = widget.isDark;
+    final nav = context.watch<NavigationProvider>();
+
     return Scaffold(
-      body: AnimatedIndexedStack(
-        index: widget.currentIndex,
-        children: widget.screens,
+      body: Column(
+        children: [
+          CommandBar(onSearchTap: widget.onSearchTap),
+          Expanded(
+            child: AnimatedIndexedStack(
+              index: widget.currentIndex,
+              children: widget.screens,
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -118,6 +124,7 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                 ...List.generate(widget.navItems.length, (i) {
                   final item = widget.navItems[i];
                   final selected = i == widget.currentIndex;
+                  final sectionColor = JarvisTheme.sectionColorFor(i);
                   return Expanded(
                     child: InkWell(
                       onTap: () => widget.onIndexChanged(i),
@@ -131,7 +138,7 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                               selected ? item.selectedIcon : item.icon,
                               size: 22,
                               color: selected
-                                  ? JarvisTheme.accent
+                                  ? sectionColor
                                   : Theme.of(context).iconTheme.color,
                             ),
                             const SizedBox(height: 2),
@@ -143,7 +150,7 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                                     ? FontWeight.w600
                                     : FontWeight.normal,
                                 color: selected
-                                    ? JarvisTheme.accent
+                                    ? sectionColor
                                     : Theme.of(context)
                                         .textTheme
                                         .bodySmall
@@ -181,7 +188,7 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                 _BottomBarAction(
                   icon: Icons.search,
                   label: 'Search',
-                  color: JarvisTheme.accent,
+                  color: nav.sectionColor,
                   onTap: widget.onSearchTap ?? () {},
                 ),
                 _BottomBarAction(
@@ -196,7 +203,7 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                       icon: Icons.smart_toy,
                       label: pip.visible ? 'Hide' : 'Office',
                       color: pip.visible
-                          ? JarvisTheme.accent
+                          ? nav.sectionColor
                           : JarvisTheme.purple,
                       onTap: () => pip.toggle(),
                     );
@@ -214,7 +221,10 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
 
   Widget _buildSideLayout(BuildContext context, {required bool expanded}) {
     final isDark = widget.isDark;
-    final railWidth = expanded ? _railExpandedWidth : _railCollapsedWidth;
+    final nav = context.watch<NavigationProvider>();
+
+    // On desktop, sidebar width morphs based on the active section
+    final railWidth = expanded ? nav.sidebarWidth : 64.0;
 
     final railBg = isDark ? JarvisTheme.surface : const Color(0xFFF8F8FC);
     final borderColor =
@@ -226,7 +236,7 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
           // ── Side Rail ──
           MouseRegion(
             onEnter: (_) {
-              if (!_desktopExpanded) {
+              if (!expanded) {
                 setState(() => _tabletHovered = true);
               }
             },
@@ -244,10 +254,8 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
               child: Column(
                 children: [
                   // ── Logo / brand area ──
-                  _RailHeader(
-                    expanded: expanded,
-                    onToggle: () =>
-                        setState(() => _desktopExpanded = !_desktopExpanded),
+                  _BreathingLogo(
+                    expanded: expanded && nav.sidebarWidth > 80,
                   ),
 
                   const SizedBox(height: 8),
@@ -262,8 +270,9 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                       children: List.generate(widget.navItems.length, (i) {
                         return _RailNavItem(
                           item: widget.navItems[i],
+                          tabIndex: i,
                           selected: i == widget.currentIndex,
-                          expanded: expanded,
+                          expanded: expanded && nav.sidebarWidth > 80,
                           onTap: () => widget.onIndexChanged(i),
                         );
                       }),
@@ -279,15 +288,16 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                         _RailActionButton(
                           icon: Icons.search,
                           label: 'Search',
-                          expanded: expanded,
+                          expanded: expanded && nav.sidebarWidth > 80,
+                          glowColor: nav.sectionColor,
                           onTap: widget.onSearchTap ?? () {},
                         ),
                         const SizedBox(height: 4),
                         _RailActionButton(
-                          icon:
-                              isDark ? Icons.light_mode : Icons.dark_mode,
+                          icon: isDark ? Icons.light_mode : Icons.dark_mode,
                           label: isDark ? 'Light' : 'Dark',
-                          expanded: expanded,
+                          expanded: expanded && nav.sidebarWidth > 80,
+                          glowColor: JarvisTheme.orange,
                           onTap: widget.onThemeToggle ?? () {},
                         ),
                         const SizedBox(height: 4),
@@ -295,9 +305,11 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                           builder: (context, pip, _) {
                             return _RailActionButton(
                               icon: Icons.smart_toy,
-                              label:
-                                  pip.visible ? 'Hide Office' : 'Robot Office',
-                              expanded: expanded,
+                              label: pip.visible
+                                  ? 'Hide Office'
+                                  : 'Robot Office',
+                              expanded: expanded && nav.sidebarWidth > 80,
+                              glowColor: JarvisTheme.purple,
                               onTap: () => pip.toggle(),
                             );
                           },
@@ -314,14 +326,8 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
           Expanded(
             child: Column(
               children: [
-                // Breadcrumb header
-                if (widget.title != null ||
-                    widget.currentIndex < widget.navItems.length)
-                  _ContentHeader(
-                    title: widget.title ??
-                        widget.navItems[widget.currentIndex].label,
-                    actions: widget.actions,
-                  ),
+                // Command bar replaces the old content header
+                CommandBar(onSearchTap: widget.onSearchTap),
                 // Screen content
                 Expanded(
                   child: AnimatedIndexedStack(
@@ -338,13 +344,39 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
   }
 }
 
-// ─── Rail header (logo + collapse toggle) ───────────────────────────────────
+// ── Breathing Logo (scale 0.98–1.02, 4s loop) ────────────────────────────
 
-class _RailHeader extends StatelessWidget {
-  const _RailHeader({required this.expanded, required this.onToggle});
+class _BreathingLogo extends StatefulWidget {
+  const _BreathingLogo({required this.expanded});
 
   final bool expanded;
-  final VoidCallback onToggle;
+
+  @override
+  State<_BreathingLogo> createState() => _BreathingLogoState();
+}
+
+class _BreathingLogoState extends State<_BreathingLogo>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _breathCtrl;
+  late final Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _breathCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
+    _scaleAnim = Tween<double>(begin: 0.98, end: 1.02).animate(
+      CurvedAnimation(parent: _breathCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _breathCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -353,30 +385,44 @@ class _RailHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
       child: Row(
         children: [
-          // Logo
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              'assets/logo.png',
-              width: 36,
-              height: 36,
-              fit: BoxFit.cover,
-              errorBuilder: (_, e, s) => Container(
+          // Animated logo
+          AnimatedBuilder(
+            animation: _scaleAnim,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _scaleAnim.value,
+                child: child,
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/logo.png',
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(
-                  color: JarvisTheme.accent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Center(
-                  child: Text('C', style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18,
-                  )),
+                fit: BoxFit.cover,
+                errorBuilder: (_, e, s) => Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: JarvisTheme.accent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'C',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-          if (expanded) ...[
+          if (widget.expanded) ...[
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -384,44 +430,34 @@ class _RailHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? JarvisTheme.textPrimary : const Color(0xFF1A1A2E),
+                  color: isDark
+                      ? JarvisTheme.textPrimary
+                      : const Color(0xFF1A1A2E),
                   letterSpacing: -0.3,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
-          if (expanded)
-            _HoverIconButton(
-              icon: Icons.menu_open,
-              size: 18,
-              onTap: onToggle,
-              tooltip: 'Collapse sidebar',
-            )
-          else
-            _HoverIconButton(
-              icon: Icons.menu,
-              size: 18,
-              onTap: onToggle,
-              tooltip: 'Expand sidebar',
-            ),
         ],
       ),
     );
   }
 }
 
-// ─── Rail nav item ──────────────────────────────────────────────────────────
+// ── Rail nav item (section-colored active/hover) ─────────────────────────
 
 class _RailNavItem extends StatefulWidget {
   const _RailNavItem({
     required this.item,
+    required this.tabIndex,
     required this.selected,
     required this.expanded,
     required this.onTap,
   });
 
   final NavItem item;
+  final int tabIndex;
   final bool selected;
   final bool expanded;
   final VoidCallback onTap;
@@ -436,21 +472,22 @@ class _RailNavItemState extends State<_RailNavItem> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? JarvisTheme.accent : const Color(0xFF0077CC);
+    final sectionColor = JarvisTheme.sectionColorFor(widget.tabIndex);
     final selected = widget.selected;
 
+    // Active: Neon pill at 20% opacity
     final bgColor = selected
-        ? accent.withValues(alpha: 0.12)
+        ? sectionColor.withValues(alpha: 0.20)
         : _hovered
-            ? (isDark ? JarvisTheme.surfaceHover : const Color(0xFFF0F0F4))
+            ? sectionColor.withValues(alpha: 0.08)
             : Colors.transparent;
 
     final iconColor = selected
-        ? accent
+        ? sectionColor
         : (isDark ? JarvisTheme.textSecondary : const Color(0xFF6B6B80));
 
     final labelColor = selected
-        ? accent
+        ? sectionColor
         : (isDark ? JarvisTheme.textPrimary : const Color(0xFF1A1A2E));
 
     return Padding(
@@ -460,57 +497,83 @@ class _RailNavItemState extends State<_RailNavItem> {
         onExit: (_) => setState(() => _hovered = false),
         child: GestureDetector(
           onTap: widget.onTap,
-          child: AnimatedContainer(
+          child: AnimatedScale(
+            scale: _hovered && !selected ? 1.05 : 1.0,
             duration: JarvisTheme.animDurationFast,
-            curve: JarvisTheme.animCurve,
-            padding: EdgeInsets.symmetric(
-              horizontal: widget.expanded ? 12 : 0,
-              vertical: 10,
-            ),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              mainAxisAlignment: widget.expanded
-                  ? MainAxisAlignment.start
-                  : MainAxisAlignment.center,
-              children: [
-                AnimatedScale(
-                  scale: _hovered && !selected ? 1.1 : 1.0,
-                  duration: JarvisTheme.animDurationFast,
-                  child: Icon(
+            child: AnimatedContainer(
+              duration: JarvisTheme.animDurationFast,
+              curve: JarvisTheme.animCurve,
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.expanded ? 12 : 0,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: _hovered && !selected
+                    ? [
+                        BoxShadow(
+                          color: sectionColor.withValues(alpha: 0.15),
+                          blurRadius: 12,
+                          spreadRadius: -2,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                mainAxisAlignment: widget.expanded
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  // Thin vertical accent line on left when selected
+                  if (selected)
+                    Container(
+                      width: 3,
+                      height: 22,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: sectionColor,
+                        borderRadius: BorderRadius.circular(2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: sectionColor.withValues(alpha: 0.4),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+                  Icon(
                     selected ? widget.item.selectedIcon : widget.item.icon,
                     size: 22,
                     color: iconColor,
                   ),
-                ),
-                if (widget.expanded) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      widget.item.label,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w500,
-                        color: labelColor,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (widget.item.shortcut != null)
-                    Text(
-                      widget.item.shortcut!,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: JarvisTheme.textTertiary,
-                        fontFamily: 'monospace',
+                  if (widget.expanded) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.item.label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                              selected ? FontWeight.w600 : FontWeight.w500,
+                          color: labelColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (widget.item.shortcut != null)
+                      Text(
+                        widget.item.shortcut!,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: JarvisTheme.textTertiary,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -519,7 +582,7 @@ class _RailNavItemState extends State<_RailNavItem> {
   }
 }
 
-// ─── Rail bottom action button ──────────────────────────────────────────────
+// ── Rail bottom action button (neon glow styling) ────────────────────────
 
 class _RailActionButton extends StatefulWidget {
   const _RailActionButton({
@@ -527,12 +590,14 @@ class _RailActionButton extends StatefulWidget {
     required this.label,
     required this.expanded,
     required this.onTap,
+    this.glowColor,
   });
 
   final IconData icon;
   final String label;
   final bool expanded;
   final VoidCallback onTap;
+  final Color? glowColor;
 
   @override
   State<_RailActionButton> createState() => _RailActionButtonState();
@@ -544,10 +609,11 @@ class _RailActionButtonState extends State<_RailActionButton> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hoverBg =
-        isDark ? JarvisTheme.surfaceHover : const Color(0xFFF0F0F4);
-    final iconColor =
-        isDark ? JarvisTheme.textSecondary : const Color(0xFF6B6B80);
+    final glow = widget.glowColor ?? JarvisTheme.accent;
+    final hoverBg = glow.withValues(alpha: 0.10);
+    final iconColor = _hovered
+        ? glow
+        : (isDark ? JarvisTheme.textSecondary : const Color(0xFF6B6B80));
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -564,6 +630,15 @@ class _RailActionButtonState extends State<_RailActionButton> {
           decoration: BoxDecoration(
             color: _hovered ? hoverBg : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: glow.withValues(alpha: 0.20),
+                      blurRadius: 10,
+                      spreadRadius: -2,
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             mainAxisAlignment: widget.expanded
@@ -586,97 +661,7 @@ class _RailActionButtonState extends State<_RailActionButton> {
   }
 }
 
-// ─── Content header / breadcrumb ────────────────────────────────────────────
-
-class _ContentHeader extends StatelessWidget {
-  const _ContentHeader({required this.title, this.actions});
-
-  final String title;
-  final List<Widget>? actions;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: isDark ? JarvisTheme.surface : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? JarvisTheme.border : const Color(0xFFE0E0E8),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? JarvisTheme.textPrimary
-                  : const Color(0xFF1A1A2E),
-            ),
-          ),
-          const Spacer(),
-          if (actions != null) ...actions!,
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Hover icon button helper ───────────────────────────────────────────────
-
-class _HoverIconButton extends StatefulWidget {
-  const _HoverIconButton({
-    required this.icon,
-    required this.size,
-    required this.onTap,
-    this.tooltip,
-  });
-
-  final IconData icon;
-  final double size;
-  final VoidCallback onTap;
-  final String? tooltip;
-
-  @override
-  State<_HoverIconButton> createState() => _HoverIconButtonState();
-}
-
-class _HoverIconButtonState extends State<_HoverIconButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = _hovered
-        ? (isDark ? JarvisTheme.textPrimary : const Color(0xFF1A1A2E))
-        : (isDark ? JarvisTheme.textTertiary : const Color(0xFF9999AA));
-
-    Widget icon = MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Icon(widget.icon, size: widget.size, color: color),
-        ),
-      ),
-    );
-
-    if (widget.tooltip != null) {
-      icon = Tooltip(message: widget.tooltip!, child: icon);
-    }
-    return icon;
-  }
-}
-
-// ─── Bottom bar action (reused from original main_shell for mobile) ─────────
+// ── Bottom bar action (reused for mobile) ────────────────────────────────
 
 class _BottomBarAction extends StatelessWidget {
   const _BottomBarAction({
