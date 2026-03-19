@@ -146,11 +146,11 @@ class _IdentityScreenState extends State<IdentityScreen> {
       );
     }
 
-    final isFrozen = _state!['frozen'] as bool? ?? false;
-    final energy = _state!['energy']?.toString() ?? '0';
-    final interactions = _state!['interactions']?.toString() ?? '0';
-    final memories = _state!['memories']?.toString() ?? '0';
-    final characterStrength = _state!['character_strength']?.toString() ?? '0';
+    final isFrozen = (_state!['is_frozen'] ?? _state!['frozen']) as bool? ?? false;
+    final energy = (_state!['somatic_energy'] ?? _state!['energy'] ?? 0).toString();
+    final interactions = (_state!['total_interactions'] ?? _state!['interactions'] ?? 0).toString();
+    final memories = (_state!['vector_store_count'] ?? _state!['memories'] ?? 0).toString();
+    final characterStrength = (_state!['character_strength'] ?? 0).toString();
     final anchors = _state!['genesis_anchors'] as List<dynamic>? ?? [];
 
     return RefreshIndicator(
