@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
+import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/providers/admin_provider.dart';
 import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
@@ -66,6 +67,89 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
     _allowedToolsCtrl.addListener(_markDirty);
     _blockedToolsCtrl.addListener(_markDirty);
     _sandboxTimeoutCtrl.addListener(_markDirty);
+  }
+
+  Future<void> _showModelPicker(BuildContext context) async {
+    // Fetch available models from backend
+    List<String> models = [];
+    try {
+      final api = context.read<ConnectionProvider>().api;
+      final data = await api.get('models/available');
+      final raw = data['models'];
+      if (raw is List) {
+        models = raw.map((m) => m.toString()).toList()..sort();
+      }
+    } catch (_) {}
+
+    if (!mounted || models.isEmpty) return;
+
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        String search = '';
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            final filtered = search.isEmpty
+                ? models
+                : models.where((m) => m.toLowerCase().contains(search.toLowerCase())).toList();
+            return AlertDialog(
+              title: const Text('Select Model'),
+              content: SizedBox(
+                width: 400,
+                height: 500,
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Search models...',
+                        prefixIcon: Icon(Icons.search, size: 20),
+                        isDense: true,
+                      ),
+                      onChanged: (v) => setState(() => search = v),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (ctx, i) {
+                          final name = filtered[i];
+                          final isCurrent = name == _modelCtrl.text;
+                          return ListTile(
+                            dense: true,
+                            selected: isCurrent,
+                            selectedColor: JarvisTheme.sectionAdmin,
+                            leading: Icon(
+                              isCurrent ? Icons.check_circle : Icons.circle_outlined,
+                              size: 18,
+                              color: isCurrent ? JarvisTheme.sectionAdmin : null,
+                            ),
+                            title: Text(name, style: const TextStyle(fontSize: 13)),
+                            onTap: () => Navigator.pop(ctx, name),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() {
+        _modelCtrl.text = selected;
+        _isDirty = true;
+      });
+    }
   }
 
   void _markDirty() {
@@ -384,12 +468,19 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Preferred Model
-                TextFormField(
-                  controller: _modelCtrl,
-                  decoration: InputDecoration(
-                    labelText: l.preferredModel,
-                    prefixIcon: const Icon(Icons.memory_outlined),
+                // Preferred Model (tap to pick from available)
+                GestureDetector(
+                  onTap: () => _showModelPicker(context),
+                  child: AbsorbPointer(
+                    child: TextFormField(
+                      controller: _modelCtrl,
+                      decoration: InputDecoration(
+                        labelText: l.preferredModel,
+                        prefixIcon: const Icon(Icons.memory_outlined),
+                        suffixIcon: const Icon(Icons.arrow_drop_down),
+                        hintText: 'Tap to select...',
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
