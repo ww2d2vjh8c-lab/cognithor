@@ -2099,7 +2099,7 @@ class OfficePainter extends CustomPainter {
     final mx = s.width * 0.74;
     final my = s.height * 0.22;
     final mw = s.width * 0.12;
-    final mh = s.height * 0.16;
+    final mh = s.height * 0.20;
 
     // Monitor frame (dark rectangle with rounded corners)
     final frame = RRect.fromRectAndRadius(
@@ -2159,45 +2159,38 @@ class OfficePainter extends CustomPainter {
       Offset(mx + screenInset + 4, my + screenInset + 2),
     );
 
-    // CPU bar
+    // Bar layout — 4 bars: CPU, GPU, RAM, LOAD
     final barX = mx + screenInset + 4;
     final barW = mw - screenInset * 2 - 8;
-    final barH = mh * 0.12;
-    final cpuBarY = my + mh * 0.30;
+    final barH = mh * 0.09;
+    final barSpacing = mh * 0.22;
+    final firstBarY = my + mh * 0.25;
 
-    _drawMonitorLabel(canvas, 'CPU', Offset(barX, cpuBarY - mh * 0.02), mh * 0.09);
-    _drawMonitorBar(
-      canvas, barX, cpuBarY + mh * 0.08, barW, barH, cpuUsage,
-      cpuUsage > 0.8
-          ? JarvisTheme.red
-          : cpuUsage > 0.5
-              ? JarvisTheme.orange
-              : JarvisTheme.sectionDashboard,
-    );
+    // GPU usage = approximate from systemLoad (no separate GPU metric yet)
+    final gpuUsage = (systemLoad * 1.2).clamp(0.0, 1.0);
 
-    // MEM bar
-    final memBarY = cpuBarY + mh * 0.30;
-    _drawMonitorLabel(canvas, 'MEM', Offset(barX, memBarY - mh * 0.02), mh * 0.09);
-    _drawMonitorBar(
-      canvas, barX, memBarY + mh * 0.08, barW, barH, memoryUsage,
-      memoryUsage > 0.8
-          ? JarvisTheme.red
-          : memoryUsage > 0.5
-              ? JarvisTheme.orange
-              : JarvisTheme.accent,
-    );
+    // CPU
+    _drawMonitorLabel(canvas, 'CPU', Offset(barX, firstBarY), mh * 0.07);
+    _drawMonitorBar(canvas, barX, firstBarY + mh * 0.07, barW, barH, cpuUsage,
+        cpuUsage > 0.8 ? JarvisTheme.red : cpuUsage > 0.5 ? JarvisTheme.orange : JarvisTheme.sectionDashboard);
 
-    // LOAD bar
-    final loadBarY = memBarY + mh * 0.30;
-    _drawMonitorLabel(canvas, 'LOAD', Offset(barX, loadBarY - mh * 0.02), mh * 0.09);
-    _drawMonitorBar(
-      canvas, barX, loadBarY + mh * 0.08, barW, barH, systemLoad,
-      systemLoad > 0.8
-          ? JarvisTheme.red
-          : systemLoad > 0.5
-              ? JarvisTheme.orange
-              : JarvisTheme.gold,
-    );
+    // GPU
+    final gpuBarY = firstBarY + barSpacing;
+    _drawMonitorLabel(canvas, 'GPU', Offset(barX, gpuBarY), mh * 0.07);
+    _drawMonitorBar(canvas, barX, gpuBarY + mh * 0.07, barW, barH, gpuUsage,
+        gpuUsage > 0.8 ? JarvisTheme.red : gpuUsage > 0.5 ? JarvisTheme.orange : JarvisTheme.accent);
+
+    // RAM
+    final ramBarY = gpuBarY + barSpacing;
+    _drawMonitorLabel(canvas, 'RAM', Offset(barX, ramBarY), mh * 0.07);
+    _drawMonitorBar(canvas, barX, ramBarY + mh * 0.07, barW, barH, memoryUsage,
+        memoryUsage > 0.8 ? JarvisTheme.red : memoryUsage > 0.5 ? JarvisTheme.orange : JarvisTheme.blue);
+
+    // LOAD
+    final loadBarY = ramBarY + barSpacing;
+    _drawMonitorLabel(canvas, 'LOAD', Offset(barX, loadBarY), mh * 0.07);
+    _drawMonitorBar(canvas, barX, loadBarY + mh * 0.07, barW, barH, systemLoad,
+        systemLoad > 0.8 ? JarvisTheme.red : systemLoad > 0.5 ? JarvisTheme.orange : JarvisTheme.gold);
 
     // Monitor stand (small trapezoid below the monitor)
     final standW = mw * 0.25;

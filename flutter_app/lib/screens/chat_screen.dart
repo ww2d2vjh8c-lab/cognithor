@@ -127,14 +127,6 @@ class _ChatScreenState extends State<ChatScreen> {
                         debugPrint('[Chat] Consumer2 rebuild: messages=${chat.messages.length} streaming=${chat.isStreaming} id=${identityHashCode(chat)}');
                         _scrollToBottom();
 
-                        if (chat.messages.isEmpty && !chat.isStreaming) {
-                          return JarvisEmptyState(
-                            icon: Icons.chat_bubble_outline,
-                            title: l.startConversation,
-                            subtitle: l.typeMessage,
-                          );
-                        }
-
                         if (hackerMode.enabled) {
                           return HackerChatView(
                             messages: chat.messages,
@@ -142,6 +134,14 @@ class _ChatScreenState extends State<ChatScreen> {
                             isStreaming: chat.isStreaming,
                             activeTool: chat.activeTool,
                             scrollController: _scrollController,
+                          );
+                        }
+
+                        if (chat.messages.isEmpty && !chat.isStreaming) {
+                          return JarvisEmptyState(
+                            icon: Icons.chat_bubble_outline,
+                            title: l.startConversation,
+                            subtitle: l.typeMessage,
                           );
                         }
 
