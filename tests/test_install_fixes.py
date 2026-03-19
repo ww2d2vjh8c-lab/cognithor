@@ -439,6 +439,10 @@ class TestFix7DynamicVersion:
 # =========================================================================
 
 
+@pytest.mark.skipif(
+    not (REPO / "ui" / "vite.config.js").exists(),
+    reason="React UI removed — Flutter is the primary UI since v0.42.0",
+)
 class TestFix8VitePythonFallback:
     """Vite launcher must try python3 if python fails (and vice versa)."""
 
@@ -718,6 +722,10 @@ class TestSetESafety:
 # =========================================================================
 
 
+@pytest.mark.skipif(
+    not (REPO / "ui" / "vite.config.js").exists(),
+    reason="React UI removed — Flutter is the primary UI since v0.42.0",
+)
 class TestViteVenvPython:
     """Vite must prefer venv Python over system Python."""
 
