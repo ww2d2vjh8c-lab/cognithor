@@ -229,12 +229,55 @@ def _register_system_routes(
     @app.get("/api/v1/agents/{agent_name}", dependencies=deps)
     async def get_agent(agent_name: str) -> dict[str, Any]:
         """Get a single agent by name."""
+        # Try agents.yaml first
         agents_path = config_manager.config.jarvis_home / "agents.yaml"
         if agents_path.exists():
             raw = yaml.safe_load(agents_path.read_text(encoding="utf-8")) or {}
             for a in raw.get("agents", []):
                 if a.get("name") == agent_name:
                     return a
+
+        # Fallback: check the live agent router
+        router = getattr(gateway, "_agent_router", None) if gateway else None
+        if router:
+            agent_obj = getattr(router, "get_agent", lambda n: None)(agent_name)
+            if agent_obj:
+                return {
+                    "name": getattr(agent_obj, "name", agent_name),
+                    "display_name": getattr(agent_obj, "display_name", agent_name.title()),
+                    "description": getattr(agent_obj, "description", ""),
+                    "system_prompt": getattr(agent_obj, "system_prompt", ""),
+                    "language": getattr(agent_obj, "language", "de"),
+                    "preferred_model": getattr(agent_obj, "preferred_model", ""),
+                    "temperature": getattr(agent_obj, "temperature", 0.7),
+                    "priority": getattr(agent_obj, "priority", 0),
+                    "enabled": getattr(agent_obj, "enabled", True),
+                    "allowed_tools": getattr(agent_obj, "allowed_tools", None) or [],
+                    "blocked_tools": getattr(agent_obj, "blocked_tools", []),
+                    "can_delegate_to": getattr(agent_obj, "can_delegate_to", []),
+                    "sandbox_timeout": getattr(agent_obj, "sandbox_timeout", 30),
+                    "sandbox_network": getattr(agent_obj, "sandbox_network", "allow"),
+                }
+
+        # Last fallback for default "jarvis"
+        if agent_name == "jarvis":
+            return {
+                "name": "jarvis",
+                "display_name": "Jarvis",
+                "description": "Default Agent",
+                "system_prompt": "",
+                "language": "de",
+                "preferred_model": "",
+                "temperature": 0.7,
+                "priority": 100,
+                "enabled": True,
+                "allowed_tools": [],
+                "blocked_tools": [],
+                "can_delegate_to": [],
+                "sandbox_timeout": 30,
+                "sandbox_network": "allow",
+            }
+
         raise HTTPException(404, f"Agent '{agent_name}' not found")
 
     @app.post("/api/v1/agents", dependencies=deps)
