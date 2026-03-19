@@ -12,9 +12,9 @@ class MemoryPage extends StatelessWidget {
     return Consumer<ConfigProvider>(
       builder: (context, cfg, _) {
         final mem = cfg.cfg['memory'] as Map<String, dynamic>? ?? {};
-        final wVector = (mem['weight_vector'] as num?)?.toDouble() ?? 0.4;
+        final wVector = (mem['weight_vector'] as num?)?.toDouble() ?? 0.5;
         final wBm25 = (mem['weight_bm25'] as num?)?.toDouble() ?? 0.3;
-        final wGraph = (mem['weight_graph'] as num?)?.toDouble() ?? 0.3;
+        final wGraph = (mem['weight_graph'] as num?)?.toDouble() ?? 0.2;
         final sum = wVector + wBm25 + wGraph;
         final sumColor = (sum - 1.0).abs() < 0.02
             ? JarvisTheme.green
@@ -27,19 +27,19 @@ class MemoryPage extends StatelessWidget {
           children: [
             JarvisNumberField(
               label: 'Chunk Size (tokens)',
-              value: (mem['chunk_size_tokens'] as num?) ?? 512,
+              value: (mem['chunk_size_tokens'] as num?) ?? 400,
               onChanged: (v) => cfg.set('memory.chunk_size_tokens', v),
               min: 64,
             ),
             JarvisNumberField(
               label: 'Chunk Overlap (tokens)',
-              value: (mem['chunk_overlap_tokens'] as num?) ?? 64,
+              value: (mem['chunk_overlap_tokens'] as num?) ?? 80,
               onChanged: (v) => cfg.set('memory.chunk_overlap_tokens', v),
               min: 0,
             ),
             JarvisNumberField(
               label: 'Search Top K',
-              value: (mem['search_top_k'] as num?) ?? 10,
+              value: (mem['search_top_k'] as num?) ?? 6,
               onChanged: (v) => cfg.set('memory.search_top_k', v),
               min: 1,
               max: 50,
@@ -76,25 +76,27 @@ class MemoryPage extends StatelessWidget {
             const Divider(height: 32),
             JarvisNumberField(
               label: 'Recency Half-Life (days)',
-              value: (mem['recency_half_life_days'] as num?) ?? 7,
+              value: (mem['recency_half_life_days'] as num?) ?? 30,
               onChanged: (v) => cfg.set('memory.recency_half_life_days', v),
               min: 1,
             ),
-            JarvisNumberField(
+            JarvisSliderField(
               label: 'Compaction Threshold',
-              value: (mem['compaction_threshold'] as num?) ?? 1000,
+              value: (mem['compaction_threshold'] as num?)?.toDouble() ?? 0.8,
               onChanged: (v) => cfg.set('memory.compaction_threshold', v),
-              min: 100,
+              min: 0.5,
+              max: 0.95,
+              step: 0.05,
             ),
             JarvisNumberField(
               label: 'Compaction Keep Last N',
-              value: (mem['compaction_keep_last_n'] as num?) ?? 100,
+              value: (mem['compaction_keep_last_n'] as num?) ?? 8,
               onChanged: (v) => cfg.set('memory.compaction_keep_last_n', v),
-              min: 10,
+              min: 2,
             ),
             JarvisNumberField(
               label: 'Episodic Retention (days)',
-              value: (mem['episodic_retention_days'] as num?) ?? 30,
+              value: (mem['episodic_retention_days'] as num?) ?? 365,
               onChanged: (v) => cfg.set('memory.episodic_retention_days', v),
               min: 1,
             ),

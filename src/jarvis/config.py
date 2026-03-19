@@ -1389,7 +1389,7 @@ class ChannelConfig(BaseModel):
     slack_enabled: bool = False
     slack_default_channel: str = ""
     discord_enabled: bool = False
-    discord_channel_id: int = 0
+    discord_channel_id: str = ""
 
     # Erweiterte Messaging-Kanäle
     whatsapp_enabled: bool = False
@@ -2317,7 +2317,7 @@ channels:
   slack_enabled: false
   slack_default_channel: ""
   discord_enabled: false
-  discord_channel_id: 0
+  discord_channel_id: ""
   whatsapp_enabled: false
   whatsapp_default_chat: ""
   signal_enabled: false

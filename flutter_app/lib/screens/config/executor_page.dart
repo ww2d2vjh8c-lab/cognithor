@@ -23,7 +23,7 @@ class ExecutorPage extends StatelessWidget {
             ),
             JarvisNumberField(
               label: 'Max Output Chars',
-              value: (ex['max_output_chars'] as num?) ?? 50000,
+              value: (ex['max_output_chars'] as num?) ?? 10000,
               onChanged: (v) => cfg.set('executor.max_output_chars', v),
               min: 1000,
             ),
@@ -44,7 +44,7 @@ class ExecutorPage extends StatelessWidget {
             ),
             JarvisNumberField(
               label: 'Max Parallel Tools',
-              value: (ex['max_parallel_tools'] as num?) ?? 3,
+              value: (ex['max_parallel_tools'] as num?) ?? 4,
               onChanged: (v) => cfg.set('executor.max_parallel_tools', v),
               min: 1,
               max: 20,
@@ -55,34 +55,34 @@ class ExecutorPage extends StatelessWidget {
             const SizedBox(height: 12),
             JarvisNumberField(
               label: 'Image Analysis Timeout',
-              value: (ex['media_analyze_image_timeout'] as num?) ?? 30,
+              value: (ex['media_analyze_image_timeout'] as num?) ?? 180,
               onChanged: (v) =>
                   cfg.set('executor.media_analyze_image_timeout', v),
               min: 5,
             ),
             JarvisNumberField(
               label: 'Audio Transcription Timeout',
-              value: (ex['media_transcribe_audio_timeout'] as num?) ?? 60,
+              value: (ex['media_transcribe_audio_timeout'] as num?) ?? 120,
               onChanged: (v) =>
                   cfg.set('executor.media_transcribe_audio_timeout', v),
               min: 5,
             ),
             JarvisNumberField(
               label: 'Text Extraction Timeout',
-              value: (ex['media_extract_text_timeout'] as num?) ?? 30,
+              value: (ex['media_extract_text_timeout'] as num?) ?? 120,
               onChanged: (v) =>
                   cfg.set('executor.media_extract_text_timeout', v),
               min: 5,
             ),
             JarvisNumberField(
               label: 'TTS Timeout',
-              value: (ex['media_tts_timeout'] as num?) ?? 15,
+              value: (ex['media_tts_timeout'] as num?) ?? 120,
               onChanged: (v) => cfg.set('executor.media_tts_timeout', v),
               min: 5,
             ),
             JarvisNumberField(
               label: 'Run Python Timeout',
-              value: (ex['run_python_timeout'] as num?) ?? 30,
+              value: (ex['run_python_timeout'] as num?) ?? 120,
               onChanged: (v) => cfg.set('executor.run_python_timeout', v),
               min: 5,
             ),

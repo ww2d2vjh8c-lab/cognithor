@@ -206,7 +206,7 @@ class ApiClient {
   Future<Map<String, dynamic>> getModelStats() => get('models/stats');
   Future<Map<String, dynamic>> getSystemStatus() => get('status');
   Future<Map<String, dynamic>> getSystemOverview() => get('overview');
-  Future<Map<String, dynamic>> shutdownServer() => post('shutdown', {});
+  Future<Map<String, dynamic>> shutdownServer() => post('system/stop', {});
 
   // ---------------------------------------------------------------------------
   // Skills & Marketplace
@@ -372,11 +372,9 @@ class ApiClient {
   Future<Map<String, dynamic>> patchConfigSection(
           String section, Map<String, dynamic> body) =>
       patch('config/$section', body);
-  Future<Map<String, dynamic>> exportConfig() => get('config/export');
-  Future<Map<String, dynamic>> importConfig(Map<String, dynamic> body) =>
-      post('config/import', body);
-  Future<Map<String, dynamic>> factoryReset() =>
-      post('config/factory-reset', {});
+  // exportConfig() and importConfig() removed — no backend endpoints exist.
+  // Config export/import is handled client-side in system_page.dart.
+  // factoryReset() removed — no backend endpoint exists yet.
 
   // ---------------------------------------------------------------------------
   // Prompts
@@ -449,7 +447,8 @@ class ApiClient {
   // System control
   // ---------------------------------------------------------------------------
 
-  Future<Map<String, dynamic>> restartServer() => post('system/restart', {});
+  // restartServer() removed — system/restart endpoint does not exist.
+  // Use shutdownServer() (system/stop) and restart manually.
 
   // ---------------------------------------------------------------------------
   // TTS

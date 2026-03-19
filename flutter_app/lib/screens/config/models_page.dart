@@ -10,6 +10,7 @@ class ModelsPage extends StatelessWidget {
     ('planner', 'Planner', Icons.architecture),
     ('executor', 'Executor', Icons.play_arrow),
     ('coder', 'Coder', Icons.code),
+    ('coder_fast', 'Coder (Fast)', Icons.flash_on),
     ('embedding', 'Embedding', Icons.scatter_plot),
   ];
 
@@ -30,10 +31,9 @@ class ModelsPage extends StatelessWidget {
               value: (cfg.cfg['vision_model'] ?? '').toString(),
               onChanged: (v) => cfg.set('vision_model', v),
             ),
-            JarvisSelectField.fromStrings(
-              label: 'Vision Detail',
-              value: (cfg.cfg['vision_model_detail'] ?? 'auto').toString(),
-              options: const ['auto', 'low', 'high'],
+            JarvisTextField(
+              label: 'Vision Detail Model',
+              value: (cfg.cfg['vision_model_detail'] ?? 'qwen3-vl:32b').toString(),
               onChanged: (v) => cfg.set('vision_model_detail', v),
             ),
             const SizedBox(height: 8),

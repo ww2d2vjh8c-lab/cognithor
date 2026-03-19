@@ -85,13 +85,13 @@ class WebPage extends StatelessWidget {
               children: [
                 JarvisNumberField(
                   label: 'Max Fetch Bytes',
-                  value: (web['max_fetch_bytes'] as num?) ?? 5000000,
+                  value: (web['max_fetch_bytes'] as num?) ?? 500000,
                   onChanged: (v) => cfg.set('web.max_fetch_bytes', v),
                   min: 10000,
                 ),
                 JarvisNumberField(
                   label: 'Max Text Chars',
-                  value: (web['max_text_chars'] as num?) ?? 50000,
+                  value: (web['max_text_chars'] as num?) ?? 20000,
                   onChanged: (v) => cfg.set('web.max_text_chars', v),
                   min: 1000,
                 ),
@@ -103,7 +103,7 @@ class WebPage extends StatelessWidget {
                 ),
                 JarvisNumberField(
                   label: 'Search and Read Max Chars',
-                  value: (web['search_and_read_max_chars'] as num?) ?? 80000,
+                  value: (web['search_and_read_max_chars'] as num?) ?? 5000,
                   onChanged: (v) => cfg.set('web.search_and_read_max_chars', v),
                   min: 1000,
                 ),
@@ -160,7 +160,7 @@ class WebPage extends StatelessWidget {
               children: [
                 JarvisNumberField(
                   label: 'Max Body Bytes',
-                  value: (web['http_request_max_body_bytes'] as num?) ?? 10000000,
+                  value: (web['http_request_max_body_bytes'] as num?) ?? 1048576,
                   onChanged: (v) => cfg.set('web.http_request_max_body_bytes', v),
                   min: 1000,
                 ),

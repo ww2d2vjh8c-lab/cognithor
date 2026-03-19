@@ -27,10 +27,10 @@ class PlannerPage extends StatelessWidget {
               children: [
                 JarvisNumberField(
                   label: 'Max Iterations',
-                  value: (planner['max_iterations'] as num?) ?? 5,
+                  value: (planner['max_iterations'] as num?) ?? 25,
                   onChanged: (v) => cfg.set('planner.max_iterations', v),
                   min: 1,
-                  max: 20,
+                  max: 50,
                 ),
                 JarvisNumberField(
                   label: 'Escalation After',
@@ -49,7 +49,7 @@ class PlannerPage extends StatelessWidget {
                 JarvisNumberField(
                   label: 'Response Token Budget',
                   value:
-                      (planner['response_token_budget'] as num?) ?? 4096,
+                      (planner['response_token_budget'] as num?) ?? 4000,
                   onChanged: (v) =>
                       cfg.set('planner.response_token_budget', v),
                   min: 256,

@@ -133,6 +133,8 @@ _EDITABLE_TOP_LEVEL = frozenset(
         "bedrock_api_key",
         "huggingface_api_key",
         "moonshot_api_key",
+        "lmstudio_api_key",
+        "lmstudio_base_url",
     }
 )
 

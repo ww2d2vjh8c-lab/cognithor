@@ -23,6 +23,7 @@ class ProvidersPage extends StatelessWidget {
     ('bedrock', 'AWS Bedrock', Icons.cloud),
     ('huggingface', 'Hugging Face', Icons.face),
     ('moonshot', 'Moonshot', Icons.nightlight),
+    ('lmstudio', 'LM Studio', Icons.laptop),
   ];
 
   @override
@@ -198,12 +199,14 @@ class _ProviderCard extends StatelessWidget {
         isPassword: true,
         isSecret: true,
       ),
-      if (key == 'openai')
+      if (key == 'openai' || key == 'lmstudio')
         JarvisTextField(
           label: 'Base URL (optional)',
           value: (cfg.cfg[baseUrl] ?? '').toString(),
           onChanged: (v) => cfg.set(baseUrl, v),
-          placeholder: 'https://api.openai.com/v1',
+          placeholder: key == 'lmstudio'
+              ? 'http://localhost:1234/v1'
+              : 'https://api.openai.com/v1',
         ),
       if (key == 'anthropic')
         JarvisNumberField(

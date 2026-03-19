@@ -23,21 +23,43 @@ class SystemConfigPage extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Restart
+            // Stop (manual restart required)
             _ActionCard(
-              icon: Icons.restart_alt,
+              icon: Icons.stop_circle_outlined,
               title: l.restartBackend,
-              description: 'Restart the Jarvis backend process',
-              buttonLabel: 'Restart',
+              description: 'Stop the Jarvis backend. You will need to restart it manually.',
+              buttonLabel: 'Stop',
               onPressed: () async {
                 final api = context.read<ConnectionProvider>().api;
-                await api.restartServer();
-                if (context.mounted) {
-                  JarvisToast.show(
-                    context,
-                    l.restartInitiated,
-                    type: ToastType.success,
-                  );
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Stop Backend'),
+                    content: const Text(
+                      'This will stop the Jarvis backend process. '
+                      'You will need to restart it manually from the command line.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: Text(l.cancel),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: const Text('Stop'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  await api.shutdownServer();
+                  if (context.mounted) {
+                    JarvisToast.show(
+                      context,
+                      'Backend stopped. Please restart manually.',
+                      type: ToastType.warning,
+                    );
+                  }
                 }
               },
             ),
@@ -99,7 +121,7 @@ class SystemConfigPage extends StatelessWidget {
               },
             ),
             const SizedBox(height: 12),
-            // Factory Reset
+            // Factory Reset (not yet implemented)
             _ActionCard(
               icon: Icons.warning_amber,
               title: l.factoryReset,
@@ -107,37 +129,22 @@ class SystemConfigPage extends StatelessWidget {
               buttonLabel: 'Reset',
               isDanger: true,
               onPressed: () async {
-                final confirmed = await showDialog<bool>(
+                await showDialog<void>(
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: Text(l.factoryReset),
-                    content: Text(l.factoryResetConfirmMsg),
+                    content: const Text(
+                      'Factory reset is not yet implemented on the backend. '
+                      'To reset manually, delete your config.yaml and restart Jarvis.',
+                    ),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: Text(l.cancel),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: JarvisTheme.red,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Reset'),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('OK'),
                       ),
                     ],
                   ),
                 );
-                if (confirmed == true) {
-                  await cfg.factoryReset();
-                  if (context.mounted) {
-                    JarvisToast.show(
-                      context,
-                      l.factoryResetComplete,
-                      type: ToastType.warning,
-                    );
-                  }
-                }
               },
             ),
             const SizedBox(height: 24),
