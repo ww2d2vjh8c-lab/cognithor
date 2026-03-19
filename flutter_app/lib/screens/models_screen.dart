@@ -10,7 +10,6 @@ import 'package:jarvis_ui/widgets/neon_card.dart';
 import 'package:jarvis_ui/widgets/jarvis_empty_state.dart';
 import 'package:jarvis_ui/widgets/jarvis_section.dart';
 import 'package:jarvis_ui/widgets/jarvis_stat.dart';
-import 'package:jarvis_ui/widgets/jarvis_status_badge.dart';
 
 /// Safely convert a model config value to Map.
 /// API may return either a Map or a plain String (just the model name).
@@ -120,21 +119,29 @@ class _ModelsScreenState extends State<ModelsScreen> {
             label: l.plannerModel,
             icon: Icons.architecture,
             model: planner,
+            configKey: 'planner',
+            availableModels: available,
           ),
           _ConfiguredModelCard(
             label: l.executorModel,
             icon: Icons.play_arrow,
             model: executor,
+            configKey: 'executor',
+            availableModels: available,
           ),
           _ConfiguredModelCard(
             label: l.coderModel,
             icon: Icons.code,
             model: coder,
+            configKey: 'coder',
+            availableModels: available,
           ),
           _ConfiguredModelCard(
             label: l.embeddingModel,
             icon: Icons.text_fields,
             model: embedding,
+            configKey: 'embedding',
+            availableModels: available,
           ),
 
           // Available models
@@ -237,37 +244,135 @@ class _ConfiguredModelCard extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.model,
+    required this.configKey,
+    required this.availableModels,
   });
 
   final String label;
   final IconData icon;
   final Map<String, dynamic> model;
+  final String configKey; // "planner", "executor", "coder", "embedding"
+  final List<dynamic> availableModels;
+
+  void _showModelPicker(BuildContext context) {
+    final currentName = model['name']?.toString() ?? '';
+    final models = availableModels
+        .map((m) => m is String ? m : m.toString())
+        .toList()
+      ..sort();
+
+    showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        String? search;
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            final filtered = search == null || search!.isEmpty
+                ? models
+                : models.where((m) => m.toLowerCase().contains(search!.toLowerCase())).toList();
+
+            return AlertDialog(
+              title: Text('Select $label'),
+              content: SizedBox(
+                width: 400,
+                height: 500,
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Search models...',
+                        prefixIcon: Icon(Icons.search, size: 20),
+                        isDense: true,
+                      ),
+                      onChanged: (v) => setState(() => search = v),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (ctx, i) {
+                          final name = filtered[i];
+                          final isSelected = name == currentName;
+                          return ListTile(
+                            dense: true,
+                            selected: isSelected,
+                            selectedColor: JarvisTheme.sectionAdmin,
+                            leading: Icon(
+                              isSelected ? Icons.check_circle : Icons.circle_outlined,
+                              size: 18,
+                              color: isSelected ? JarvisTheme.sectionAdmin : null,
+                            ),
+                            title: Text(name, style: const TextStyle(fontSize: 13)),
+                            onTap: () => Navigator.pop(ctx, name),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((selected) {
+      if (selected != null && selected != currentName) {
+        _saveModelSelection(context, selected);
+      }
+    });
+  }
+
+  void _saveModelSelection(BuildContext context, String modelName) {
+    final cfg = context.read<ConfigProvider>();
+    cfg.set('models.$configKey.name', modelName);
+    cfg.save().then((ok) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok
+                ? '$label changed to $modelName'
+                : 'Failed to save — check backend logs'),
+            backgroundColor: ok ? JarvisTheme.green : JarvisTheme.red,
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final name = model['name']?.toString() ?? l.notConfigured;
-    final provider = model['provider']?.toString() ?? '';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: NeonCard(
         tint: JarvisTheme.sectionAdmin,
         glowOnHover: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        onTap: availableModels.isNotEmpty ? () => _showModelPicker(context) : null,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: JarvisTheme.sectionAdmin),
-                const SizedBox(width: 8),
-                Expanded(child: Text(label, style: Theme.of(context).textTheme.titleMedium)),
-                if (provider.isNotEmpty)
-                  JarvisStatusBadge(label: provider, color: JarvisTheme.accent),
-              ],
+            Icon(icon, size: 18, color: JarvisTheme.sectionAdmin),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(name, style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: JarvisTheme.textSecondary,
+                  )),
+                ],
+              ),
             ),
-            const SizedBox(height: 4),
-            Text(name, style: Theme.of(context).textTheme.bodyMedium),
+            Icon(Icons.swap_horiz, size: 20, color: JarvisTheme.textSecondary),
           ],
         ),
       ),
