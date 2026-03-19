@@ -4,6 +4,7 @@ import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:jarvis_ui/providers/admin_provider.dart';
+import 'package:jarvis_ui/providers/chat_provider.dart';
 import 'package:jarvis_ui/providers/config_provider.dart';
 import 'package:jarvis_ui/providers/locale_provider.dart';
 import 'package:jarvis_ui/providers/connection_provider.dart';
@@ -44,6 +45,7 @@ class JarvisApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => PipProvider()),
         ChangeNotifierProvider(create: (_) => HackerModeProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: Consumer2<ThemeProvider, LocaleProvider>(
         builder: (context, themeProvider, localeProvider, _) {

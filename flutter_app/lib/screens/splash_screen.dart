@@ -3,6 +3,7 @@ import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:jarvis_ui/providers/admin_provider.dart';
+import 'package:jarvis_ui/providers/chat_provider.dart';
 import 'package:jarvis_ui/providers/connection_provider.dart'
     show ConnectionProvider, JarvisConnectionState;
 import 'package:jarvis_ui/providers/memory_provider.dart';
@@ -30,6 +31,13 @@ class SplashScreen extends StatelessWidget {
         context.read<MemoryProvider>().setApi(api);
         context.read<SkillsProvider>().setApi(api);
         context.read<WorkflowProvider>().setApi(api);
+
+        // Attach ChatProvider to WebSocket and connect
+        final chat = context.read<ChatProvider>();
+        chat.attach(conn.ws);
+        final sessionId = 'flutter_${DateTime.now().millisecondsSinceEpoch}';
+        conn.ws.connect(sessionId);
+
         Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(builder: (_) => const MainShell()),
         );

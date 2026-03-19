@@ -56,11 +56,21 @@ class PipelinePhase {
 // ---------------------------------------------------------------------------
 
 class ChatProvider extends ChangeNotifier {
-  ChatProvider({required this.ws}) {
+  ChatProvider();
+
+  WebSocketService? _ws;
+  bool _listenersRegistered = false;
+
+  /// Bind to a WebSocket service and register listeners.
+  /// Safe to call multiple times — only registers once per WS instance.
+  void attach(WebSocketService ws) {
+    if (_ws == ws && _listenersRegistered) return;
+    _ws = ws;
+    _listenersRegistered = false;
     _registerListeners();
   }
 
-  final WebSocketService ws;
+  WebSocketService get ws => _ws!;
 
   final List<ChatMessage> messages = [];
   final StringBuffer _streamBuffer = StringBuffer();
@@ -81,7 +91,11 @@ class ChatProvider extends ChangeNotifier {
   void sendMessage(String text) {
     debugPrint('[Chat] sendMessage: "$text" (messages.length=${messages.length})');
     messages.add(ChatMessage(role: MessageRole.user, text: text));
-    ws.sendMessage(text);
+    if (_ws != null) {
+      _ws!.sendMessage(text);
+    } else {
+      debugPrint('[Chat] WARN: no WebSocket attached — message not sent');
+    }
     statusText = '';
     debugPrint('[Chat] notifyListeners (messages.length=${messages.length})');
     notifyListeners();
@@ -89,26 +103,26 @@ class ChatProvider extends ChangeNotifier {
 
   void sendFile(String name, String type, String base64) {
     messages.add(ChatMessage(role: MessageRole.user, text: '[File: $name]'));
-    ws.sendFile(name, type, base64);
+    _ws?.sendFile(name, type, base64);
     notifyListeners();
   }
 
   void sendAudio(String base64, {String mime = 'audio/webm'}) {
     messages.add(
         ChatMessage(role: MessageRole.user, text: '[Voice message]'));
-    ws.sendAudio(base64, mimeType: mime);
+    _ws?.sendAudio(base64, mimeType: mime);
     notifyListeners();
   }
 
   void respondApproval(bool approved) {
     if (pendingApproval == null) return;
-    ws.respondApproval(pendingApproval!.requestId, approved);
+    _ws?.respondApproval(pendingApproval!.requestId, approved);
     pendingApproval = null;
     notifyListeners();
   }
 
   void cancelOperation() {
-    ws.cancelOperation();
+    _ws?.cancelOperation();
   }
 
   void clearChat() {
@@ -157,19 +171,22 @@ class ChatProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   void _registerListeners() {
-    ws.on(WsType.assistantMessage, _onAssistantMessage);
-    ws.on(WsType.streamToken, _onStreamToken);
-    ws.on(WsType.streamEnd, _onStreamEnd);
-    ws.on(WsType.toolStart, _onToolStart);
-    ws.on(WsType.toolResult, _onToolResult);
-    ws.on(WsType.approvalRequest, _onApprovalRequest);
-    ws.on(WsType.statusUpdate, _onStatusUpdate);
-    ws.on(WsType.pipelineEvent, _onPipelineEvent);
-    ws.on(WsType.canvasPush, _onCanvasPush);
-    ws.on(WsType.canvasReset, _onCanvasReset);
-    ws.on(WsType.planDetail, _onPlanDetail);
-    ws.on(WsType.transcription, _onTranscription);
-    ws.on(WsType.error, _onError);
+    if (_ws == null || _listenersRegistered) return;
+    debugPrint('[Chat] Registering WS listeners');
+    _ws!.on(WsType.assistantMessage, _onAssistantMessage);
+    _ws!.on(WsType.streamToken, _onStreamToken);
+    _ws!.on(WsType.streamEnd, _onStreamEnd);
+    _ws!.on(WsType.toolStart, _onToolStart);
+    _ws!.on(WsType.toolResult, _onToolResult);
+    _ws!.on(WsType.approvalRequest, _onApprovalRequest);
+    _ws!.on(WsType.statusUpdate, _onStatusUpdate);
+    _ws!.on(WsType.pipelineEvent, _onPipelineEvent);
+    _ws!.on(WsType.canvasPush, _onCanvasPush);
+    _ws!.on(WsType.canvasReset, _onCanvasReset);
+    _ws!.on(WsType.planDetail, _onPlanDetail);
+    _ws!.on(WsType.transcription, _onTranscription);
+    _ws!.on(WsType.error, _onError);
+    _listenersRegistered = true;
   }
 
   void _onAssistantMessage(Map<String, dynamic> msg) {

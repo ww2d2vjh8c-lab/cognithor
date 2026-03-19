@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/chat_provider.dart';
-import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/providers/hacker_mode_provider.dart';
 import 'package:jarvis_ui/providers/pip_provider.dart';
 import 'package:jarvis_ui/providers/voice_provider.dart';
@@ -32,39 +31,32 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  late ChatProvider _chat;
   final _scrollController = ScrollController();
-  bool _initialized = false;
   bool _showObserve = false;
+  bool _pipListenerAttached = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialized) {
-      final conn = context.read<ConnectionProvider>();
-      final sessionId = 'flutter_${DateTime.now().millisecondsSinceEpoch}';
-      _chat = ChatProvider(ws: conn.ws);
-      conn.ws.connect(sessionId);
-      // When response arrives, robots go back to idle
-      _chat.addListener(() {
-        if (!_chat.isStreaming && _chat.activeTool == null && _chat.statusText.isEmpty) {
+    // Attach PipProvider idle callback once
+    if (!_pipListenerAttached) {
+      final chat = context.read<ChatProvider>();
+      chat.addListener(() {
+        if (!chat.isStreaming && chat.activeTool == null && chat.statusText.isEmpty) {
           final pip = context.read<PipProvider>();
           if (pip.busy) {
-            // Small delay so robots finish their celebration
             Future.delayed(const Duration(seconds: 3), () {
               if (mounted) pip.setBusy(false);
             });
           }
         }
       });
-      _initialized = true;
+      _pipListenerAttached = true;
     }
   }
 
   @override
   void dispose() {
-    final conn = context.read<ConnectionProvider>();
-    conn.ws.disconnect();
     _scrollController.dispose();
     super.dispose();
   }
@@ -85,9 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
 
-    return ChangeNotifierProvider.value(
-      value: _chat,
-      child: Scaffold(
+    return Scaffold(
         appBar: _buildAppBar(l),
         body: Row(
           children: [
@@ -292,7 +282,6 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
           ],
         ),
-      ),
     );
   }
 
@@ -370,7 +359,7 @@ class _ChatScreenState extends State<ChatScreen> {
         IconButton(
           icon: const Icon(Icons.delete_outline),
           tooltip: l.clearChat,
-          onPressed: () => _chat.clearChat(),
+          onPressed: () => context.read<ChatProvider>().clearChat(),
         ),
       ],
     );
