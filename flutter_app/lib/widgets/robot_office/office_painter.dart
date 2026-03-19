@@ -162,12 +162,18 @@ class OfficePainter extends CustomPainter {
     required this.time,
     required this.isRunning,
     required this.brightness,
+    this.dog,
+    this.cat,
+    this.particles,
   });
 
   final List<Robot> robots;
   final double time; // elapsed seconds
   final bool isRunning;
   final Brightness brightness;
+  final dynamic dog;
+  final dynamic cat;
+  final dynamic particles;
 
   // ── Entry Point ────────────────────────────────────────────────────
 

@@ -27,16 +27,13 @@ class RobotOfficePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    _drawFloor(canvas, size);
-    _drawGrid(canvas, size);
+    // Background (floor, walls, window) drawn by OfficePainter underneath.
+    // Only draw interactive elements here.
 
     // Draw paw prints first (under everything)
     _drawPawPrints(canvas, size);
 
-    // Draw furniture
-    for (final f in furniture) {
-      _drawFurniture(canvas, size, f);
-    }
+    // Furniture drawn by OfficePainter layer underneath.
 
     // Collect all drawable entities with their Y positions for depth sorting
     final List<_DrawableEntity> entities = [];

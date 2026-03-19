@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:jarvis_ui/widgets/robot_office/furniture.dart';
 import 'package:jarvis_ui/widgets/robot_office/robot.dart';
+import 'package:jarvis_ui/widgets/robot_office/office_painter.dart' as bg;
 import 'package:jarvis_ui/widgets/robot_office/robot_office_painter.dart';
 
 // ---------------------------------------------------------------------------
@@ -961,16 +962,31 @@ class _RobotOfficeWidgetState extends State<RobotOfficeWidget>
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: CustomPaint(
-        painter: RobotOfficePainter(
-          robots: _robots,
-          furniture: officeFurniture,
-          elapsed: _elapsed,
-          dog: _dog,
-          cat: _cat,
-          particles: _particles,
-        ),
-        child: const SizedBox.expand(),
+      child: Stack(
+        children: [
+          // Background: detailed office (walls, window, desks, lights)
+          CustomPaint(
+            painter: bg.OfficePainter(
+              robots: const [],
+              time: _elapsed,
+              isRunning: true,
+              brightness: Theme.of(context).brightness,
+            ),
+            child: const SizedBox.expand(),
+          ),
+          // Foreground: robots, pets, particles
+          CustomPaint(
+            painter: RobotOfficePainter(
+              robots: _robots,
+              furniture: officeFurniture,
+              elapsed: _elapsed,
+              dog: _dog,
+              cat: _cat,
+              particles: _particles,
+            ),
+            child: const SizedBox.expand(),
+          ),
+        ],
       ),
     );
   }
