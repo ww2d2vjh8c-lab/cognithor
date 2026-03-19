@@ -49,7 +49,16 @@ class _HackerChatViewState extends State<HackerChatView>
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      decoration: const BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment.center,
+          radius: 1.2,
+          colors: [
+            Color(0xFF001A00), // very dark green center
+            Colors.black,      // pure black edges
+          ],
+        ),
+      ),
       child: Stack(
         children: [
           // Matrix rain background
@@ -59,7 +68,7 @@ class _HackerChatViewState extends State<HackerChatView>
               builder: (context, _) {
                 return CustomPaint(
                   painter: MatrixRainPainter(
-                    time: _rainController.value * 8, // 8s duration → seconds
+                    time: _rainController.value * 8,
                   ),
                 );
               },

@@ -35,7 +35,7 @@ class MatrixRainPainter extends CustomPainter {
   static List<double> _columnSpeeds = [];
   static List<double> _columnOffsets = [];
 
-  static const _maxColumns = 20;
+  static const _maxColumns = 40;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -70,9 +70,9 @@ class MatrixRainPainter extends CustomPainter {
         final distFromHead = currentRow - row;
         if (distFromHead < 0 || distFromHead > 14) continue;
 
-        // Head character is brightest (0.08), tail fades to 0.03.
-        final alpha = (1.0 - distFromHead / 14.0) * 0.08;
-        if (alpha < 0.03) continue;
+        // Head character is brightest (0.35), tail fades to 0.05.
+        final alpha = (1.0 - distFromHead / 14.0) * 0.35;
+        if (alpha < 0.05) continue;
 
         final charIndex =
             ((col * 17 + row * 31 + (time * 8).floor()) % _chars.length).abs();
