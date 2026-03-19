@@ -1,31 +1,31 @@
-# Quickstart — Vom Klonen zum ersten Gespräch
+# Quickstart -- From Clone to First Conversation
 
-Diese Anleitung bringt Jarvis in 10 Minuten zum Laufen.
+This guide gets Cognithor running in 10 minutes.
 
-## 1. Voraussetzungen
+## 1. Prerequisites
 
-- **Python 3.12+** — `python3 --version`
-- **LLM-Backend** (eines von):
-  - **Ollama** — [ollama.ai](https://ollama.ai) (empfohlen, CLI-basiert)
-  - **LM Studio** — [lmstudio.ai](https://lmstudio.ai) (GUI, OpenAI-kompatible API auf Port 1234)
-- **GPU empfohlen** — RTX 3090+ (24 GB VRAM) oder RTX 5090 (32 GB VRAM)
+- **Python 3.12+** -- `python3 --version`
+- **LLM Backend** (one of):
+  - **Ollama** -- [ollama.ai](https://ollama.ai) (recommended, CLI-based)
+  - **LM Studio** -- [lmstudio.ai](https://lmstudio.ai) (GUI, OpenAI-compatible API on port 1234)
+- **GPU recommended** -- RTX 3090+ (24 GB VRAM) or RTX 5090 (32 GB VRAM)
 
 ## 2. Installation
 
 ```bash
-git clone <repo-url> jarvis
-cd jarvis
+git clone <repo-url> cognithor
+cd cognithor
 chmod +x install.sh
 ./install.sh
 ```
 
-Der Installer erkennt dein System und fragt nach dem gewünschten Modus:
-- **Minimal** — Core-Funktionen, CLI
-- **Full** — Alle Features (Telegram, Cron, Web-Suche)
-- **Systemd** — Full + Autostart als Service
-- **Docker** — Container-Build
+The installer detects your system and asks for the desired mode:
+- **Minimal** -- Core features, CLI
+- **Full** -- All features (Telegram, Cron, Web Search)
+- **Systemd** -- Full + autostart as a service
+- **Docker** -- Container build
 
-Alternativ manuell:
+Alternatively, install manually:
 
 ```bash
 python -m venv .venv
@@ -33,71 +33,71 @@ source .venv/bin/activate
 pip install -e ".[all,dev]"
 ```
 
-## 3. Ollama-Modelle laden
+## 3. Download Ollama Models
 
 ```bash
-# Pflicht
-ollama pull qwen3:32b            # Planner — das „Gehirn" (20 GB VRAM)
-ollama pull qwen3:8b             # Executor — schnelle Ausführung (6 GB VRAM)
-ollama pull nomic-embed-text     # Embeddings — Vektor-Suche (300 MB VRAM)
+# Required
+ollama pull qwen3:32b            # Planner -- the "brain" (20 GB VRAM)
+ollama pull qwen3:8b             # Executor -- fast execution (6 GB VRAM)
+ollama pull qwen3-embedding:0.6b # Embeddings -- vector search (0.5 GB VRAM)
 
-# Optional (für Code-Aufgaben)
-ollama pull qwen3-coder:30b      # Code-Spezialist (20 GB VRAM)
+# Optional (for code tasks)
+ollama pull qwen3-coder:30b      # Code specialist (20 GB VRAM)
 ```
 
-Ollama starten (falls nicht automatisch):
+Start Ollama (if not running automatically):
 ```bash
 ollama serve
 ```
 
-### Alternative: LM Studio statt Ollama
+### Alternative: LM Studio Instead of Ollama
 
-Wenn du LM Studio bevorzugst, lade deine Modelle in der LM Studio GUI und setze in `~/.jarvis/config.yaml`:
+If you prefer LM Studio, download your models in the LM Studio GUI and set in `~/.jarvis/config.yaml`:
 
 ```yaml
 llm_backend_type: "lmstudio"
 # lmstudio_base_url: "http://localhost:1234/v1"  # Default
 ```
 
-LM Studio braucht keinen API-Key und läuft komplett lokal (wie Ollama).
+LM Studio requires no API key and runs completely locally (like Ollama).
 
-## 4. First Boot — System validieren
+## 4. First Boot -- Validate the System
 
 ```bash
 python scripts/first_boot.py
 ```
 
-Dieses Skript prüft:
-1. ✓ Python-Version und Imports
-2. ✓ Ollama erreichbar, Modelle geladen
-3. ✓ LLM antwortet (Planner + Executor)
-4. ✓ Embeddings funktionieren
-5. ✓ CORE.md und Prozeduren erstellt
-6. ✓ Kompletter Agent-Loop (echte Konversation)
-7. ✓ Memory-Roundtrip (Schreiben + Lesen)
-8. ✓ Prozedur-Matching (Keyword-Trigger)
+This script checks:
+1. Python version and imports
+2. Ollama reachable, models loaded
+3. LLM responds (Planner + Executor)
+4. Embeddings working
+5. CORE.md and procedures created
+6. Complete agent loop (real conversation)
+7. Memory roundtrip (write + read)
+8. Procedure matching (keyword triggers)
 
-Schnelltest (nur LLM, ohne Agent-Loop):
+Quick test (LLM only, no agent loop):
 ```bash
 python scripts/first_boot.py --quick
 ```
 
-Fehlende Modelle automatisch laden:
+Automatically download missing models:
 ```bash
 python scripts/first_boot.py --fix
 ```
 
-## 5. Jarvis starten
+## 5. Start Cognithor
 
-### Option A: One-Click (empfohlen)
+### Option A: One-Click (recommended)
 
 ```
-Doppelklick auf  start_cognithor.bat  →  Browser öffnet sich  →  "Power On" klicken  →  Fertig.
+Double-click  start_cognithor.bat  -->  Browser opens  -->  Click "Power On"  -->  Done.
 ```
 
-Das Batch-File startet das Control Center UI, das den Python-Backend-Prozess automatisch verwaltet (Start, Stop, Health-Checks, Orphan-Cleanup). Keine Terminal-Kenntnisse nötig.
+The batch file starts the Control Center UI, which automatically manages the Python backend process (start, stop, health checks, orphan cleanup). No terminal knowledge required.
 
-> **Tipp:** Auf dem Desktop liegt eine Verknüpfung namens **Cognithor** — einfach doppelklicken.
+> **Tip:** There is a desktop shortcut called **Cognithor** -- just double-click it.
 
 ### Option B: CLI
 
@@ -105,95 +105,95 @@ Das Batch-File startet das Control Center UI, das den Python-Backend-Prozess aut
 python -m jarvis
 ```
 
-Du siehst das CLI-REPL:
+You will see the CLI REPL:
 ```
-┌──────────────────────────────────┐
-│  Jarvis · Agent OS v0.26.0      │
-│  Modell: qwen3:32b              │
-│  Tools: 12 registriert          │
-└──────────────────────────────────┘
++----------------------------------+
+|  Cognithor - Agent OS v0.47.0    |
+|  Model: qwen3:32b               |
+|  Tools: 53 registered           |
++----------------------------------+
 
 User > _
 ```
 
-## 6. Erste Gespräche
+## 6. First Conversations
 
-### Direkte Antwort (Option A)
+### Direct Answer (Option A)
 ```
-User > Was ist der Unterschied zwischen REST und GraphQL?
+User > What is the difference between REST and GraphQL?
 ```
-Jarvis antwortet direkt aus seinem Wissen — kein Tool-Call nötig.
+Cognithor answers directly from its knowledge -- no tool call needed.
 
-### Tool-Plan (Option B)
+### Tool Plan (Option B)
 ```
-User > Liste mein Workspace-Verzeichnis auf.
+User > List the files in my workspace directory.
 ```
-Jarvis erstellt einen Plan → Gatekeeper prüft → Executor führt `list_directory` aus.
+Cognithor creates a plan -> Gatekeeper checks -> Executor runs `list_directory`.
 
-### Memory nutzen
+### Using Memory
 ```
-User > Merke dir: Kontakt Müller, Softwareentwickler, Firma TechCorp.
+User > Remember this: Contact Mueller, software developer, company TechCorp.
 ```
-Jarvis speichert die Daten im Semantic Memory.
+Cognithor stores the data in Semantic Memory.
 
 ```
-User > Was weißt du über Kontakt Müller?
+User > What do you know about Contact Mueller?
 ```
-Jarvis durchsucht Memory und gibt die gespeicherten Infos zurück.
+Cognithor searches memory and returns the stored information.
 
-### Prozedur-Trigger
+### Procedure Trigger
 ```
-User > Bereite das Meeting mit TechCorp morgen vor.
+User > Prepare the meeting with TechCorp tomorrow.
 ```
-Jarvis erkennt das Meeting-Muster, lädt die `meeting-vorbereitung` Prozedur und sammelt systematisch Hintergrundinformationen.
+Cognithor detects the meeting pattern, loads the `meeting-preparation` procedure, and systematically gathers background information.
 
-### Morgen-Briefing
+### Morning Briefing
 ```
-User > Was steht heute an?
+User > What's on the agenda today?
 ```
-Jarvis lädt die gestrigen Episoden, offene Aufgaben und erstellt einen Tagesüberblick.
+Cognithor loads yesterday's episodes, open tasks, and creates a daily overview.
 
-## 7. Konfiguration anpassen
+## 7. Customize Configuration
 
 ```bash
-# Hauptkonfiguration
+# Main configuration
 nano ~/.jarvis/config.yaml
 
-# Identität & Regeln
+# Identity & rules
 nano ~/.jarvis/memory/CORE.md
 
-# Prozeduren bearbeiten/hinzufügen
+# Edit/add procedures
 ls ~/.jarvis/memory/procedures/
 ```
 
-Wichtige Config-Optionen:
+Important config options:
 ```yaml
 ollama:
-  base_url: http://localhost:11434    # Ollama-URL (Standard)
-  timeout_seconds: 120                 # Timeout pro Anfrage
+  base_url: http://localhost:11434    # Ollama URL (default)
+  timeout_seconds: 120                 # Timeout per request
 
 models:
   planner:
-    name: qwen3:32b                    # Oder kleineres Modell bei wenig VRAM
+    name: qwen3:32b                    # Or a smaller model with limited VRAM
     context_window: 32768
 
 security:
-  allowed_paths:                        # Dateizugriff nur hier
+  allowed_paths:                        # File access restricted to these paths
     - ~/.jarvis
-    - ~/Dokumente
+    - ~/Documents
 
 personality:
-  warmth: 0.7                            # Wie warm/empathisch antwortet Jarvis
-  humor: 0.3                             # Humor-Level (0 = sachlich, 1 = viel)
-  greeting_enabled: true                 # Tageszeit-Grüße
+  warmth: 0.7                            # How warm/empathetic Cognithor responds
+  humor: 0.3                             # Humor level (0 = factual, 1 = playful)
+  greeting_enabled: true                 # Time-of-day greetings
 ```
 
 ## 8. Monitoring
 
 ```bash
-make smoke        # 26 Installations-Checks
-make health       # Laufzeit-Check (Ollama, Disk, Memory)
-make test         # 8.411+ Tests ausführen
+make smoke        # 26 installation checks
+make health       # Runtime check (Ollama, disk, memory)
+make test         # Run 10,800+ tests
 ```
 
 Logs:
@@ -201,34 +201,34 @@ Logs:
 tail -f ~/.jarvis/logs/jarvis.log
 ```
 
-## 9. Server-Deployment (optional)
+## 9. Server Deployment (optional)
 
-Cognithor lässt sich auch auf einem Server betreiben:
+Cognithor can also run on a server:
 
 ### Docker (Production)
 
 ```bash
-cp .env.example .env   # Editieren: JARVIS_API_TOKEN setzen
+cp .env.example .env   # Edit: set JARVIS_API_TOKEN
 docker compose -f docker-compose.prod.yml up -d
 
-# Optional: PostgreSQL oder Nginx dazu
+# Optional: add PostgreSQL or Nginx
 docker compose -f docker-compose.prod.yml --profile postgres --profile nginx up -d
 ```
 
 ### Bare-Metal (Ubuntu/Debian)
 
 ```bash
-sudo bash deploy/install-server.sh --domain jarvis.example.com --email admin@example.com
+sudo bash deploy/install-server.sh --domain cognithor.example.com --email admin@example.com
 ```
 
-Siehe [`deploy/README.md`](deploy/README.md) für vollständige Dokumentation.
+See [`deploy/README.md`](deploy/README.md) for complete deployment documentation.
 
-## Nächste Schritte
+## Next Steps
 
-- **Telegram-Bot** einrichten → Token in `~/.jarvis/.env` → `JARVIS_TELEGRAM_TOKEN=...`
-- **Cron-Jobs** aktivieren → Morning Briefing, Weekly Review
-- **Eigene Prozeduren** anlegen → `~/.jarvis/memory/procedures/mein-workflow.md`
-- **CORE.md** personalisieren → Eigene Regeln und Präferenzen ergänzen
-- **Server-Deployment** → `deploy/README.md` für Docker, Bare-Metal, TLS
+- **Telegram bot** -- Set token in `~/.jarvis/.env`: `JARVIS_TELEGRAM_TOKEN=...`
+- **Cron jobs** -- Enable morning briefing, weekly review
+- **Custom procedures** -- Create workflows in `~/.jarvis/memory/procedures/`
+- **CORE.md** -- Add your own rules and preferences
+- **Server deployment** -- See `deploy/README.md` for Docker, bare-metal, TLS
 
-Bei Problemen: `python scripts/first_boot.py --fix` erneut ausführen.
+If you run into problems: run `python scripts/first_boot.py --fix` again.

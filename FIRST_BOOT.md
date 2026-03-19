@@ -1,131 +1,131 @@
-# Jarvis · First Boot Guide
+# Cognithor - First Boot Guide
 
-> Von der Installation zum ersten echten Gespräch.
+> From installation to your first real conversation.
 
-## Überblick
+## Overview
 
-Dieses Dokument führt dich durch den ersten Start von Jarvis auf deiner Maschine.
-Am Ende hast du ein funktionierendes Agent-System, das Fragen beantwortet,
-Dateien verwaltet und individuelle Workflows unterstützt.
+This document walks you through starting Cognithor for the first time on your machine.
+By the end, you will have a functioning agent system that answers questions,
+manages files, and supports custom workflows.
 
-## Voraussetzungen
+## Prerequisites
 
-| Komponente | Minimum | Empfohlen (dein Setup) |
-|-----------|---------|----------------------|
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
 | GPU | 8 GB VRAM | RTX 5090 (32 GB) |
-| CPU | 8 Kerne | Ryzen 9 9950X3D |
+| CPU | 8 cores | Ryzen 9 9950X3D |
 | RAM | 16 GB | 64 GB+ |
 | Python | 3.12+ | 3.12+ |
-| Ollama oder LM Studio | 0.3+ / 0.3+ | Aktuellste Version |
-| Disk | 50 GB frei | 100 GB+ (für Modelle) |
+| Ollama or LM Studio | 0.3+ / 0.3+ | Latest version |
+| Disk | 50 GB free | 100 GB+ (for models) |
 
-## Schritt 1: Installation
+## Step 1: Installation
 
 ```bash
-# Repository klonen
-git clone <repo-url> jarvis
-cd jarvis
+# Clone the repository
+git clone <repo-url> cognithor
+cd cognithor
 
-# Empfohlen: Interaktiver Installer
+# Recommended: Interactive installer
 ./install.sh
 
-# Oder manuell:
+# Or manually:
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[all,dev]"
 ```
 
-## Schritt 2: LLM-Backend vorbereiten
+## Step 2: Prepare the LLM Backend
 
-### Option A: Ollama (empfohlen)
+### Option A: Ollama (recommended)
 
 ```bash
-# Ollama starten (falls nicht als Service)
+# Start Ollama (if not running as a service)
 ollama serve &
 
-# Modelle laden
-ollama pull qwen3:32b           # Planner — 20 GB, ~2 Min
-ollama pull qwen3:8b            # Executor — 6 GB, ~30 Sek
-ollama pull qwen3-coder:30b     # Coder — 20 GB, ~2 Min
-ollama pull nomic-embed-text    # Embeddings — 300 MB, ~5 Sek
+# Download models
+ollama pull qwen3:32b           # Planner -- 20 GB, ~2 min
+ollama pull qwen3:8b            # Executor -- 6 GB, ~30 sec
+ollama pull qwen3-coder:30b     # Coder -- 20 GB, ~2 min
+ollama pull qwen3-embedding:0.6b # Embeddings -- 0.5 GB, ~5 sec
 ```
 
-**RTX 5090 Tipp:** Planner (20 GB) + Executor (6 GB) = 26 GB → passen gleichzeitig
-in 32 GB VRAM. Qwen3-Coder teilt sich den Speicher mit dem Planner (Ollama
-entlädt automatisch).
+**RTX 5090 tip:** Planner (20 GB) + Executor (6 GB) = 26 GB -- they fit simultaneously
+in 32 GB VRAM. Qwen3-Coder shares memory with the Planner (Ollama
+unloads automatically).
 
 ### Option B: LM Studio
 
-1. Modelle in der LM Studio GUI herunterladen und laden (z.B. `qwen/qwen3-32b`)
-2. Server starten (läuft standardmäßig auf `http://localhost:1234`)
-3. In `~/.jarvis/config.yaml` setzen:
+1. Download and load models in the LM Studio GUI (e.g., `qwen/qwen3-32b`)
+2. Start the server (runs by default on `http://localhost:1234`)
+3. Set in `~/.jarvis/config.yaml`:
 
 ```yaml
 llm_backend_type: "lmstudio"
 ```
 
-LM Studio braucht keinen API-Key und bleibt komplett lokal.
+LM Studio requires no API key and stays completely local.
 
-## Schritt 3: First Boot
+## Step 3: First Boot
 
 ```bash
-# Vollständige Validierung (empfohlen beim ersten Mal)
+# Full validation (recommended for first time)
 python scripts/first_boot.py
 
-# Kurztest (nur System + Ollama + LLM, kein Agent-Loop)
+# Quick test (system + Ollama + LLM only, no agent loop)
 python scripts/first_boot.py --quick
 
-# Automatisch fehlende Modelle nachladen
+# Automatically download missing models
 python scripts/first_boot.py --fix
 ```
 
-Der First-Boot-Test prüft:
+The first boot test checks:
 
-| Check | Was wird getestet |
-|-------|------------------|
-| System | Python-Version, GPU, Ollama-Binary |
-| Modelle | Planner, Executor, Coder, Embedding verfügbar |
-| LLM | Chat mit Planner + Executor (Antwortzeit) |
-| Embeddings | Vektor-Generierung (Einzel + Batch) |
-| Memory | CORE.md, Prozeduren, Policies, Verzeichnisse |
-| Agent-Loop | Komplette PGE-Anfrage (Plan → Gate → Execute) |
+| Check | What Is Tested |
+|-------|----------------|
+| System | Python version, GPU, Ollama binary |
+| Models | Planner, Executor, Coder, Embedding available |
+| LLM | Chat with Planner + Executor (response time) |
+| Embeddings | Vector generation (single + batch) |
+| Memory | CORE.md, procedures, policies, directories |
+| Agent Loop | Complete PGE request (Plan -> Gate -> Execute) |
 
-**Erwartete Ausgabe:**
+**Expected output:**
 
 ```
-╔══════════════════════════════════════════════╗
-║         Jarvis · First Boot                  ║
-║         Erster Start mit echtem Ollama        ║
-╚══════════════════════════════════════════════╝
++----------------------------------------------+
+|         Cognithor - First Boot                |
+|         First start with real Ollama          |
++----------------------------------------------+
 
-──────────────────────────────────────────────────────────
-  1. System-Check
-──────────────────────────────────────────────────────────
-  ✓ Python 3.12.x
-  ✓ jarvis Package importierbar
-  ✓ Ollama Binary gefunden
-  ✓ GPU: NVIDIA GeForce RTX 5090 — 32 GB total, 28.5 GB frei
+--------------------------------------------------
+  1. System Check
+--------------------------------------------------
+  [OK] Python 3.12.x
+  [OK] jarvis package importable
+  [OK] Ollama binary found
+  [OK] GPU: NVIDIA GeForce RTX 5090 -- 32 GB total, 28.5 GB free
 
   ...
 
-  ✓ FIRST BOOT ERFOLGREICH
-  12/12 Checks bestanden
+  [OK] FIRST BOOT SUCCESSFUL
+  12/12 checks passed
 
-  Jarvis ist bereit!
-  Starte mit: start_cognithor.bat (oder: python -m jarvis)
+  Cognithor is ready!
+  Start with: start_cognithor.bat (or: python -m jarvis)
 ```
 
-## Schritt 4: Erster Start
+## Step 4: First Start
 
-### Option A: One-Click (empfohlen)
+### Option A: One-Click (recommended)
 
 ```
-Doppelklick auf  start_cognithor.bat  →  Browser öffnet sich  →  "Power On" klicken  →  Fertig.
+Double-click  start_cognithor.bat  -->  Browser opens  -->  Click "Power On"  -->  Done.
 ```
 
-Das Vite-Dev-Server startet automatisch den Python-Backend-Prozess. Du musst kein Terminal öffnen.
+The UI automatically starts the Python backend process. No terminal needed.
 
-> **Desktop-Shortcut:** Eine Verknüpfung namens **Cognithor** liegt auf dem Desktop.
+> **Desktop shortcut:** A shortcut called **Cognithor** is on the desktop.
 
 ### Option B: CLI
 
@@ -133,152 +133,152 @@ Das Vite-Dev-Server startet automatisch den Python-Backend-Prozess. Du musst kei
 python -m jarvis
 ```
 
-Du siehst das CLI-REPL:
+You will see the CLI REPL:
 
 ```
-╭──────────────────────────────────────╮
-│  Jarvis · Agent OS                   │
-│  Lokaler KI-Assistent                │
-╰──────────────────────────────────────╯
++--------------------------------------+
+|  Cognithor - Agent OS                |
+|  Local AI Assistant                  |
++--------------------------------------+
 
-jarvis> 
+cognithor>
 ```
 
-### Erste Gespräche zum Ausprobieren
+### First Conversations to Try
 
-**Direkte Antwort (Option A):**
+**Direct answer (Option A):**
 ```
-jarvis> Was ist eine REST-API?
-jarvis> Erkläre mir den Unterschied zwischen Docker und Podman.
-jarvis> Wie geht es dir?
-```
-
-**Tool-Plan (Option B):**
-```
-jarvis> Zeig mir die Dateien in meinem Workspace.
-jarvis> Was weißt du über mich?
-jarvis> Erstelle mir eine Datei mit einer Checkliste für Neukundengespräche.
+cognithor> What is a REST API?
+cognithor> Explain the difference between Docker and Podman.
+cognithor> How are you?
 ```
 
-**Prozedur-Trigger:**
+**Tool plan (Option B):**
 ```
-jarvis> Ich habe morgen einen Termin mit einem neuen Lead: Markus Weber, IT-Unternehmer.
-jarvis> Bereite ein Meeting mit der TechCorp GmbH vor — Thema Cloud-Migration.
-jarvis> Was steht heute an?
+cognithor> Show me the files in my workspace.
+cognithor> What do you know about me?
+cognithor> Create a file with a checklist for new client meetings.
 ```
 
-## Schritt 5: Konfiguration anpassen
+**Procedure trigger:**
+```
+cognithor> I have an appointment tomorrow with a new lead: John Smith, IT entrepreneur.
+cognithor> Prepare a meeting with TechCorp -- topic: cloud migration.
+cognithor> What's on the agenda today?
+```
 
-Die Konfiguration liegt in `~/.jarvis/config.yaml`:
+## Step 5: Customize Configuration
+
+The configuration is at `~/.jarvis/config.yaml`:
 
 ```yaml
-# Wichtigste Einstellungen:
+# Most important settings:
 ollama:
-  base_url: http://localhost:11434    # Ollama-Server URL
-  timeout_seconds: 120                 # Timeout für lange Planungen
+  base_url: http://localhost:11434    # Ollama server URL
+  timeout_seconds: 120                 # Timeout for long planning tasks
 
 planner:
-  max_iterations: 10                   # Max. Schritte pro Anfrage
+  max_iterations: 10                   # Max steps per request
 
 memory:
-  chunk_size_tokens: 400               # Chunk-Größe für Indexierung
-  search_top_k: 6                      # Anzahl Memory-Treffer
+  chunk_size_tokens: 400               # Chunk size for indexing
+  search_top_k: 6                      # Number of memory search results
 ```
 
-## Schritt 6: Identität verfeinern
+## Step 6: Refine Identity
 
-Jarvis' Persönlichkeit und Regeln stehen in `~/.jarvis/CORE.md`.
-Du kannst diese Datei jederzeit bearbeiten:
+Cognithor's personality and rules are in `~/.jarvis/CORE.md`.
+You can edit this file at any time:
 
 ```bash
-# Mit deinem Editor öffnen
+# Open with your editor
 nano ~/.jarvis/CORE.md
 ```
 
-Oder direkt über Jarvis:
+Or directly through Cognithor:
 ```
-jarvis> Ändere in der CORE.md: Füge unter Fachgebiet hinzu dass ich auch Sachversicherungen berate.
+cognithor> Update the CORE.md: Add under expertise that I also advise on property insurance.
 ```
 
-## Architektur im Überblick
+## Architecture Overview
 
-Was bei einer Anfrage passiert:
+What happens during a request:
 
 ```
-Du: "Bereite das Meeting mit Kontakt Schmidt vor"
- │
- ▼
-[CLI Channel] → IncomingMessage
- │
- ▼
-[Gateway] → Session erstellen/laden
- │
- ▼
-[Memory Manager] → CORE.md laden, relevante Erinnerungen suchen
- │
- ▼
-[Planner (qwen3:32b)] → Plan erstellen:
- │  1. search_memory("Kunde Schmidt")
- │  2. write_file("bu-vergleich.md", ...)
- │
- ▼
-[Gatekeeper] → Jeden Step prüfen:
- │  ✓ search_memory → ALLOW (sicher)
- │  ✓ write_file → INFORM (Datei wird geschrieben)
- │
- ▼
-[Executor] → Tools ausführen:
- │  1. MCP: search_memory → Kundendaten gefunden
- │  2. MCP: write_file → Datei erstellt
- │
- ▼
-[Planner (replan)] → Ergebnisse interpretieren → Antwort formulieren
- │
- ▼
-[Reflector] → Session auswerten, Fakten extrahieren, Prozeduren lernen
- │
- ▼
-Du: "Hier ist die Meeting-Vorbereitung für Kontakt Schmidt: ..."
+You: "Prepare the meeting with contact Smith"
+ |
+ v
+[CLI Channel] -> IncomingMessage
+ |
+ v
+[Gateway] -> Create/load session
+ |
+ v
+[Memory Manager] -> Load CORE.md, search relevant memories
+ |
+ v
+[Planner (qwen3:32b)] -> Create plan:
+ |  1. search_memory("client Smith")
+ |  2. write_file("meeting-prep.md", ...)
+ |
+ v
+[Gatekeeper] -> Check each step:
+ |  [OK] search_memory -> ALLOW (safe)
+ |  [OK] write_file -> INFORM (file will be written)
+ |
+ v
+[Executor] -> Execute tools:
+ |  1. MCP: search_memory -> Client data found
+ |  2. MCP: write_file -> File created
+ |
+ v
+[Planner (replan)] -> Interpret results -> Formulate response
+ |
+ v
+[Reflector] -> Evaluate session, extract facts, learn procedures
+ |
+ v
+You: "Here is the meeting preparation for contact Smith: ..."
 ```
 
 ## Troubleshooting
 
-### Ollama antwortet nicht
+### Ollama is not responding
 ```bash
-# Ist Ollama gestartet?
+# Is Ollama running?
 curl http://localhost:11434/api/tags
 
-# Neustart:
+# Restart:
 pkill ollama
 ollama serve &
 ```
 
-### Modell-Loading langsam
-Beim ersten Aufruf eines Modells lädt Ollama es in den VRAM. Das kann
-30–60 Sekunden dauern. Danach sind Antworten in 1–5 Sekunden da.
+### Model loading is slow
+On the first call, Ollama loads the model into VRAM. This can take
+30-60 seconds. After that, responses come in 1-5 seconds.
 
 ```bash
-# Modelle vorladen:
-ollama run qwen3:32b "Hallo" --keepalive 30m
-ollama run qwen3:8b "Hallo" --keepalive 30m
+# Preload models:
+ollama run qwen3:32b "Hello" --keepalive 30m
+ollama run qwen3:8b "Hello" --keepalive 30m
 ```
 
-### Planner erstellt keinen Plan (antwortet immer direkt)
-Das passiert wenn das Modell die Tool-Liste nicht erkennt. Prüfe:
-1. Sind MCP-Tools registriert? → Log prüfen: `~/.jarvis/logs/jarvis.log`
-2. Ist der System-Prompt zu lang? → `memory.search_top_k` reduzieren
-3. Ist die Temperatur zu niedrig? → In `config.yaml`: `planner.temperature: 0.7`
+### Planner does not create a plan (always answers directly)
+This happens when the model does not recognize the tool list. Check:
+1. Are MCP tools registered? Check log: `~/.jarvis/logs/jarvis.log`
+2. Is the system prompt too long? Reduce `memory.search_top_k`
+3. Is the temperature too low? In `config.yaml`: `planner.temperature: 0.7`
 
-### Memory-Suche findet nichts
-Memory muss erst gefüllt werden. Beim ersten Start ist die Datenbank leer.
+### Memory search finds nothing
+Memory needs to be populated first. On first start the database is empty.
 ```
-jarvis> Merke dir: Mein wichtigster Kunde ist Firma Müller GmbH, Maschinenbau, 50 Mitarbeiter.
-jarvis> Was weißt du über Firma Müller?
+cognithor> Remember: My most important client is Mueller Corp, mechanical engineering, 50 employees.
+cognithor> What do you know about Mueller Corp?
 ```
 
-## Nächste Schritte
+## Next Steps
 
-1. **Kundendaten einspeisen** — Bestehende Kunden-Notizen in `~/.jarvis/memory/knowledge/kunden/` ablegen
-2. **Telegram einrichten** — Für mobile Nutzung: Token in `~/.jarvis/.env` → `JARVIS_TELEGRAM_TOKEN=...`
-3. **Cron aktivieren** — Automatisches Morgen-Briefing: `~/.jarvis/cron/jobs.yaml`
-4. **Eigene Prozeduren** — Wiederkehrende Workflows als Prozeduren in `~/.jarvis/memory/procedures/`
+1. **Import knowledge** -- Place existing notes in `~/.jarvis/memory/knowledge/`
+2. **Set up Telegram** -- For mobile use: token in `~/.jarvis/.env`: `JARVIS_TELEGRAM_TOKEN=...`
+3. **Enable cron** -- Automatic morning briefing: `~/.jarvis/cron/jobs.yaml`
+4. **Custom procedures** -- Create recurring workflows in `~/.jarvis/memory/procedures/`

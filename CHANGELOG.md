@@ -5,6 +5,36 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.47.1] -- 2026-03-19
+
+### Added
+- **English documentation suite**: Rewrote `QUICKSTART.md`, `FIRST_BOOT.md` in English; created `CONFIG_REFERENCE.md` (complete configuration reference with all 30+ config classes, every field documented), `DATABASE.md` (all 19+ SQLite databases with full schema), `FAQ.md` (35 frequently asked questions)
+- **Flutter app README**: Replaced placeholder with proper documentation covering architecture, project structure, development workflow, and key files
+
+### Changed
+- All user-facing documentation now in English
+- `FIRST_BOOT.md`: Updated "Jarvis" references to "Cognithor" throughout
+- `CHANGELOG.md`: Added v0.47.0 and v0.47.1 entries
+
+## [0.47.0] -- 2026-03-19
+
+### Added
+- **Flutter Web UI**: Complete cross-platform UI built with Flutter 3.41, replacing React+Preact. Features Sci-Fi Command Center aesthetic, chat with markdown/voice/hacker mode, Robot Office dashboard, 12 admin sub-screens, skills marketplace, identity management, i18n (EN/DE/ZH/AR)
+- **15 LLM Backend Providers**: Added support for Ollama, OpenAI, Anthropic, Gemini, Groq, DeepSeek, Mistral, Together, OpenRouter, xAI, Cerebras, GitHub Models, AWS Bedrock, Hugging Face, Moonshot/Kimi, and LM Studio. Auto-detection from API keys, automatic model name adaptation per provider
+- **Community Skill Marketplace**: Public skill registry with publisher verification, trust levels, recall checks, tool enforcement. 3 new MCP tools: `install_community_skill`, `search_community_skills`, `report_skill`
+- **GEPA (Guided Evolution through Pattern Analysis)**: Execution trace recording, optimization proposals, auto-rollback on performance regression
+- **Prompt Evolution**: A/B-test-based prompt optimization with statistical significance testing
+- **Identity Layer (Immortal Mind Protocol)**: Cognitive identity with checkpoints, narrative self-reflection, reality checks, optional blockchain anchoring
+- **Cost Tracking**: Per-request LLM cost tracking with daily/monthly budget limits
+- **Durable Message Queue**: SQLite-backed message queue with priority boost, TTL, and retry logic
+- **53 MCP tools** across 10 modules (filesystem, shell, web, media, memory, vault, synthesis, code, skills, browser)
+- **16 communication channels**: CLI, WebUI, Telegram, Discord, Slack, WhatsApp, Signal, Matrix, Teams, Google Chat, Mattermost, Feishu, IRC, Twitch, iMessage, Voice
+
+### Changed
+- Version bumped to 0.47.0
+- Config system expanded to 30+ Pydantic config classes with full validation
+- Test suite: 10,800+ tests
+
 ## [0.33.0-beta] – 2026-03-11
 
 ### Added
