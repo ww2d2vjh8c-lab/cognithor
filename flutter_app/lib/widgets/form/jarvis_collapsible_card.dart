@@ -94,7 +94,9 @@ class _JarvisCollapsibleCardState extends State<JarvisCollapsibleCard> {
                     Icon(
                       isOpen ? Icons.expand_less : Icons.expand_more,
                       size: 20,
-                      color: JarvisTheme.textSecondary,
+                      color: theme.brightness == Brightness.dark
+                          ? JarvisTheme.textSecondary
+                          : const Color(0xFF6B6B80),
                     ),
                 ],
               ),

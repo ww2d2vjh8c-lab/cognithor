@@ -272,7 +272,11 @@ class _ConfigScreenState extends State<ConfigScreen>
                         ? Row(
                             children: [
                               _buildSubPageSidebar(context, l),
-                              const VerticalDivider(width: 1),
+                              VerticalDivider(
+                                width: 1,
+                                thickness: 1,
+                                color: Theme.of(context).dividerColor,
+                              ),
                               Expanded(
                                 child: _pageRegistry[_currentPageKey]!
                                     .builder(),
@@ -359,7 +363,7 @@ class _ConfigScreenState extends State<ConfigScreen>
     const tint = JarvisTheme.sectionAdmin;
 
     return SizedBox(
-      width: 200,
+      width: 220,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         itemCount: keys.length,
@@ -398,6 +402,8 @@ class _ConfigScreenState extends State<ConfigScreen>
                         ? tint
                         : Theme.of(context).textTheme.bodyMedium?.color,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 trailing: shortcutLabel != null
                     ? Text(

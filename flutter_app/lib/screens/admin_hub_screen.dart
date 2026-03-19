@@ -178,7 +178,11 @@ class _AdminHubScreenState extends State<AdminHubScreen> {
               width: 260,
               child: _buildList(context, sections: sections, isWide: true),
             ),
-            const VerticalDivider(width: 1),
+            VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: Theme.of(context).dividerColor,
+            ),
             Expanded(
               child: ColoredBox(
                 color: Theme.of(context).scaffoldBackgroundColor,

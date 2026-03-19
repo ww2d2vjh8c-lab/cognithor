@@ -33,33 +33,51 @@ class _NeonCardState extends State<NeonCard> {
   Widget build(BuildContext context) {
     final color = widget.tint ?? JarvisTheme.accent;
     final isHovered = _hovered && widget.glowOnHover;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bgColor = isDark
+        ? color.withValues(alpha: isHovered ? 0.14 : 0.08)
+        : isHovered
+            ? color.withValues(alpha: 0.08)
+            : Theme.of(context).cardColor;
+
+    final borderColor = isDark
+        ? color.withValues(alpha: isHovered ? 0.50 : 0.22)
+        : isHovered
+            ? color.withValues(alpha: 0.40)
+            : Theme.of(context).dividerColor;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: JarvisTheme.animDuration,
-          curve: JarvisTheme.animCurve,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: isHovered ? 0.14 : 0.08),
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            border: Border.all(
-              color: color.withValues(alpha: isHovered ? 0.50 : 0.22),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          clipBehavior: Clip.antiAlias,
+          child: AnimatedContainer(
+            duration: JarvisTheme.animDuration,
+            curve: JarvisTheme.animCurve,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              border: Border.all(
+                color: borderColor,
+                width: 1.0,
+              ),
+              boxShadow: isHovered
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: isDark ? 0.25 : 0.12),
+                        blurRadius: 28,
+                        spreadRadius: -2,
+                      ),
+                    ]
+                  : null,
             ),
-            boxShadow: isHovered
-                ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.25),
-                      blurRadius: 28,
-                      spreadRadius: -2,
-                    ),
-                  ]
-                : null,
+            padding: widget.padding ?? const EdgeInsets.all(16),
+            child: widget.child,
           ),
-          padding: widget.padding ?? const EdgeInsets.all(16),
-          child: widget.child,
         ),
       ),
     );

@@ -37,6 +37,15 @@ class _GlassPanelState extends State<GlassPanel> {
   Widget build(BuildContext context) {
     final color = widget.tint ?? JarvisTheme.accent;
     final isHovered = _hovered && widget.glowOnHover;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final borderAlpha = isDark
+        ? (isHovered ? 0.35 : 0.12)
+        : (isHovered ? 0.40 : 0.18);
+
+    final fillColor = isDark
+        ? color.withValues(alpha: 0.04)
+        : color.withValues(alpha: 0.03);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -49,12 +58,15 @@ class _GlassPanelState extends State<GlassPanel> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.borderRadius),
             border: Border.all(
-              color: color.withValues(alpha: isHovered ? 0.35 : 0.12),
+              color: isDark
+                  ? color.withValues(alpha: borderAlpha)
+                  : Theme.of(context).dividerColor,
+              width: 1.0,
             ),
             boxShadow: isHovered
                 ? [
                     BoxShadow(
-                      color: color.withValues(alpha: 0.15),
+                      color: color.withValues(alpha: isDark ? 0.15 : 0.08),
                       blurRadius: 20,
                       spreadRadius: -2,
                     ),
@@ -63,6 +75,7 @@ class _GlassPanelState extends State<GlassPanel> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(widget.borderRadius),
+            clipBehavior: Clip.antiAlias,
             child: BackdropFilter(
               filter: ImageFilter.blur(
                 sigmaX: widget.blur,
@@ -70,7 +83,7 @@ class _GlassPanelState extends State<GlassPanel> {
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.04),
+                  color: isDark ? fillColor : Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(widget.borderRadius),
                 ),
                 padding: widget.padding ?? const EdgeInsets.all(16),

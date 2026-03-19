@@ -280,7 +280,7 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                   ),
 
                   // ── Bottom actions ──
-                  const Divider(height: 1),
+                  Divider(height: 1, thickness: 1, color: borderColor),
                   Padding(
                     padding: const EdgeInsets.all(8),
                     child: Column(

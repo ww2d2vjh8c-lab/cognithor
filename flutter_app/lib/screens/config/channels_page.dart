@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:jarvis_ui/providers/config_provider.dart';
+import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/form/form_widgets.dart';
 
 class ChannelsPage extends StatelessWidget {
@@ -12,10 +13,55 @@ class ChannelsPage extends StatelessWidget {
       builder: (context, cfg, _) {
         final ch = cfg.cfg['channels'] as Map<String, dynamic>? ?? {};
 
+        // Quick-toggle grid for all channels
+        final channelDefs = [
+          ('cli', 'CLI', Icons.terminal),
+          ('webui', 'Web UI', Icons.web),
+          ('telegram', 'Telegram', Icons.telegram),
+          ('slack', 'Slack', Icons.tag),
+          ('discord', 'Discord', Icons.discord),
+          ('whatsapp', 'WhatsApp', Icons.chat),
+          ('signal', 'Signal', Icons.lock),
+          ('matrix', 'Matrix', Icons.grid_view),
+          ('teams', 'Teams', Icons.groups),
+          ('imessage', 'iMessage', Icons.message),
+          ('google_chat', 'Google Chat', Icons.chat_bubble),
+          ('mattermost', 'Mattermost', Icons.forum),
+          ('feishu', 'Feishu', Icons.business),
+          ('irc', 'IRC', Icons.tag),
+          ('twitch', 'Twitch', Icons.live_tv),
+        ];
+
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _channelCard(cfg, ch, 'cli', 'CLI', Icons.terminal),
+            // Compact toggle grid
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text('Channel Toggles',
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: channelDefs.map((def) {
+                final (key, label, icon) = def;
+                final enabled = ch['${key}_enabled'] == true;
+                return _CompactChannelToggle(
+                  label: label,
+                  icon: icon,
+                  enabled: enabled,
+                  onChanged: (v) => cfg.set('channels.${key}_enabled', v),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+            // Detailed config per channel (collapsible)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text('Channel Settings',
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
             _channelCard(cfg, ch, 'webui', 'Web UI', Icons.web, extra: [
               JarvisNumberField(
                 label: 'Port',
@@ -327,5 +373,77 @@ class ChannelsPage extends StatelessWidget {
   static List<String> _toStringList(dynamic v) {
     if (v is List) return v.map((e) => e.toString()).toList();
     return [];
+  }
+}
+
+/// Compact channel toggle chip: icon + name + switch in a single row.
+class _CompactChannelToggle extends StatelessWidget {
+  const _CompactChannelToggle({
+    required this.label,
+    required this.icon,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accentColor = enabled
+        ? JarvisTheme.accent
+        : (isDark ? JarvisTheme.textSecondary : const Color(0xFF9999AA));
+
+    return Container(
+      width: 180,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: enabled
+            ? JarvisTheme.accent.withValues(alpha: isDark ? 0.12 : 0.06)
+            : theme.cardColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: enabled
+              ? JarvisTheme.accent.withValues(alpha: 0.3)
+              : theme.dividerColor,
+          width: 1.0,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: accentColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: enabled ? FontWeight.w600 : FontWeight.normal,
+                color: enabled
+                    ? (isDark ? JarvisTheme.textPrimary : const Color(0xFF1A1A2E))
+                    : (isDark ? JarvisTheme.textSecondary : const Color(0xFF6B6B80)),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          SizedBox(
+            height: 24,
+            child: FittedBox(
+              child: Switch.adaptive(
+                value: enabled,
+                onChanged: onChanged,
+                activeTrackColor: JarvisTheme.accent,
+                activeThumbColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

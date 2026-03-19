@@ -1603,7 +1603,7 @@ class PromptEvolutionConfig(BaseModel):
 class GEPAConfig(BaseModel):
     """GEPA — Guided Evolution through Pattern Analysis."""
 
-    enabled: bool = False  # Opt-in
+    enabled: bool = True  # Opt-out (enabled by default)
     evolution_interval_hours: int = Field(default=6, ge=1, le=168)
     min_traces_for_proposal: int = Field(default=10, ge=3, le=100)
     max_active_optimizations: int = Field(default=1, ge=1, le=3)

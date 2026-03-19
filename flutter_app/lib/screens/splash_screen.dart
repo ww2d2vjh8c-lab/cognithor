@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:jarvis_ui/providers/admin_provider.dart';
 import 'package:jarvis_ui/providers/chat_provider.dart';
@@ -13,6 +14,7 @@ import 'package:jarvis_ui/providers/workflow_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/screens/main_shell.dart';
 import 'package:jarvis_ui/screens/settings_screen.dart';
+import 'package:jarvis_ui/screens/setup_wizard_screen.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -24,7 +26,7 @@ class SplashScreen extends StatelessWidget {
 
     // Auto-navigate when connected — wire up all providers with the API first.
     if (conn.state == JarvisConnectionState.connected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         final api = conn.api;
         context.read<AdminProvider>().setApi(api);
         context.read<SecurityProvider>().setApi(api);
@@ -38,8 +40,18 @@ class SplashScreen extends StatelessWidget {
         final sessionId = 'flutter_${DateTime.now().millisecondsSinceEpoch}';
         conn.ws.connect(sessionId);
 
+        // Check if the first-run wizard has been completed.
+        final prefs = await SharedPreferences.getInstance();
+        final firstRunComplete =
+            prefs.getBool(SetupWizardScreen.prefKey) ?? false;
+
+        if (!context.mounted) return;
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(builder: (_) => const MainShell()),
+          MaterialPageRoute<void>(
+            builder: (_) => firstRunComplete
+                ? const MainShell()
+                : const SetupWizardScreen(),
+          ),
         );
       });
     }

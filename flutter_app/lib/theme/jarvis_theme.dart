@@ -41,10 +41,12 @@ abstract final class JarvisTheme {
   static const _text3 = Color(0xFF4A5580); // Tertiary
 
   // ── Light Theme Surfaces ────────────────────────────────
+  // ignore: unused_field
   static const _lightBg = Color(0xFFF5F5F8);
   static const _lightSurface = Color(0xFFFFFFFF);
   // ignore: unused_field
   static const _lightSurfaceHover = Color(0xFFF0F0F4);
+  // ignore: unused_field
   static const _lightBorder = Color(0xFFE0E0E8);
   // ignore: unused_field
   static const _lightBorderHover = Color(0xFFD0D0DC);
@@ -192,7 +194,7 @@ abstract final class JarvisTheme {
     final baseText = GoogleFonts.interTextTheme(ThemeData.light().textTheme);
     return ThemeData(
       brightness: Brightness.light,
-      scaffoldBackgroundColor: _lightBg,
+      scaffoldBackgroundColor: const Color(0xFFF0F0F5),
       colorScheme: const ColorScheme.light(
         primary: _lightAccent,
         secondary: _green,
@@ -204,11 +206,25 @@ abstract final class JarvisTheme {
         onError: Colors.white,
       ),
       cardColor: _lightSurface,
-      dividerColor: _lightBorder,
+      dividerColor: const Color(0xFFCCCCD8),
+      cardTheme: CardThemeData(
+        color: _lightSurface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(cardRadius),
+          side: const BorderSide(color: Color(0xFFD8D8E4)),
+        ),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: _lightSurface,
         foregroundColor: _lightText1,
         elevation: 0,
+        scrolledUnderElevation: 1,
+        shadowColor: Color(0x22000000),
+        surfaceTintColor: Colors.transparent,
+        shape: Border(
+          bottom: BorderSide(color: Color(0xFFD8D8E4)),
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -216,16 +232,20 @@ abstract final class JarvisTheme {
         hintStyle: const TextStyle(color: _lightText2),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(inputRadius),
-          borderSide: const BorderSide(color: _lightBorder),
+          borderSide: const BorderSide(color: Color(0xFFBBBBCC)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(inputRadius),
-          borderSide: const BorderSide(color: _lightBorder),
+          borderSide: const BorderSide(color: Color(0xFFBBBBCC)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(inputRadius),
-          borderSide: const BorderSide(color: _lightAccent),
+          borderSide: const BorderSide(color: _lightAccent, width: 2),
         ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        textColor: _lightText1,
+        iconColor: _lightText2,
       ),
       textTheme: baseText.copyWith(
         bodyLarge: baseText.bodyLarge?.copyWith(
@@ -246,6 +266,13 @@ abstract final class JarvisTheme {
           fontWeight: FontWeight.w600,
           letterSpacing: -0.3,
         ),
+        titleMedium: baseText.titleMedium?.copyWith(
+          color: _lightText1,
+          fontWeight: FontWeight.w500,
+        ),
+        labelLarge: baseText.labelLarge?.copyWith(
+          color: _lightText1,
+        ),
       ),
       iconTheme: const IconThemeData(color: _lightText2),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -260,7 +287,7 @@ abstract final class JarvisTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: _lightAccent,
-          side: BorderSide(color: _lightAccent.withValues(alpha: 0.3)),
+          side: BorderSide(color: _lightAccent.withValues(alpha: 0.5)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(buttonRadius),
           ),
