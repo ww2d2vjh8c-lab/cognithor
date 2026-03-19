@@ -91,6 +91,13 @@ def parse_args() -> argparse.Namespace:
 
 def _check_python_version() -> None:
     """Sicherstellen, dass Python >= 3.12 läuft."""
+    if sys.version_info < (3, 12):
+        print(
+            f"[FAIL] Python >= 3.12 required, found {sys.version}.\n"
+            "       Please upgrade: https://python.org/downloads/",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
 
 
 def main() -> None:
