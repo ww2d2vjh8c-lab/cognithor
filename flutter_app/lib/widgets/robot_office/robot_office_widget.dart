@@ -547,6 +547,8 @@ class _RobotOfficeWidgetState extends State<RobotOfficeWidget>
 
     switch (r.state) {
       case RobotState.idle:
+        // Even idle robots slowly drift toward their target (chill spot)
+        _moveToTarget(r, dt * 0.1);
         if (r.stateTimer <= 0) {
           _assignRandomBehavior(r);
         }
@@ -954,6 +956,11 @@ class _RobotOfficeWidgetState extends State<RobotOfficeWidget>
   // ── Behavior assignment with weighted random ───────────────
 
   void _assignRandomBehavior(Robot r) {
+    // Always set a target so robots don't cluster — pick a spot far from others
+    final spot = _randomChillSpot();
+    r.targetX = spot.dx;
+    r.targetY = spot.dy;
+
     // When NOT running (no user request): robots chill, play, rest
     // When running (user request active): robots work frantically
     if (!widget.isRunning) {
@@ -1032,20 +1039,50 @@ class _RobotOfficeWidgetState extends State<RobotOfficeWidget>
   }
 
   /// Spread-out chill spots so idle robots don't cluster.
+  /// Pick a chill spot that's FAR from all other robots to prevent clustering.
   Offset _randomChillSpot() {
     const spots = [
-      Offset(0.08, 0.85), // bottom-left corner
-      Offset(0.92, 0.85), // bottom-right corner
-      Offset(0.50, 0.88), // center bottom
-      Offset(0.25, 0.78), // near plant
-      Offset(0.75, 0.82), // near plant
-      Offset(0.15, 0.45), // near board
-      Offset(0.55, 0.35), // near coffee
-      Offset(0.40, 0.75), // mid-floor
-      Offset(0.65, 0.50), // mid-office
-      Offset(0.35, 0.42), // between desks
+      Offset(0.06, 0.88), // bottom-left corner
+      Offset(0.93, 0.88), // bottom-right corner
+      Offset(0.50, 0.90), // center bottom
+      Offset(0.22, 0.80), // near left plant
+      Offset(0.78, 0.82), // near right plant
+      Offset(0.10, 0.42), // near board
+      Offset(0.56, 0.32), // near coffee
+      Offset(0.35, 0.75), // mid-floor left
+      Offset(0.65, 0.48), // mid-office
+      Offset(0.30, 0.55), // between desks row1
+      Offset(0.50, 0.72), // between desks row2
+      Offset(0.80, 0.55), // near server
+      Offset(0.45, 0.42), // desk2 area
+      Offset(0.15, 0.65), // desk3 area
+      Offset(0.70, 0.38), // upper right
     ];
-    return spots[_rng.nextInt(spots.length)];
+
+    // Find the spot that's farthest from any existing robot
+    Offset best = spots[_rng.nextInt(spots.length)];
+    double bestMinDist = -1;
+
+    for (final spot in spots) {
+      double minDist = double.infinity;
+      for (final r in _robots) {
+        final dx = r.x - spot.dx;
+        final dy = r.y - spot.dy;
+        final dist = dx * dx + dy * dy;
+        if (dist < minDist) minDist = dist;
+      }
+      // Also check pets
+      final dogDx = _dog.x - spot.dx;
+      final dogDy = _dog.y - spot.dy;
+      final dogDist = dogDx * dogDx + dogDy * dogDy;
+      if (dogDist < minDist) minDist = dogDist;
+
+      if (minDist > bestMinDist) {
+        bestMinDist = minDist;
+        best = spot;
+      }
+    }
+    return best;
   }
 
   void _assignNap(Robot r) {
