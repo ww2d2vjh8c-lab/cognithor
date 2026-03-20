@@ -5,6 +5,74 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.48.0] -- 2026-03-20
+
+### Added
+- **SuperClaude Integration (8 features)**:
+  - Reflexion-Based Error Learning (`learning/reflexion.py`): JSONL error memory with root cause, prevention rules, recurrence tracking (35 tests)
+  - Pre-Execution Confidence Check (`core/confidence.py`): 3-stage assessment (clarity/mistakes/context) in Gatekeeper (20 tests)
+  - Four Questions Response Validator (`core/response_validator.py`): Anti-hallucination checks in formulate_response() (22 tests)
+  - Token Budget Manager (`core/token_budget.py`): Complexity-based allocation with channel multipliers (24 tests)
+  - Parallel Wave Context Pipeline: asyncio.gather for memory+vault+episodes (13 tests)
+  - Self-Correction Prevention Rules: Auto-generated from GEPA trace analysis (17 tests)
+  - Channel-Specific Behavioral Flags (`core/channel_flags.py`): 11 channel profiles (18 tests)
+  - Post-Execution Pattern Documentation: Auto-captures successful tool sequences (8 tests)
+- **Chat History** (like ChatGPT/Claude):
+  - Session sidebar with past conversations, auto-titled from first message
+  - Folder/Project system: organize chats into project folders
+  - Rename, move to folder, delete via 3-dot context menu
+  - Session switching with WebSocket reconnect
+  - 5 new REST endpoints (list, history, create, delete, rename)
+- **Skill Editor (Full CRUD)**:
+  - Create, edit, delete skills from Flutter UI
+  - Monospace body editor, trigger keywords as chips, category dropdown
+  - Export as SKILL.md (agentskills.io format)
+  - Built-in skills protected with lock banner
+  - 7 backend API endpoints under /skill-registry/
+- **Agent Editor (Full CRUD)**:
+  - Create, edit, delete agent profiles
+  - System prompt editor, searchable model picker dialog
+  - Temperature slider, allowed/blocked tools, sandbox settings
+  - Default "jarvis" agent protected from deletion
+  - 4 backend API endpoints
+- **Interactive Model Selection**: Tap configured models to change via searchable picker dialog
+- **First-Run Setup Wizard**: 3-step onboarding (provider selection, config, connection test)
+
+### Changed
+- GEPA enabled by default (opt-out instead of opt-in)
+- Desktop breakpoint: 1024px → 800px (sidebar stays expanded on smaller screens)
+- Neon visual intensity doubled across all UI elements
+- Config sidebar width 200→220, labels with ellipsis
+- Channels page: compact toggle grid instead of full-width rows
+- Robot Office PiP: 50% larger (420×270 / 700×450)
+- Robot pathfinding around desks via corridor waypoints
+- System monitor in Robot Office: CPU/GPU/RAM/LOAD bars
+- Matrix rain 4x brighter (0.35 opacity, 40 columns)
+- Identity auto-unfreezes on startup when Genesis Anchors exist
+- Password eye toggle disabled when value is backend-masked (***)
+- All 80+ hardcoded UI strings localized (EN/DE/ZH/AR)
+- Provider error handling: partial error tracking, errors cleared only on success
+
+### Fixed
+- Chat messages disappearing (ChatProvider moved to app-level)
+- BackdropFilter causing invisible content on Flutter web (NeonCard replaces GlassPanel in lists)
+- Security/Models screens crashing (all unsafe type casts replaced)
+- Skills not showing (API path conflict with marketplace catch-all route)
+- Admin hub gray background (explicit scaffoldBackgroundColor)
+- Monitoring screen 404 (hardcoded API paths → proper methods)
+- discord_channel_id int→str coercion in config
+- Python version check was empty function
+- persistence.py row.get() on sqlite3.Row
+- Vite-specific tests skipped when React UI not present
+- WebSocket session switch race condition (300ms delay)
+
+### Testing
+- 157 new tests for SuperClaude features (all passing)
+- 71 GEPA tests (all passing)
+- Full suite: 5,063+ passed, 0 failed
+- flutter analyze: "No issues found!"
+- ruff format: 713 files conformant
+
 ## [0.47.1] -- 2026-03-19
 
 ### Added
