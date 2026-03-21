@@ -67,3 +67,10 @@ def test_should_create_new_session_no_sessions(tmp_path):
         channel="webui",
         user_id="web_user",
     ) is True
+
+
+def test_chat_history_limit_default():
+    """Chat history limit defaults to 100."""
+    from jarvis.config import JarvisConfig
+    config = JarvisConfig()
+    assert config.session.chat_history_limit == 100

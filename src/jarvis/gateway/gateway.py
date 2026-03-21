@@ -1234,6 +1234,9 @@ class Gateway:
             raise RuntimeError("Gateway.initialize() must be called before handle_message()")
 
         async def _run_context_pipeline():
+            if session.incognito:
+                log.info("incognito_skip_context", session=session.session_id[:8])
+                return
             if self._context_pipeline is not None:
                 try:
                     ctx_result = await self._context_pipeline.enrich(msg.text, wm)
@@ -2822,6 +2825,14 @@ class Gateway:
         wm: WorkingMemory,
     ) -> None:
         """Phase 5: Session persistieren."""
+        # Incognito: nur Session-Metadaten speichern, keine Chat-History
+        if session.incognito:
+            if self._session_store:
+                try:
+                    self._session_store.save_session(session)
+                except Exception as exc:
+                    log.warning("session_persist_error", error=str(exc))
+            return
         if self._session_store:
             try:
                 self._session_store.save_session(session)
@@ -3482,6 +3493,13 @@ class Gateway:
         now = time.monotonic()
         if (now - self._last_session_cleanup) >= self._CLEANUP_INTERVAL_SECONDS:
             self._cleanup_stale_sessions()
+            # GDPR retention: also clean up persisted sessions & channel mappings
+            if self._session_store:
+                try:
+                    self._session_store.cleanup_old_sessions(max_age_days=30)
+                    self._session_store.cleanup_channel_mappings(max_age_days=30)
+                except Exception as exc:
+                    log.warning("gdpr_retention_cleanup_failed", error=str(exc))
 
     def _get_or_create_session(
         self,
@@ -3574,9 +3592,13 @@ class Gateway:
         # Chat-History aus SessionStore wiederherstellen
         if self._session_store:
             try:
+                history_limit = getattr(
+                    getattr(self._config, "session", None),
+                    "chat_history_limit", 100,
+                )
                 history = self._session_store.load_chat_history(
                     session.session_id,
-                    limit=20,
+                    limit=history_limit,
                 )
                 if history:
                     wm.chat_history = history
