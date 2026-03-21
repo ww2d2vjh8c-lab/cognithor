@@ -567,6 +567,8 @@ class ApiClient {
   Future<Map<String, dynamic>> exportSession(String sessionId) =>
       get('sessions/$sessionId/export');
 
+  Future<Map<String, dynamic>> searchSessions(String query, {int limit = 20}) =>
+      get('sessions/search?q=${Uri.encodeComponent(query)}&limit=$limit');
   Future<bool> shouldNewSession({int timeoutMinutes = 30}) async {
     final data = await get(
       'sessions/should-new?timeout_minutes=$timeoutMinutes',

@@ -72,6 +72,24 @@ class SessionsProvider extends ChangeNotifier {
     }
   }
 
+  /// Create an incognito session (no memory enrichment, no persistence).
+  Future<String?> createIncognitoSession() async {
+    if (_api == null) return null;
+    try {
+      final data = await _api!.createIncognitoSession();
+      if (data.containsKey('error')) return null;
+      final id = data['session_id'] as String?;
+      if (id != null) {
+        activeSessionId = id;
+        await loadSessions();
+        notifyListeners();
+      }
+      return id;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<List<Map<String, dynamic>>?> loadHistory(String sessionId) async {
     if (_api == null) return null;
     try {
@@ -121,6 +139,23 @@ class SessionsProvider extends ChangeNotifier {
       error = e.toString();
       notifyListeners();
     }
+  }
+
+  List<Map<String, dynamic>> searchResults = [];
+
+  Future<void> searchChats(String query) async {
+    if (_api == null || query.trim().isEmpty) {
+      searchResults = [];
+      notifyListeners();
+      return;
+    }
+    try {
+      final data = await _api!.searchSessions(query);
+      searchResults = List<Map<String, dynamic>>.from(data['results'] ?? []);
+    } catch (_) {
+      searchResults = [];
+    }
+    notifyListeners();
   }
 
   Future<void> loadFolders() async {
