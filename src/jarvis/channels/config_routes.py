@@ -1229,6 +1229,15 @@ def _register_session_routes(
         folders = store.list_folders(channel=channel)
         return {"folders": folders}
 
+    @app.get("/api/v1/sessions/by-folder/{folder}", dependencies=deps)
+    async def list_sessions_by_folder(folder: str, limit: int = 50) -> dict[str, Any]:
+        """List sessions filtered by project/folder."""
+        store = _get_session_store()
+        if not store:
+            return {"sessions": []}
+        sessions = store.list_sessions_by_folder(folder, limit=limit)
+        return {"sessions": sessions}
+
     @app.patch("/api/v1/sessions/{session_id}", dependencies=deps)
     async def update_session(session_id: str, request: Request) -> dict[str, Any]:
         """Session-Metadaten aktualisieren (Titel, Ordner)."""

@@ -559,6 +559,9 @@ class ApiClient {
           String sessionId, String folder) =>
       patch('sessions/$sessionId', {'folder': folder});
   Future<Map<String, dynamic>> listFolders() => get('sessions/folders');
+  Future<Map<String, dynamic>> listSessionsByFolder(String folder,
+          {int limit = 50}) =>
+      get('sessions/by-folder/$folder?limit=$limit');
   Future<bool> shouldNewSession({int timeoutMinutes = 30}) async {
     final data = await get(
       'sessions/should-new?timeout_minutes=$timeoutMinutes',

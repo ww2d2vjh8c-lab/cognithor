@@ -15,6 +15,7 @@ import sqlite3
 import threading
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from jarvis.db import SQLITE_BUSY_TIMEOUT_MS
 from jarvis.models import (
@@ -455,6 +456,37 @@ class SessionStore:
             (channel, user_id),
         ).fetchall()
         return [row["folder"] for row in rows]
+
+    def list_sessions_by_folder(
+        self,
+        folder: str,
+        channel: str = "webui",
+        user_id: str = "web_user",
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """List sessions filtered by project/folder."""
+        rows = self.conn.execute(
+            """
+            SELECT session_id, title, message_count, started_at,
+                   last_activity, folder
+            FROM sessions
+            WHERE channel = ? AND user_id = ? AND folder = ? AND active = 1
+            ORDER BY last_activity DESC
+            LIMIT ?
+            """,
+            (channel, user_id, folder, limit),
+        ).fetchall()
+        return [
+            {
+                "id": r["session_id"],
+                "title": r["title"] or "",
+                "message_count": r["message_count"],
+                "started_at": r["started_at"],
+                "last_activity": r["last_activity"],
+                "folder": r["folder"] or "",
+            }
+            for r in rows
+        ]
 
     def delete_session(self, session_id: str) -> bool:
         """Soft-Delete: Setzt active=0.

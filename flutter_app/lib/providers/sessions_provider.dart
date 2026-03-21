@@ -165,6 +165,26 @@ class SessionsProvider extends ChangeNotifier {
     }
   }
 
+  /// Sessions grouped by folder/project for sidebar display.
+  Map<String, List<Map<String, dynamic>>> get sessionsByProject {
+    final grouped = <String, List<Map<String, dynamic>>>{};
+    for (final s in sessions) {
+      final folder = (s['folder'] as String?) ?? '';
+      final key = folder.isEmpty ? 'Allgemein' : folder;
+      grouped.putIfAbsent(key, () => []).add(s);
+    }
+    // Sort: 'Allgemein' last, rest alphabetical
+    final sorted = Map<String, List<Map<String, dynamic>>>.fromEntries(
+      grouped.entries.toList()
+        ..sort((a, b) {
+          if (a.key == 'Allgemein') return 1;
+          if (b.key == 'Allgemein') return -1;
+          return a.key.compareTo(b.key);
+        }),
+    );
+    return sorted;
+  }
+
   Future<void> moveToFolder(String sessionId, String folder) async {
     if (_api == null) return;
     try {
