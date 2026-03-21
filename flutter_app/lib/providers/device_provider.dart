@@ -85,6 +85,23 @@ class DeviceProvider extends ChangeNotifier {
     return granted;
   }
 
+  /// Enable sharing for a specific permission (web: app-level toggle only).
+  void enablePermission(Permission permission) {
+    switch (permission) {
+      case Permission.location:
+        locationEnabled = true;
+      case Permission.camera:
+        cameraEnabled = true;
+      case Permission.microphone:
+        microphoneEnabled = true;
+      case Permission.photos:
+        photosEnabled = true;
+      default:
+        break;
+    }
+    notifyListeners();
+  }
+
   /// Disable sharing for a specific permission (user opt-out).
   void disablePermission(Permission permission) {
     switch (permission) {

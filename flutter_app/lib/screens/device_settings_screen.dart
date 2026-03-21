@@ -46,11 +46,15 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     Permission permission,
     bool currentValue,
   ) async {
-    if (kIsWeb) return;
     if (!currentValue) {
-      await device.requestSinglePermission(permission);
+      if (kIsWeb) {
+        // On web, just toggle the app-level flag.
+        // Browser permission prompts happen when features are actually used.
+        device.enablePermission(permission);
+      } else {
+        await device.requestSinglePermission(permission);
+      }
     } else {
-      // Toggling off: we can't revoke the OS permission but we stop sharing.
       device.disablePermission(permission);
     }
   }
@@ -145,7 +149,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
           const SizedBox(height: 24),
 
           // ----- Device Permissions -----
-          if (!kIsWeb) ...[
+          // Show permissions on all platforms. On web, toggles control
+          // app-level flags (actual browser permission prompts happen on use).
+          if (true) ...[
             const _SectionHeader(title: 'Device Permissions'),
             Card(
               child: Column(
