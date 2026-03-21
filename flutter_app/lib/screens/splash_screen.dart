@@ -17,51 +17,64 @@ import 'package:jarvis_ui/screens/main_shell.dart';
 import 'package:jarvis_ui/screens/settings_screen.dart';
 import 'package:jarvis_ui/screens/setup_wizard_screen.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  bool _navigating = false;
+
+  Future<void> _onConnected() async {
+    if (_navigating || !mounted) return;
+    _navigating = true;
+
+    final conn = context.read<ConnectionProvider>();
+    final api = conn.api;
+
+    // Wire all providers
+    context.read<AdminProvider>().setApi(api);
+    context.read<SecurityProvider>().setApi(api);
+    context.read<MemoryProvider>().setApi(api);
+    context.read<SkillsProvider>().setApi(api);
+    context.read<WorkflowProvider>().setApi(api);
+
+    final sessions = context.read<SessionsProvider>();
+    sessions.setApi(api);
+
+    final chat = context.read<ChatProvider>();
+    chat.attach(conn.ws);
+
+    // Auto-session: resume recent or create new based on inactivity timeout
+    final sessionId = await sessions.autoSessionOnStartup() ??
+        'flutter_${DateTime.now().millisecondsSinceEpoch}';
+    conn.ws.connect(sessionId);
+
+    // Check if the first-run wizard has been completed.
+    final prefs = await SharedPreferences.getInstance();
+    final firstRunComplete =
+        prefs.getBool(SetupWizardScreen.prefKey) ?? false;
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) => firstRunComplete
+            ? const MainShell()
+            : const SetupWizardScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final conn = context.watch<ConnectionProvider>();
     final l = AppLocalizations.of(context);
 
-    // Auto-navigate when connected — wire up all providers with the API first.
-    if (conn.state == JarvisConnectionState.connected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final api = conn.api;
-        context.read<AdminProvider>().setApi(api);
-        context.read<SecurityProvider>().setApi(api);
-        context.read<MemoryProvider>().setApi(api);
-        context.read<SkillsProvider>().setApi(api);
-        context.read<WorkflowProvider>().setApi(api);
-
-        // Wire SessionsProvider with API
-        final sessions = context.read<SessionsProvider>();
-        sessions.setApi(api);
-
-        // Attach ChatProvider to WebSocket and connect
-        final chat = context.read<ChatProvider>();
-        chat.attach(conn.ws);
-
-        // Auto-session: resume recent or create new based on inactivity timeout
-        final sessionId = await sessions.autoSessionOnStartup() ??
-            'flutter_${DateTime.now().millisecondsSinceEpoch}';
-        conn.ws.connect(sessionId);
-
-        // Check if the first-run wizard has been completed.
-        final prefs = await SharedPreferences.getInstance();
-        final firstRunComplete =
-            prefs.getBool(SetupWizardScreen.prefKey) ?? false;
-
-        if (!context.mounted) return;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (_) => firstRunComplete
-                ? const MainShell()
-                : const SetupWizardScreen(),
-          ),
-        );
-      });
+    // Auto-navigate when connected — only once via _navigating guard
+    if (conn.state == JarvisConnectionState.connected && !_navigating) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onConnected());
     }
 
     return Scaffold(
