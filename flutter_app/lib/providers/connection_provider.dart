@@ -14,7 +14,19 @@ class ConnectionProvider extends ChangeNotifier {
   ConnectionProvider();
 
   static const _serverUrlKey = 'jarvis_server_url';
-  static const _defaultUrl = 'http://localhost:8741';
+
+  /// Default URL: on web, use the host the page was loaded from.
+  /// On native apps, default to localhost.
+  static String get _defaultUrl {
+    try {
+      // ignore: avoid_web_libraries_in_flutter
+      final uri = Uri.base; // works on web: gives the page URL
+      if (uri.host.isNotEmpty && uri.host != 'localhost' && uri.host != '127.0.0.1') {
+        return '${uri.scheme}://${uri.host}:${uri.port}';
+      }
+    } catch (_) {}
+    return 'http://localhost:8741';
+  }
 
   JarvisConnectionState state = JarvisConnectionState.disconnected;
   String serverUrl = _defaultUrl;
