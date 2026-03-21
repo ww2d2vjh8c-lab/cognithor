@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\core_memory.py
-# hypothesis_version: 6.151.9
-
-['^(#{1,2})\\s+(.+)$', 'utf-8']

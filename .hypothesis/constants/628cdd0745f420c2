@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\indexer.py
-# hypothesis_version: 6.151.9
-
-[450, 500, 900, 999, ' AND ', ' OR ', '%', ',', '1=1', '?', 'AND', 'NEAR', 'NOT', 'OR', 'VACUUM', '["\\(\\)\\*\\:\\^]', '\\', '\\%', '\\\\', '\\_', '_', 'attributes_json', 'chunks', 'cnt', 'confidence', 'content_hash', 'created_at', 'embeddings', 'entities', 'entities_json', 'id', 'line_end', 'line_start', 'memory_tier', 'name', 'qwen3-embedding:0.6b', 'rank', 'relation_type', 'relations', 'source_entity', 'source_file', 'source_path', 'target_entity', 'text', 'timestamp', 'token_count', 'type', 'type = ?', 'updated_at', 'vector']

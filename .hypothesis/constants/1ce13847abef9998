@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\learning\reflexion.py
-# hypothesis_version: 6.151.9
-
-[300, 500, 5000, 86400, '/\\S+\\.\\w+', '0x[0-9a-f]+', '<hex>', '<path>', '<ts>', '<uuid>', '\\s+', 'a', 'adopted', 'adopted_rules', 'category', 'count', 'line N', 'line \\d+', 'pending', 'pending_rules', 'reflexion.jsonl', 'reflexion_recorded', 'reflexion_recurrence', 'rejected', 'rejected_rules', 'tool', 'top_recurring', 'total_entries', 'unique_patterns', 'utf-8', 'w']

@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\db\factory.py
-# hypothesis_version: 6.151.9
-
-['.jarvis', 'backend', 'database', 'db_path', 'index', 'jarvis.db.factory', 'memory.db', 'postgresql', 'sqlite']

@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\learning\active_learner.py
-# hypothesis_version: 6.151.9
-
-[0.0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4, 0.6, 1.0, 30.0, 60.0, 365, 1024, 3600, 8192, 86400, '*', '.csv', '.docx', '.html', '.json', '.md', '.pdf', '.txt', '.xml', 'active_learner_error', 'enabled', 'exists', 'files_learned', 'files_this_hour', 'index_text', 'is_idle', 'path', 'rate_limit', 'rb', 'running', 'total_chunks', 'total_text_length', 'watch_dirs']

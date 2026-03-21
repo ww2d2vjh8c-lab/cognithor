@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\learning\lineage.py
-# hypothesis_version: 6.151.9
-
-[0.0, 100, '.jarvis', 'by_action', 'by_source', 'confidence_after', 'confidence_before', 'entities_tracked', 'knowledge_lineage.db', 'memory', 'new_value', 'old_value', 'source_path', 'total_entries']

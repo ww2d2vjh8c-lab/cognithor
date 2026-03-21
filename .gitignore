@@ -75,3 +75,4 @@ flutter_app/build/web/canvaskit/wimp*
 *.bak
 *.tmp
 *.orig
+.hypothesis/

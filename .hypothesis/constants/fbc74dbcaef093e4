@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\working.py
-# hypothesis_version: 6.151.9
-
-[1.0, 100, 500, 600, 800, 1200, 2500, 3000, 32768, '\n\n---\n\n', 'budget_core_memory', 'budget_procedures', 'budget_system_prompt', 'core_memory', 'memories', 'procedures']

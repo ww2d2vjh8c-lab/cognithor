@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\learning\confidence.py
-# hypothesis_version: 6.151.9
-
-[0.0, 0.05, 0.15, 0.2, 0.25, 0.35, 0.5, 1.0, 180, 'avg_change', 'confidence_update', 'correction', 'negative', 'negative_count', 'positive', 'positive_count', 'total_updates', 'verification_count', 'verified']

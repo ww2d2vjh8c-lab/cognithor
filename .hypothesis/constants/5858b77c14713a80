@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\core\distributed_lock.py
-# hypothesis_version: 6.151.9
-
-[0.05, 0.5, 1.5, 10.0, 30.0, '.jarvis', '/', '\\', '_', '_lock', '_name', '_timeout', 'file', 'jarvis:lock:', 'jarvis_home', 'local', 'lock_backend', 'locks', 'redis', 'redis_url', 'w', 'win32', '~/.jarvis/locks']

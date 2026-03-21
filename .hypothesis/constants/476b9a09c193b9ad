@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\multimodal.py
-# hypothesis_version: 6.151.9
-
-[0.2, 1.0, 200, 10000, 65536, '*', '.aac', '.bmp', '.csv', '.docx', '.flac', '.gif', '.htm', '.html', '.jpeg', '.jpg', '.json', '.m4a', '.md', '.mp3', '.ogg', '.pdf', '.png', '.svg', '.tiff', '.txt', '.wav', '.webm', '.webp', '.xml', 'audio', 'by_type', 'direct_read', 'document', 'image', 'manual', 'rb', 'replace', 'total_assets', 'total_chunks', 'unique_files', 'utf-8', 'video']

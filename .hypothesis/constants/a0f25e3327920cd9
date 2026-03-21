@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\chunker.py
-# hypothesis_version: 6.151.9
-
-[1.3, 3.2, 400, '/', '/core', '/episodes/', '/knowledge/', '/procedures/', '/semantic/', '\\', '^#{1,6}\\s+', 'core.md', 'episodes/', 'procedures/', 'utf-8']

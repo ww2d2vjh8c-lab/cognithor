@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\db\__init__.py
-# hypothesis_version: 6.151.9
-
-[5000, 'DatabaseBackend', 'create_backend', 'get_encryption_key', 'init_encryption', 'open_sqlite']

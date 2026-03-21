@@ -1,4 +1,0 @@
-# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\graph_ranking.py
-# hypothesis_version: 6.151.9
-
-[0.0, 1e-06, 0.3, 0.5, 0.7, 0.8, 0.85, 1.0, 'avg_degree', 'avg_pagerank', 'entities', 'fresh_entities', 'last_computed', 'name', 'not_computed', 'rank', 'stale_entities', 'status', 'top_3', 'total_entities']
