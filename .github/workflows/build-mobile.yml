@@ -1,0 +1,104 @@
+name: Build Mobile Apps (Android + iOS)
+
+on:
+  push:
+    tags:
+      - 'v*'  # Only build on version tags
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  build-android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter_app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.4'
+          channel: stable
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK (release)
+        run: flutter build apk --release
+
+      - name: Build App Bundle (for Play Store)
+        run: flutter build appbundle --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cognithor-android-apk
+          path: flutter_app/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cognithor-android-aab
+          path: flutter_app/build/app/outputs/bundle/release/app-release.aab
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            flutter_app/build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-ios:
+    name: iOS IPA
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: flutter_app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.4'
+          channel: stable
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build iOS (no codesign — for testing/sideload)
+        run: flutter build ios --release --no-codesign
+
+      - name: Create IPA from app bundle
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r cognithor-ios.ipa Payload
+          rm -rf Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cognithor-ios-ipa
+          path: flutter_app/cognithor-ios.ipa
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            flutter_app/cognithor-ios.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
