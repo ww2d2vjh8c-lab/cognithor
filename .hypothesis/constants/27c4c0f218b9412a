@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\embeddings.py
+# hypothesis_version: 6.151.9
+
+[0.0, 30.0, 1024, 50000, '/', '/api/embed', '/embeddings', 'Authorization', 'OLLAMA_HOST', 'anthropic', 'bedrock', 'bedrock_api_key', 'cerebras', 'cerebras_api_key', 'content', 'data', 'deepseek', 'deepseek_api_key', 'embedding', 'embeddings', 'gemini', 'github', 'github_api_key', 'groq', 'groq_api_key', 'huggingface', 'huggingface_api_key', 'index', 'input', 'is_closed', 'mistral', 'mistral_api_key', 'model', 'moonshot', 'moonshot_api_key', 'ollama', 'openai', 'openai_api_key', 'openai_base_url', 'openrouter', 'openrouter_api_key', 'parts', 'qwen3-embedding:0.6b', 'requests', 'text', 'together', 'together_api_key', 'unknown', 'values', 'x-goog-api-key', 'xai', 'xai_api_key']

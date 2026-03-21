@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\hashline\config.py
+# hypothesis_version: 6.151.9
+
+[0.5, 10.0, 30.0, 100, 10000, '*.env', '*.key', '*.min.css', '*.min.js', '*.pem', '*.pyc', '*.pyo', '*credentials*', '*secret*', '.git/*', '__pycache__/*', 'node_modules/*', 'xxhash64']

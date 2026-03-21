@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\ingest.py
+# hypothesis_version: 6.151.9
+
+[0.0, 5.0, 512, 1024, 2000, 4096, '%Y%m%d_%H%M%S', '.csv', '.docx', '.htm', '.html', '.jarvis', '.json', '.md', '.pdf', '.txt', '.xml', 'Datei nicht gefunden', 'Kein Text extrahiert', '_', 'failed', 'html.parser', 'index_text', 'ingest', 'ingest_error', 'ingest_file_size', 'ingest_scan', 'ingest_scan_complete', 'ingest_start', 'ingest_success', 'ingest_watch_error', 'ingest_watch_started', 'ingest_watch_stopped', 'known_hashes', 'pending', 'processed', 'rb', 'replace', 'script', 'style', 'supported_formats', 'utf-8', 'watch_dir']

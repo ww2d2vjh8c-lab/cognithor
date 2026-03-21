@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\learning\knowledge_ingest.py
+# hypothesis_version: 6.151.9
+
+[50000, '"', '&', '&#39;', '&amp;', '&gt;', '&lt;', '&quot;', "'", '.bmp', '.gif', '.jpeg', '.jpg', '.png', '.webp', '<', '>', 'Cognithor/1.0', 'Invalid YouTube URL', 'Mozilla/5.0', 'User-Agent', '\\u0026', 'failed', 'file', 'index_text', 'ingest_file_failed', 'processing', 'success', 'total', 'total_chunks', 'total_text', 'url', 'url_fetch_failed', 'youtube']

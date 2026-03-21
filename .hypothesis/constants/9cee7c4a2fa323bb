@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\utils\ttl_dict.py
+# hypothesis_version: 6.151.9
+
+[60.0, 10000, 86400, 'KT', 'TTLDict', 'VT', 'eviction_count', 'expired_count', 'max_size', 'size']

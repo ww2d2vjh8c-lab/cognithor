@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\vector_index.py
+# hypothesis_version: 6.151.9
+
+[0.3, 100, 200, 768, 'auto', 'faiss']

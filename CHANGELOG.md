@@ -5,6 +5,35 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.50.0] -- 2026-03-21
+
+### Added
+- **97 End-to-End Scenario Tests**: Real user interaction simulations through full PGE pipeline (greeting, factual questions, file ops, code generation, memory, documents, web research, shell, conversation context, error handling, language/tone, skills, safety, performance, sentiment, channels)
+- **WebSocket Token Streaming**: Real-time token-by-token response delivery + tool_start/tool_result events during PGE execution
+- **Property-Based Testing** (Hypothesis): 650 fuzz cases for hash determinism, parse roundtrips, budget invariants, signature consistency
+
+### Changed
+- **Prompts completely rewritten** — SYSTEM_PROMPT 274→50 lines (-61%), character-first design, casual German tone
+- REPLAN_PROMPT 50→15 lines (-70%), three clear options
+- ESCALATION_PROMPT uses first person ("Ich wollte...")
+- Prompt presets synced: English + Chinese translations match new style
+- formulate_response() prompts condensed (7 REGELN → 1 sentence)
+- Personality directives shorter and more natural
+- Greetings: "Morgen!" / "" / "Hey, guten Abend!" / "Na, auch noch wach?"
+- Sentiment messages: removed "HINWEIS:" prefix, shorter
+
+### Fixed
+- trace_optimizer: `get()` → `get_trace()`, `get_recent()` → `get_recent_traces()`
+- Personality test assertions updated to match new wording
+- Chat bubble light mode contrast (dark text on light background)
+- Hashline read_file pre-caches only, doesn't change output format
+
+### Testing
+- 97 E2E scenario tests (all passing)
+- 8 automated test methods: mypy, bandit, API contract, SQLite schemas, Hypothesis, stress test, dependency audit, config fuzzing
+- 0 bugs found in automated testing
+- Full suite: 5,500+ tests passing
+
 ## [0.49.0] -- 2026-03-21
 
 ### Added

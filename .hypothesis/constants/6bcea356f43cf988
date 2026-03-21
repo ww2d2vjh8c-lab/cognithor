@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\learning\knowledge_qa.py
+# hypothesis_version: 6.151.9
+
+[0.5, 100, '.jarvis', 'avg_confidence', 'knowledge_qa.db', 'memory', 'topics', 'total_pairs']

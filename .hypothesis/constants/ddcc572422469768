@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\memory\manager.py
+# hypothesis_version: 6.151.9
+
+[0.1, 0.5, 0.6, 1000, 4000, '*.md', 'Session-Ende', 'auto', 'chunks', 'core', 'core_memory_loaded', 'embedding_api_calls', 'embedding_cache_hits', 'embeddings', 'emotional', 'entities', 'episode_dates', 'episodic', 'episodic_pruned', 'identity_sync_failed', 'initialized', 'memory_episodic.db', 'memory_weights.db', 'multimodal_assets', 'procedural', 'procedures', 'procedures_reliable', 'relations', 'reliable', 'semantic', 'total']

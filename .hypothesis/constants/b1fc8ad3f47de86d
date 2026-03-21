@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\models.py
+# hypothesis_version: 6.151.9
+
+[-1.0, 0.0, 0.1, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.3, 2.0, 64.0, 300, 512, 600, 768, 3600, 8192, 32768, '*', 'ALLOW', 'APPROVE', 'BLOCK', 'INFORM', 'MASK', '_blocked_tools', 'assistant', 'cli', 'coder', 'container', 'core', 'credential_access', 'day', 'default', 'done', 'episodic', 'error', 'exec_process', 'exec_script', 'executing', 'fast', 'fs_read', 'fs_write', 'gating', 'green', 'http', 'hybrid', 'idle', 'jarvis', 'jobobject', 'medium', 'memory_read', 'memory_write', 'month', 'namespace', 'network_http', 'network_ws', 'offline', 'online', 'orange', 'pending', 'planner', 'planning', 'procedural', 'process', 'qwen3:8b', 'red', 'reflecting', 'researcher', 'routing', 'semantic', 'slow', 'stdio', 'system', 'system_info', 'telegram', 'tool', 'unknown', 'user', 'week', 'worker', 'working', 'yellow', '~/.jarvis/workspace/']

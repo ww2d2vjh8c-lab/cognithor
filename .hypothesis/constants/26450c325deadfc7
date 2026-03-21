@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\core\channel_flags.py
+# hypothesis_version: 6.151.9
+
+[500, 2000, 3000, 4000, 'cli', 'discord', 'irc', 'matrix', 'signal', 'slack', 'teams', 'telegram', 'twitch', 'voice', 'webui', 'whatsapp']

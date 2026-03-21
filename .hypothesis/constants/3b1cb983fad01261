@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\utils\circuit_breaker.py
+# hypothesis_version: 6.151.9
+
+[0.0, 60.0, 'CircuitBreaker', 'CircuitBreakerOpen', 'CircuitState', 'T', 'cb_name', 'closed', 'default', 'failure_count', 'from_state', 'half_open', 'name', 'open', 'state', 'state_changes', 'total_calls', 'total_failures', 'total_rejections']

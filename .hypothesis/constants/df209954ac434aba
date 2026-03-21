@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\utils\logging.py
+# hypothesis_version: 6.151.9
+
+[1024, '%(message)s', 'INFO', 'asyncio', 'debug', 'error', 'httpcore', 'httpx', 'info', 'iso', 'jarvis.jsonl', 'pad_event', 'pad_event_to', 'structlog', 'urllib3', 'utf-8', 'warning', 'watchdog']

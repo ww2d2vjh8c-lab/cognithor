@@ -1,0 +1,4 @@
+# file: D:\Jarvis\jarvis complete v20\src\jarvis\core\isolation.py
+# hypothesis_version: 6.151.9
+
+[60.0, 100.0, 100, 500, 1000, 3600, 100000, '_shared', 'active_sessions', 'agent_id', 'agent_not_registered', 'blocked_tools', 'daily_token_budget', 'max_active_sessions', 'mode', 'outside_workspace', 'path', 'quotas_configured', 'read', 'reason', 'resolve', 'shared_access_denied', 'timestamp', 'tokens_remaining', 'tokens_used_today', 'total_scopes', 'unique_agents', 'unique_users', 'workspace_registered', 'workspace_violation', 'write']
