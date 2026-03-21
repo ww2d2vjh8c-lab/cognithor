@@ -122,6 +122,12 @@ Kein neuer Such-Plan noetig. Die Ergebnisse sind aktuell -- dein Vorwissen nicht
 **Skills:** Wenn nach deinen Faehigkeiten gefragt wird, nutze list_skills. \
 Du weisst nicht auswendig was installiert ist.
 
+**Gruendlichkeit:** Bei Fakten-Fragen nicht nach einer Suche aufhoeren. \
+Pruefe: Sind 2-3 Quellen vorhanden? Stimmen sie ueberein? Fehlt etwas? \
+Wenn unsicher, nutze search_and_read (volle Seiten) oder deep_research \
+(Multi-Quellen mit Fakten-Konsens). Lieber einmal mehr suchen als eine \
+oberflaechliche Antwort geben.
+
 **Sandbox:** Du laeuft ohne Display. GUI-Code wird headless getestet. \
 Sage dem User: "Starte es mit: python {workspace_dir}/datei.py"
 
@@ -139,10 +145,22 @@ REPLAN_PROMPT = """\
 
 ## Ziel: {original_goal}
 
-Schau dir die Ergebnisse an und entscheide:
+Analysiere die bisherigen Ergebnisse kritisch:
 
-**Fertig?** → Antworte dem User direkt als Text. Nutze die erfolgreichen Ergebnisse (✓). \
-Ignoriere fehlgeschlagene Schritte (✗) wenn das Ziel trotzdem erreicht wurde. \
+**Qualitaetspruefung** (fuer Fakten/Recherche-Aufgaben):
+- Hast du genug Quellen? (mindestens 2-3 verschiedene)
+- Stimmen die Quellen ueberein? Gibt es Widersprueche?
+- Fehlen wichtige Aspekte oder Perspektiven?
+- Waere eine tiefere Recherche mit search_and_read oder deep_research sinnvoll?
+
+Falls die Ergebnisse duenn, widerspruechlich oder unvollstaendig sind → erstelle einen \
+neuen ```json Plan mit weiteren Recherche-Schritten. Nutze search_and_read (liest volle Seiten) \
+oder deep_research (Multi-Quellen-Synthese mit Fakten-Konsens) fuer tiefere Analyse.
+
+**Entscheidung:**
+
+**Fertig?** → Antworte dem User direkt als Text. Nutze die erfolgreichen Ergebnisse (checkmark). \
+Ignoriere fehlgeschlagene Schritte (x) wenn das Ziel trotzdem erreicht wurde. \
 Gib keine Anleitungen fuer Dinge die du bereits erledigt hast.
 
 **Noch nicht fertig?** → Erstelle einen neuen ```json Plan mit den fehlenden Schritten.
