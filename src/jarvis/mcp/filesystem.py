@@ -138,20 +138,13 @@ class FileSystemTools:
         if not validated.is_file():
             raise FileSystemError(f"Kein reguläres File: {path}")
 
-        # Hashline Guard: return tagged output if enabled
+        # Hashline Guard: pre-cache file hashes in the background
+        # (does NOT change output format — hashes used internally for edit validation)
         if self._hashline_guard is not None:
             try:
-                if line_start > 0 or line_end >= 0:
-                    # Convert 0-based to 1-based for hashline
-                    hl_start = line_start + 1
-                    hl_end = line_end + 1 if line_end >= 0 else -1
-                    if hl_end < 0:
-                        return self._hashline_guard.read_file(validated)
-                    return self._hashline_guard.read_range(validated, hl_start, hl_end)
-                return self._hashline_guard.read_file(validated)
+                self._hashline_guard.read_file(validated)  # populates cache
             except Exception:
-                log.debug("hashline_read_fallback", path=path, exc_info=True)
-                # Fall through to normal read
+                log.debug("hashline_cache_prefill_failed", path=path, exc_info=True)
 
         # Größenbeschränkung (maximal 1MB lesen)
         size = validated.stat().st_size
