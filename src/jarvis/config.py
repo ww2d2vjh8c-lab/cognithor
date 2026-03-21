@@ -1323,6 +1323,47 @@ _PROVIDER_MODEL_DEFAULTS: dict[str, dict[str, dict[str, Any]]] = {
             "name": "kimi-k2.5",
         },
     },
+    "claude-code": {
+        "planner": {
+            "name": "opus",
+            "context_window": 200000,
+            "vram_gb": 0.0,
+            "strengths": ["reasoning", "planning", "reflection", "german"],
+            "speed": "medium",
+        },
+        "executor": {
+            "name": "haiku",
+            "context_window": 200000,
+            "vram_gb": 0.0,
+            "strengths": ["tool-calling", "simple-tasks"],
+            "speed": "fast",
+        },
+        "coder": {
+            "name": "sonnet",
+            "context_window": 200000,
+            "vram_gb": 0.0,
+            "strengths": ["code-generation", "debugging", "testing"],
+            "speed": "medium",
+        },
+        "coder_fast": {
+            "name": "haiku",
+            "context_window": 200000,
+            "vram_gb": 0.0,
+            "strengths": ["code-generation", "real-time-coding"],
+            "speed": "fast",
+        },
+        # Claude Code CLI hat keine Embedding-API -- Ollama-Fallback bleibt
+        "embedding": {
+            "name": "qwen3-embedding:0.6b",
+            "context_window": 8192,
+            "vram_gb": 0.5,
+            "strengths": ["semantic-search", "multilingual"],
+            "speed": "fast",
+        },
+        "vision": {
+            "name": "sonnet",
+        },
+    },
 }
 
 # Base-URLs für OpenAI-kompatible Provider
@@ -1692,6 +1733,7 @@ class JarvisConfig(BaseModel):
         "huggingface",
         "moonshot",
         "lmstudio",
+        "claude-code",
     ] = Field(
         default="ollama",
         description=(
@@ -1699,7 +1741,7 @@ class JarvisConfig(BaseModel):
             "'gemini', 'groq', 'deepseek', 'mistral', "
             "'together', 'openrouter', 'xai', 'cerebras', "
             "'github', 'bedrock', 'huggingface', "
-            "'moonshot', 'lmstudio'"
+            "'moonshot', 'lmstudio', 'claude-code'"
         ),
     )
     openai_api_key: str = Field(default="", description="API-Key für OpenAI-kompatibles Backend")

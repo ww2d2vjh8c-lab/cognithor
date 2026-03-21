@@ -9,6 +9,8 @@ but delegates the actual communication to the configured backend.
 
 from __future__ import annotations
 
+import asyncio
+import shutil
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -40,6 +42,7 @@ class LLMBackendType(StrEnum):
     ANTHROPIC = "anthropic"
     GEMINI = "gemini"
     LMSTUDIO = "lmstudio"
+    CLAUDE_CODE = "claude-code"
 
 
 @dataclass
@@ -1094,6 +1097,204 @@ class GeminiBackend(LLMBackend):
 
 
 # ============================================================================
+# Claude Code CLI Backend
+# ============================================================================
+
+
+class ClaudeCodeBackend(LLMBackend):
+    """LLM backend using Claude Code CLI with user's subscription.
+
+    Requires the ``claude`` CLI to be installed and authenticated.
+    No API key needed -- uses the Claude Pro/Max subscription directly.
+
+    Args:
+        model: Default model shorthand (sonnet, opus, haiku).
+        timeout: Maximum seconds to wait for the CLI to respond.
+    """
+
+    def __init__(self, model: str = "sonnet", timeout: int = 120) -> None:
+        self._model = model
+        self._timeout = timeout
+        self._claude_path = shutil.which("claude") or "claude"
+
+    @property
+    def backend_type(self) -> LLMBackendType:
+        return LLMBackendType.CLAUDE_CODE
+
+    # ------------------------------------------------------------------
+    # Chat (non-streaming)
+    # ------------------------------------------------------------------
+
+    async def chat(
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        *,
+        tools: list[dict[str, Any]] | None = None,
+        temperature: float = 0.7,
+        top_p: float = 0.9,
+        format_json: bool = False,
+    ) -> ChatResponse:
+        prompt = self._messages_to_prompt(messages)
+        effective_model = model or self._model
+
+        cmd: list[str] = [
+            self._claude_path,
+            "--print",
+            "--model",
+            effective_model,
+        ]
+        if format_json:
+            cmd.extend(["--output-format", "json"])
+        else:
+            cmd.extend(["--output-format", "text"])
+
+        start = time.monotonic()
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(input=prompt.encode("utf-8")),
+                timeout=self._timeout,
+            )
+        except TimeoutError as exc:
+            raise LLMBackendError(
+                f"Claude CLI Timeout nach {self._timeout}s",
+            ) from exc
+        except FileNotFoundError as exc:
+            raise LLMBackendError(
+                "Claude CLI nicht gefunden. Bitte installieren: https://docs.anthropic.com/claude-code",
+            ) from exc
+
+        if proc.returncode != 0:
+            err_text = stderr.decode("utf-8", errors="replace")[:500]
+            raise LLMBackendError(
+                f"Claude CLI Fehler (exit {proc.returncode}): {err_text}",
+                status_code=proc.returncode,
+            )
+
+        content = stdout.decode("utf-8").strip()
+        duration_ms = int((time.monotonic() - start) * 1000)
+        log.debug("claude_code_chat", model=effective_model, duration_ms=duration_ms)
+
+        return ChatResponse(
+            content=content,
+            model=effective_model,
+            usage=None,
+            raw=None,
+        )
+
+    # ------------------------------------------------------------------
+    # Chat (streaming)
+    # ------------------------------------------------------------------
+
+    async def chat_stream(
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        *,
+        temperature: float = 0.7,
+        top_p: float = 0.9,
+    ) -> AsyncIterator[str]:
+        prompt = self._messages_to_prompt(messages)
+        effective_model = model or self._model
+
+        cmd: list[str] = [
+            self._claude_path,
+            "--print",
+            "--model",
+            effective_model,
+        ]
+
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except FileNotFoundError as exc:
+            raise LLMBackendError(
+                "Claude CLI nicht gefunden. Bitte installieren: https://docs.anthropic.com/claude-code",
+            ) from exc
+
+        assert proc.stdin is not None
+        assert proc.stdout is not None
+
+        proc.stdin.write(prompt.encode("utf-8"))
+        await proc.stdin.drain()
+        proc.stdin.close()
+
+        while True:
+            line = await proc.stdout.readline()
+            if not line:
+                break
+            yield line.decode("utf-8")
+
+        await proc.wait()
+        if proc.returncode != 0:
+            stderr_bytes = await proc.stderr.read() if proc.stderr else b""
+            err_text = stderr_bytes.decode("utf-8", errors="replace")[:500]
+            log.warning("claude_code_stream_error", exit_code=proc.returncode, stderr=err_text)
+
+    # ------------------------------------------------------------------
+    # Embeddings (not supported)
+    # ------------------------------------------------------------------
+
+    async def embed(self, model: str, text: str) -> EmbedResponse:
+        raise LLMBackendError(
+            "Claude Code CLI unterstuetzt keine Embeddings. "
+            "Verwende Ollama oder OpenAI als Embedding-Fallback."
+        )
+
+    # ------------------------------------------------------------------
+    # Availability / Models
+    # ------------------------------------------------------------------
+
+    async def is_available(self) -> bool:
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                self._claude_path,
+                "--version",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            _, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
+            return proc.returncode == 0
+        except Exception:
+            return False
+
+    async def list_models(self) -> list[str]:
+        return ["sonnet", "opus", "haiku"]
+
+    async def close(self) -> None:
+        pass  # No persistent connections
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _messages_to_prompt(messages: list[dict[str, Any]]) -> str:
+        """Convert chat messages to a single prompt string for the CLI."""
+        parts: list[str] = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                parts.append(f"[System]: {content}")
+            elif role == "assistant":
+                parts.append(f"[Previous response]: {content}")
+            else:
+                parts.append(content)
+        return "\n\n".join(parts)
+
+
+# ============================================================================
 # Factory
 # ============================================================================
 
@@ -1194,6 +1395,11 @@ def create_backend(config: JarvisConfig) -> LLMBackend:
             return OpenAIBackend(
                 api_key=getattr(config, "lmstudio_api_key", "lm-studio"),
                 base_url=getattr(config, "lmstudio_base_url", "http://localhost:1234/v1"),
+                timeout=config.ollama.timeout_seconds,
+            )
+        case "claude-code":
+            return ClaudeCodeBackend(
+                model=getattr(config.models.planner, "name", "sonnet"),
                 timeout=config.ollama.timeout_seconds,
             )
         case _:
