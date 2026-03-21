@@ -5,6 +5,35 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.49.0] -- 2026-03-21
+
+### Added
+- **Hashline Guard** — hash-anchored file edit system preventing race conditions and stale-line errors:
+  - 11 new modules in `src/jarvis/hashline/` (~1,500 lines)
+  - xxHash64-based line hashing with 2-char Base62 display tags
+  - Format: `1#aK| import yaml` — compact, LLM-parseable
+  - Hash validation before every edit (always checks disk, never just cache)
+  - Thread-safe LRU cache (100 files, OrderedDict + RLock)
+  - 4 edit operations: replace, insert_after, insert_before, delete
+  - Atomic writes (tempfile + os.replace), preserves permissions/encoding/newline style
+  - Auto-recovery on hash mismatch: reread + fuzzy line matching (±5 lines, difflib)
+  - Append-only JSONL audit trail with SHA-256
+  - Binary/encoding detection, file size limits, excluded/protected paths
+  - 14 configurable parameters via `config.yaml` hashline section
+  - 119 tests, all passing
+- **Voice Mode wired** — mic button in chat input toggles VoiceProvider, transcriptions auto-send
+- **Chat typing indicator** — "Thinking..." label with waveform, triggers during streaming start
+- **Dashboard idle state** — gauges show "Idle" instead of "0%" when backend is idle
+- **Agent Router live reload** — `reload_from_yaml()` after agent CRUD operations
+- **Kubernetes Helm Chart** — complete chart under `deploy/helm/cognithor/` with Ollama sidecar, GPU support
+- **Integration tests** — 9 new tests for SuperClaude + Chat History features
+- **demo.svg** — new animated terminal SVG with PGE pipeline visualization
+
+### Changed
+- FLUTTER_API_CONTRACT.md updated to v0.48.0 (25 new endpoints documented)
+- PWA Capacitor config points to Flutter web build
+- `xxhash>=3.0` added as dependency
+
 ## [0.48.0] -- 2026-03-20
 
 ### Added
