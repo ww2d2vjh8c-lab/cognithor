@@ -518,13 +518,14 @@ def main() -> None:
                             )
                             return
 
-                    # ── Session collision: close existing connection ──────
+                    # ── Session collision: silently replace ──────────────
+                    # Do NOT close the old connection — closing with 4002
+                    # triggers the client's reconnect logic → infinite loop.
+                    # Just replace in the dict; the old handler will get a
+                    # WebSocketDisconnect on its next receive/send attempt.
                     existing = _ws_connections.get(session_id)
                     if existing is not None and existing is not websocket:
-                        log.info("cc_ws_closing_stale", session_id=session_id)
-                        with contextlib.suppress(Exception):
-                            await existing.close(code=4002, reason="Session replaced")
-                        await asyncio.sleep(0.3)  # Let close propagate before replacing
+                        log.debug("cc_ws_replacing", session_id=session_id)
 
                     _ws_connections[session_id] = websocket
                     log.info("cc_ws_connected", session_id=session_id)
