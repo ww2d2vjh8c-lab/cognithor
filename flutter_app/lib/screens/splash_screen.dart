@@ -9,6 +9,7 @@ import 'package:jarvis_ui/providers/connection_provider.dart'
     show ConnectionProvider, JarvisConnectionState;
 import 'package:jarvis_ui/providers/memory_provider.dart';
 import 'package:jarvis_ui/providers/security_provider.dart';
+import 'package:jarvis_ui/providers/sessions_provider.dart';
 import 'package:jarvis_ui/providers/skills_provider.dart';
 import 'package:jarvis_ui/providers/workflow_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
@@ -34,10 +35,17 @@ class SplashScreen extends StatelessWidget {
         context.read<SkillsProvider>().setApi(api);
         context.read<WorkflowProvider>().setApi(api);
 
+        // Wire SessionsProvider with API
+        final sessions = context.read<SessionsProvider>();
+        sessions.setApi(api);
+
         // Attach ChatProvider to WebSocket and connect
         final chat = context.read<ChatProvider>();
         chat.attach(conn.ws);
-        final sessionId = 'flutter_${DateTime.now().millisecondsSinceEpoch}';
+
+        // Auto-session: resume recent or create new based on inactivity timeout
+        final sessionId = await sessions.autoSessionOnStartup() ??
+            'flutter_${DateTime.now().millisecondsSinceEpoch}';
         conn.ws.connect(sessionId);
 
         // Check if the first-run wizard has been completed.

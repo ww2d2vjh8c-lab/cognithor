@@ -91,7 +91,6 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
 
   Widget _buildMobile(BuildContext context) {
     final isDark = widget.isDark;
-    final nav = context.watch<NavigationProvider>();
 
     return Scaffold(
       body: Column(
@@ -176,39 +175,6 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                     ),
                   );
                 }),
-                const SizedBox(width: 4),
-                Container(
-                  width: 1,
-                  height: 32,
-                  color: isDark
-                      ? Theme.of(context).dividerColor
-                      : const Color(0xFFE0E0E8),
-                ),
-                const SizedBox(width: 4),
-                _BottomBarAction(
-                  icon: Icons.search,
-                  label: 'Search',
-                  color: nav.sectionColor,
-                  onTap: widget.onSearchTap ?? () {},
-                ),
-                _BottomBarAction(
-                  icon: isDark ? Icons.light_mode : Icons.dark_mode,
-                  label: isDark ? 'Light' : 'Dark',
-                  color: JarvisTheme.orange,
-                  onTap: widget.onThemeToggle ?? () {},
-                ),
-                Consumer<PipProvider>(
-                  builder: (context, pip, _) {
-                    return _BottomBarAction(
-                      icon: Icons.smart_toy,
-                      label: pip.visible ? 'Hide' : 'Office',
-                      color: pip.visible
-                          ? nav.sectionColor
-                          : JarvisTheme.purple,
-                      onTap: () => pip.toggle(),
-                    );
-                  },
-                ),
               ],
             ),
           ),
@@ -661,37 +627,3 @@ class _RailActionButtonState extends State<_RailActionButton> {
   }
 }
 
-// ── Bottom bar action (reused for mobile) ────────────────────────────────
-
-class _BottomBarAction extends StatelessWidget {
-  const _BottomBarAction({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 9, color: color)),
-          ],
-        ),
-      ),
-    );
-  }
-}
