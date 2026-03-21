@@ -472,20 +472,20 @@ def main() -> None:
 
                 @api_app.websocket("/ws/{session_id}")
                 async def _cc_ws(websocket: WebSocket, session_id: str) -> None:
+                    # ── Always accept first (Windows ProactorEventLoop crashes
+                    #    if close() is called before accept()) ──────────────
+                    required_token = _internal_api_token
+                    await websocket.accept()
+
                     # ── Rate-limit: prevent reconnection storms ─────────
                     import time as _ws_time
                     now = _ws_time.monotonic()
                     last = _ws_last_connect.get(session_id, 0)
                     if now - last < _WS_MIN_CONNECT_INTERVAL:
-                        await websocket.close(code=4003, reason="Too many connections")
+                        with contextlib.suppress(Exception):
+                            await websocket.close(code=4003, reason="Too many connections")
                         return
                     _ws_last_connect[session_id] = now
-
-                    # ── Token-based authentication ────────────────────────
-                    # Token wird via erster WS-Nachricht gesendet, NICHT als
-                    # Query-Parameter (vermeidet Log-Exposure).
-                    required_token = _internal_api_token
-                    await websocket.accept()
 
                     if required_token:
                         import hmac as _hmac
