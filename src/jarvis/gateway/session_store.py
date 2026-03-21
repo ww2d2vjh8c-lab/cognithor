@@ -192,6 +192,9 @@ class SessionStore:
         )
         self.conn.commit()
 
+    # Roles that represent user-visible chat messages (not internal context)
+    _VISIBLE_ROLES = {"user", "assistant"}
+
     def save_chat_history(
         self,
         session_id: str,
@@ -202,6 +205,10 @@ class SessionStore:
         Löscht vorherige History und schreibt alles neu
         (einfach + idempotent).
 
+        Only saves user and assistant messages — system messages
+        (context pipeline, identity, tool results) are internal
+        and must not be persisted as chat history.
+
         Returns:
             Anzahl gespeicherter Messages.
         """
@@ -209,7 +216,11 @@ class SessionStore:
             "DELETE FROM chat_history WHERE session_id = ?",
             (session_id,),
         )
+        saved = 0
         for msg in messages:
+            # Skip system/internal messages — only persist user-visible chat
+            if msg.role.value not in self._VISIBLE_ROLES:
+                continue
             ts = msg.timestamp.timestamp() if msg.timestamp else datetime.now(tz=UTC).timestamp()
             self.conn.execute(
                 """
@@ -225,8 +236,9 @@ class SessionStore:
                     ts,
                 ),
             )
+            saved += 1
         self.conn.commit()
-        return len(messages)
+        return saved
 
     def load_chat_history(
         self,
@@ -371,6 +383,9 @@ class SessionStore:
     ) -> list[dict[str, str | float]]:
         """Lädt Chat-Messages für eine Session als einfache Dicts.
 
+        Only returns user and assistant messages — system messages
+        are filtered out even if they were persisted by older code.
+
         Returns:
             Liste mit role, content, timestamp (chronologisch).
         """
@@ -379,6 +394,7 @@ class SessionStore:
             SELECT role, content, timestamp
             FROM chat_history
             WHERE session_id = ?
+              AND role IN ('user', 'assistant')
             ORDER BY timestamp DESC
             LIMIT ?
             """,
