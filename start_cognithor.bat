@@ -120,7 +120,7 @@ if exist "%REPO_ROOT%\flutter_app\build\web\index.html" (
     echo.
     cd /d "%REPO_ROOT%"
     start "" http://localhost:8741
-    %PYTHON_CMD% -m jarvis --no-cli
+    %PYTHON_CMD% -m jarvis --no-cli --api-host 0.0.0.0
     echo.
     echo   Cognithor stopped.
     goto :eof
@@ -153,7 +153,7 @@ if "!HAS_FLUTTER!"=="1" (
             echo   Backend + UI at http://localhost:8741
             echo.
             start "" http://localhost:8741
-            %PYTHON_CMD% -m jarvis --no-cli
+            %PYTHON_CMD% -m jarvis --no-cli --api-host 0.0.0.0
             echo.
             echo   Cognithor stopped.
             goto :eof
