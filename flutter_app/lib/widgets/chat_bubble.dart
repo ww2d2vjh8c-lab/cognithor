@@ -42,19 +42,24 @@ class ChatBubble extends StatelessWidget {
   // ── User Bubble ──────────────────────────────────────────────────────
   Widget _buildUserBubble(BuildContext context) {
     const baseColor = JarvisTheme.sectionChat;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: baseColor.withValues(alpha: 0.20),
+        color: isDark
+            ? baseColor.withValues(alpha: 0.20)
+            : baseColor.withValues(alpha: 0.12),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
           bottomLeft: Radius.circular(16),
-          bottomRight: Radius.circular(4), // chat tail
+          bottomRight: Radius.circular(4),
         ),
         border: Border.all(
-          color: baseColor.withValues(alpha: 0.40),
+          color: isDark
+              ? baseColor.withValues(alpha: 0.40)
+              : baseColor.withValues(alpha: 0.50),
         ),
       ),
       child: Row(
@@ -64,8 +69,8 @@ class ChatBubble extends StatelessWidget {
           Flexible(
             child: SelectableText(
               text,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -90,17 +95,24 @@ class ChatBubble extends StatelessWidget {
   // ── Assistant Bubble ─────────────────────────────────────────────────
   Widget _buildAssistantBubble(BuildContext context) {
     const tint = JarvisTheme.sectionChat;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.10),
+        color: isDark
+            ? tint.withValues(alpha: 0.10)
+            : tint.withValues(alpha: 0.08),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
           bottomLeft: Radius.circular(4),
           bottomRight: Radius.circular(16),
         ),
-        border: Border.all(color: tint.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: isDark
+              ? tint.withValues(alpha: 0.25)
+              : tint.withValues(alpha: 0.35),
+        ),
       ),
       child: IntrinsicHeight(
         child: Row(
