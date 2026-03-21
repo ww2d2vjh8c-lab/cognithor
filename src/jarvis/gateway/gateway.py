@@ -1136,10 +1136,21 @@ class Gateway:
         log.info("gateway_components_reloaded", components=reloaded)
         return {"reloaded": reloaded}
 
-    async def handle_message(self, msg: IncomingMessage) -> OutgoingMessage:
+    async def handle_message(
+        self,
+        msg: IncomingMessage,
+        stream_callback: Any | None = None,
+    ) -> OutgoingMessage:
         """Verarbeitet eine eingehende Nachricht. [B§3.4]
 
         Orchestriert den PGE-Zyklus (Plan → Gate → Execute → Replan).
+
+        Args:
+            msg: Eingehende Nachricht.
+            stream_callback: Optionaler async Callback fuer Streaming-Events.
+                Signatur: async (event_type: str, data: dict) -> None.
+                Wird vom WebUI-Channel gesetzt, um Tokens und Status-Events
+                in Echtzeit an den Client zu senden.
 
         Returns:
             OutgoingMessage mit der Jarvis-Antwort.
@@ -1442,6 +1453,7 @@ class Gateway:
                         route_decision,
                         agent_workspace,
                         run_id,
+                        stream_callback=stream_callback,
                     )
                 else:
                     await _pipeline_cb(
@@ -1464,6 +1476,7 @@ class Gateway:
                     route_decision,
                     agent_workspace,
                     run_id,
+                    stream_callback=stream_callback,
                 )
         finally:
             _cleanup_skill_state()
@@ -1763,6 +1776,36 @@ class Gateway:
 
         return _send_pipeline
 
+    async def _formulate_response(
+        self,
+        msg_text: str,
+        all_results: list[ToolResult],
+        wm: WorkingMemory,
+        stream_callback: Any | None = None,
+    ) -> str:
+        """Formulate response, optionally streaming tokens to the client.
+
+        If stream_callback is set and the planner supports streaming,
+        tokens are sent as stream_token events in real time.
+        Falls back to non-streaming formulate_response() otherwise.
+        """
+        if stream_callback is not None and hasattr(self._planner, "formulate_response_stream"):
+            try:
+                return await self._planner.formulate_response_stream(
+                    user_message=msg_text,
+                    results=all_results,
+                    working_memory=wm,
+                    stream_callback=stream_callback,
+                )
+            except Exception:
+                log.debug("streaming_formulate_failed_fallback", exc_info=True)
+                # Fall through to non-streaming
+        return await self._planner.formulate_response(
+            user_message=msg_text,
+            results=all_results,
+            working_memory=wm,
+        )
+
     async def _run_pge_loop(
         self,
         msg: IncomingMessage,
@@ -1772,8 +1815,12 @@ class Gateway:
         route_decision: RouteDecision | None,
         agent_workspace: Any,
         run_id: str | None,
+        stream_callback: Any | None = None,
     ) -> tuple[str, list[ToolResult], list[ActionPlan], list[AuditEntry]]:
         """Phase 3: Plan → Gate → Execute Loop.
+
+        Args:
+            stream_callback: Optionaler async Callback fuer Streaming-Events.
 
         Returns:
             (final_response, all_results, all_plans, all_audit)
@@ -1909,10 +1956,11 @@ class Gateway:
                 # daraus eine saubere Antwort formulieren (statt aufzugeben)
                 if all_results and any(r.success for r in all_results):
                     await _status_cb("finishing", "Composing response...")
-                    final_response = await self._planner.formulate_response(
-                        user_message=msg.text,
-                        results=all_results,
-                        working_memory=wm,
+                    final_response = await self._formulate_response(
+                        msg.text,
+                        all_results,
+                        wm,
+                        stream_callback,
                     )
                 else:
                     # Kein Kontext → Sanitized-Fallback oder Fehlermeldung
@@ -1951,10 +1999,11 @@ class Gateway:
                     # Don't retry — immediately formulate a direct response.
                     if session.iteration_count == 1 and not all_results:
                         await _status_cb("finishing", "Composing response...")
-                        final_response = await self._planner.formulate_response(
-                            user_message=msg.text,
-                            results=[],
-                            working_memory=wm,
+                        final_response = await self._formulate_response(
+                            msg.text,
+                            [],
+                            wm,
+                            stream_callback,
                         )
                         break
                     # Allow max 2 replan-text retries, then break
@@ -1966,10 +2015,11 @@ class Gateway:
                     # Stuck — never send raw REPLAN text to the user
                     if all_results and any(r.success for r in all_results):
                         await _status_cb("finishing", "Composing response...")
-                        final_response = await self._planner.formulate_response(
-                            user_message=msg.text,
-                            results=all_results,
-                            working_memory=wm,
+                        final_response = await self._formulate_response(
+                            msg.text,
+                            all_results,
+                            wm,
+                            stream_callback,
                         )
                     else:
                         final_response = (
@@ -1983,10 +2033,11 @@ class Gateway:
                 # returned text instead of JSON, formulate a proper response
                 if all_results and any(r.success for r in all_results):
                     await _status_cb("finishing", "Composing response...")
-                    final_response = await self._planner.formulate_response(
-                        user_message=msg.text,
-                        results=all_results,
-                        working_memory=wm,
+                    final_response = await self._formulate_response(
+                        msg.text,
+                        all_results,
+                        wm,
+                        stream_callback,
                     )
                     break
 
@@ -1997,10 +2048,11 @@ class Gateway:
                 # If there are prior successful results, summarize them
                 if all_results and any(r.success for r in all_results):
                     await _status_cb("finishing", "Composing response...")
-                    final_response = await self._planner.formulate_response(
-                        user_message=msg.text,
-                        results=all_results,
-                        working_memory=wm,
+                    final_response = await self._formulate_response(
+                        msg.text,
+                        all_results,
+                        wm,
+                        stream_callback,
                     )
                     break
                 final_response = (
@@ -2071,6 +2123,22 @@ class Gateway:
                 await _status_cb("executing", tool_status)
                 break  # Only send the first tool's status
 
+            # Stream: tool_start events for each planned step
+            if stream_callback is not None:
+                for step in plan.steps:
+                    try:
+                        await stream_callback(
+                            "tool_start",
+                            {
+                                "tool": step.tool,
+                                "status": _TOOL_STATUS_MAP.get(
+                                    step.tool, f"Running {step.tool}..."
+                                ),
+                            },
+                        )
+                    except Exception:
+                        log.debug("stream_tool_start_failed", exc_info=True)
+
             # Set status callback on executor for retry visibility
             self._executor.set_status_callback(_status_cb)
             await _pipeline_cb(
@@ -2100,6 +2168,23 @@ class Gateway:
                 results = await self._executor.execute(plan.steps, approved_decisions)
             finally:
                 self._executor.clear_agent_context()
+
+            # Stream: tool_result events for each completed tool
+            if stream_callback is not None:
+                for result in results:
+                    try:
+                        await stream_callback(
+                            "tool_result",
+                            {
+                                "tool": result.tool_name,
+                                "success": result.success,
+                                "result": (result.content[:200] if result.success else "")
+                                if hasattr(result, "content")
+                                else "",
+                            },
+                        )
+                    except Exception:
+                        log.debug("stream_tool_result_failed", exc_info=True)
 
             if run_id and self._run_recorder:
                 try:
@@ -2172,10 +2257,11 @@ class Gateway:
                     log.warning("pge_stuck_no_tools", iterations=session.iteration_count)
                     if all_results and any(r.success for r in all_results):
                         await _status_cb("finishing", "Composing response...")
-                        final_response = await self._planner.formulate_response(
-                            user_message=msg.text,
-                            results=all_results,
-                            working_memory=wm,
+                        final_response = await self._formulate_response(
+                            msg.text,
+                            all_results,
+                            wm,
+                            stream_callback,
                         )
                     else:
                         final_response = (
@@ -2208,10 +2294,11 @@ class Gateway:
             # Single-step non-coding tasks: respond immediately after success
             if has_success and not has_errors and not used_coding_tool and not _is_multi_step:
                 await _status_cb("finishing", "Composing response...")
-                final_response = await self._planner.formulate_response(
-                    user_message=msg.text,
-                    results=all_results,
-                    working_memory=wm,
+                final_response = await self._formulate_response(
+                    msg.text,
+                    all_results,
+                    wm,
+                    stream_callback,
                 )
                 break
 
@@ -2233,10 +2320,11 @@ class Gateway:
                 )
             ):
                 await _status_cb("finishing", "Composing response...")
-                final_response = await self._planner.formulate_response(
-                    user_message=msg.text,
-                    results=all_results,
-                    working_memory=wm,
+                final_response = await self._formulate_response(
+                    msg.text,
+                    all_results,
+                    wm,
+                    stream_callback,
                 )
                 break
                 # Otherwise: continue to replan for more steps (normal)
@@ -2245,10 +2333,11 @@ class Gateway:
             _failure_threshold = max(3, session.max_iterations // 2)
             if not has_success and session.iteration_count >= _failure_threshold:
                 await _status_cb("finishing", "Composing response...")
-                final_response = await self._planner.formulate_response(
-                    user_message=msg.text,
-                    results=all_results,
-                    working_memory=wm,
+                final_response = await self._formulate_response(
+                    msg.text,
+                    all_results,
+                    wm,
+                    stream_callback,
                 )
                 break
 
@@ -2425,9 +2514,10 @@ class Gateway:
         # GEPA: Collect execution trace
         if getattr(self, "_trace_store", None):
             try:
-                from jarvis.learning.execution_trace import ExecutionTrace, TraceStep
-                import uuid as _uuid
                 import time as _time
+                import uuid as _uuid
+
+                from jarvis.learning.execution_trace import ExecutionTrace, TraceStep
 
                 # Extract user goal from working memory
                 _goal = ""

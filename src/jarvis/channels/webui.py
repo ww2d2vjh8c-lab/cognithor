@@ -634,8 +634,38 @@ class WebUIChannel(Channel):
                 metadata=metadata,
             )
 
+            # Stream callback: sends events to client in real-time
+            _streamed_tokens = False
+
+            async def _stream_callback(event_type: str, data: dict[str, Any]) -> None:
+                nonlocal _streamed_tokens
+                if event_type == "stream_token":
+                    _streamed_tokens = True
+                await self._ws_send(
+                    ws,
+                    {
+                        "type": event_type,
+                        **data,
+                        "session_id": session_id,
+                    },
+                )
+
             try:
-                response = await self._handler(incoming)
+                # Try streaming-aware handler first (Gateway.handle_message
+                # accepts optional stream_callback kwarg)
+                try:
+                    response = await self._handler(
+                        incoming,
+                        stream_callback=_stream_callback,  # type: ignore[call-arg]
+                    )
+                except TypeError:
+                    # Handler does not accept stream_callback (e.g. tests,
+                    # non-gateway handlers) — fall back to plain call
+                    response = await self._handler(incoming)
+
+                # If tokens were streamed, the client already has the text
+                # progressively. Send assistant_message as final confirmation
+                # with the complete (post-processed) text.
                 await self._ws_send(
                     ws,
                     {
@@ -643,6 +673,7 @@ class WebUIChannel(Channel):
                         "text": response.text,
                         "session_id": session_id,
                         "timestamp": datetime.now(UTC).isoformat(),
+                        "streamed": _streamed_tokens,
                     },
                 )
                 await self._ws_send(
