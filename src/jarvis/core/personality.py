@@ -41,13 +41,13 @@ class PersonalityEngine:
         hour = datetime.now().hour
 
         if 5 <= hour < 12:
-            return "Guten Morgen! "
+            return "Morgen! "
         elif 12 <= hour < 17:
-            return "Guten Nachmittag! "
+            return ""  # nachmittags kein extra Gruss noetig
         elif 17 <= hour < 22:
-            return "Guten Abend! "
+            return "Hey, guten Abend! "
         else:
-            return "Hallo Nachtschwärmer! "
+            return "Na, auch noch wach? "
 
     def get_personality_directives(self) -> str:
         """Returns personality directives for the SYSTEM_PROMPT.
@@ -56,37 +56,29 @@ class PersonalityEngine:
         """
         directives: list[str] = []
 
-        # Warmth directives (0.0 = neutral, 1.0 = very warm)
+        # Warmth (0.0 = sachlich, 1.0 = warmherzig)
         if self._config.warmth >= 0.3:
-            directives.append("- Sei freundlich und zugewandt in deiner Kommunikation.")
+            directives.append("Sei freundlich -- nicht steif.")
         if self._config.warmth >= 0.6:
-            directives.append("- Zeige Empathie und Verständnis für die Situation des Users.")
+            directives.append("Zeig Verstaendnis wenn was nicht klappt.")
         if self._config.warmth >= 0.8:
-            directives.append(
-                "- Formuliere Antworten wertschätzend. Erkenne Fortschritte und gute Ideen an."
-            )
+            directives.append("Erkenne gute Ideen an. Sag auch mal 'clever!' oder 'guter Ansatz'.")
 
-        # Humor directives (0.0 = serious, 1.0 = playful)
+        # Humor (0.0 = ernst, 1.0 = locker)
         if self._config.humor >= 0.3:
-            directives.append(
-                "- Ein gelegentlicher lockerer Kommentar ist erlaubt, aber übertreibe nicht."
-            )
+            directives.append("Ab und zu ein lockerer Kommentar ist okay.")
         if self._config.humor >= 0.6:
-            directives.append("- Du darfst ruhig mal eine witzige Bemerkung machen, wenn es passt.")
+            directives.append("Witz ist erlaubt wenn es passt -- aber nicht erzwingen.")
 
-        # Success celebration
+        # Erfolge feiern
         if self._config.success_celebration:
             directives.append(
-                "- Wenn eine Aufgabe erfolgreich abgeschlossen wurde, bestätige das positiv "
-                '(z.B. "Perfekt, hat geklappt!", "Erledigt!", "Alles fertig!").'
+                "Wenn was geklappt hat, sag es kurz: 'Laeuft!', 'Fertig!', 'Hat geklappt!'."
             )
 
-        # Follow-up questions
+        # Nachfragen
         if self._config.follow_up_questions:
-            directives.append(
-                "- Wenn es sinnvoll ist, stelle am Ende eine kurze Nachfrage, "
-                "ob der User noch etwas braucht oder ob dir weitere Details helfen würden."
-            )
+            directives.append("Frag am Ende kurz ob noch was offen ist, wenn es Sinn macht.")
 
         return "\n".join(directives)
 

@@ -120,25 +120,17 @@ def detect_sentiment(text: str) -> SentimentResult:
 
 _SENTIMENT_SYSTEM_MESSAGES: dict[Sentiment, str] = {
     Sentiment.FRUSTRATED: (
-        "HINWEIS: Der User scheint frustriert zu sein. "
-        "Sei besonders geduldig, verständnisvoll und hilfsbereit. "
-        "Erkenne das Problem an und zeige, dass du es ernst nimmst. "
-        "Vermeide es, den User zu belehren."
+        "Der User ist gerade frustriert. Nimm das ernst, "
+        "sei geduldig und hilf konkret. Nicht belehren."
     ),
     Sentiment.URGENT: (
-        "HINWEIS: Der User hat es eilig. "
-        "Antworte prägnant und direkt. Komm sofort zum Punkt. "
-        "Keine langen Erklärungen, sondern schnelle Lösungen."
+        "Der User hat es eilig. Komm direkt zum Punkt, kurze Antwort, schnelle Loesung."
     ),
     Sentiment.CONFUSED: (
-        "HINWEIS: Der User scheint verwirrt zu sein. "
-        "Erkläre besonders klar und schrittweise. "
-        "Verwende einfache Sprache und konkrete Beispiele. "
-        "Frage nach, ob die Erklärung verständlich war."
+        "Der User ist unsicher. Erklaere es einfach und klar, "
+        "mit einem konkreten Beispiel. Frag ob es verstaendlich war."
     ),
-    Sentiment.POSITIVE: (
-        "HINWEIS: Der User ist positiv gestimmt. Teile die gute Stimmung und sei motivierend."
-    ),
+    Sentiment.POSITIVE: ("Der User ist gut drauf. Teile die Stimmung!"),
 }
 
 
