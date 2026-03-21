@@ -3,8 +3,8 @@ name: Build Mobile Apps (Android + iOS)
 on:
   push:
     tags:
-      - 'v*'  # Only build on version tags
-  workflow_dispatch:  # Manual trigger
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -28,6 +28,7 @@ jobs:
         with:
           flutter-version: '3.41.4'
           channel: stable
+          cache: false
 
       - name: Clean and get dependencies
         run: |
@@ -35,10 +36,7 @@ jobs:
           flutter pub get
 
       - name: Build APK (release)
-        run: flutter build apk --release
-
-      - name: Build App Bundle (for Play Store)
-        run: flutter build appbundle --release
+        run: flutter build apk --release --target-platform android-arm64
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -46,18 +44,11 @@ jobs:
           name: cognithor-android-apk
           path: flutter_app/build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Upload AAB artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cognithor-android-aab
-          path: flutter_app/build/app/outputs/bundle/release/app-release.aab
-
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            flutter_app/build/app/outputs/flutter-apk/app-release.apk
+          files: flutter_app/build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -76,17 +67,19 @@ jobs:
         with:
           flutter-version: '3.41.4'
           channel: stable
+          cache: false
 
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Build iOS via xcodebuild (skip Flutter signing check)
+      - name: Get dependencies and generate code
         run: |
-          # Flutter's --no-codesign still checks for team. Use xcodebuild directly.
+          flutter clean
           flutter pub get
-          cd ios && pod install && cd ..
+          flutter build ios --config-only --no-codesign 2>/dev/null || true
 
-          # Build with xcodebuild, completely disabling code signing
+      - name: Install CocoaPods
+        run: cd ios && pod install
+
+      - name: Build iOS with xcodebuild (unsigned)
+        run: |
           cd ios
           xcodebuild \
             -workspace Runner.xcworkspace \
@@ -94,34 +87,26 @@ jobs:
             -configuration Release \
             -sdk iphoneos \
             -destination generic/platform=iOS \
-            -archivePath ../build/ios/Runner.xcarchive \
+            -archivePath "$PWD/../build/ios/archive/Runner.xcarchive" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="-" \
             DEVELOPMENT_TEAM="" \
             PROVISIONING_PROFILE_SPECIFIER="" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             archive
-          cd ..
 
-      - name: Create IPA from archive
+      - name: Create IPA
         run: |
-          if [ -d "build/ios/Runner.xcarchive/Products/Applications/Runner.app" ]; then
-            mkdir -p Payload
-            cp -r "build/ios/Runner.xcarchive/Products/Applications/Runner.app" Payload/
+          ARCHIVE="build/ios/archive/Runner.xcarchive"
+          APP="$ARCHIVE/Products/Applications/Runner.app"
+          if [ -d "$APP" ]; then
+            mkdir Payload
+            cp -r "$APP" Payload/
             zip -r cognithor-ios.ipa Payload
-            rm -rf Payload
           else
-            echo "Archive build failed — creating from build products"
-            APP_PATH=$(find build -name "Runner.app" -type d 2>/dev/null | head -1)
-            if [ -n "$APP_PATH" ]; then
-              mkdir -p Payload
-              cp -r "$APP_PATH" Payload/
-              zip -r cognithor-ios.ipa Payload
-              rm -rf Payload
-            else
-              echo "No .app found"
-              exit 1
-            fi
+            echo "::error::No Runner.app found in archive"
+            find build -name "*.app" -type d 2>/dev/null
+            exit 1
           fi
 
       - name: Upload IPA artifact
@@ -134,7 +119,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            flutter_app/cognithor-ios.ipa
+          files: flutter_app/cognithor-ios.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
