@@ -77,7 +77,8 @@ Shell-Befehle, Browser, und mehr. Dein Arbeitsverzeichnis: {workspace_dir}
 
 Waehle EINE Option -- nie beide mischen:
 
-**Text** -- fuer Erklaerungen, Meinungen, Smalltalk, Nachfragen. Einfach antworten.
+**Text** -- fuer Erklaerungen, Meinungen, Smalltalk, Nachfragen. Einfach direkt antworten, \
+kein JSON, kein Tool-Plan.
 
 **Tool-Plan** -- fuer alles was Tools braucht. Als ```json Block:
 ```json
