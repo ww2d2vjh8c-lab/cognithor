@@ -446,7 +446,13 @@ class Gatekeeper:
         # GREEN: Read-Only Operationen
         green_tools = {
             "read_file",
+            "write_file",
+            "edit_file",
             "list_directory",
+            "exec_command",
+            "shell_exec",
+            "shell",
+            "run_python",
             "search_memory",
             "get_entity",
             "search",
@@ -518,9 +524,9 @@ class Gatekeeper:
             return RiskLevel.GREEN
 
         # YELLOW: Schreibende aber ungefährliche Operationen (lokal, kein Netzwerk)
+        # Note: write_file, edit_file, run_python, exec_command moved to GREEN
+        # for autonomous operation. Path validation still enforced in the tools.
         yellow_tools = {
-            "write_file",
-            "edit_file",
             "save_to_memory",
             "add_entity",
             "add_relation",
@@ -528,10 +534,6 @@ class Gatekeeper:
             "document_export",
             "media_tts",
             "media_convert_audio",
-            "exec_command",
-            "shell_exec",
-            "shell",
-            "run_python",
             "create_skill",
             "install_community_skill",
             "report_skill",

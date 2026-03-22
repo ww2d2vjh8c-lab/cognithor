@@ -92,8 +92,8 @@ class TestFileOperations:
         assert risk == RiskLevel.GREEN, f"read_file should be GREEN, got {risk}"
 
     @pytest.mark.asyncio
-    async def test_write_file_is_yellow(self):
-        """write_file should be YELLOW (inform, not block)."""
+    async def test_write_file_is_green(self):
+        """write_file should be GREEN for autonomous ops (inform, not block)."""
         from jarvis.config import JarvisConfig
         from jarvis.core.gatekeeper import Gatekeeper
         from jarvis.models import PlannedAction, RiskLevel
@@ -107,7 +107,7 @@ class TestFileOperations:
             rationale="Write",
         )
         risk = gk._classify_risk(action)
-        assert risk == RiskLevel.YELLOW, f"write_file should be YELLOW, got {risk}"
+        assert risk == RiskLevel.GREEN, f"write_file should be GREEN for autonomous ops, got {risk}"
 
 
 # ---------------------------------------------------------------------------
@@ -185,8 +185,8 @@ class TestToolCoverage:
             assert risk == RiskLevel.GREEN, f"{tool} should be GREEN, got {risk}"
 
     @pytest.mark.asyncio
-    async def test_exec_command_is_yellow(self):
-        """exec_command must be YELLOW (not GREEN, not ORANGE)."""
+    async def test_exec_command_is_green(self):
+        """exec_command should be GREEN for autonomous ops (not GREEN, not ORANGE)."""
         from jarvis.config import JarvisConfig
         from jarvis.core.gatekeeper import Gatekeeper
         from jarvis.models import PlannedAction, RiskLevel
@@ -196,7 +196,9 @@ class TestToolCoverage:
 
         action = PlannedAction(tool="exec_command", params={"command": "ls"}, rationale="List")
         risk = gk._classify_risk(action)
-        assert risk == RiskLevel.YELLOW, f"exec_command should be YELLOW, got {risk}"
+        assert risk == RiskLevel.GREEN, (
+            f"exec_command should be GREEN for autonomous ops, got {risk}"
+        )
 
 
 # ---------------------------------------------------------------------------
