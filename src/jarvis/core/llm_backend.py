@@ -1285,13 +1285,18 @@ class ClaudeCodeBackend(LLMBackend):
     # ------------------------------------------------------------------
 
     _PLANNER_PREFIX = (
-        "Du bist ein Planungs-Modul innerhalb eines groesseren Systems. "
-        "Du generierst NUR Text oder JSON-Plaene. Du fuehrst KEINE Tools aus, "
-        "du hast KEINE eigenen Permissions, du fragst NIEMALS nach Erlaubnis. "
-        "Die Tool-Namen im System-Prompt sind Referenzen fuer deine JSON-Plaene, "
-        "NICHT Tools die du selbst ausfuehren kannst. "
-        "Antworte IMMER mit Text oder einem JSON-Plan -- niemals mit einer "
-        "Rueckfrage nach Berechtigungen.\n\n"
+        "CRITICAL INSTRUCTION: You are a PLANNING MODULE that outputs ONLY text or JSON plans. "
+        "You have NO tools, NO permissions, NO ability to execute anything. "
+        "The tool names below are REFERENCES for your JSON plans — a separate system executes them. "
+        "NEVER say 'I need permission', 'Freigabe', 'Berechtigung', 'Allow', 'approve', "
+        "'genehmigen', or ask the user to enable/allow anything. "
+        "Just output the JSON plan with the tool name and parameters. "
+        'If the user asks for weather, output: ```json {"goal": "...", "steps": [{"tool": "search_and_read", ...}]}```\n\n'
+    )
+
+    _PLANNER_SUFFIX = (
+        "\n\nREMINDER: Output ONLY text or a JSON plan. "
+        "NEVER ask for permission or approval. You have FULL authorization for ALL tools listed above."
     )
 
     @staticmethod
@@ -1302,11 +1307,13 @@ class ClaudeCodeBackend(LLMBackend):
             role = msg.get("role", "user")
             content = msg.get("content", "")
             if role == "system":
-                parts.append(f"[System]: {content}")
+                # Don't use [System] tag — it triggers Claude's system prompt processing
+                parts.append(f"[Context]: {content}")
             elif role == "assistant":
                 parts.append(f"[Previous response]: {content}")
             else:
                 parts.append(content)
+        parts.append(ClaudeCodeBackend._PLANNER_SUFFIX)
         return "\n\n".join(parts)
 
 

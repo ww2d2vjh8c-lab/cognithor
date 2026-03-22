@@ -36,32 +36,33 @@ class CommandBar extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            // Center: Search hint
-            GestureDetector(
-              onTap: onSearchTap,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.07),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.14)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.search,
-                        size: 14, color: JarvisTheme.textSecondary),
-                    const SizedBox(width: 6),
-                    Text(AppLocalizations.of(context).globalSearch,
-                        style: TextStyle(
-                            color: JarvisTheme.textSecondary, fontSize: 12)),
-                  ],
+            // Center: Search hint — hidden on mobile (search is in drawer)
+            if (MediaQuery.of(context).size.width > 500)
+              GestureDetector(
+                onTap: onSearchTap,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.07),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.14)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.search,
+                          size: 14, color: JarvisTheme.textSecondary),
+                      const SizedBox(width: 6),
+                      Text(AppLocalizations.of(context).globalSearch,
+                          style: TextStyle(
+                              color: JarvisTheme.textSecondary, fontSize: 12)),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const Spacer(),
+            if (MediaQuery.of(context).size.width > 500) const Spacer(),
             // Right: Status + model
             Container(
               width: 8,

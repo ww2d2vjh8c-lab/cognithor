@@ -57,8 +57,9 @@ class TestMessagesToPrompt:
         b = ClaudeCodeBackend()
         result = b._messages_to_prompt([{"role": "user", "content": "Hello"}])
         assert "Hello" in result
-        # Planner prefix is prepended to all prompts
-        assert "Planungs-Modul" in result
+        # Planner prefix + suffix are included
+        assert "PLANNING MODULE" in result
+        assert "REMINDER" in result
 
     def test_system_and_user(self) -> None:
         b = ClaudeCodeBackend()
@@ -67,7 +68,8 @@ class TestMessagesToPrompt:
             {"role": "user", "content": "Hi"},
         ]
         result = b._messages_to_prompt(msgs)
-        assert "[System]: You are helpful." in result
+        # System messages use [Context] tag, not [System]
+        assert "[Context]: You are helpful." in result
         assert "Hi" in result
 
     def test_assistant_message(self) -> None:
@@ -84,14 +86,13 @@ class TestMessagesToPrompt:
     def test_empty_messages(self) -> None:
         b = ClaudeCodeBackend()
         result = b._messages_to_prompt([])
-        # Even with no messages, planner prefix is included
-        assert "Planungs-Modul" in result
+        # Even with no messages, planner prefix + suffix included
+        assert "PLANNING MODULE" in result
 
     def test_missing_content_key(self) -> None:
         b = ClaudeCodeBackend()
         result = b._messages_to_prompt([{"role": "user"}])
-        # Empty content message still has planner prefix
-        assert "Planungs-Modul" in result
+        assert "PLANNING MODULE" in result
 
 
 # ============================================================================
