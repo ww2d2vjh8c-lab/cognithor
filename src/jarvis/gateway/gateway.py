@@ -1909,9 +1909,33 @@ class Gateway:
                 token_estimate=wm.token_count,
             )
 
-            # Status: Thinking
-            await _status_cb("thinking", "Thinking...")
+            # Status: Thinking (with periodic keepalive for long-running plans)
+            await _status_cb("thinking", "Denke nach...")
             await _pipeline_cb("plan", "start", iteration=session.iteration_count)
+
+            # Keepalive: send periodic status updates while planner works
+            _keepalive_running = True
+
+            async def _thinking_keepalive() -> None:
+                """Send periodic status updates so the UI shows activity."""
+                _elapsed = 0
+                _messages = [
+                    "Denke nach...",
+                    "Plane Schritte...",
+                    "Analysiere Aufgabe...",
+                    "Erstelle Plan...",
+                    "Arbeite daran...",
+                ]
+                while _keepalive_running:
+                    await asyncio.sleep(5)
+                    if not _keepalive_running:
+                        break
+                    _elapsed += 5
+                    _msg = _messages[min(_elapsed // 10, len(_messages) - 1)]
+                    with contextlib.suppress(Exception):
+                        await _status_cb("thinking", f"{_msg} ({_elapsed}s)")
+
+            _keepalive_task = asyncio.create_task(_thinking_keepalive())
 
             # Identity: enrich context before planning (first iteration only)
             if session.iteration_count == 1 and _identity is not None:
@@ -1943,6 +1967,12 @@ class Gateway:
                     working_memory=wm,
                     tool_schemas=tool_schemas,
                 )
+
+            # Stop keepalive once planner responds
+            _keepalive_running = False
+            _keepalive_task.cancel()
+            with contextlib.suppress(Exception):
+                await _keepalive_task
 
             all_plans.append(plan)
             await _pipeline_cb(
