@@ -1658,55 +1658,55 @@ class AppLocalizationsAr extends AppLocalizations {
   String get directoryMissing => 'المجلد غير موجود';
 
   @override
-  String get qaKnowledgeBase => 'Q&A';
+  String get qaKnowledgeBase => 'أسئلة وأجوبة';
 
   @override
-  String get lineage => 'Lineage';
+  String get lineage => 'السلالة';
 
   @override
-  String get question => 'Question';
+  String get question => 'السؤال';
 
   @override
-  String get answer => 'Answer';
+  String get answer => 'الإجابة';
 
   @override
-  String get topic => 'Topic';
+  String get topic => 'الموضوع';
 
   @override
-  String get addQA => 'Add Q&A';
+  String get addQA => 'إضافة سؤال وجواب';
 
   @override
-  String get verify => 'Verify';
+  String get verify => 'تحقّق';
 
   @override
-  String get source => 'Source';
+  String get source => 'المصدر';
 
   @override
-  String get noQAPairs => 'No knowledge entries';
+  String get noQAPairs => 'لا توجد إدخالات معرفية';
 
   @override
-  String get noLineage => 'No lineage data';
+  String get noLineage => 'لا توجد بيانات سلالة';
 
   @override
-  String get entityLineage => 'Entity Lineage';
+  String get entityLineage => 'سلالة الكيان';
 
   @override
-  String get recentChanges => 'Recent Changes';
+  String get recentChanges => 'التغييرات الأخيرة';
 
   @override
-  String get created => 'Created';
+  String get created => 'تاريخ الإنشاء';
 
   @override
-  String get updated => 'Updated';
+  String get updated => 'تاريخ التحديث';
 
   @override
-  String get decayed => 'Decayed';
+  String get decayed => 'متلاشٍ';
 
   @override
-  String get runExploration => 'Run Exploration';
+  String get runExploration => 'تشغيل الاستكشاف';
 
   @override
-  String get explorationComplete => 'Exploration complete';
+  String get explorationComplete => 'اكتمل الاستكشاف';
 
   @override
   String get activityChart => 'النشاط';

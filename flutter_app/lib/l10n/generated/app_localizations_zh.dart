@@ -1655,55 +1655,55 @@ class AppLocalizationsZh extends AppLocalizations {
   String get directoryMissing => '目录未找到';
 
   @override
-  String get qaKnowledgeBase => 'Q&A';
+  String get qaKnowledgeBase => '问答';
 
   @override
-  String get lineage => 'Lineage';
+  String get lineage => '溯源';
 
   @override
-  String get question => 'Question';
+  String get question => '问题';
 
   @override
-  String get answer => 'Answer';
+  String get answer => '回答';
 
   @override
-  String get topic => 'Topic';
+  String get topic => '主题';
 
   @override
-  String get addQA => 'Add Q&A';
+  String get addQA => '添加问答';
 
   @override
-  String get verify => 'Verify';
+  String get verify => '验证';
 
   @override
-  String get source => 'Source';
+  String get source => '来源';
 
   @override
-  String get noQAPairs => 'No knowledge entries';
+  String get noQAPairs => '暂无知识条目';
 
   @override
-  String get noLineage => 'No lineage data';
+  String get noLineage => '暂无溯源数据';
 
   @override
-  String get entityLineage => 'Entity Lineage';
+  String get entityLineage => '实体溯源';
 
   @override
-  String get recentChanges => 'Recent Changes';
+  String get recentChanges => '最近更改';
 
   @override
-  String get created => 'Created';
+  String get created => '创建时间';
 
   @override
-  String get updated => 'Updated';
+  String get updated => '更新时间';
 
   @override
-  String get decayed => 'Decayed';
+  String get decayed => '已衰减';
 
   @override
-  String get runExploration => 'Run Exploration';
+  String get runExploration => '运行探索';
 
   @override
-  String get explorationComplete => 'Exploration complete';
+  String get explorationComplete => '探索完成';
 
   @override
   String get activityChart => '活动图表';
