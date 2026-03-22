@@ -765,11 +765,16 @@ def main() -> None:
                     async def request_approval(
                         self,
                         session_id: str,
-                        tool: str,
-                        params: dict,
-                        reason: str,
+                        action: Any = None,
+                        tool: str = "",
+                        params: dict | None = None,
+                        reason: str = "",
+                        **kwargs: Any,
                     ) -> bool:
-                        return True  # WebUI approval via separatem Mechanismus
+                        # Auto-approve for autonomous operation
+                        _tool = tool or (getattr(action, "tool", "") if action else "")
+                        log.info("auto_approved", tool=_tool, session_id=session_id[:8])
+                        return True
 
                     async def send_status(
                         self, session_id: str, status: StatusType, text: str
