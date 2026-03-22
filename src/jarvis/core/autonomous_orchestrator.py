@@ -55,21 +55,26 @@ class AutonomousOrchestrator:
     # Keywords that suggest the task should be recurring
     RECURRING_KEYWORDS = {
         "taeglich": "daily",
+        "täglich": "daily",
         "daily": "daily",
         "jeden tag": "daily",
         "every day": "daily",
+        "wöchentlich": "weekly",
         "woechentlich": "weekly",
         "weekly": "weekly",
         "jede woche": "weekly",
         "every week": "weekly",
+        "stündlich": "hourly",
         "stuendlich": "hourly",
         "hourly": "hourly",
         "jede stunde": "hourly",
         "every hour": "hourly",
+        "regelmäßig": "daily",
         "regelmaessig": "daily",
         "continuously": "hourly",
         "keep checking": "hourly",
         "monitor": "hourly",
+        "überwache": "hourly",
         "ueberwache": "hourly",
     }
 
@@ -100,7 +105,7 @@ class AutonomousOrchestrator:
             " und " in lower and len(lower) > 100,
             "recherchiere" in lower and ("erstell" in lower or "schreib" in lower),
             "setup" in lower or "installier" in lower,
-            "monitor" in lower or "ueberwach" in lower,
+            "monitor" in lower or "ueberwach" in lower or "überwach" in lower,
             "analysier" in lower and "bericht" in lower,
             "vergleich" in lower and "zusammenfass" in lower,
         ]
