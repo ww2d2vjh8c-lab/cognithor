@@ -89,7 +89,12 @@ class _ChatInputState extends State<ChatInput> {
     final l = AppLocalizations.of(context);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
+      padding: EdgeInsets.fromLTRB(
+        MediaQuery.of(context).size.width > 400 ? 16 : 8,
+        8,
+        MediaQuery.of(context).size.width > 400 ? 16 : 8,
+        16,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(

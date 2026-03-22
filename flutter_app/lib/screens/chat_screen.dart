@@ -443,74 +443,85 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ],
       ),
-      actions: [
-        // Voice toggle
-        Consumer<VoiceProvider>(
-          builder: (context, voice, _) {
-            return IconButton(
-              icon: Icon(
-                voice.isActive ? Icons.mic : Icons.mic_none,
-                color: voice.isActive ? JarvisTheme.green : null,
-              ),
-              tooltip: l.voiceMode,
-              onPressed: () => voice.toggle(),
-            );
-          },
-        ),
-        // Teach Cognithor
-        IconButton(
-          icon: const Icon(Icons.auto_stories),
-          tooltip: l.teachCognithor,
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const TeachScreen(),
-              ),
-            );
-          },
-        ),
-        // Hacker mode toggle
-        Consumer<HackerModeProvider>(
-          builder: (context, hackerMode, _) {
-            return IconButton(
-              icon: Icon(
-                Icons.terminal,
-                color: hackerMode.enabled
-                    ? const Color(0xFF00FF41)
-                    : null,
-              ),
-              tooltip: l.hackerMode,
-              onPressed: () => hackerMode.toggle(),
-            );
-          },
-        ),
-        // Observe panel toggle
-        IconButton(
-          icon: Icon(
-            Icons.analytics_outlined,
-            color: _showObserve ? JarvisTheme.accent : null,
-          ),
-          tooltip: l.observe,
-          onPressed: () => setState(() => _showObserve = !_showObserve),
-        ),
-        // Canvas toggle
-        Consumer<ChatProvider>(
-          builder: (context, chat, _) {
-            if (chat.canvasHtml == null) return const SizedBox.shrink();
-            return IconButton(
-              icon: Icon(Icons.web_asset, color: JarvisTheme.accent),
-              tooltip: l.canvasLabel,
-              onPressed: () {},
-            );
-          },
-        ),
-        // Clear chat
-        IconButton(
-          icon: const Icon(Icons.delete_outline),
-          tooltip: l.clearChat,
-          onPressed: () => context.read<ChatProvider>().clearChat(),
-        ),
-      ],
+      actions: _buildAppBarActions(l),
     );
+  }
+
+  List<Widget> _buildAppBarActions(AppLocalizations l) {
+    final isLargePhone = MediaQuery.of(context).size.width > 400;
+    final spacer = isLargePhone ? const SizedBox(width: 4) : const SizedBox.shrink();
+
+    return [
+      // Voice toggle
+      Consumer<VoiceProvider>(
+        builder: (context, voice, _) {
+          return IconButton(
+            icon: Icon(
+              voice.isActive ? Icons.mic : Icons.mic_none,
+              color: voice.isActive ? JarvisTheme.green : null,
+            ),
+            tooltip: l.voiceMode,
+            onPressed: () => voice.toggle(),
+          );
+        },
+      ),
+      spacer,
+      // Teach Cognithor
+      IconButton(
+        icon: const Icon(Icons.auto_stories),
+        tooltip: l.teachCognithor,
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const TeachScreen(),
+            ),
+          );
+        },
+      ),
+      spacer,
+      // Hacker mode toggle
+      Consumer<HackerModeProvider>(
+        builder: (context, hackerMode, _) {
+          return IconButton(
+            icon: Icon(
+              Icons.terminal,
+              color: hackerMode.enabled
+                  ? const Color(0xFF00FF41)
+                  : null,
+            ),
+            tooltip: l.hackerMode,
+            onPressed: () => hackerMode.toggle(),
+          );
+        },
+      ),
+      spacer,
+      // Observe panel toggle
+      IconButton(
+        icon: Icon(
+          Icons.analytics_outlined,
+          color: _showObserve ? JarvisTheme.accent : null,
+        ),
+        tooltip: l.observe,
+        onPressed: () => setState(() => _showObserve = !_showObserve),
+      ),
+      spacer,
+      // Canvas toggle
+      Consumer<ChatProvider>(
+        builder: (context, chat, _) {
+          if (chat.canvasHtml == null) return const SizedBox.shrink();
+          return IconButton(
+            icon: Icon(Icons.web_asset, color: JarvisTheme.accent),
+            tooltip: l.canvasLabel,
+            onPressed: () {},
+          );
+        },
+      ),
+      // Clear chat
+      IconButton(
+        icon: const Icon(Icons.delete_outline),
+        tooltip: l.clearChat,
+        onPressed: () => context.read<ChatProvider>().clearChat(),
+      ),
+    ];
   }
 }

@@ -77,7 +77,11 @@ class _ChatHistoryDrawerState extends State<ChatHistoryDrawer> {
 
     final hasSearchResults = widget.searchResults.isNotEmpty;
 
-    return Drawer(
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return SizedBox(
+      width: screenWidth * (screenWidth > 400 ? 0.80 : 0.85),
+      child: Drawer(
       backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.horizontal(right: Radius.circular(16)),
@@ -262,6 +266,7 @@ class _ChatHistoryDrawerState extends State<ChatHistoryDrawer> {
           ],
         ),
       ),
+    ),
     );
   }
 

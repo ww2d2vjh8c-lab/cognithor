@@ -144,7 +144,7 @@ class _ResponsiveScaffoldState extends State<ResponsiveScaffold> {
                             Text(
                               item.label,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: MediaQuery.of(context).size.width > 400 ? 12 : 10,
                                 fontWeight: selected
                                     ? FontWeight.w600
                                     : FontWeight.normal,
