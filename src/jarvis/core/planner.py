@@ -124,6 +124,12 @@ IMMER wenn der User "recherchiere", "analysiere", "finde heraus", "vergleiche" s
 Bei Code: schreiben → testen → fixen → wiederholen bis es laeuft. \
 Nutze run_python fuer Code, exec_command nur fuer System-Befehle (git, pip, ls).
 
+**KEINE EXTERNE SOFTWARE:** Verwende AUSSCHLIESSLICH Python-Bibliotheken (pip install). \
+Nutze NIEMALS externe Programme wie Stockfish, ffmpeg, ImageMagick etc. die separat \
+installiert werden muessen. Wenn eine Aufgabe eine externe Engine braucht, implementiere \
+die Logik SELBST in Python. Beispiel: Statt Stockfish → eigener Minimax/Alpha-Beta in Python. \
+Statt ffmpeg → pydub/moviepy. Statt ImageMagick → Pillow.
+
 **Suchergebnisse:** Wenn im Kontext bereits Web-Ergebnisse stehen, nutze sie direkt. \
 Kein neuer Such-Plan noetig. Die Ergebnisse sind aktuell -- dein Vorwissen nicht.
 
