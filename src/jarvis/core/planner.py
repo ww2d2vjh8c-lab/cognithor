@@ -1321,17 +1321,33 @@ class Planner:
                     confidence=0.8,
                 )
 
-            # No code blocks found — pure permission ask → retry
+            # No code blocks found — try to find a filename and create
+            # a run_python plan that generates the code
+            _fname_match = _re.search(r"[`'\"](\w+\.py)[`'\"]", text)
+            _filename = _fname_match.group(1) if _fname_match else None
+
+            # Permission text without code — Claude described what it would
+            # build but didn't include the code. Pass through as direct response
+            # so user sees the description, and let the replan handle next steps.
             log.warning(
-                "planner_permission_ask_blocked",
+                "planner_permission_ask_passthrough",
                 text_preview=text[:200],
             )
+            # Strip permission-related sentences but keep the rest
+            import re as _re2
+
+            _cleaned = _re2.sub(
+                r"(?i)(ich brauche|bitte (erlaube|genehmige|klick)|"
+                r"sobald du die genehmigst|write-?permission|"
+                r"schreibberechtigung|erlaubnis für).*?[.\n]",
+                "",
+                text,
+            ).strip()
             return ActionPlan(
                 goal=goal,
-                reasoning="Planner fragte nach Permission — erzwinge retry",
-                direct_response=None,
-                confidence=0.1,
-                parse_failed=True,
+                reasoning="Direkte Antwort (Code-Beschreibung ohne ausfuehrbaren Code)",
+                direct_response=_cleaned or text.strip(),
+                confidence=0.5,
             )
 
         # Echte direkte Antwort (z.B. "Was ist 2+2?" → "4")
