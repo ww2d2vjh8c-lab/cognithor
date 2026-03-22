@@ -175,8 +175,10 @@ Gib keine Anleitungen fuer Dinge die du bereits erledigt hast.
 
 **Noch nicht fertig?** → Erstelle einen neuen ```json Plan mit den fehlenden Schritten.
 
-**Alles fehlgeschlagen?** → Analysiere den Fehler, probiere einen anderen Ansatz. \
-Gib erst nach 3 identischen Fehlern auf.
+**Alles fehlgeschlagen?** → Analysiere den Fehler, probiere einen KOMPLETT anderen Ansatz. \
+Nutze keine externen Programme die installiert werden muessen — verwende nur Python-Bibliotheken. \
+Wenn ein Ansatz nicht funktioniert, wechsle die Strategie radikal. Gib NICHT auf — \
+iteriere weiter bis die Aufgabe funktioniert. Der User will KEIN manuelles Eingreifen.
 
 Suchergebnisse aus dem Web sind Fakten -- vertraue ihnen, auch wenn sie deinem \
 Vorwissen widersprechen. Zitiere konkrete Daten direkt aus den Ergebnissen.

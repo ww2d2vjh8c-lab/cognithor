@@ -1298,9 +1298,10 @@ class Gateway:
         if coding_model and self._model_router:
             self._model_router.set_coding_override(coding_model)
 
-        # Coding-Tasks: mehr Iterationen fuer iteratives Fixen (GUI headless etc.)
-        if is_coding and session.max_iterations < 20:
-            session.max_iterations = 20
+        # Coding-Tasks: mehr Iterationen fuer iteratives Fixen, Debuggen, Optimieren
+        # Cognithor soll autonom arbeiten bis die Aufgabe erledigt ist
+        if is_coding and session.max_iterations < 50:
+            session.max_iterations = 50
 
         # ── Token Budget (complexity-based) ──
         _token_budget = None
@@ -2406,7 +2407,8 @@ class Gateway:
                 # Otherwise: continue to replan for more steps (normal)
 
             # Failure-Threshold: give planner room for alternative strategies
-            _failure_threshold = max(3, session.max_iterations // 2)
+            # Only give up after 70% of max_iterations with no success at all
+            _failure_threshold = max(5, int(session.max_iterations * 0.7))
             if not has_success and session.iteration_count >= _failure_threshold:
                 await _status_cb("finishing", "Composing response...")
                 final_response = await self._formulate_response(
