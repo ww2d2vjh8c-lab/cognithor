@@ -10,39 +10,108 @@
     "type": "git",
     "url": "https://github.com/Alex8791-cyber/cognithor"
   },
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["AI", "Chat", "Machine Learning", "Other"],
-  "keywords": ["ai", "copilot", "local", "llm", "cognithor", "agent"],
-  "activationEvents": ["onStartupFinished"],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Machine Learning",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "copilot",
+    "local",
+    "llm",
+    "cognithor",
+    "agent"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      { "command": "cognithor.chat", "title": "Cognithor: Chat öffnen" },
-      { "command": "cognithor.generateCode", "title": "Cognithor: Code generieren" },
-      { "command": "cognithor.explainCode", "title": "Cognithor: Code erklären" },
-      { "command": "cognithor.refactorCode", "title": "Cognithor: Code refactoren" },
-      { "command": "cognithor.fixBug", "title": "Cognithor: Bug fixen" },
-      { "command": "cognithor.generateTests", "title": "Cognithor: Tests generieren" },
-      { "command": "cognithor.generateDocs", "title": "Cognithor: Docs generieren" },
-      { "command": "cognithor.addToContext", "title": "Cognithor: Zu Kontext hinzufügen" },
-      { "command": "cognithor.clearContext", "title": "Cognithor: Kontext leeren" },
-      { "command": "cognithor.openSettings", "title": "Cognithor: Einstellungen" },
-      { "command": "cognithor.reconnect", "title": "Cognithor: Verbindung herstellen" }
+      {
+        "command": "cognithor.chat",
+        "title": "Cognithor: Chat öffnen"
+      },
+      {
+        "command": "cognithor.generateCode",
+        "title": "Cognithor: Code generieren"
+      },
+      {
+        "command": "cognithor.explainCode",
+        "title": "Cognithor: Code erklären"
+      },
+      {
+        "command": "cognithor.refactorCode",
+        "title": "Cognithor: Code refactoren"
+      },
+      {
+        "command": "cognithor.fixBug",
+        "title": "Cognithor: Bug fixen"
+      },
+      {
+        "command": "cognithor.generateTests",
+        "title": "Cognithor: Tests generieren"
+      },
+      {
+        "command": "cognithor.generateDocs",
+        "title": "Cognithor: Docs generieren"
+      },
+      {
+        "command": "cognithor.addToContext",
+        "title": "Cognithor: Zu Kontext hinzufügen"
+      },
+      {
+        "command": "cognithor.clearContext",
+        "title": "Cognithor: Kontext leeren"
+      },
+      {
+        "command": "cognithor.openSettings",
+        "title": "Cognithor: Einstellungen"
+      },
+      {
+        "command": "cognithor.reconnect",
+        "title": "Cognithor: Verbindung herstellen"
+      }
     ],
     "menus": {
       "editor/context": [
-        { "submenu": "cognithor.editorSubmenu", "group": "cognithor" }
+        {
+          "submenu": "cognithor.editorSubmenu",
+          "group": "cognithor"
+        }
       ],
       "cognithor.editorSubmenu": [
-        { "command": "cognithor.explainCode", "when": "editorHasSelection" },
-        { "command": "cognithor.refactorCode", "when": "editorHasSelection" },
-        { "command": "cognithor.fixBug", "when": "editorHasSelection" },
-        { "command": "cognithor.generateTests", "when": "editorHasSelection" },
-        { "command": "cognithor.addToContext" }
+        {
+          "command": "cognithor.explainCode",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "cognithor.refactorCode",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "cognithor.fixBug",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "cognithor.generateTests",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "cognithor.addToContext"
+        }
       ]
     },
     "submenus": [
-      { "id": "cognithor.editorSubmenu", "label": "Cognithor" }
+      {
+        "id": "cognithor.editorSubmenu",
+        "label": "Cognithor"
+      }
     ],
     "viewsContainers": {
       "activitybar": [
@@ -55,8 +124,15 @@
     },
     "views": {
       "cognithor": [
-        { "type": "webview", "id": "cognithor.chatView", "name": "Chat" },
-        { "id": "cognithor.statusView", "name": "Status & Modell" }
+        {
+          "type": "webview",
+          "id": "cognithor.chatView",
+          "name": "Chat"
+        },
+        {
+          "id": "cognithor.statusView",
+          "name": "Status & Modell"
+        }
       ]
     },
     "configuration": {
@@ -84,7 +160,11 @@
         },
         "cognithor.language": {
           "type": "string",
-          "enum": ["auto", "de", "en"],
+          "enum": [
+            "auto",
+            "de",
+            "en"
+          ],
           "default": "auto",
           "description": "Sprache für Cognithor-Antworten"
         }
@@ -99,9 +179,9 @@
     "test": "node --experimental-vm-modules node_modules/.bin/jest"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
-    "esbuild": "^0.20.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.27.4",
     "eslint": "^9.0.0",
     "typescript": "^5.4.0"
   },
