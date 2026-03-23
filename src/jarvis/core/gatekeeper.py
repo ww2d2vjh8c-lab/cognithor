@@ -499,6 +499,13 @@ class Gatekeeper:
             "set_clipboard",
             "screenshot_desktop",
             "screenshot_region",
+            # Computer Use (screenshot + coordinate actions)
+            "computer_screenshot",
+            "computer_click",
+            "computer_type",
+            "computer_hotkey",
+            "computer_scroll",
+            "computer_drag",
             "calendar_today",
             "calendar_upcoming",
             "calendar_check_availability",

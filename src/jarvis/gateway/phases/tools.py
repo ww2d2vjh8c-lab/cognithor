@@ -457,6 +457,17 @@ async def init_tools(
     except Exception:
         log.debug("desktop_tools_not_registered", exc_info=True)
 
+    # Computer Use (GPT-5.4-style screenshot + coordinate clicking)
+    try:
+        from jarvis.mcp.computer_use import register_computer_use_tools
+
+        vision = getattr(gateway, "_vision_analyzer", None) if gateway else None
+        cu_tools = register_computer_use_tools(mcp_client, vision_analyzer=vision)
+        if cu_tools:
+            log.info("computer_use_tools_registered")
+    except Exception:
+        log.debug("computer_use_not_registered", exc_info=True)
+
     # Verified Web Lookup (multi-agent fact verification)
     try:
         from jarvis.mcp.verified_lookup import register_verified_lookup_tools
