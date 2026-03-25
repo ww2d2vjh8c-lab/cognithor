@@ -32,8 +32,6 @@ log = get_logger(__name__)
 
 __all__ = [
     "BackgroundProcessManager",
-    "ProcessMonitor",
-    "register_background_tools",
 ]
 
 # Limits
@@ -128,7 +126,7 @@ class BackgroundProcessManager:
 
         loop = asyncio.get_running_loop()
 
-        def _spawn() -> subprocess.Popen:
+        def _spawn() -> tuple[subprocess.Popen, Any]:
             lf = open(log_file, "w", encoding="utf-8", errors="replace")
             kwargs: dict[str, Any] = {
                 "stdout": lf,
@@ -141,16 +139,16 @@ class BackgroundProcessManager:
                     subprocess.CREATE_NEW_PROCESS_GROUP
                     | getattr(subprocess, "CREATE_NO_WINDOW", 0)
                 )
-                # start_new_session not supported on Windows with creationflags
                 kwargs.pop("start_new_session", None)
             if sys.platform == "win32":
-                return subprocess.Popen(command, shell=True, **kwargs)
+                p = subprocess.Popen(command, shell=True, **kwargs)
             else:
-                return subprocess.Popen(
-                    ["bash", "-c", command], **kwargs
-                )
+                p = subprocess.Popen(["bash", "-c", command], **kwargs)
+            return p, lf
 
-        proc = await loop.run_in_executor(None, _spawn)
+        proc, log_handle = await loop.run_in_executor(None, _spawn)
+        # Close parent's copy of the log handle — subprocess inherited the fd
+        log_handle.close()
         self._processes[job_id] = proc
 
         with self._conn() as conn:
@@ -305,10 +303,7 @@ class BackgroundProcessManager:
             pid = job.get("pid")
             if pid:
                 try:
-                    if sys.platform == "win32":
-                        os.kill(pid, signal.SIGTERM)
-                    else:
-                        os.kill(pid, signal.SIGTERM)
+                    os.kill(pid, signal.SIGTERM)
                 except OSError:
                     pass
 
