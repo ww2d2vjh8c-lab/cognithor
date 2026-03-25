@@ -1595,6 +1595,31 @@ class SecurityConfig(BaseModel):
     shell_validate_paths: bool = Field(default=True)
 
 
+class AuditConfig(BaseModel):
+    """Audit-Trail Konfiguration fuer Compliance."""
+
+    hmac_enabled: bool = Field(
+        default=True,
+        description="HMAC-SHA256 Signaturen auf Audit-Eintraege",
+    )
+    hmac_key_file: str = Field(
+        default="",
+        description="Pfad zur HMAC-Key-Datei (leer = ~/.jarvis/audit_key)",
+    )
+    breach_notification_enabled: bool = Field(
+        default=True,
+        description="Automatische Breach-Erkennung und Benachrichtigung",
+    )
+    breach_cooldown_hours: int = Field(
+        default=1, ge=1, le=72,
+        description="Mindestabstand zwischen Breach-Benachrichtigungen in Stunden",
+    )
+    retention_days: int = Field(
+        default=90, ge=7, le=3650,
+        description="Aufbewahrungsfrist fuer Audit-Logs in Tagen",
+    )
+
+
 # ============================================================================
 # Datenbank-Konfiguration
 # ============================================================================
@@ -1843,6 +1868,7 @@ class JarvisConfig(BaseModel):
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
+    audit: AuditConfig = Field(default_factory=AuditConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     queue: QueueConfig = Field(default_factory=QueueConfig)
     marketplace: MarketplaceConfig = Field(default_factory=MarketplaceConfig)

@@ -16,6 +16,7 @@ Bibel-Referenz: §3.2 (Audit-Log), §11.5 (Audit Trail)
 from __future__ import annotations
 
 import hashlib
+import hmac as hmac_mod
 import json
 import re
 from datetime import UTC, datetime
@@ -110,12 +111,23 @@ class AuditTrail:
     Credentials werden automatisch maskiert.
     """
 
-    def __init__(self, log_dir: Path | None = None) -> None:
-        self._log_dir = log_dir or Path.home() / ".jarvis" / "logs"
+    def __init__(
+        self,
+        log_dir: Path | None = None,
+        *,
+        log_path: Path | str | None = None,
+        hmac_key: bytes | None = None,
+    ) -> None:
+        if log_path is not None:
+            self._log_path = Path(log_path)
+            self._log_dir = self._log_path.parent
+        else:
+            self._log_dir = log_dir or Path.home() / ".jarvis" / "logs"
+            self._log_path = self._log_dir / "audit.jsonl"
         self._log_dir.mkdir(parents=True, exist_ok=True)
-        self._log_path = self._log_dir / "audit.jsonl"
         self._last_hash = "genesis"
         self._entry_count = 0
+        self._hmac_key = hmac_key
 
         # Chain vom letzten Eintrag fortsetzen
         self._restore_chain()
@@ -157,6 +169,12 @@ class AuditTrail:
         entry_hash = _compute_hash(data_str, self._last_hash)
         record["prev_hash"] = self._last_hash
         record["hash"] = entry_hash
+
+        # HMAC signature (cryptographically binding, not just tamper-evident)
+        if self._hmac_key:
+            record["hmac"] = hmac_mod.new(
+                self._hmac_key, record["hash"].encode(), hashlib.sha256
+            ).hexdigest()
 
         line = json.dumps(record, ensure_ascii=False)
         try:
@@ -246,7 +264,7 @@ class AuditTrail:
 
                     # Verify hash
                     verify_entry = {
-                        k: v for k, v in entry.items() if k not in ("prev_hash", "hash")
+                        k: v for k, v in entry.items() if k not in ("prev_hash", "hash", "hmac")
                     }
                     data_str = json.dumps(verify_entry, ensure_ascii=False, sort_keys=True)
                     expected = _compute_hash(data_str, prev_hash)
