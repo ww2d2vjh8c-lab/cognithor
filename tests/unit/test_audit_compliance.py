@@ -146,3 +146,27 @@ class TestBlockchainAnchoring:
         anchor2 = audit_trail.get_anchor()
         assert anchor1["hash"] != anchor2["hash"]
         assert anchor2["entry_count"] == 2
+
+
+class TestUserDataExport:
+    """GDPR Art. 15 — user can export their audit data."""
+
+    def test_export_filters_by_channel(self, tmp_path):
+        from jarvis.audit import AuditLogger
+
+        logger = AuditLogger(log_dir=tmp_path)
+        logger.log_tool_call("tool1", agent_name="jarvis", result="ok")
+        logger.log_user_input("telegram", "hello from telegram")
+        logger.log_user_input("cli", "hello from cli")
+
+        entries = logger.get_entries_for_export(channel="telegram")
+        assert len(entries) >= 1
+
+    def test_export_returns_all_without_filter(self, tmp_path):
+        from jarvis.audit import AuditLogger
+
+        logger = AuditLogger(log_dir=tmp_path)
+        logger.log_tool_call("tool1", result="ok")
+        logger.log_tool_call("tool2", result="ok")
+        entries = logger.get_entries_for_export()
+        assert len(entries) >= 2

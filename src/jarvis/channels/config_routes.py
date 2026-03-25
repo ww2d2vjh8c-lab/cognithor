@@ -2266,6 +2266,27 @@ def _register_security_routes(
         report = exporter.generate_report()
         return report.to_dict()
 
+    # -- GDPR Art. 15: User Data Export -----------------------------------
+
+    @app.get("/api/v1/user/audit-data", dependencies=deps)
+    async def export_user_audit_data(
+        channel: str = "",
+        hours: int = 0,
+    ) -> dict[str, Any]:
+        """GDPR Art. 15: Export audit data for a user/channel."""
+        audit = getattr(gateway, "_audit_logger", None)
+        if not audit:
+            return {"entries": [], "count": 0, "message": "Audit logging not active."}
+
+        entries = audit.get_entries_for_export(channel=channel, hours=hours)
+        return {
+            "entries": entries,
+            "count": len(entries),
+            "channel_filter": channel or "all",
+            "hours_filter": hours or "all",
+            "gdpr_article": "Art. 15 DSGVO — Auskunftsrecht",
+        }
+
     # -- Security Pipeline (Phase 19) ------------------------------------
 
     @app.get("/api/v1/security/pipeline/stats", dependencies=deps)

@@ -519,6 +519,47 @@ class AuditLogger:
 
         return summary
 
+    # ── GDPR Art. 15 Export ─────────────────────────────────────
+
+    def get_entries_for_export(
+        self,
+        *,
+        channel: str = "",
+        hours: int = 0,
+        max_entries: int = 10000,
+    ) -> list[dict[str, Any]]:
+        """Export audit entries for GDPR Art. 15 data subject access.
+
+        Args:
+            channel: Filter by channel name (empty = all).
+            hours: Only entries from last N hours (0 = all).
+            max_entries: Maximum entries to return.
+
+        Returns:
+            List of entry dicts (sanitized, no internal IDs).
+        """
+        cutoff = None
+        if hours > 0:
+            cutoff = datetime.now(UTC) - timedelta(hours=hours)
+
+        results: list[dict[str, Any]] = []
+        for entry in self._entries:
+            if len(results) >= max_entries:
+                break
+            if cutoff:
+                ts = self._parse_ts(entry.timestamp)
+                if ts and ts < cutoff:
+                    continue
+            if channel:
+                desc = entry.description.lower()
+                action = entry.action.lower()
+                if channel.lower() not in desc and channel.lower() not in action:
+                    continue
+            d = entry.to_dict()
+            d.pop("entry_id", None)
+            results.append(d)
+        return results
+
     # ── Export ────────────────────────────────────────────────────
 
     def export_json(self, path: Path, *, hours: int = 24) -> int:
