@@ -98,6 +98,35 @@ IDEMPOTENT_TOOLS = frozenset(
     }
 )
 
+# Tools die im MCP-Server-Modus fuer externe Clients (VSCode etc.) sicher sind.
+# Kein Shell-Exec, kein Computer-Use, kein Remote-Shell, kein Docker-Run.
+MCP_WORKSPACE_SAFE_TOOLS = frozenset({
+    # Filesystem (workspace-sandboxed)
+    "read_file", "write_file", "edit_file", "list_directory", "find_in_files",
+    # Code (sandboxed execution)
+    "run_python", "analyze_code",
+    # Web (read-only, SSRF-protected)
+    "web_search", "web_fetch", "search_and_read", "web_news_search",
+    # Memory
+    "search_memory", "save_to_memory", "get_entity", "add_entity",
+    "add_relation", "get_core_memory", "get_recent_episodes",
+    "search_procedures", "memory_stats",
+    # Vault (note management)
+    "vault_save", "vault_search", "vault_list", "vault_write",
+    # Git (workspace-scoped)
+    "git_status", "git_log", "git_diff", "git_commit", "git_branch",
+    # Knowledge synthesis
+    "knowledge_synthesize",
+    # Charts and data
+    "create_chart", "create_table_image", "chart_from_csv",
+    # Database (read-only queries)
+    "db_query", "db_schema",
+    # Search
+    "deep_research", "deep_research_v2", "verified_web_lookup",
+    # Browser (read-only navigation)
+    "browse_url", "browse_page_info", "browse_screenshot",
+})
+
 
 def _build_annotations(tool_name: str) -> dict[str, Any]:
     """Erzeugt MCP-Annotations für ein Tool basierend auf seinem Namen."""
@@ -138,11 +167,17 @@ class MCPBridge:
         self._server_config: MCPServerConfig | None = None
         self._enabled = False
         self._setup_time: float = 0
+        self._tool_allowlist: frozenset[str] | None = None
+
+    def set_tool_allowlist(self, allowlist: frozenset[str] | None) -> None:
+        """Restrict which tools are exposed via MCP server."""
+        self._tool_allowlist = allowlist
 
     def setup(
         self,
         mcp_client: JarvisMCPClient,
         memory: MemoryManager | None = None,
+        mode_override: MCPServerMode | None = None,
     ) -> bool:
         """Richtet den MCP-Server-Modus ein (falls konfiguriert).
 
@@ -160,6 +195,9 @@ class MCPBridge:
 
         # Server-Config aus Jarvis-Config laden
         self._server_config = self._load_server_config()
+
+        if mode_override is not None:
+            self._server_config.mode = mode_override
 
         if self._server_config.mode == MCPServerMode.DISABLED:
             log.info("mcp_bridge_disabled", reason="server_mode=disabled")
@@ -254,6 +292,9 @@ class MCPBridge:
         schemas = mcp_client.get_tool_schemas()
 
         for tool_name, schema in schemas.items():
+            if self._tool_allowlist is not None and tool_name not in self._tool_allowlist:
+                continue
+
             # Handler aus dem Client holen
             handler = mcp_client._builtin_handlers.get(tool_name)
             if handler is None:

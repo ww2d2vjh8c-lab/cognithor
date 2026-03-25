@@ -86,6 +86,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Fehlende Python-Pakete automatisch installieren (Default: nur Warning)",
     )
+    parser.add_argument(
+        "--mcp-server",
+        action="store_true",
+        help=(
+            "Start as MCP server on stdio (for VSCode, Claude Desktop, etc.). "
+            "Only workspace-safe tools are exposed. No CLI, no Web UI."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -98,6 +106,58 @@ def _check_python_version() -> None:
             file=sys.stderr,
         )
         raise SystemExit(1)
+
+
+async def _run_mcp_server_mode(config: Any) -> None:
+    """Run Jarvis as a pure MCP server on stdio.
+
+    Exposes only workspace-safe tools. No CLI, no Web UI, no channels.
+    Designed for integration with VSCode, Claude Desktop, Cursor, etc.
+    """
+    import asyncio
+
+    from jarvis.mcp.bridge import MCPBridge, MCP_WORKSPACE_SAFE_TOOLS
+    from jarvis.mcp.client import JarvisMCPClient
+    from jarvis.mcp.server import MCPServerMode
+
+    from jarvis.utils.logging import get_logger
+
+    log = get_logger("jarvis.mcp_server")
+    log.info("mcp_server_mode_starting")
+
+    # Ensure desktop tools are off in MCP server mode
+    if hasattr(config, "tools"):
+        config.tools.computer_use_enabled = False
+        config.tools.desktop_tools_enabled = False
+
+    # Create MCP client and register tools
+    mcp_client = JarvisMCPClient()
+
+    from jarvis.gateway.phases.tools import init_tools
+
+    await init_tools(config, mcp_client, memory_manager=None)
+
+    # Create bridge with workspace-safe allowlist
+    bridge = MCPBridge(config)
+    bridge.set_tool_allowlist(MCP_WORKSPACE_SAFE_TOOLS)
+
+    if bridge.setup(mcp_client, memory=None, mode_override=MCPServerMode.STDIO):
+        await bridge.start()
+        log.info(
+            "mcp_server_stdio_running",
+            tools=len(MCP_WORKSPACE_SAFE_TOOLS),
+        )
+        # Keep running until interrupted
+        try:
+            while True:
+                await asyncio.sleep(3600)
+        except (KeyboardInterrupt, EOFError):
+            pass
+        finally:
+            await bridge.stop()
+    else:
+        print("[ERROR] MCP server setup failed.", file=sys.stderr)
+        sys.exit(1)
 
 
 def main() -> None:
@@ -195,6 +255,13 @@ def main() -> None:
         log.info("startup_auto_fixes", fixes=report.fixes_applied, warnings=report.warnings)
     if report.errors:
         log.warning("startup_check_errors", errors=report.errors)
+
+    # 3.7 MCP-Server-Modus: Nur MCP-Server auf stdio starten, kein CLI/WebUI
+    if args.mcp_server:
+        import asyncio
+
+        asyncio.run(_run_mcp_server_mode(config))
+        return
 
     # 4. Startup-Info
     log.info(
