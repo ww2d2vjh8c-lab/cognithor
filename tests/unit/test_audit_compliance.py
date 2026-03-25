@@ -170,3 +170,51 @@ class TestUserDataExport:
         logger.log_tool_call("tool2", result="ok")
         entries = logger.get_entries_for_export()
         assert len(entries) >= 2
+
+
+class TestBreachDetector:
+    """GDPR Art. 33 — automatic breach detection and notification."""
+
+    @pytest.fixture
+    def detector(self, tmp_path):
+        from jarvis.audit.breach_detector import BreachDetector
+        return BreachDetector(state_path=tmp_path / "breach_state.json", cooldown_hours=0)
+
+    def test_no_breach_on_normal_entries(self, detector, tmp_path):
+        from jarvis.audit import AuditLogger
+        logger = AuditLogger(log_dir=tmp_path)
+        logger.log_tool_call("read_file", result="ok")
+        breaches = detector.scan(logger)
+        assert len(breaches) == 0
+
+    def test_detects_security_critical_event(self, detector, tmp_path):
+        from jarvis.audit import AuditLogger, AuditSeverity
+        logger = AuditLogger(log_dir=tmp_path)
+        logger.log_security("Unauthorized access attempt detected", severity=AuditSeverity.CRITICAL)
+        breaches = detector.scan(logger)
+        assert len(breaches) >= 1
+        assert breaches[0]["severity"] == "critical"
+
+    def test_cooldown_prevents_duplicate(self, tmp_path):
+        from jarvis.audit.breach_detector import BreachDetector
+        from jarvis.audit import AuditLogger, AuditSeverity
+        detector = BreachDetector(state_path=tmp_path / "breach_state.json", cooldown_hours=24)
+        logger = AuditLogger(log_dir=tmp_path)
+        logger.log_security("Breach attempt", severity=AuditSeverity.CRITICAL)
+        breaches1 = detector.scan(logger)
+        assert len(breaches1) >= 1
+        breaches2 = detector.scan(logger)
+        assert len(breaches2) == 0
+
+    def test_breach_report_format(self, detector, tmp_path):
+        from jarvis.audit import AuditLogger, AuditSeverity
+        logger = AuditLogger(log_dir=tmp_path)
+        logger.log_security("Data exfiltration attempt", severity=AuditSeverity.CRITICAL)
+        breaches = detector.scan(logger)
+        assert len(breaches) >= 1
+        report = breaches[0]
+        assert "severity" in report
+        assert "description" in report
+        assert "timestamp" in report
+        assert "gdpr_article" in report
+        assert report["gdpr_article"] == "Art. 33 DSGVO"

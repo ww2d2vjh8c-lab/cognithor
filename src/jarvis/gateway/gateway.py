@@ -828,6 +828,42 @@ class Gateway:
             self._background_tasks.add(task)
             task.add_done_callback(self._background_tasks.discard)
 
+        # Breach detection (GDPR Art. 33)
+        if getattr(self._config, "audit", None) and getattr(self._config.audit, "breach_notification_enabled", True):
+            try:
+                from jarvis.audit.breach_detector import BreachDetector
+
+                _breach_state = self._config.jarvis_home / "breach_state.json"
+                _cooldown = getattr(self._config.audit, "breach_cooldown_hours", 1)
+                self._breach_detector = BreachDetector(
+                    state_path=_breach_state,
+                    cooldown_hours=_cooldown,
+                )
+
+                async def _breach_scan_loop():
+                    while True:
+                        await asyncio.sleep(300)  # Every 5 minutes
+                        try:
+                            if hasattr(self, "_audit_logger") and self._audit_logger:
+                                breaches = self._breach_detector.scan(self._audit_logger)
+                                if breaches:
+                                    log.critical(
+                                        "gdpr_breach_notification",
+                                        count=len(breaches),
+                                        article="Art. 33 DSGVO",
+                                    )
+                        except Exception:
+                            log.debug("breach_scan_failed", exc_info=True)
+
+                _breach_task = asyncio.create_task(
+                    _breach_scan_loop(), name="breach-detector"
+                )
+                self._background_tasks.add(_breach_task)
+                _breach_task.add_done_callback(self._background_tasks.discard)
+                log.info("breach_detector_started")
+            except Exception:
+                log.debug("breach_detector_start_failed", exc_info=True)
+
         # Channels starten
         tasks = []
         for channel in self._channels.values():
