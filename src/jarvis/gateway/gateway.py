@@ -3051,10 +3051,18 @@ class Gateway:
         if self._planner is None:
             raise RuntimeError("Planner nicht initialisiert -- Delegation nicht möglich")
 
+        # Agent-specific LLM overrides for delegation target
+        _del_model = target.preferred_model or None
+        _del_temp = target.temperature
+        _del_top_p = getattr(target, "top_p", None)
+
         plan = await self._planner.plan(
             user_message=task,
             working_memory=sub_wm,
             tool_schemas=tool_schemas,
+            model_override=_del_model,
+            temperature_override=_del_temp,
+            top_p_override=_del_top_p,
         )
 
         # Direkte Antwort?
