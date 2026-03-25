@@ -817,6 +817,27 @@ class Gateway:
                                     log.warning("tsa_daily_timestamp_failed", date=date_str)
                         except Exception:
                             log.debug("tsa_daily_failed", exc_info=True)
+                    # WORM: Upload audit files to S3/MinIO with Object Lock
+                    if (
+                        getattr(self._config, "audit", None)
+                        and getattr(self._config.audit, "worm_backend", "none") != "none"
+                    ):
+                        try:
+                            from jarvis.audit.worm import WORMUploader
+
+                            worm_audit_dir = self._config.jarvis_home / "data" / "audit"
+                            uploader = WORMUploader(
+                                self._config.audit, self._config.jarvis_home
+                            )
+                            uploaded = uploader.upload_daily(worm_audit_dir)
+                            if uploaded:
+                                log.info(
+                                    "worm_daily_upload_complete",
+                                    count=len(uploaded),
+                                    files=uploaded,
+                                )
+                        except Exception:
+                            log.debug("worm_daily_upload_failed", exc_info=True)
                 except Exception:
                     log.debug("retention_cleanup_failed", exc_info=True)
 

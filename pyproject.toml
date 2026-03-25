@@ -148,6 +148,9 @@ identity = [
     "sentence-transformers>=5.0.0",
     "numpy>=2.0,<3",
 ]
+worm = [
+    "boto3>=1.28",
+]
 blockchain = [
     "web3>=7.0.0",
 ]
