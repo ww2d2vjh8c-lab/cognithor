@@ -739,6 +739,61 @@ class Gateway:
             self._background_tasks.add(task)
             task.add_done_callback(self._background_tasks.discard)
 
+        # Start background process monitor
+        _bg_manager = getattr(self, "_bg_manager", None)
+        if _bg_manager is not None:
+            try:
+                from jarvis.mcp.background_tasks import ProcessMonitor
+
+                async def _notify_status_change(job_id, old, new, job):
+                    channel_name = job.get("channel", "")
+                    session_id = job.get("session_id", "")
+                    cmd_short = job.get("command", "")[:60]
+                    text = f"Background job {job_id} {new}: {cmd_short}"
+                    if job.get("exit_code") is not None:
+                        text += f" (exit code: {job['exit_code']})"
+                    if channel_name and session_id:
+                        cb = self._make_status_callback(channel_name, session_id)
+                        await cb("background", text)
+                    log.info("background_job_status_change",
+                             job_id=job_id, old=old, new=new)
+
+                self._process_monitor = ProcessMonitor(
+                    _bg_manager,
+                    on_status_change=_notify_status_change,
+                )
+                self._process_monitor._running = True
+                _mon_task = asyncio.create_task(
+                    self._process_monitor._loop(),
+                    name="bg-process-monitor",
+                )
+                self._background_tasks.add(_mon_task)
+                _mon_task.add_done_callback(self._background_tasks.discard)
+                log.info("process_monitor_started")
+            except Exception:
+                log.debug("process_monitor_start_failed", exc_info=True)
+
+        # Daily audit log retention cleanup
+        async def _daily_retention_cleanup():
+            while True:
+                await asyncio.sleep(86400)  # 24 hours
+                try:
+                    if hasattr(self, "_audit_logger") and self._audit_logger:
+                        if hasattr(self._audit_logger, "cleanup_old_entries"):
+                            removed = self._audit_logger.cleanup_old_entries()
+                            log.info("audit_retention_cleanup", removed=removed)
+                    if hasattr(self, "_bg_manager") and self._bg_manager:
+                        removed_logs = self._bg_manager.cleanup_old_logs()
+                        log.info("background_log_cleanup", removed=removed_logs)
+                except Exception:
+                    log.debug("retention_cleanup_failed", exc_info=True)
+
+        _retention_task = asyncio.create_task(
+            _daily_retention_cleanup(), name="daily-retention-cleanup"
+        )
+        self._background_tasks.add(_retention_task)
+        _retention_task.add_done_callback(self._background_tasks.discard)
+
         # Start confidence decay (runs every 24 hours)
         if self._confidence_manager is not None:
 
@@ -822,6 +877,10 @@ class Gateway:
         """Fährt den Gateway sauber herunter mit Session-Persistierung."""
         log.info("gateway_shutdown_start")
         self._running = False
+
+        # Stop background process monitor
+        if hasattr(self, "_process_monitor") and self._process_monitor:
+            await self._process_monitor.stop()
 
         # Audit log BEFORE closing resources
         if self._audit_logger:
