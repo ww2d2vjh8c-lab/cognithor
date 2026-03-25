@@ -218,6 +218,28 @@ class ShellConfig(BaseModel):
     """Maximale Präfixlänge für geschwärzte Log-Einträge."""
 
 
+class ToolsConfig(BaseModel):
+    """Konfiguration für Desktop-Automation und Desktop-Tools."""
+
+    computer_use_enabled: bool = Field(
+        default=False,
+        description=(
+            "Desktop-Automation via Screenshot + Koordinaten-Klick"
+            " (pyautogui, mss). Erfordert pip install cognithor[desktop]."
+        ),
+    )
+    """Aktiviert Computer-Use (Screenshot + Klick)."""
+
+    desktop_tools_enabled: bool = Field(
+        default=False,
+        description=(
+            "Clipboard-Zugriff und Screenshot-Tools."
+            " Erfordert pip install cognithor[desktop]."
+        ),
+    )
+    """Aktiviert Desktop-Tools (Clipboard, Screenshot)."""
+
+
 class MediaConfig(BaseModel):
     """Media-Pipeline Konfiguration."""
 
@@ -1807,6 +1829,7 @@ class JarvisConfig(BaseModel):
     browser: BrowserConfig = Field(default_factory=BrowserConfig)
     filesystem: FilesystemConfig = Field(default_factory=FilesystemConfig)
     shell: ShellConfig = Field(default_factory=ShellConfig)
+    tools: ToolsConfig = Field(default_factory=ToolsConfig)
     media: MediaConfig = Field(default_factory=MediaConfig)
     synthesis: SynthesisConfig = Field(default_factory=SynthesisConfig)
     email: EmailConfig = Field(default_factory=EmailConfig)
