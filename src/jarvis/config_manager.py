@@ -102,6 +102,7 @@ _EDITABLE_SECTIONS = frozenset(
         "improvement",
         "executor",
         "tools",
+        "audit",
     }
 )
 

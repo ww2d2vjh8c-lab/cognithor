@@ -46,6 +46,7 @@ def declare_security_attrs(config: Any) -> PhaseResult:
         "agent_vault_manager": None,
         "red_team": None,
         "code_auditor": None,
+        "audit_trail": None,
     }
 
     # Phase 10: Red-Team Security-Scanner
@@ -168,6 +169,32 @@ async def init_security(config: Any, llm_backend: Any = None) -> PhaseResult:
     audit_log_dir = config.jarvis_home / "data" / "audit"
     audit_logger = AuditLogger(log_dir=audit_log_dir, retention_days=90)
     result["audit_logger"] = audit_logger
+
+    # AuditTrail (security.audit) with optional HMAC signing
+    try:
+        from pathlib import Path as _Path
+
+        from jarvis.security.audit import AuditTrail
+
+        _hmac_key = None
+        if getattr(config, "audit", None) and config.audit.hmac_enabled:
+            key_file = config.audit.hmac_key_file or str(
+                config.jarvis_home / "audit_key"
+            )
+            key_path = _Path(key_file)
+            if not key_path.exists():
+                import secrets
+
+                key_path.parent.mkdir(parents=True, exist_ok=True)
+                key_path.write_bytes(secrets.token_bytes(32))
+                log.info("audit_hmac_key_generated", path=str(key_path))
+            _hmac_key = key_path.read_bytes()
+
+        result["audit_trail"] = AuditTrail(
+            log_dir=audit_log_dir, hmac_key=_hmac_key,
+        )
+    except Exception:
+        log.debug("audit_trail_init_skipped", exc_info=True)
 
     # Runtime Monitor
     runtime_monitor = RuntimeMonitor(enable_defaults=True)
