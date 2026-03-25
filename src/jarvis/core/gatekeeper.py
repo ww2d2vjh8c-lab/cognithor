@@ -75,6 +75,15 @@ class Gatekeeper:
         }
     )
 
+    # ── Tool Group Toggles ──────────────────────────────────────────
+    _COMPUTER_USE_TOOLS = frozenset({
+        "computer_screenshot", "computer_click", "computer_type",
+        "computer_hotkey", "computer_scroll", "computer_drag",
+    })
+    _DESKTOP_TOOLS = frozenset({
+        "get_clipboard", "set_clipboard", "screenshot_desktop", "screenshot_region",
+    })
+
     def __init__(
         self,
         config: JarvisConfig,
@@ -83,6 +92,8 @@ class Gatekeeper:
     ) -> None:
         """Initialisiert den Gatekeeper mit Security-Konfiguration und Policy-Regeln."""
         self._config = config
+        # Tool group blocklists (derived from config.tools)
+        self._disabled_tools: frozenset[str] = self._build_disabled_tools()
         self._audit_logger = audit_logger
         self._operation_mode = operation_mode
         self._policies: list[PolicyRule] = []
@@ -136,6 +147,26 @@ class Gatekeeper:
 
         # Aktiver Community-Skill (wird pro evaluate()-Aufruf gesetzt)
         self._active_skill: Skill | None = None
+
+    def _build_disabled_tools(self) -> frozenset[str]:
+        """Build set of tools disabled by config.tools flags."""
+        disabled: set[str] = set()
+        tools_cfg = getattr(self._config, "tools", None)
+        if tools_cfg is None:
+            return frozenset()
+        if not getattr(tools_cfg, "computer_use_enabled", False):
+            disabled |= self._COMPUTER_USE_TOOLS
+        if not getattr(tools_cfg, "desktop_tools_enabled", False):
+            disabled |= self._DESKTOP_TOOLS
+        return frozenset(disabled)
+
+    def is_tool_disabled(self, tool_name: str) -> bool:
+        """Check if a tool is disabled by config.tools flags."""
+        return tool_name in self._disabled_tools
+
+    def reload_disabled_tools(self) -> None:
+        """Re-read config.tools flags (called after runtime config change)."""
+        self._disabled_tools = self._build_disabled_tools()
 
     def initialize(self) -> None:
         """Lädt Policies und kompiliert Regex-Patterns.
@@ -442,6 +473,10 @@ class Gatekeeper:
     def _classify_risk(self, action: PlannedAction) -> RiskLevel:
         """Klassifiziert das Risiko einer Aktion nach Tool-Typ. [B§3.2]"""
         tool = action.tool.lower()
+
+        # Hard-block tools disabled by config.tools
+        if tool in self._disabled_tools:
+            return RiskLevel.RED
 
         # GREEN: Read-Only Operationen
         green_tools = {

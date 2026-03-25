@@ -45,3 +45,47 @@ class TestJarvisConfigToolsIntegration:
         assert "tools" in data
         assert data["tools"]["computer_use_enabled"] is False
         assert data["tools"]["desktop_tools_enabled"] is False
+
+
+class TestGatekeeperBlocksDisabledTools:
+    """Gatekeeper must block tools from disabled groups even if somehow registered."""
+
+    COMPUTER_USE_TOOLS = {
+        "computer_screenshot", "computer_click", "computer_type",
+        "computer_hotkey", "computer_scroll", "computer_drag",
+    }
+    DESKTOP_TOOLS = {
+        "get_clipboard", "set_clipboard", "screenshot_desktop", "screenshot_region",
+    }
+
+    def test_computer_use_blocked_when_disabled(self):
+        from jarvis.core.gatekeeper import Gatekeeper
+
+        config = JarvisConfig(tools=ToolsConfig(computer_use_enabled=False))
+        gk = Gatekeeper(config)
+        for tool in self.COMPUTER_USE_TOOLS:
+            assert gk.is_tool_disabled(tool), f"{tool} should be disabled"
+
+    def test_computer_use_allowed_when_enabled(self):
+        from jarvis.core.gatekeeper import Gatekeeper
+
+        config = JarvisConfig(tools=ToolsConfig(computer_use_enabled=True))
+        gk = Gatekeeper(config)
+        for tool in self.COMPUTER_USE_TOOLS:
+            assert not gk.is_tool_disabled(tool), f"{tool} should be enabled"
+
+    def test_desktop_tools_blocked_when_disabled(self):
+        from jarvis.core.gatekeeper import Gatekeeper
+
+        config = JarvisConfig(tools=ToolsConfig(desktop_tools_enabled=False))
+        gk = Gatekeeper(config)
+        for tool in self.DESKTOP_TOOLS:
+            assert gk.is_tool_disabled(tool), f"{tool} should be disabled"
+
+    def test_desktop_tools_allowed_when_enabled(self):
+        from jarvis.core.gatekeeper import Gatekeeper
+
+        config = JarvisConfig(tools=ToolsConfig(desktop_tools_enabled=True))
+        gk = Gatekeeper(config)
+        for tool in self.DESKTOP_TOOLS:
+            assert not gk.is_tool_disabled(tool), f"{tool} should be enabled"
