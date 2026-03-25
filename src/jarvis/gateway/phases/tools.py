@@ -449,25 +449,31 @@ async def init_tools(
     except Exception:
         log.debug("notification_tools_not_registered", exc_info=True)
 
-    # Desktop tools (clipboard, screenshot)
-    try:
-        from jarvis.mcp.desktop_tools import register_desktop_tools
+    # Desktop tools (clipboard, screenshot) — guarded by config.tools.desktop_tools_enabled
+    if getattr(getattr(config, "tools", None), "desktop_tools_enabled", False):
+        try:
+            from jarvis.mcp.desktop_tools import register_desktop_tools
 
-        register_desktop_tools(mcp_client, config)
-        log.info("desktop_tools_registered")
-    except Exception:
-        log.debug("desktop_tools_not_registered", exc_info=True)
+            register_desktop_tools(mcp_client, config)
+            log.info("desktop_tools_registered")
+        except Exception:
+            log.debug("desktop_tools_not_registered", exc_info=True)
+    else:
+        log.info("desktop_tools_disabled_by_config")
 
-    # Computer Use (GPT-5.4-style screenshot + coordinate clicking)
-    try:
-        from jarvis.mcp.computer_use import register_computer_use_tools
+    # Computer Use (screenshot + coordinate clicking) — guarded by config.tools.computer_use_enabled
+    if getattr(getattr(config, "tools", None), "computer_use_enabled", False):
+        try:
+            from jarvis.mcp.computer_use import register_computer_use_tools
 
-        vision = getattr(gateway, "_vision_analyzer", None) if gateway else None
-        cu_tools = register_computer_use_tools(mcp_client, vision_analyzer=vision)
-        if cu_tools:
-            log.info("computer_use_tools_registered")
-    except Exception:
-        log.debug("computer_use_not_registered", exc_info=True)
+            vision = getattr(gateway, "_vision_analyzer", None) if gateway else None
+            cu_tools = register_computer_use_tools(mcp_client, vision_analyzer=vision)
+            if cu_tools:
+                log.info("computer_use_tools_registered")
+        except Exception:
+            log.debug("computer_use_not_registered", exc_info=True)
+    else:
+        log.info("computer_use_disabled_by_config")
 
     # Verified Web Lookup (multi-agent fact verification)
     try:
