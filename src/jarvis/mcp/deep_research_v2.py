@@ -10,7 +10,7 @@ complex queries or explicitly by the user.
 from __future__ import annotations
 
 import logging
-import asyncio
+import asyncio  # noqa: F401 — needed for future parallel search
 import sys
 from pathlib import Path
 from typing import Any

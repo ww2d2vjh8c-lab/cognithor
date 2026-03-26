@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import os
-import shutil
+import shutil  # noqa: F401 — planned for copystat in safe_write
 import tempfile
 from pathlib import Path
 
