@@ -569,6 +569,7 @@ class Gatekeeper:
             # Vault (read-only)
             "vault_list",
             "vault_search",
+            "vault_read",
             # Docker (read-only)
             "docker_ps",
             "docker_logs",
@@ -605,6 +606,8 @@ class Gatekeeper:
             "vault_save",
             "vault_write",
             "vault_delete",
+            "vault_update",
+            "vault_link",
             "delegate_to_remote_agent",
             "email_read_inbox",
             "email_search",

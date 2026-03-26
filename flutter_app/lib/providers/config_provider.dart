@@ -412,6 +412,7 @@ class ConfigProvider extends ChangeNotifier {
         'ollama', 'models', 'gatekeeper', 'planner', 'memory', 'channels',
         'sandbox', 'logging', 'security', 'heartbeat', 'plugins', 'dashboard',
         'model_overrides', 'web', 'database', 'executor', 'tools', 'audit',
+        'improvement', 'prompt_evolution',
       ]) {
         if (_cfg.containsKey(section)) {
           futures.add(_api!.patch('config/$section', _cfg[section] as Map<String, dynamic>)
