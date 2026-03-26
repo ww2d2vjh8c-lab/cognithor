@@ -596,6 +596,7 @@ class Gatekeeper:
             "create_skill",
             "install_community_skill",
             "report_skill",
+            "publish_skill",
             "vault_save",
             "vault_write",
             "vault_delete",

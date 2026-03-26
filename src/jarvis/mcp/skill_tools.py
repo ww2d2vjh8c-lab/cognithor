@@ -449,6 +449,207 @@ def register_skill_tools(
         },
     )
 
+    # publish_skill — publish a local skill to the community registry
+    async def _publish_skill(name: str = "", github_token: str = "") -> str:
+        """Publish a local skill to the community skill registry on GitHub."""
+        import base64
+        import hashlib
+        import json
+        import urllib.request
+
+        if not name:
+            return "Error: 'name' (skill slug) is required."
+
+        # Find the skill file locally
+        skill_file = None
+        for search_dir in [
+            config.jarvis_home / "skills",
+            Path(__file__).parent.parent.parent / "data" / "procedures",
+        ]:
+            candidate = search_dir / f"{name}.md"
+            if candidate.exists():
+                skill_file = candidate
+                break
+            # Also check community subdir
+            candidate2 = search_dir / "community" / name / "skill.md"
+            if candidate2.exists():
+                skill_file = candidate2
+                break
+
+        if not skill_file:
+            return f"Error: Skill '{name}' not found locally."
+
+        content = skill_file.read_text(encoding="utf-8")
+        content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+        # Parse frontmatter for metadata
+        import re as _re
+
+        fm_match = _re.match(r"^---\n(.*?)\n---\n", content, _re.DOTALL)
+        if not fm_match:
+            return "Error: Skill file has no YAML frontmatter."
+
+        try:
+            import yaml
+
+            frontmatter = yaml.safe_load(fm_match.group(1)) or {}
+        except Exception as exc:
+            return f"Error parsing frontmatter: {exc}"
+
+        # Validate locally first
+        if not frontmatter.get("trigger_keywords"):
+            return "Error: Skill has no trigger_keywords. Add them before publishing."
+        if not frontmatter.get("tools_required"):
+            return "Error: Skill has no tools_required. Add them before publishing."
+
+        # Get GitHub token
+        token = github_token
+        if not token:
+            # Try git credential manager
+            try:
+                import subprocess
+
+                proc = subprocess.run(
+                    ["git", "credential", "fill"],
+                    input="protocol=https\nhost=github.com\n",
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                for line in proc.stdout.splitlines():
+                    if line.startswith("password="):
+                        token = line.split("=", 1)[1]
+                        break
+            except Exception:
+                pass
+        if not token:
+            return (
+                "Error: No GitHub token available. Either:\n"
+                "1. Pass github_token parameter\n"
+                "2. Configure git credential manager\n"
+                "3. Set GITHUB_TOKEN environment variable"
+            )
+
+        # Check env var fallback
+        if not token:
+            import os
+
+            token = os.environ.get("GITHUB_TOKEN", "")
+        if not token:
+            return "Error: No GitHub token found."
+
+        repo_api = "https://api.github.com/repos/Alex8791-cyber/skill-registry"
+
+        def _api_call(method: str, path: str, data: dict | None = None) -> dict:
+            url = f"{repo_api}/{path}"
+            body = json.dumps(data).encode() if data else None
+            req = urllib.request.Request(url, data=body, method=method)
+            req.add_header("Authorization", f"token {token}")
+            req.add_header("Accept", "application/vnd.github.v3+json")
+            if body:
+                req.add_header("Content-Type", "application/json")
+            try:
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    return json.loads(resp.read())
+            except urllib.error.HTTPError as e:
+                return {"error": e.read().decode(), "status": e.code}
+
+        def _get_sha(path: str) -> str:
+            r = _api_call("GET", f"contents/{path}?ref=main")
+            return r.get("sha", "")
+
+        def _put(path: str, text: str, msg: str, sha: str = "") -> dict:
+            d: dict = {
+                "message": msg,
+                "content": base64.b64encode(text.encode()).decode(),
+                "branch": "main",
+            }
+            if sha:
+                d["sha"] = sha
+            return _api_call("PUT", f"contents/{path}", d)
+
+        # Upload skill.md
+        skill_path = f"skills/{name}/skill.md"
+        sha = _get_sha(skill_path)
+        r = _put(skill_path, content, f"publish: {name}", sha)
+        if "error" in r:
+            return f"Error uploading skill.md: {r['error'][:200]}"
+
+        # Upload manifest.json
+        manifest = {
+            "name": name,
+            "version": "1.0.0",
+            "description": frontmatter.get("name", name),
+            "author_github": "Alex8791-cyber",
+            "category": frontmatter.get("category", "productivity"),
+            "tools_required": frontmatter.get("tools_required", []),
+            "trigger_keywords": frontmatter.get("trigger_keywords", []),
+            "content_hash": content_hash,
+        }
+        manifest_path = f"skills/{name}/manifest.json"
+        sha2 = _get_sha(manifest_path)
+        r2 = _put(manifest_path, json.dumps(manifest, indent=2), f"publish: {name} manifest", sha2)
+        if "error" in r2:
+            return f"Error uploading manifest.json: {r2['error'][:200]}"
+
+        # Update registry.json
+        reg_sha = _get_sha("registry.json")
+        reg_r = _api_call("GET", "contents/registry.json?ref=main")
+        if "content" in reg_r:
+            import time
+
+            reg_data = json.loads(base64.b64decode(reg_r["content"]).decode())
+            # Remove old entry if exists
+            reg_data["skills"] = [s for s in reg_data.get("skills", []) if s["name"] != name]
+            # Add new entry
+            reg_data["skills"].append({
+                "name": name,
+                "version": "1.0.0",
+                "description": frontmatter.get("name", name),
+                "author_github": "Alex8791-cyber",
+                "category": frontmatter.get("category", "productivity"),
+                "tools_required": frontmatter.get("tools_required", []),
+                "content_hash": content_hash,
+                "recalled": False,
+            })
+            reg_data["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            r3 = _put("registry.json", json.dumps(reg_data, indent=2), f"registry: add {name}", reg_sha)
+            if "error" in r3:
+                return f"Skill uploaded but registry update failed: {r3['error'][:200]}"
+
+        log.info("skill_published", name=name, hash=content_hash[:16])
+        return (
+            f"Skill '{name}' published to community registry!\n"
+            f"Hash: {content_hash[:16]}...\n"
+            f"URL: https://github.com/Alex8791-cyber/skill-registry/tree/main/skills/{name}\n"
+            f"Other Cognithor users can now install it with: install_community_skill('{name}')"
+        )
+
+    mcp_client.register_builtin_handler(
+        "publish_skill",
+        _publish_skill,
+        description=(
+            "Publish a local skill to the Cognithor Community Skill Registry on GitHub. "
+            "The skill must exist locally and have valid frontmatter with trigger_keywords "
+            "and tools_required. Requires GitHub credentials."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Skill slug name (e.g., 'meeting-protokoll')",
+                },
+                "github_token": {
+                    "type": "string",
+                    "description": "GitHub Personal Access Token (optional, uses credential manager if empty)",
+                    "default": "",
+                },
+            },
+            "required": ["name"],
+        },
+    )
+
     log.info(
         "skill_tools_registered",
         tools=[
@@ -457,6 +658,7 @@ def register_skill_tools(
             "install_community_skill",
             "search_community_skills",
             "report_skill",
+            "publish_skill",
         ],
     )
     return st
