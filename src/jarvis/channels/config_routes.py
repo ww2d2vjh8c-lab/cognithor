@@ -99,6 +99,7 @@ def create_config_routes(
     _register_gepa_evolution_routes(app, deps, gateway)
     _register_backend_routes(app, deps, config_manager, gateway)
     _register_autonomous_routes(app, deps, gateway)
+    _register_feedback_routes(app, deps, gateway)
 
 
 # ======================================================================
@@ -3513,6 +3514,28 @@ def _register_workflow_graph_routes(
             log.error("wf_dag_run_read_failed", run_id=run_id, error=str(exc))
             return {"error": "DAG-Run konnte nicht geladen werden", "status": 500}
 
+    @app.get("/api/v1/workflows/dag/runs/{run_id}/nodes/{node_id}", dependencies=deps)
+    async def wf_get_dag_node_detail(run_id: str, node_id: str) -> dict[str, Any]:
+        """Get detailed execution data for a single DAG node."""
+        _, dag, _ = _get_engines()
+        if not dag or not dag._checkpoint_dir:
+            return {"error": "DAG engine unavailable", "status": 503}
+        cp_file = (dag._checkpoint_dir / f"{run_id}.json").resolve()
+        try:
+            cp_file.relative_to(dag._checkpoint_dir.resolve())
+        except ValueError:
+            return {"error": "Invalid run_id (Path-Traversal)", "status": 400}
+        if not cp_file.exists():
+            return {"error": "Run not found", "status": 404}
+        try:
+            data = json.loads(cp_file.read_text(encoding="utf-8"))
+            node_results = data.get("node_results", {})
+            if node_id not in node_results:
+                return {"error": f"Node '{node_id}' not found in run", "status": 404}
+            return {"node_id": node_id, "run_id": run_id, **node_results[node_id]}
+        except json.JSONDecodeError:
+            return {"error": "Invalid run data", "status": 500}
+
     # -- Combined stats ----------------------------------------------------
 
     @app.get("/api/v1/workflows/stats", dependencies=deps)
@@ -4807,3 +4830,68 @@ def _register_autonomous_routes(
         if not hasattr(gateway, "_autonomous_orchestrator"):
             return {"tasks": []}
         return {"tasks": gateway._autonomous_orchestrator.get_active_tasks()}
+
+
+# ======================================================================
+# Feedback routes (thumbs up/down)
+# ======================================================================
+
+
+def _register_feedback_routes(
+    app: Any,
+    deps: list[Any],
+    gateway: Any,
+) -> None:
+    """REST endpoints for user feedback (thumbs up/down)."""
+
+    @app.post("/api/v1/feedback", dependencies=deps)
+    async def submit_feedback(request: Request) -> dict[str, Any]:
+        """Submit thumbs up/down feedback for a message."""
+        body = await request.json()
+        feedback_store = getattr(gateway, "_feedback_store", None)
+        if not feedback_store:
+            return {"error": "Feedback system not initialized"}
+
+        rating = body.get("rating", 0)
+        if rating not in (1, -1):
+            return {"error": "rating must be 1 (thumbs up) or -1 (thumbs down)"}
+
+        feedback_id = feedback_store.submit(
+            session_id=body.get("session_id", ""),
+            message_id=body.get("message_id", ""),
+            rating=rating,
+            comment=body.get("comment", ""),
+            agent_name=body.get("agent_name", "jarvis"),
+            channel=body.get("channel", "webui"),
+            user_message=body.get("user_message", ""),
+            assistant_response=body.get("assistant_response", ""),
+            tool_calls=body.get("tool_calls", ""),
+        )
+        return {"status": "ok", "feedback_id": feedback_id}
+
+    @app.patch("/api/v1/feedback/{feedback_id}", dependencies=deps)
+    async def update_feedback_comment(feedback_id: str, request: Request) -> dict[str, Any]:
+        """Add comment to existing feedback (after follow-up question)."""
+        body = await request.json()
+        feedback_store = getattr(gateway, "_feedback_store", None)
+        if not feedback_store:
+            return {"error": "Feedback system not initialized"}
+
+        ok = feedback_store.add_comment(feedback_id, body.get("comment", ""))
+        return {"status": "ok" if ok else "not_found"}
+
+    @app.get("/api/v1/feedback/stats", dependencies=deps)
+    async def feedback_stats(agent_name: str = "", hours: int = 0) -> dict[str, Any]:
+        """Get feedback statistics."""
+        feedback_store = getattr(gateway, "_feedback_store", None)
+        if not feedback_store:
+            return {"total": 0, "positive": 0, "negative": 0, "satisfaction_rate": 0}
+        return feedback_store.get_stats(agent_name=agent_name, hours=hours)
+
+    @app.get("/api/v1/feedback/recent", dependencies=deps)
+    async def recent_feedback(limit: int = 50) -> dict[str, Any]:
+        """Get recent feedback entries."""
+        feedback_store = getattr(gateway, "_feedback_store", None)
+        if not feedback_store:
+            return {"entries": []}
+        return {"entries": feedback_store.get_recent(limit=limit)}

@@ -789,6 +789,50 @@ def main() -> None:
                                         break
                                 continue
 
+                            if msg_type == "feedback":
+                                _fb_store = getattr(gateway, "_feedback_store", None)
+                                if _fb_store:
+                                    _fb_rating = msg.get("rating", 0)
+                                    _fb_id = _fb_store.submit(
+                                        session_id=msg.get("session_id", session_id),
+                                        message_id=msg.get("message_id", ""),
+                                        rating=_fb_rating,
+                                        comment=msg.get("comment", ""),
+                                        agent_name=msg.get("agent_name", "jarvis"),
+                                        channel="webui",
+                                        user_message=msg.get("user_message", ""),
+                                        assistant_response=msg.get("assistant_response", ""),
+                                    )
+                                    if not await _ws_safe_send(
+                                        websocket,
+                                        {"type": "feedback_ack", "feedback_id": _fb_id},
+                                    ):
+                                        break
+                                    # On thumbs down: send follow-up question
+                                    if _fb_rating == -1:
+                                        if not await _ws_safe_send(
+                                            websocket,
+                                            {
+                                                "type": "feedback_followup",
+                                                "feedback_id": _fb_id,
+                                                "question": (
+                                                    "Was hat an meiner Antwort nicht gepasst? "
+                                                    "Dein Feedback hilft mir, besser zu werden."
+                                                ),
+                                            },
+                                        ):
+                                            break
+                                continue
+
+                            if msg_type == "feedback_comment":
+                                _fb_store = getattr(gateway, "_feedback_store", None)
+                                if _fb_store:
+                                    _fb_store.add_comment(
+                                        msg.get("feedback_id", ""),
+                                        msg.get("comment", ""),
+                                    )
+                                continue
+
                             if not await _ws_safe_send(
                                 websocket,
                                 {"type": "error", "error": f"Unbekannter Typ: {msg_type}"},

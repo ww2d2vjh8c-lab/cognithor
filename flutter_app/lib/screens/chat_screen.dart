@@ -18,6 +18,7 @@ import 'package:jarvis_ui/widgets/chat/hacker_chat_view.dart';
 import 'package:jarvis_ui/widgets/jarvis_empty_state.dart';
 import 'package:jarvis_ui/widgets/message_actions.dart';
 import 'package:jarvis_ui/widgets/chat/chat_history_drawer.dart';
+import 'package:jarvis_ui/widgets/chat/feedback_buttons.dart';
 import 'package:jarvis_ui/widgets/observe/observe_panel.dart';
 import 'package:jarvis_ui/widgets/pipeline_indicator.dart';
 import 'package:jarvis_ui/widgets/plan_detail_panel.dart';
@@ -223,13 +224,30 @@ class _ChatScreenState extends State<ChatScreen> {
                             }
 
                             final msg = chat.messages[index];
-                            return MessageActions(
+                            final bubble = MessageActions(
                               text: msg.text,
                               child: ChatBubble(
                                 role: msg.role,
                                 text: msg.text,
                               ),
                             );
+                            if (msg.role == MessageRole.assistant) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  bubble,
+                                  const SizedBox(height: 4),
+                                  FeedbackButtons(
+                                    messageId: msg.id,
+                                    onFeedback: (rating, msgId) {
+                                      chat.sendFeedback(
+                                          rating, msgId, msg.text);
+                                    },
+                                  ),
+                                ],
+                              );
+                            }
+                            return bubble;
                           },
                         );
                       },
@@ -273,6 +291,28 @@ class _ChatScreenState extends State<ChatScreen> {
                       return ApprovalDialog(
                         request: chat.pendingApproval!,
                         onRespond: chat.respondApproval,
+                      );
+                    },
+                  ),
+
+                  // Feedback follow-up dialog
+                  Consumer<ChatProvider>(
+                    builder: (context, chat, _) {
+                      if (chat.pendingFeedbackFollowup == null) {
+                        return const SizedBox.shrink();
+                      }
+                      final followup = chat.pendingFeedbackFollowup!;
+                      return _FeedbackFollowupBanner(
+                        feedbackId: followup['feedback_id'] ?? '',
+                        question: followup['question'] ?? '',
+                        onSubmit: (comment) {
+                          chat.sendFeedbackComment(
+                            followup['feedback_id'] ?? '',
+                            comment,
+                          );
+                          chat.dismissFeedbackFollowup();
+                        },
+                        onDismiss: chat.dismissFeedbackFollowup,
                       );
                     },
                   ),
@@ -523,5 +563,111 @@ class _ChatScreenState extends State<ChatScreen> {
         onPressed: () => context.read<ChatProvider>().clearChat(),
       ),
     ];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Feedback Follow-up Banner
+// ---------------------------------------------------------------------------
+
+class _FeedbackFollowupBanner extends StatefulWidget {
+  const _FeedbackFollowupBanner({
+    required this.feedbackId,
+    required this.question,
+    required this.onSubmit,
+    required this.onDismiss,
+  });
+
+  final String feedbackId;
+  final String question;
+  final void Function(String comment) onSubmit;
+  final VoidCallback onDismiss;
+
+  @override
+  State<_FeedbackFollowupBanner> createState() =>
+      _FeedbackFollowupBannerState();
+}
+
+class _FeedbackFollowupBannerState extends State<_FeedbackFollowupBanner> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: JarvisTheme.orange.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: JarvisTheme.orange.withValues(alpha: 0.30)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.question,
+            style: TextStyle(
+              fontSize: 13,
+              color: JarvisTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _controller,
+            maxLines: 2,
+            decoration: InputDecoration(
+              hintText: 'Was war nicht ideal?',
+              hintStyle: TextStyle(color: JarvisTheme.textTertiary),
+              filled: true,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                    color: JarvisTheme.orange.withValues(alpha: 0.30)),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            ),
+            style: const TextStyle(fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: widget.onDismiss,
+                child: Text(
+                  'Ueberspringen',
+                  style: TextStyle(color: JarvisTheme.textTertiary),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () {
+                  final comment = _controller.text.trim();
+                  if (comment.isNotEmpty) {
+                    widget.onSubmit(comment);
+                  } else {
+                    widget.onDismiss();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: JarvisTheme.orange,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Senden'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -15,11 +15,16 @@ enum MessageRole { user, assistant, system }
 
 class ChatMessage {
   ChatMessage({
+    String? id,
     required this.role,
     required this.text,
     DateTime? timestamp,
-  }) : timestamp = timestamp ?? DateTime.now();
+  })  : id = id ?? 'msg_${DateTime.now().millisecondsSinceEpoch}_${_msgCounter++}',
+        timestamp = timestamp ?? DateTime.now();
 
+  static int _msgCounter = 0;
+
+  final String id;
   final MessageRole role;
   String text;
   final DateTime timestamp;
@@ -88,6 +93,9 @@ class ChatProvider extends ChangeNotifier {
   Map<String, dynamic>? planDetail;
   final List<Map<String, dynamic>> agentLog = [];
 
+  /// Pending feedback follow-up from the server (shown as dialog).
+  Map<String, String>? pendingFeedbackFollowup;
+
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
@@ -127,6 +135,22 @@ class ChatProvider extends ChangeNotifier {
 
   void cancelOperation() {
     _ws?.cancelOperation();
+  }
+
+  /// Send thumbs up/down feedback for a specific message.
+  void sendFeedback(int rating, String messageId, String assistantResponse) {
+    _ws?.sendFeedback(rating, messageId, assistantResponse: assistantResponse);
+  }
+
+  /// Send a follow-up comment for negative feedback.
+  void sendFeedbackComment(String feedbackId, String comment) {
+    _ws?.sendFeedbackComment(feedbackId, comment);
+  }
+
+  /// Dismiss the pending feedback follow-up dialog.
+  void dismissFeedbackFollowup() {
+    pendingFeedbackFollowup = null;
+    notifyListeners();
   }
 
   void clearChat() {
@@ -223,6 +247,7 @@ class ChatProvider extends ChangeNotifier {
     _ws!.on(WsType.planDetail, _onPlanDetail);
     _ws!.on(WsType.transcription, _onTranscription);
     _ws!.on(WsType.error, _onError);
+    _ws!.on(WsType.feedbackFollowup, _onFeedbackFollowup);
     _listenersRegistered = true;
   }
 
@@ -367,6 +392,17 @@ class ChatProvider extends ChangeNotifier {
     _logAgent('error', null, err, status: 'error');
     isStreaming = false;
     _streamBuffer.clear();
+    notifyListeners();
+  }
+
+  void _onFeedbackFollowup(Map<String, dynamic> msg) {
+    final feedbackId = msg['feedback_id'] as String? ?? '';
+    final question = msg['question'] as String? ?? '';
+    _log('[Chat] _onFeedbackFollowup: feedbackId=$feedbackId');
+    pendingFeedbackFollowup = {
+      'feedback_id': feedbackId,
+      'question': question,
+    };
     notifyListeners();
   }
 }

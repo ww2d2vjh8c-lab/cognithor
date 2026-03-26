@@ -46,6 +46,12 @@ abstract final class WsType {
   static const error = 'error';
   static const pong = 'pong';
   static const identityState = 'identity_state';
+
+  // Feedback
+  static const feedback = 'feedback';
+  static const feedbackComment = 'feedback_comment';
+  static const feedbackAck = 'feedback_ack';
+  static const feedbackFollowup = 'feedback_followup';
 }
 
 // ---------------------------------------------------------------------------
@@ -181,6 +187,26 @@ class WebSocketService {
     _send({
       'type': WsType.cancel,
       'session_id': _sessionId,
+    });
+  }
+
+  /// Send thumbs up/down feedback for a message.
+  void sendFeedback(int rating, String messageId, {String assistantResponse = ''}) {
+    _send({
+      'type': WsType.feedback,
+      'rating': rating,
+      'message_id': messageId,
+      'session_id': _sessionId,
+      'assistant_response': assistantResponse,
+    });
+  }
+
+  /// Send a follow-up comment for previous negative feedback.
+  void sendFeedbackComment(String feedbackId, String comment) {
+    _send({
+      'type': WsType.feedbackComment,
+      'feedback_id': feedbackId,
+      'comment': comment,
     });
   }
 

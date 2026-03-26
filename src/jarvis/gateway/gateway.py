@@ -425,6 +425,18 @@ class Gateway:
             reflector=getattr(self, "_reflector", None),
         )
 
+        # --- Feedback Store (thumbs up/down rating) ---
+        try:
+            from jarvis.core.feedback import FeedbackStore
+
+            self._feedback_store = FeedbackStore(
+                db_path=self._config.jarvis_home / "feedback.db"
+            )
+            log.info("feedback_store_initialized")
+        except Exception:
+            log.debug("feedback_store_init_failed", exc_info=True)
+            self._feedback_store = None
+
         log.info(
             "gateway_init_complete",
             llm_available=llm_ok,
