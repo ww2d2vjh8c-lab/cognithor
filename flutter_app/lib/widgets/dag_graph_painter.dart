@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 
@@ -19,16 +18,89 @@ class DagEdge {
   final String to;
 }
 
-class DagGraphPainter extends CustomPainter {
-  DagGraphPainter({
+/// Interactive DAG graph widget with pan, zoom, and node tap support.
+class InteractiveDagGraph extends StatefulWidget {
+  const InteractiveDagGraph({
+    super.key,
     required this.nodes,
     required this.edges,
+    this.onNodeTap,
+    this.selectedNodeId,
     this.brightness = Brightness.dark,
   });
 
   final List<DagNode> nodes;
   final List<DagEdge> edges;
+  final void Function(DagNode node)? onNodeTap;
+  final String? selectedNodeId;
   final Brightness brightness;
+
+  @override
+  State<InteractiveDagGraph> createState() => _InteractiveDagGraphState();
+}
+
+class _InteractiveDagGraphState extends State<InteractiveDagGraph> {
+  Offset _offset = Offset.zero;
+  double _scale = 1.0;
+  double _scaleStart = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onScaleStart: (details) {
+        _scaleStart = _scale;
+      },
+      onScaleUpdate: (details) {
+        setState(() {
+          _scale = (_scaleStart * details.scale).clamp(0.3, 3.0);
+          _offset += details.focalPointDelta;
+        });
+      },
+      onTapUp: (details) {
+        final localPos = (details.localPosition - _offset) / _scale;
+        for (final node in widget.nodes) {
+          final dx = node.x - localPos.dx;
+          final dy = node.y - localPos.dy;
+          if (dx * dx + dy * dy < 900) {
+            // 30px radius hit area
+            widget.onNodeTap?.call(node);
+            return;
+          }
+        }
+      },
+      child: ClipRect(
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: DagGraphPainter(
+            nodes: widget.nodes,
+            edges: widget.edges,
+            brightness: widget.brightness,
+            offset: _offset,
+            scale: _scale,
+            selectedNodeId: widget.selectedNodeId,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DagGraphPainter extends CustomPainter {
+  DagGraphPainter({
+    required this.nodes,
+    required this.edges,
+    this.brightness = Brightness.dark,
+    this.offset = Offset.zero,
+    this.scale = 1.0,
+    this.selectedNodeId,
+  });
+
+  final List<DagNode> nodes;
+  final List<DagEdge> edges;
+  final Brightness brightness;
+  final Offset offset;
+  final double scale;
+  final String? selectedNodeId;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -37,6 +109,10 @@ class DagGraphPainter extends CustomPainter {
     // Topological layout: Kahn's algorithm for layer assignment
     final layers = _assignLayers();
     _positionNodes(layers, size);
+
+    canvas.save();
+    canvas.translate(offset.dx, offset.dy);
+    canvas.scale(scale);
 
     // Draw edges
     final nodeMap = {for (final n in nodes) n.id: n};
@@ -67,6 +143,8 @@ class DagGraphPainter extends CustomPainter {
     for (final node in nodes) {
       _drawNode(canvas, node);
     }
+
+    canvas.restore();
   }
 
   List<List<DagNode>> _assignLayers() {
@@ -131,12 +209,34 @@ class DagGraphPainter extends CustomPainter {
       DagNodeStatus.pending => JarvisTheme.textSecondary,
     };
 
-    // Circle
+    final isSelected = node.id == selectedNodeId;
+
+    // Selection glow
+    if (isSelected) {
+      canvas.drawCircle(
+        Offset(node.x, node.y),
+        20,
+        Paint()
+          ..color = color.withValues(alpha: 0.3)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+      canvas.drawCircle(
+        Offset(node.x, node.y),
+        17,
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5,
+      );
+    }
+
+    // Circle fill
     canvas.drawCircle(
       Offset(node.x, node.y),
       14,
-      Paint()..color = color.withValues(alpha: 0.2),
+      Paint()..color = color.withValues(alpha: isSelected ? 0.35 : 0.2),
     );
+    // Circle stroke
     canvas.drawCircle(
       Offset(node.x, node.y),
       14,
@@ -162,6 +262,7 @@ class DagGraphPainter extends CustomPainter {
         style: TextStyle(
           color: brightness == Brightness.dark ? JarvisTheme.textPrimary : const Color(0xFF1A1A2E),
           fontSize: 10,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         ),
       ),
       textDirection: TextDirection.ltr,

@@ -445,6 +445,11 @@ class ApiClient {
       get('workflows/instances');
   Future<Map<String, dynamic>> getWorkflowDagRuns() =>
       get('workflows/dag/runs');
+  Future<Map<String, dynamic>> getWorkflowDagRun(String runId) =>
+      get('workflows/dag/runs/$runId');
+  Future<Map<String, dynamic>> getWorkflowDagNodeDetail(
+          String runId, String nodeId) =>
+      get('workflows/dag/runs/$runId/nodes/$nodeId');
 
   // ---------------------------------------------------------------------------
   // System control

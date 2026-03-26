@@ -6,6 +6,7 @@ import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/providers/workflow_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
 import 'package:jarvis_ui/widgets/dag_graph_painter.dart';
+import 'package:jarvis_ui/widgets/dag_node_detail.dart';
 import 'package:jarvis_ui/widgets/neon_card.dart';
 import 'package:jarvis_ui/widgets/neon_glow.dart';
 import 'package:jarvis_ui/widgets/jarvis_chip.dart';
@@ -29,6 +30,8 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
   bool _dagLoading = false;
   String? _instancesError;
   String? _dagError;
+  String? _selectedDagNodeId;
+  Map<String, dynamic>? _selectedNodeData;
 
   bool _initialized = false;
 
@@ -402,14 +405,17 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
             ?.map((e) => e as Map<String, dynamic>)
             .toList() ??
         [];
+    final nodeResults =
+        (run['node_results'] as Map<String, dynamic>?) ?? {};
 
     final nodes = <DagNode>[];
     final edges = <DagEdge>[];
     for (var i = 0; i < steps.length; i++) {
       final s = steps[i];
+      final nodeId = (s['id'] ?? 'step$i').toString();
       final status = (s['status'] ?? '').toString().toLowerCase();
       nodes.add(DagNode(
-        id: 'step$i',
+        id: nodeId,
         label: (s['name'] ?? 'Step $i').toString(),
         status: status == 'running'
             ? DagNodeStatus.running
@@ -419,7 +425,10 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
                     ? DagNodeStatus.error
                     : DagNodeStatus.pending,
       ));
-      if (i > 0) edges.add(DagEdge(from: 'step${i - 1}', to: 'step$i'));
+      if (i > 0) {
+        final prevId = (steps[i - 1]['id'] ?? 'step${i - 1}').toString();
+        edges.add(DagEdge(from: prevId, to: nodeId));
+      }
     }
 
     return RefreshIndicator(
@@ -429,13 +438,53 @@ class _WorkflowsScreenState extends State<WorkflowsScreen>
         children: [
           SizedBox(
             height: 400,
-            child: CustomPaint(
-              painter: DagGraphPainter(
-                nodes: nodes,
-                edges: edges,
-                brightness: Theme.of(context).brightness,
-              ),
-              size: Size.infinite,
+            child: Row(
+              children: [
+                Expanded(
+                  child: InteractiveDagGraph(
+                    nodes: nodes,
+                    edges: edges,
+                    brightness: Theme.of(context).brightness,
+                    selectedNodeId: _selectedDagNodeId,
+                    onNodeTap: (node) {
+                      setState(() {
+                        if (_selectedDagNodeId == node.id) {
+                          // Deselect on second tap
+                          _selectedDagNodeId = null;
+                          _selectedNodeData = null;
+                        } else {
+                          _selectedDagNodeId = node.id;
+                          // Look up data from node_results or steps
+                          final result =
+                              nodeResults[node.id] as Map<String, dynamic>?;
+                          final step = steps.cast<Map<String, dynamic>?>().firstWhere(
+                            (s) => (s?['id'] ?? '').toString() == node.id,
+                            orElse: () => null,
+                          );
+                          _selectedNodeData = <String, dynamic>{
+                            'id': node.id,
+                            'name': node.label,
+                            if (step != null) ...step,
+                            if (result != null) ...result,
+                          };
+                        }
+                      });
+                    },
+                  ),
+                ),
+                if (_selectedNodeData != null) ...[
+                  const SizedBox(width: 12),
+                  DagNodeDetail(
+                    nodeData: _selectedNodeData!,
+                    onClose: () {
+                      setState(() {
+                        _selectedDagNodeId = null;
+                        _selectedNodeData = null;
+                      });
+                    },
+                  ),
+                ],
+              ],
             ),
           ),
         ],
