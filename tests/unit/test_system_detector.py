@@ -137,3 +137,65 @@ class TestSystemProfile:
 
         result = SystemProfile.load(tmp_path / "nonexistent.json")
         assert result is None
+
+
+class TestSystemDetector:
+    @pytest.fixture
+    def detector(self):
+        from jarvis.system.detector import SystemDetector
+
+        return SystemDetector()
+
+    def test_detect_os(self, detector):
+        r = detector.detect_os()
+        assert r.key == "os"
+        assert r.status == "ok"
+        assert "os" in r.raw_data
+
+    def test_detect_cpu(self, detector):
+        r = detector.detect_cpu()
+        assert r.key == "cpu"
+        assert r.raw_data.get("physical_cores", 0) > 0
+
+    def test_detect_ram(self, detector):
+        r = detector.detect_ram()
+        assert r.key == "ram"
+        assert r.raw_data.get("total_gb", 0) > 0
+
+    def test_detect_gpu(self, detector):
+        r = detector.detect_gpu()
+        assert r.key == "gpu"
+        assert r.status in ("ok", "warn", "fail")
+
+    def test_detect_disk(self, detector):
+        r = detector.detect_disk()
+        assert r.key == "disk"
+        assert r.raw_data.get("free_gb", 0) >= 0
+
+    def test_detect_network(self, detector):
+        r = detector.detect_network()
+        assert r.key == "network"
+        assert r.status in ("ok", "warn", "fail")
+
+    def test_detect_ollama(self, detector):
+        r = detector.detect_ollama()
+        assert r.key == "ollama"
+        assert r.status in ("ok", "warn", "fail")
+
+    def test_detect_lmstudio(self, detector):
+        r = detector.detect_lmstudio()
+        assert r.key == "lmstudio"
+        assert r.status in ("ok", "warn", "fail")
+
+    def test_run_full_scan(self, detector):
+        profile = detector.run_full_scan()
+        assert len(profile.results) >= 6
+        assert "cpu" in profile.results
+        assert "ram" in profile.results
+
+    def test_run_quick_scan_uses_cache(self, detector, tmp_path):
+        profile = detector.run_full_scan()
+        cache_path = tmp_path / "profile.json"
+        profile.save(cache_path)
+        quick = detector.run_quick_scan(cache_path=cache_path)
+        assert "cpu" in quick.results
