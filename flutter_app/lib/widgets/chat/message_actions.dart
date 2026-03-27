@@ -61,14 +61,14 @@ class _MessageActionButtonsState extends State<MessageActionButtons> {
           if (widget.isUser && widget.onEdit != null)
             _ActionIcon(
               icon: Icons.edit_outlined,
-              tooltip: 'Bearbeiten',
+              tooltip: 'Edit',
               onTap: widget.onEdit!,
             ),
           if (widget.isUser && widget.onEdit != null)
             const SizedBox(width: 2),
           _ActionIcon(
             icon: _copied ? Icons.check : Icons.copy_outlined,
-            tooltip: _copied ? 'Kopiert!' : 'Kopieren',
+            tooltip: _copied ? 'Copied!' : 'Copy',
             onTap: _copied ? null : _copyToClipboard,
             highlight: _copied,
           ),
@@ -76,7 +76,7 @@ class _MessageActionButtonsState extends State<MessageActionButtons> {
             const SizedBox(width: 2),
             _ActionIcon(
               icon: Icons.refresh,
-              tooltip: 'Erneut versuchen',
+              tooltip: 'Retry',
               onTap: widget.onRetry!,
             ),
           ],

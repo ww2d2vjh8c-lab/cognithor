@@ -706,7 +706,7 @@ def _register_config_routes(
 ) -> None:
     """Config CRUD, presets, reload."""
 
-    @app.get("/api/v1/health", dependencies=deps)
+    @app.get("/api/v1/health")
     async def health_check() -> dict[str, Any]:
         """Health check endpoint used by the Vite launcher."""
         return {"status": "ok"}
@@ -760,6 +760,20 @@ def _register_config_routes(
         if gateway is not None and hasattr(gateway, "reload_components"):
             gateway.reload_components(prompts=True, policies=True, core_memory=True, config=True)
         return {"status": "ok", "message": "Konfiguration und Komponenten neu geladen"}
+
+    @app.post("/api/v1/config/factory-reset", dependencies=deps)
+    async def factory_reset_config() -> dict[str, Any]:
+        """Reset configuration to defaults."""
+        from jarvis.config import JarvisConfig
+
+        try:
+            config_manager._config = JarvisConfig()
+            config_manager.save()
+            if gateway is not None and hasattr(gateway, "reload_components"):
+                gateway.reload_components(config=True)
+            return {"status": "ok", "message": "Configuration reset to defaults"}
+        except Exception as exc:
+            return {"error": str(exc)}
 
     # -- Locales (available i18n language packs) --
 
