@@ -435,6 +435,22 @@ class Gateway:
             log.debug("feedback_store_init_failed", exc_info=True)
             self._feedback_store = None
 
+        # --- Correction Memory (Smart Recovery) ---
+        try:
+            from jarvis.core.correction_memory import CorrectionMemory
+
+            _proactive = 3
+            if hasattr(self._config, "recovery"):
+                _proactive = getattr(self._config.recovery, "correction_proactive_threshold", 3)
+            self._correction_memory = CorrectionMemory(
+                db_path=self._config.jarvis_home / "corrections.db",
+                proactive_threshold=_proactive,
+            )
+            log.info("correction_memory_initialized")
+        except Exception:
+            log.debug("correction_memory_init_failed", exc_info=True)
+            self._correction_memory = None
+
         log.info(
             "gateway_init_complete",
             llm_available=llm_ok,
@@ -2073,6 +2089,32 @@ class Gateway:
                     top_p=_agent_top_p,
                 )
 
+        # ── Live Correction Detection ─────────────────────────────
+        _CORRECTION_TRIGGERS = frozenset({
+            "nein", "stopp", "stop", "halt", "falsch", "nicht so",
+            "stattdessen", "anders", "korrigier", "abbrech", "cancel",
+            "wrong", "lass das", "vergiss das", "mach anders",
+        })
+        _lower_msg = msg.text.lower().strip()
+        _is_correction = any(t in _lower_msg for t in _CORRECTION_TRIGGERS)
+
+        if _is_correction and session.iteration_count > 0:
+            log.info("live_correction_detected", text=msg.text[:80])
+            if hasattr(self, "_correction_memory") and self._correction_memory:
+                self._correction_memory.store(
+                    user_message=getattr(session, "last_user_message", "") or "",
+                    correction_text=msg.text,
+                )
+            wm.add_message(Message(
+                role=MessageRole.SYSTEM,
+                content=(
+                    f"[KORREKTUR] Der User hat korrigiert: "
+                    f"\"{msg.text}\". Passe deinen Plan an. "
+                    f"Fuehre NICHT die vorherige Aktion erneut aus."
+                ),
+                channel=msg.channel,
+            ))
+
         while not session.iterations_exhausted and self._running:
             # Cancel-Check: User hat /stop oder cancel gesendet
             if msg.session_id in self._cancelled_sessions:
@@ -2174,6 +2216,43 @@ class Gateway:
                 has_actions=plan.has_actions,
                 steps=len(plan.steps) if plan.has_actions else 0,
             )
+
+            # ── Pre-Flight Notification (non-blocking, agentic-first) ──
+            _recovery_cfg = getattr(self._config, "recovery", None)
+            if (
+                _recovery_cfg
+                and getattr(_recovery_cfg, "pre_flight_enabled", False)
+                and plan.has_actions
+                and len(plan.steps) >= getattr(_recovery_cfg, "pre_flight_min_steps", 2)
+            ):
+                _timeout = getattr(_recovery_cfg, "pre_flight_timeout_seconds", 3)
+                _steps_summary = [
+                    {"tool": s.tool, "rationale": (s.rationale or "")[:80]} for s in plan.steps[:5]
+                ]
+                await _status_cb(
+                    "pre_flight",
+                    _json.dumps(
+                        {
+                            "goal": plan.goal or msg.text[:100],
+                            "steps": _steps_summary,
+                            "timeout": _timeout,
+                            "session_id": msg.session_id,
+                        }
+                    ),
+                )
+                _pf_start = time.monotonic()
+                _pf_cancelled = False
+                while (time.monotonic() - _pf_start) < _timeout:
+                    if msg.session_id in self._cancelled_sessions:
+                        self._cancelled_sessions.discard(msg.session_id)
+                        _pf_cancelled = True
+                        break
+                    await asyncio.sleep(0.5)
+                if _pf_cancelled:
+                    log.info("pre_flight_cancelled", session=session.session_id[:8])
+                    final_response = "Plan abgebrochen. Was soll ich stattdessen tun?"
+                    break
+                log.debug("pre_flight_auto_execute", session=session.session_id[:8])
 
             # Emit plan detail for UI Plan Review panel
             if plan.has_actions:
