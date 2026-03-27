@@ -1,40 +1,40 @@
 """P2P Skill Distribution: Distributed network for Jarvis skills.
 
-Ermöglicht die dezentrale Verteilung von Skill-Paketen ohne
+Ermoeglicht die dezentrale Verteilung von Skill-Paketen ohne
 zentralen Server. Jede Jarvis-Instanz kann Skills publizieren,
 suchen und herunterladen.
 
 Komponenten:
 
-  1. PeerNode: Lokaler Knoten mit Identität und Schlüsselpaar.
+  1. PeerNode: Lokaler Knoten mit Identitaet und Schluesselpaar.
      Jede Jarvis-Instanz hat einen eindeutigen Peer.
 
   2. PeerRegistry: Verwaltung bekannter Peers mit Heartbeat
      und Cleanup von inaktiven Nodes.
 
-  3. SkillIndex: Verteiltes Verzeichnis aller verfügbaren Skills.
-     DHT-ähnliche Struktur: Jeder Peer kennt einen Teil des Index.
-     Suche über Keyword-Matching + Kategorien.
+  3. SkillIndex: Verteiltes Verzeichnis aller verfuegbaren Skills.
+     DHT-aehnliche Struktur: Jeder Peer kennt einen Teil des Index.
+     Suche ueber Keyword-Matching + Kategorien.
 
   4. ReputationTracker: Vertrauenssystem basierend auf:
      - Erfolgreiche Installationen (+1)
      - Fehlgeschlagene Installationen (-2)
      - Positives User-Feedback (+1)
      - Negatives Feedback / Malware-Report (-5)
-     - Alter des Pakets (ältere = mehr Vertrauen)
+     - Alter des Pakets (aeltere = mehr Vertrauen)
 
   5. SkillExchange: Orchestriert den kompletten Workflow:
      Publish → Sign → Index → Search → Download → Verify → Install
 
-  6. SubscriptionFeed: Automatische Benachrichtigung über neue
+  6. SubscriptionFeed: Automatische Benachrichtigung ueber neue
      Skills in abonnierten Kategorien.
 
 Sicherheit:
-  - Alle Pakete MÜSSEN signiert sein
+  - Alle Pakete MUeSSEN signiert sein
   - Code-Analyse vor Installation (CodeAnalyzer)
   - Reputation-basiertes Vertrauen
   - Sandbox-Isolation pro Skill
-  - Schnelle Isolation von Malware-Paketen (Quarantäne)
+  - Schnelle Isolation von Malware-Paketen (Quarantaene)
 
 Bibel-Referenz: §6.5 (P2P Skill Distribution)
 """
@@ -78,7 +78,7 @@ class PeerNode:
     """A node in the P2P network.
 
     Jede Jarvis-Instanz ist ein PeerNode mit eindeutiger ID
-    und optionalem Schlüsselpaar für Signierung.
+    und optionalem Schluesselpaar fuer Signierung.
     """
 
     peer_id: str  # SHA-256[:16] vom öffentlichen Schlüssel
@@ -117,7 +117,7 @@ class PeerNode:
 class PeerRegistry:
     """Verwaltung bekannter Peers im Netzwerk.
 
-    Hält eine Liste aktiver Peers, entfernt inaktive,
+    Haelt eine Liste aktiver Peers, entfernt inaktive,
     und bietet Discovery-Funktionen.
     """
 
@@ -230,10 +230,10 @@ class IndexEntry:
 
 
 class SkillIndex:
-    """Verteiltes Verzeichnis verfügbarer Skills.
+    """Verteiltes Verzeichnis verfuegbarer Skills.
 
-    Jeder Peer hält eine lokale Kopie des Index.
-    Synchronisation erfolgt über Peer-Exchange:
+    Jeder Peer haelt eine lokale Kopie des Index.
+    Synchronisation erfolgt ueber Peer-Exchange:
       - Beim Verbinden: Index-Diff austauschen
       - Beim Publizieren: Broadcast an bekannte Peers
     """
@@ -249,7 +249,7 @@ class SkillIndex:
         return len(self._entries)
 
     def publish(self, entry: IndexEntry) -> None:
-        """Fügt ein Skill-Paket dem Index hinzu.
+        """Fuegt ein Skill-Paket dem Index hinzu.
 
         Args:
             entry: Index-Eintrag.
@@ -375,10 +375,10 @@ class SkillIndex:
         return True
 
     def merge_from(self, other_entries: list[IndexEntry]) -> int:
-        """Merged Einträge eines anderen Peers in den lokalen Index.
+        """Merged Eintraege eines anderen Peers in den lokalen Index.
 
         Returns:
-            Anzahl neuer Einträge.
+            Anzahl neuer Eintraege.
         """
         new_count = 0
         for entry in other_entries:
@@ -435,13 +435,13 @@ class ReputationProfile:
 
 
 class ReputationTracker:
-    """Vertrauenssystem für Peers und Pakete.
+    """Vertrauenssystem fuer Peers und Pakete.
 
     Tracks:
       - Peer-Reputation (basierend auf publizierten Paketen)
       - Paket-Reputation (basierend auf Installationen + Feedback)
 
-    Quarantäne:
+    Quarantaene:
       - Peers mit Score < -5 werden automatisch quarantiniert
       - Pakete mit Score < -3 werden quarantiniert
     """
@@ -497,7 +497,7 @@ class ReputationTracker:
         return self._profiles.get(entity_id)
 
     def is_trusted(self, entity_id: str) -> bool:
-        """Prüft ob ein Entity (Peer/Paket) vertrauenswürdig ist."""
+        """Prueft ob ein Entity (Peer/Paket) vertrauenswuerdig ist."""
         profile = self._profiles.get(entity_id)
         if not profile:
             return False  # Unbekannt = nicht vertrauenswürdig
@@ -516,7 +516,7 @@ class ReputationTracker:
         profile.quarantined = True
 
     def release(self, entity_id: str) -> None:
-        """Quarantäne aufheben."""
+        """Quarantaene aufheben."""
         profile = self._profiles.get(entity_id)
         if profile:
             profile.quarantined = False
@@ -541,7 +541,7 @@ class ReputationTracker:
 
 @dataclass
 class Subscription:
-    """Ein Skill-Abonnement für automatische Updates."""
+    """Ein Skill-Abonnement fuer automatische Updates."""
 
     subscriber_id: str  # Eigene Peer-ID
     category: str = ""  # Abonnierte Kategorie
@@ -553,9 +553,9 @@ class Subscription:
 
 
 class SubscriptionFeed:
-    """Automatische Benachrichtigungen über neue Skills.
+    """Automatische Benachrichtigungen ueber neue Skills.
 
-    Peers können Kategorien, Keywords oder Herausgeber abonnieren.
+    Peers koennen Kategorien, Keywords oder Herausgeber abonnieren.
     Neue Pakete werden gegen Abonnements gematched.
     """
 
@@ -820,7 +820,7 @@ class SkillExchange:
         """Search the skill index.
 
         Filtert quarantinierte Pakete und Herausgeber automatisch.
-        Optional: Trust-Filter über Trusted Circles.
+        Optional: Trust-Filter ueber Trusted Circles.
         """
         results = self._index.search(query, category=category, max_results=max_results * 2)
 
@@ -862,7 +862,7 @@ class SkillExchange:
         """Install a skill package.
 
         1. Paket laden (lokal oder aus Bytes)
-        2. Reputation prüfen
+        2. Reputation pruefen
         3. An Installer delegieren
         4. Reputation aktualisieren
 
@@ -955,7 +955,7 @@ class SkillExchange:
         """Synchronize the index with entries from another peer.
 
         Returns:
-            Anzahl neuer Einträge.
+            Anzahl neuer Eintraege.
         """
         new = self._index.merge_from(peer_entries)
         if new:

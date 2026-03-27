@@ -1,6 +1,6 @@
 """Wake Word Detection: Erkennt Aktivierungswort im Audio-Stream.
 
-Unterstützt mehrere Backends:
+Unterstuetzt mehrere Backends:
   - Vosk (offline, kostenlos, gutes Deutsch)
   - Porcupine (Picovoice, offline, bessere Accuracy)
   - Energy-based Fallback (einfache Audio-Schwelle)
@@ -40,7 +40,7 @@ class WakeWordDetector:
         self._running = False
 
     async def load(self) -> None:
-        """Lädt das Wake-Word-Modell."""
+        """Laedt das Wake-Word-Modell."""
         if self._backend == "vosk":
             await self._load_vosk()
         elif self._backend == "porcupine":
@@ -49,7 +49,7 @@ class WakeWordDetector:
             log.info("using_energy_based_wake_word_fallback")
 
     async def _load_vosk(self) -> None:
-        """Lädt Vosk für Keyword-Spotting."""
+        """Laedt Vosk fuer Keyword-Spotting."""
         try:
             import json as _json  # noqa: F401
 
@@ -67,7 +67,7 @@ class WakeWordDetector:
             self._backend = "energy"
 
     async def _load_porcupine(self) -> None:
-        """Lädt Porcupine für Wake-Word-Detection."""
+        """Laedt Porcupine fuer Wake-Word-Detection."""
         try:
             import pvporcupine
 
@@ -84,7 +84,7 @@ class WakeWordDetector:
             self._backend = "energy"
 
     async def listen(self, audio_stream: AsyncIterator[bytes]) -> bool:
-        """Lauscht kontinuierlich und gibt True zurück wenn Wake Word erkannt.
+        """Lauscht kontinuierlich und gibt True zurueck wenn Wake Word erkannt.
 
         Args:
             audio_stream: Async Iterator von Audio-Chunks (16-bit mono PCM).
@@ -105,7 +105,7 @@ class WakeWordDetector:
         return False
 
     def detect_in_chunk(self, chunk: bytes) -> bool:
-        """Prüft einen einzelnen Audio-Chunk auf das Wake Word.
+        """Prueft einen einzelnen Audio-Chunk auf das Wake Word.
 
         Args:
             chunk: 16-bit mono PCM Audio-Daten.

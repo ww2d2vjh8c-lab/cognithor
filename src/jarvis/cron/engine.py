@@ -1,7 +1,7 @@
 """Cron-Engine: Zeitgesteuerte und event-basierte Aufgaben.
 
 Nutzt APScheduler 3.x (AsyncIOScheduler) um CronJobs periodisch
-auszuführen. Jeder Job erzeugt eine IncomingMessage die über den
+auszufuehren. Jeder Job erzeugt eine IncomingMessage die ueber den
 Gateway-Handler verarbeitet wird -- identisch zu einer User-Nachricht.
 
 Bibel-Referenz: §10 (Cron-Engine & Proaktive Autonomie)
@@ -33,7 +33,7 @@ CronHandler = Callable[[IncomingMessage], Coroutine[Any, Any, Any]]
 def _parse_cron_fields(expression: str) -> dict[str, str]:
     """Parst einen Cron-Ausdruck in APScheduler-kompatible Felder.
 
-    Unterstützt Standard-5-Feld-Format: minute hour day month day_of_week
+    Unterstuetzt Standard-5-Feld-Format: minute hour day month day_of_week
 
     Args:
         expression: Cron-Ausdruck (z.B. "0 7 * * 1-5")
@@ -42,7 +42,7 @@ def _parse_cron_fields(expression: str) -> dict[str, str]:
         Dict mit APScheduler CronTrigger-Feldern.
 
     Raises:
-        ValueError: Bei ungültigem Cron-Ausdruck.
+        ValueError: Bei ungueltigem Cron-Ausdruck.
     """
     parts = expression.strip().split()
     if len(parts) != 5:
@@ -64,17 +64,17 @@ class CronEngine:
     Die CronEngine verwaltet zeitgesteuerte Jobs (CronJobs) und einen
     optionalen Heartbeat-Mechanismus. CronJobs werden aus einer YAML-
     Datei geladen und erzeugen `IncomingMessage`-Objekte, die an den
-    Gateway-Handler übergeben werden -- identisch zu einer User-Nachricht.
+    Gateway-Handler uebergeben werden -- identisch zu einer User-Nachricht.
     Der Heartbeat hingegen ist ein periodischer Check, der den Inhalt
     einer konfigurierten Checkliste liest und als Systemnachricht an den
-    Handler sendet. Dieser Mechanismus ermöglicht proaktive Aktionen
+    Handler sendet. Dieser Mechanismus ermoeglicht proaktive Aktionen
     ohne explizite Nutzereingaben.
 
     Attributes:
-        job_store: JobStore-Instanz für CronJob-Persistenz.
-        running: Ob die Engine läuft.
+        job_store: JobStore-Instanz fuer CronJob-Persistenz.
+        running: Ob die Engine laeuft.
         heartbeat_config: Optionale HeartbeatConfig.
-        heartbeat_file: Pfad zur Checkliste für Heartbeats.
+        heartbeat_file: Pfad zur Checkliste fuer Heartbeats.
         _heartbeat_job_id: Interner Name des geplanten Heartbeat-Jobs.
     """
 
@@ -92,12 +92,12 @@ class CronEngine:
             jobs_path: Pfad zur jobs.yaml. ``None`` bedeutet, dass
                 keine CronJob-Datei verwendet wird und die Engine nur
                 den Heartbeat bedient.
-            handler: Async-Callback für ausgelöste Jobs und Heartbeats.
+            handler: Async-Callback fuer ausgeloeste Jobs und Heartbeats.
             heartbeat_config: Optionale HeartbeatConfig. Wenn ``None``
                 oder ``enabled`` auf ``False`` gesetzt ist, wird
                 kein Heartbeat geplant.
-            jarvis_home: Basisverzeichnis von Jarvis. Wird benötigt,
-                um den vollständigen Pfad der Heartbeat-Checkliste
+            jarvis_home: Basisverzeichnis von Jarvis. Wird benoetigt,
+                um den vollstaendigen Pfad der Heartbeat-Checkliste
                 zu bestimmen, falls ``heartbeat_config.checklist_file``
                 ein relativer Pfad ist. Wenn ``None``, wird versucht,
                 ``jobs_path`` als Referenz zu verwenden.
@@ -145,7 +145,7 @@ class CronEngine:
         """Setzt den Message-Handler (wird vom Gateway aufgerufen).
 
         Args:
-            handler: Async-Callback für Job-Ausführung.
+            handler: Async-Callback fuer Job-Ausfuehrung.
         """
         self._handler = handler
 
@@ -167,7 +167,7 @@ class CronEngine:
         return self.job_count > 0
 
     async def start(self) -> None:
-        """Startet die Cron-Engine und lädt alle aktivierten Jobs."""
+        """Startet die Cron-Engine und laedt alle aktivierten Jobs."""
         if self.running:
             logger.warning("CronEngine läuft bereits")
             return
@@ -384,14 +384,14 @@ class CronEngine:
         return False
 
     async def _execute_job(self, job: CronJob) -> None:
-        """Führt einen Cron-Job aus indem eine IncomingMessage erzeugt wird.
+        """Fuehrt einen Cron-Job aus indem eine IncomingMessage erzeugt wird.
 
         Wenn der Job einen bestimmten Agenten spezifiziert, wird dieser
-        über die Message-Metadata an den Gateway übergeben. Der Gateway
+        ueber die Message-Metadata an den Gateway uebergeben. Der Gateway
         umgeht dann das Keyword-Routing und nutzt den angegebenen Agenten.
 
         Args:
-            job: Der auszuführende CronJob.
+            job: Der auszufuehrende CronJob.
         """
         if self._handler is None:
             logger.warning("Kein Handler gesetzt, Job '%s' übersprungen", job.name)
@@ -417,12 +417,12 @@ class CronEngine:
             logger.exception("Cron-Job '%s' fehlgeschlagen", job.name)
 
     async def _execute_heartbeat(self) -> None:
-        """Führt einen Heartbeat-Lauf aus.
+        """Fuehrt einen Heartbeat-Lauf aus.
 
-        Diese Methode wird regelmäßig vom Scheduler aufgerufen. Sie:
-          1. Lässt den HeartbeatScheduler proaktive Tasks abarbeiten
+        Diese Methode wird regelmaessig vom Scheduler aufgerufen. Sie:
+          1. Laesst den HeartbeatScheduler proaktive Tasks abarbeiten
           2. Liest die konfigurierte Heartbeat-Checkliste (falls vorhanden)
-          3. Erzeugt eine IncomingMessage für den Handler
+          3. Erzeugt eine IncomingMessage fuer den Handler
         """
         # --- Phase 1: Proaktive Tasks via HeartbeatScheduler ---
         if self._heartbeat_scheduler is not None:
@@ -470,10 +470,10 @@ class CronEngine:
     # === Oeffentliche API fuer Runtime-Management ===
 
     def add_runtime_job(self, job: CronJob) -> bool:
-        """Fügt einen Job zur Laufzeit hinzu (und persistiert ihn).
+        """Fuegt einen Job zur Laufzeit hinzu (und persistiert ihn).
 
         Args:
-            job: Der hinzuzufügende CronJob.
+            job: Der hinzuzufuegende CronJob.
 
         Returns:
             True wenn erfolgreich geplant.
@@ -511,10 +511,10 @@ class CronEngine:
         return []
 
     def get_next_run_times(self) -> dict[str, datetime | None]:
-        """Gibt die nächsten Ausführungszeiten aller aktiven Jobs zurück.
+        """Gibt die naechsten Ausfuehrungszeiten aller aktiven Jobs zurueck.
 
         Returns:
-            Dict: Job-Name → nächste Ausführungszeit (oder None).
+            Dict: Job-Name → naechste Ausfuehrungszeit (oder None).
         """
         result: dict[str, datetime | None] = {}
         if self._scheduler is None:
@@ -588,13 +588,13 @@ class CronEngine:
         return True
 
     async def trigger_now(self, name: str) -> bool:
-        """Löst einen Job sofort aus (unabhängig vom Schedule).
+        """Loest einen Job sofort aus (unabhaengig vom Schedule).
 
         Args:
             name: Job-Name.
 
         Returns:
-            True wenn der Job existiert und ausgelöst wurde.
+            True wenn der Job existiert und ausgeloest wurde.
         """
         if self.job_store is None:
             return False

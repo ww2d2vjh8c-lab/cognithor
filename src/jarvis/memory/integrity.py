@@ -1,13 +1,13 @@
 """Jarvis · Memory integrity & extended explainability.
 
-Prüft die Integrität des Knowledge-Speichers:
+Prueft die Integritaet des Knowledge-Speichers:
 
   - MemoryEntry:           Einzelner Eintrag mit Hash und Version
   - IntegrityChecker:      Erkennt Manipulationen durch Hash-Verifikation
   - DuplicateDetector:     Findet Dubletten in Erinnerungen
-  - ContradictionDetector: Erkennt widersprüchliche Fakten
-  - MemoryVersionControl:  Versionskontrolle für Memory-Änderungen
-  - PlausibilityChecker:   Plausibilitäts-Checks auf neue Einträge
+  - ContradictionDetector: Erkennt widerspruechliche Fakten
+  - MemoryVersionControl:  Versionskontrolle fuer Memory-Aenderungen
+  - PlausibilityChecker:   Plausibilitaets-Checks auf neue Eintraege
   - DecisionExplainer:     Erweiterte Explainability mit Quellen-Tracking
 
 Architektur-Bibel: §7.3 (Memory), §13.3 (Explainability)
@@ -29,7 +29,7 @@ from typing import Any
 
 @dataclass
 class MemoryEntry:
-    """Einzelner Memory-Eintrag mit Integritäts-Hash."""
+    """Einzelner Memory-Eintrag mit Integritaets-Hash."""
 
     entry_id: str
     content: str
@@ -76,7 +76,7 @@ class IntegrityStatus(Enum):
 
 @dataclass
 class IntegrityReport:
-    """Ergebnis einer Integritäts-Prüfung."""
+    """Ergebnis einer Integritaets-Pruefung."""
 
     total_entries: int
     intact: int
@@ -179,7 +179,7 @@ class DuplicateDetector:
 
     @staticmethod
     def _simple_similarity(a: str, b: str) -> float:
-        """Jaccard-Ähnlichkeit auf Wort-Ebene."""
+        """Jaccard-Aehnlichkeit auf Wort-Ebene."""
         words_a = set(a.split())
         words_b = set(b.split())
         if not words_a or not words_b:
@@ -248,7 +248,7 @@ class DuplicateDetector:
 
     @staticmethod
     def _jaccard(words_a: set[str], words_b: set[str]) -> float:
-        """Jaccard-Ähnlichkeit auf vorberechneten Wort-Sets."""
+        """Jaccard-Aehnlichkeit auf vorberechneten Wort-Sets."""
         if not words_a or not words_b:
             return 0.0
         return len(words_a & words_b) / len(words_a | words_b)
@@ -267,7 +267,7 @@ class DuplicateDetector:
 
 @dataclass
 class Contradiction:
-    """Ein erkannter Widerspruch zwischen zwei Einträgen."""
+    """Ein erkannter Widerspruch zwischen zwei Eintraegen."""
 
     contradiction_id: str
     entry_a_id: str
@@ -288,11 +288,11 @@ class Contradiction:
 
 
 class ContradictionDetector:
-    """Erkennt widersprüchliche Fakten im Memory.
+    """Erkennt widerspruechliche Fakten im Memory.
 
     Einfache Heuristiken (Produktionsversion → NLI-Modell):
       - Negations-Erkennung bei gleichem Subjekt
-      - Numerische Widersprüche (x ist 5 vs x ist 10)
+      - Numerische Widersprueche (x ist 5 vs x ist 10)
       - Gegenteil-Paare
     """
 
@@ -389,7 +389,7 @@ class MemoryVersion:
 
 
 class MemoryVersionControl:
-    """Versionskontrolle für Memory-Änderungen."""
+    """Versionskontrolle fuer Memory-Aenderungen."""
 
     def __init__(self) -> None:
         self._versions: dict[str, list[MemoryVersion]] = {}  # entry_id → versions
@@ -419,7 +419,7 @@ class MemoryVersionControl:
         return None
 
     def rollback(self, entry_id: str, to_version: int) -> MemoryVersion | None:
-        """Rollt einen Eintrag auf eine frühere Version zurück."""
+        """Rollt einen Eintrag auf eine fruehere Version zurueck."""
         return self.get_version(entry_id, to_version)
 
     @property
@@ -451,7 +451,7 @@ class PlausibilityResult(Enum):
 
 @dataclass
 class PlausibilityCheck:
-    """Ergebnis einer Plausibilitäts-Prüfung."""
+    """Ergebnis einer Plausibilitaets-Pruefung."""
 
     entry_id: str
     result: PlausibilityResult
@@ -468,11 +468,11 @@ class PlausibilityCheck:
 
 
 class PlausibilityChecker:
-    """Plausibilitäts-Checks auf neue Memory-Einträge.
+    """Plausibilitaets-Checks auf neue Memory-Eintraege.
 
-    Prüft:
-      - Länge (zu kurz/lang?)
-      - Sprache (enthält Injection-Patterns?)
+    Prueft:
+      - Laenge (zu kurz/lang?)
+      - Sprache (enthaelt Injection-Patterns?)
       - Confidence (zu niedrig?)
       - Content-Type-Konsistenz
     """
@@ -537,7 +537,7 @@ class PlausibilityChecker:
 
 @dataclass
 class DecisionExplanation:
-    """Erklärung einer Agent-Entscheidung mit Quellen."""
+    """Erklaerung einer Agent-Entscheidung mit Quellen."""
 
     decision_id: str
     question: str

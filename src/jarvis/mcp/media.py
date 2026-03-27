@@ -1,13 +1,13 @@
 """Media-Pipeline: Verarbeitung von Bildern, Audio und Dokumenten.
 
-MCP-Tools für multimodale Medienverarbeitung -- vollständig lokal.
+MCP-Tools fuer multimodale Medienverarbeitung -- vollstaendig lokal.
 
 Tools:
   - media_transcribe_audio: Audio → Text (Whisper)
   - media_analyze_image: Bild → Beschreibung (multimodales LLM via Ollama)
   - media_extract_text: PDF/DOCX/TXT → Text
   - media_convert_audio: Audio-Formatkonvertierung (ffmpeg)
-  - media_image_resize: Bildgröße ändern (Pillow)
+  - media_image_resize: Bildgroesse aendern (Pillow)
   - media_tts: Text → Sprache (Piper/eSpeak)
 
 Alle Tools arbeiten mit lokalen Dateipfaden -- keine Cloud-Uploads.
@@ -71,10 +71,10 @@ class MediaResult:
 
 
 class MediaPipeline:
-    """Zentrale Klasse für Medienverarbeitung.
+    """Zentrale Klasse fuer Medienverarbeitung.
 
     Alle Methoden sind async und nutzen run_in_executor
-    für CPU-intensive Operationen (Whisper, Pillow, etc.).
+    fuer CPU-intensive Operationen (Whisper, Pillow, etc.).
     """
 
     def __init__(self, workspace_dir: Path | None = None, config: Any = None) -> None:
@@ -107,7 +107,7 @@ class MediaPipeline:
         self._default_max_height: int = getattr(_media, "default_max_height", _DEFAULT_MAX_HEIGHT)
 
     def _set_llm_fn(self, llm_fn: Any, model_name: str = "") -> None:
-        """Injiziert eine LLM-Funktion für Dokument-Analyse.
+        """Injiziert eine LLM-Funktion fuer Dokument-Analyse.
 
         Args:
             llm_fn: Async-Funktion mit Signatur (prompt: str, model: str) -> str
@@ -117,7 +117,7 @@ class MediaPipeline:
         self._llm_model = model_name
 
     def _set_vault(self, vault: Any) -> None:
-        """Injiziert VaultTools-Referenz für optionales Speichern.
+        """Injiziert VaultTools-Referenz fuer optionales Speichern.
 
         Args:
             vault: VaultTools-Instanz mit vault_save-Methode.
@@ -162,7 +162,7 @@ class MediaPipeline:
     ) -> MediaResult:
         """Transkribiert eine Audiodatei zu Text.
 
-        Unterstützt: WAV, MP3, OGG, FLAC, M4A, WEBM
+        Unterstuetzt: WAV, MP3, OGG, FLAC, M4A, WEBM
         Backend: faster-whisper (lokal, GPU-beschleunigt)
 
         Args:
@@ -235,15 +235,15 @@ class MediaPipeline:
     ) -> MediaResult:
         """Analysiert ein Bild mit einem multimodalen LLM.
 
-        Unterstützt: JPG, PNG, GIF, WEBP, BMP
-        Backend: Automatisch erkannt — OpenAI für gpt-*/o*-Modelle, sonst Ollama.
+        Unterstuetzt: JPG, PNG, GIF, WEBP, BMP
+        Backend: Automatisch erkannt — OpenAI fuer gpt-*/o*-Modelle, sonst Ollama.
 
         Args:
             image_path: Pfad zum Bild.
-            prompt: Analyseanweisung für das LLM.
+            prompt: Analyseanweisung fuer das LLM.
             model: Vision-Modell (OpenAI oder Ollama).
             ollama_url: Ollama API-URL.
-            openai_api_key: OpenAI API-Key (nötig für gpt-* Modelle).
+            openai_api_key: OpenAI API-Key (noetig fuer gpt-* Modelle).
             openai_base_url: OpenAI base URL.
         """
         import base64
@@ -375,7 +375,7 @@ class MediaPipeline:
     async def extract_text(self, file_path: str) -> MediaResult:
         """Extrahiert Text aus verschiedenen Dokumentformaten.
 
-        Unterstützt: PDF, DOCX, TXT, MD, HTML, CSV, JSON, XML
+        Unterstuetzt: PDF, DOCX, TXT, MD, HTML, CSV, JSON, XML
 
         Args:
             file_path: Pfad zum Dokument.
@@ -902,7 +902,7 @@ class MediaPipeline:
         language: str = "de",
         save_to_vault: bool = False,
     ) -> str:
-        """Analysiert ein Dokument strukturiert mit LLM-Unterstützung.
+        """Analysiert ein Dokument strukturiert mit LLM-Unterstuetzung.
 
         Extrahiert Text, sendet ihn an das LLM mit einem strukturierten
         Analyse-Prompt und liefert eine Analyse mit 6 Abschnitten.
@@ -910,7 +910,7 @@ class MediaPipeline:
         Args:
             path: Pfad zum Dokument (PDF, DOCX, TXT, HTML, etc.).
             analysis_type: Art der Analyse:
-                'full' = vollständige Analyse (6 Abschnitte)
+                'full' = vollstaendige Analyse (6 Abschnitte)
                 'summary' = nur Zusammenfassung
                 'risks' = nur Risiken & Bedenken
                 'todos' = nur Handlungsbedarf / To-Dos
@@ -1065,12 +1065,12 @@ class MediaPipeline:
         max_height: int | None = None,
         output_format: str | None = None,
     ) -> MediaResult:
-        """Ändert die Bildgröße (behält Seitenverhältnis).
+        """Aendert die Bildgroesse (behaelt Seitenverhaeltnis).
 
         Args:
             image_path: Quellbild.
             max_width: Maximale Breite (1-max_image_dimension). Default aus Config.
-            max_height: Maximale Höhe (1-max_image_dimension). Default aus Config.
+            max_height: Maximale Hoehe (1-max_image_dimension). Default aus Config.
             output_format: Optionales Ausgabeformat (jpg, png, webp).
         """
         if max_width is None:
@@ -1139,7 +1139,7 @@ class MediaPipeline:
         """Exportiert Text als PDF- oder DOCX-Dokument.
 
         Args:
-            content: Text-Inhalt (Absätze durch \\n\\n getrennt).
+            content: Text-Inhalt (Absaetze durch \\n\\n getrennt).
             fmt: Ausgabeformat ('pdf' oder 'docx').
             title: Optionaler Titel/Betreff.
             author: Optionaler Absender/Autor.
@@ -1412,7 +1412,7 @@ def _build_analysis_prompt(
     language: str,
     filename: str,
 ) -> str:
-    """Baut den LLM-Prompt für die Dokument-Analyse.
+    """Baut den LLM-Prompt fuer die Dokument-Analyse.
 
     Args:
         text: Extrahierter Dokumenttext.
@@ -1720,7 +1720,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
 
     Args:
         mcp_client: JarvisMCPClient-Instanz.
-        config: JarvisConfig-Instanz (optional, für Vision-Modell-Auswahl).
+        config: JarvisConfig-Instanz (optional, fuer Vision-Modell-Auswahl).
 
     Returns:
         MediaPipeline-Instanz.

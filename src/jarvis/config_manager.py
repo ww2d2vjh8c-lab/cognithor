@@ -226,7 +226,7 @@ class ConfigManager:
     def update_section(self, section: str, values: dict[str, Any]) -> JarvisConfig:
         """Aktualisiert eine Konfigurations-Sektion.
 
-        Validiert die Änderungen über Pydantic, bevor sie angewendet werden.
+        Validiert die Aenderungen ueber Pydantic, bevor sie angewendet werden.
         Bei Validierungsfehlern wird eine ValueError geworfen.
 
         Args:
@@ -237,7 +237,7 @@ class ConfigManager:
             Aktualisierte JarvisConfig.
 
         Raises:
-            ValueError: Ungültige Sektion oder Validierungsfehler.
+            ValueError: Ungueltige Sektion oder Validierungsfehler.
         """
         if section not in _EDITABLE_SECTIONS:
             msg = f"Sektion '{section}' ist nicht editierbar. Erlaubt: {sorted(_EDITABLE_SECTIONS)}"

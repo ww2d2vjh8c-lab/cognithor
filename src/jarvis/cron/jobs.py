@@ -1,6 +1,6 @@
 """Cron-Job-Verwaltung: Laden, Speichern, Validieren.
 
-Lädt Job-Definitionen aus einer YAML-Datei und stellt sie
+Laedt Job-Definitionen aus einer YAML-Datei und stellt sie
 als typisierte CronJob-Modelle bereit.
 
 Bibel-Referenz: §10.1 (Job-Typen)
@@ -98,7 +98,7 @@ async def prompt_evolution_check(gateway: Any) -> None:
 
 
 class JobStore:
-    """Lädt und verwaltet CronJob-Definitionen aus einer YAML-Datei.
+    """Laedt und verwaltet CronJob-Definitionen aus einer YAML-Datei.
 
     Attributes:
         path: Pfad zur jobs.yaml Datei.
@@ -115,7 +115,7 @@ class JobStore:
         self.jobs: dict[str, CronJob] = {}
 
     def load(self) -> dict[str, CronJob]:
-        """Lädt Jobs aus der YAML-Datei.
+        """Laedt Jobs aus der YAML-Datei.
 
         Erstellt die Datei mit Default-Jobs falls sie nicht existiert.
 
@@ -158,7 +158,7 @@ class JobStore:
         return self.jobs
 
     def get_enabled(self) -> list[CronJob]:
-        """Gibt nur aktivierte Jobs zurück.
+        """Gibt nur aktivierte Jobs zurueck.
 
         Returns:
             Liste der aktivierten CronJobs.
@@ -166,10 +166,10 @@ class JobStore:
         return [job for job in self.jobs.values() if job.enabled]
 
     def add_job(self, job: CronJob) -> None:
-        """Fügt einen Job hinzu und speichert die Datei.
+        """Fuegt einen Job hinzu und speichert die Datei.
 
         Args:
-            job: Der hinzuzufügende CronJob.
+            job: Der hinzuzufuegende CronJob.
         """
         self.jobs[job.name] = job
         self._save()

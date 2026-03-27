@@ -139,8 +139,8 @@ def setup_logging(
 
     Args:
         level: Log-Level als String (DEBUG, INFO, WARNING, ERROR).
-        log_dir: Verzeichnis für JSONL-Log-Dateien. None = keine Datei-Logs.
-        json_logs: True = JSON-Output auch auf Konsole (für Produktion).
+        log_dir: Verzeichnis fuer JSONL-Log-Dateien. None = keine Datei-Logs.
+        json_logs: True = JSON-Output auch auf Konsole (fuer Produktion).
         console: True = Log-Ausgabe auf stderr.
     """
     # Determine the desired log level from the provided string. Fall back to

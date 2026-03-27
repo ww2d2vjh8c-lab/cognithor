@@ -1,9 +1,9 @@
-"""Web-Tools für Jarvis: Suche und URL-Fetch.
+"""Web-Tools fuer Jarvis: Suche und URL-Fetch.
 
-Ermöglicht dem Agenten Webrecherche und Seiteninhalt-Extraktion.
+Ermoeglicht dem Agenten Webrecherche und Seiteninhalt-Extraktion.
 
 Tools:
-  - web_search: Websuche über SearXNG, Brave oder DuckDuckGo (Multi-Backend)
+  - web_search: Websuche ueber SearXNG, Brave oder DuckDuckGo (Multi-Backend)
   - web_news_search: Nachrichtensuche via DuckDuckGo News
   - web_fetch: URL abrufen und Text extrahieren (via trafilatura)
   - search_and_read: Kombinierte Suche + Fetch
@@ -90,7 +90,7 @@ class WebError(Exception):
 class WebTools:
     """Web-Recherche und URL-Fetch-Tools. [B§5.3]
 
-    Unterstützt vier Such-Backends (Fallback-Kette):
+    Unterstuetzt vier Such-Backends (Fallback-Kette):
       1. SearXNG (self-hosted, bevorzugt)
       2. Brave Search API
       3. Google Custom Search Engine (100 Anfragen/Tag kostenlos)
@@ -222,7 +222,7 @@ class WebTools:
     def reload_config(self, config: JarvisConfig) -> None:
         """Aktualisiert WebTools-Parameter aus neuer Config (Live-Reload).
 
-        Wird vom Gateway aufgerufen wenn der User Einstellungen im UI ändert.
+        Wird vom Gateway aufgerufen wenn der User Einstellungen im UI aendert.
         API-Keys, Domain-Listen und Limits werden sofort aktualisiert.
         """
         self._config = config
@@ -275,7 +275,7 @@ class WebTools:
             Validierte URL.
 
         Raises:
-            WebError: Bei ungültiger oder blockierter URL.
+            WebError: Bei ungueltiger oder blockierter URL.
         """
         try:
             parsed = urlparse(url)
@@ -331,10 +331,10 @@ class WebTools:
         return url
 
     def _check_domain_allowed(self, hostname: str) -> None:
-        """Prüft ob eine Domain durch die Blocklist/Allowlist erlaubt ist.
+        """Prueft ob eine Domain durch die Blocklist/Allowlist erlaubt ist.
 
         Args:
-            hostname: Der zu prüfende Hostname.
+            hostname: Der zu pruefende Hostname.
 
         Raises:
             WebError: Wenn die Domain blockiert ist.
@@ -374,14 +374,14 @@ class WebTools:
         language: str = "de",
         timelimit: str = "",
     ) -> str:
-        """Führt eine Websuche durch.
+        """Fuehrt eine Websuche durch.
 
         Fallback-Kette: SearXNG → Brave → DuckDuckGo (Multi-Backend).
 
         Args:
             query: Suchanfrage.
-            num_results: Anzahl gewünschter Ergebnisse (1-10).
-            language: Sprache für Suchergebnisse.
+            num_results: Anzahl gewuenschter Ergebnisse (1-10).
+            language: Sprache fuer Suchergebnisse.
             timelimit: Zeitfilter ('d'=Tag, 'w'=Woche, 'm'=Monat, 'y'=Jahr, ''=alle).
 
         Returns:
@@ -446,7 +446,7 @@ class WebTools:
         num_results: int,
         language: str,
     ) -> str:
-        """Suche über SearXNG-Instanz."""
+        """Suche ueber SearXNG-Instanz."""
         url = f"{self._searxng_url}/search"
         params = {
             "q": query,
@@ -472,7 +472,7 @@ class WebTools:
         num_results: int,
         language: str,
     ) -> str:
-        """Suche über Brave Search API."""
+        """Suche ueber Brave Search API."""
         url = "https://api.search.brave.com/res/v1/web/search"
         # Set API key directly as header, never log it
         _token = self._brave_api_key or ""
@@ -514,7 +514,7 @@ class WebTools:
         num_results: int,
         language: str,
     ) -> str:
-        """Suche über Google Custom Search Engine API."""
+        """Suche ueber Google Custom Search Engine API."""
         url = "https://www.googleapis.com/customsearch/v1"
         params = {
             "key": self._google_cse_api_key,
@@ -561,9 +561,9 @@ class WebTools:
 
         Args:
             query: Suchanfrage.
-            num_results: Anzahl gewünschter Ergebnisse.
+            num_results: Anzahl gewuenschter Ergebnisse.
             language: Sprache (ISO-Code).
-            timelimit: Zeitfilter ('d', 'w', 'm', 'y', '' für alle).
+            timelimit: Zeitfilter ('d', 'w', 'm', 'y', '' fuer alle).
         """
         import anyio
 
@@ -623,7 +623,7 @@ class WebTools:
         """Synchrone DuckDuckGo-Suche mit Backend-Fallback-Kette.
 
         Probiert nacheinander: duckduckgo → bing → google → brave.
-        Bei RateLimit: 30s warten, dann nächstes Backend.
+        Bei RateLimit: 30s warten, dann naechstes Backend.
         """
         try:
             from ddgs import DDGS
@@ -703,7 +703,7 @@ class WebTools:
         language: str = "de",
         timelimit: str = "w",
     ) -> str:
-        """Sucht aktuelle Nachrichten über DuckDuckGo News.
+        """Sucht aktuelle Nachrichten ueber DuckDuckGo News.
 
         Args:
             query: Suchanfrage.
@@ -946,13 +946,13 @@ class WebTools:
         body: str | None = None,
         timeout_seconds: int = 30,
     ) -> str:
-        """Führt einen HTTP-Request aus (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS).
+        """Fuehrt einen HTTP-Request aus (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS).
 
         Args:
             url: Ziel-URL.
             method: HTTP-Methode.
             headers: Optionale HTTP-Headers.
-            body: Request-Body (für POST/PUT/PATCH).
+            body: Request-Body (fuer POST/PUT/PATCH).
             timeout_seconds: Timeout in Sekunden (1-120).
 
         Returns:
@@ -1024,10 +1024,10 @@ class WebTools:
         return f"HTTP {resp.status_code}\nContent-Type: {ct}\n\n{body_text}"
 
     async def _fetch_via_jina(self, url: str) -> str:
-        """Fetcht eine URL über den Jina AI Reader Service.
+        """Fetcht eine URL ueber den Jina AI Reader Service.
 
         Jina Reader extrahiert sauber formatierten Inhalt, besonders
-        gut für JS-heavy/SPA-Seiten wo trafilatura versagt.
+        gut fuer JS-heavy/SPA-Seiten wo trafilatura versagt.
 
         Args:
             url: Die abzurufende URL.
@@ -1067,13 +1067,13 @@ class WebTools:
     ) -> str:
         """Sucht im Web und liest die Top-Ergebnisse.
 
-        Kombiniert web_search + web_fetch für tiefere Recherche.
+        Kombiniert web_search + web_fetch fuer tiefere Recherche.
 
         Args:
             query: Suchanfrage.
             num_results: Anzahl der zu lesenden Seiten.
             language: Suchsprache.
-            cross_check: Wenn True, wird ein Quellenvergleich angehängt.
+            cross_check: Wenn True, wird ein Quellenvergleich angehaengt.
 
         Returns:
             Zusammengefasste Inhalte der Top-Ergebnisse.
@@ -1126,7 +1126,7 @@ def _extract_text_from_html(html: str, url: str = "") -> str:
 
     Args:
         html: HTML-Inhalt.
-        url: Original-URL (für trafilatura-Kontext).
+        url: Original-URL (fuer trafilatura-Kontext).
 
     Returns:
         Extrahierter Text.
@@ -1155,8 +1155,8 @@ def _extract_text_from_html(html: str, url: str = "") -> str:
 class _TextExtractor(HTMLParser):
     """Einfache HTML-Parser-Klasse zum Extrahieren von Text.
 
-    Ignoriert Inhalt von <script> und <style> und fügt für bestimmte
-    Block-Elemente Zeilenumbrüche ein.
+    Ignoriert Inhalt von <script> und <style> und fuegt fuer bestimmte
+    Block-Elemente Zeilenumbrueche ein.
     """
 
     _BLOCK_TAGS = {"br", "p", "div", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6"}
@@ -1263,15 +1263,15 @@ def _format_news_results(results: list[dict[str, Any]], query: str) -> str:
 
 
 def _truncate_text(text: str, max_chars: int, url: str = "") -> str:
-    """Kürzt Text auf maximale Zeichenanzahl.
+    """Kuerzt Text auf maximale Zeichenanzahl.
 
     Args:
-        text: Der zu kürzende Text.
+        text: Der zu kuerzende Text.
         max_chars: Maximale Zeichenanzahl.
-        url: Quell-URL für Hinweis.
+        url: Quell-URL fuer Hinweis.
 
     Returns:
-        Gekürzter Text mit Hinweis.
+        Gekuerzter Text mit Hinweis.
     """
     if len(text) <= max_chars:
         return text
@@ -1286,13 +1286,13 @@ def _truncate_text(text: str, max_chars: int, url: str = "") -> str:
 
 
 def _is_private_host(hostname: str) -> bool:
-    """Prüft ob ein Hostname auf eine private Adresse zeigt.
+    """Prueft ob ein Hostname auf eine private Adresse zeigt.
 
     Blockiert: 10.x.x.x, 172.16-31.x.x, 192.168.x.x, 127.x.x.x,
     fc00::/7, fe80::/10, ::1, ::, 0.0.0.0
 
     Args:
-        hostname: Der zu prüfende Hostname.
+        hostname: Der zu pruefende Hostname.
 
     Returns:
         True wenn privat.
@@ -1356,8 +1356,8 @@ def register_web_tools(
     Args:
         mcp_client: JarvisMCPClient-Instanz.
         config: JarvisConfig (optional).
-        searxng_url: SearXNG Base-URL (optional, überschreibt Config).
-        brave_api_key: Brave Search API Key (optional, überschreibt Config).
+        searxng_url: SearXNG Base-URL (optional, ueberschreibt Config).
+        brave_api_key: Brave Search API Key (optional, ueberschreibt Config).
 
     Returns:
         WebTools-Instanz.

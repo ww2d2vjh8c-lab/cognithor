@@ -96,7 +96,7 @@ class ProceduralMemory:
         return file_path
 
     def load_procedure(self, name: str) -> tuple[ProcedureMetadata, str] | None:
-        """Lädt eine Prozedur.
+        """Laedt eine Prozedur.
 
         Args:
             name: Prozedur-Name.
@@ -177,13 +177,13 @@ class ProceduralMemory:
     def find_by_query(
         self, query: str, max_results: int = 2
     ) -> list[tuple[ProcedureMetadata, str, float]]:
-        """Sucht Prozeduren passend zu einer natürlichen User-Query. [B§6.3]
+        """Sucht Prozeduren passend zu einer natuerlichen User-Query. [B§6.3]
 
-        Extrahiert automatisch Schlüsselwörter aus der Query und
-        durchsucht die Prozeduren. Für den Planner-Kontext.
+        Extrahiert automatisch Schluesselwoerter aus der Query und
+        durchsucht die Prozeduren. Fuer den Planner-Kontext.
 
         Args:
-            query: Natürliche Benutzer-Anfrage.
+            query: Natuerliche Benutzer-Anfrage.
             max_results: Maximale Anzahl Ergebnisse.
 
         Returns:
@@ -322,7 +322,7 @@ class ProceduralMemory:
         return meta
 
     def add_failure_pattern(self, name: str, pattern: str) -> bool:
-        """Fügt ein Fehler-Muster zu einer Prozedur hinzu."""
+        """Fuegt ein Fehler-Muster zu einer Prozedur hinzu."""
         result = self.load_procedure(name)
         if result is None:
             return False
@@ -334,7 +334,7 @@ class ProceduralMemory:
         return True
 
     def add_improvement(self, name: str, improvement: str) -> bool:
-        """Fügt eine Verbesserung zu einer Prozedur hinzu."""
+        """Fuegt eine Verbesserung zu einer Prozedur hinzu."""
         result = self.load_procedure(name)
         if result is None:
             return False
@@ -346,7 +346,7 @@ class ProceduralMemory:
         return True
 
     def delete_procedure(self, name: str) -> bool:
-        """Löscht eine Prozedur."""
+        """Loescht eine Prozedur."""
         safe_name = re.sub(r"[^\w\-]", "-", name.lower()).strip("-")
         file_path = self._dir / f"{safe_name}.md"
         if file_path.exists():
@@ -357,7 +357,7 @@ class ProceduralMemory:
     # ── Stats ────────────────────────────────────────────────────
 
     def stats(self) -> dict[str, Any]:
-        """Statistiken über Prozeduren."""
+        """Statistiken ueber Prozeduren."""
         procs = self.list_procedures()
         return {
             "total": len(procs),

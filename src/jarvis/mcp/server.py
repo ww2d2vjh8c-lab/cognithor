@@ -1,12 +1,12 @@
 """MCP-Server: Exponiert Jarvis als Standard-MCP-Server.
 
-Ermöglicht es externen MCP-Clients (Claude Desktop, Cursor, VS Code,
+Ermoeglicht es externen MCP-Clients (Claude Desktop, Cursor, VS Code,
 andere Agenten) sich mit Jarvis zu verbinden und dessen Tools, Resources
 und Prompts zu nutzen.
 
 OPTIONAL: Funktioniert nur wenn `mcp` SDK installiert ist UND
 server_mode in der Konfiguration aktiviert ist. Ohne MCP SDK
-läuft Jarvis normal mit Builtin-Handlers weiter.
+laeuft Jarvis normal mit Builtin-Handlers weiter.
 
 MCP-Spec 2025-11-25 Compliance:
   - Tools (list, call) mit Annotations
@@ -71,7 +71,7 @@ class ToolAnnotationKey(str, Enum):
 
 @dataclass
 class MCPToolDef:
-    """Vollständige MCP-Tool-Definition mit Annotations."""
+    """Vollstaendige MCP-Tool-Definition mit Annotations."""
 
     name: str
     description: str
@@ -117,7 +117,7 @@ class MCPResource:
 
 @dataclass
 class MCPResourceTemplate:
-    """MCP Resource Template für dynamische URIs."""
+    """MCP Resource Template fuer dynamische URIs."""
 
     uri_template: str  # z.B. "jarvis://memory/entity/{entity_id}"
     name: str
@@ -141,7 +141,7 @@ class MCPResourceTemplate:
 
 @dataclass
 class MCPPromptArgument:
-    """Argument für ein MCP-Prompt-Template."""
+    """Argument fuer ein MCP-Prompt-Template."""
 
     name: str
     description: str = ""
@@ -239,8 +239,8 @@ class MCPLogEntry:
 class JarvisMCPServer:
     """Exponiert Jarvis als Standard-MCP-Server.
 
-    Registrierung von Tools, Resources und Prompts über eine
-    einfache API. Kann über stdio oder HTTP gestartet werden.
+    Registrierung von Tools, Resources und Prompts ueber eine
+    einfache API. Kann ueber stdio oder HTTP gestartet werden.
 
     Nutzung:
         server = JarvisMCPServer(config)
@@ -481,13 +481,13 @@ class JarvisMCPServer:
         return {}
 
     async def notify_subscribers(self, uri: str) -> None:
-        """Benachrichtigt alle Subscriber einer Resource über Änderungen.
+        """Benachrichtigt alle Subscriber einer Resource ueber Aenderungen.
 
         Sendet eine notifications/resources/updated-Nachricht an alle
-        registrierten Callbacks für die gegebene URI.
+        registrierten Callbacks fuer die gegebene URI.
 
         Args:
-            uri: Die URI der geänderten Resource.
+            uri: Die URI der geaenderten Resource.
         """
         callbacks = self._subscribers.get(uri, [])
         for callback in callbacks:
@@ -556,7 +556,7 @@ class JarvisMCPServer:
             params: Parameter-Dict
 
         Returns:
-            Result-Dict für die JSON-RPC-Response
+            Result-Dict fuer die JSON-RPC-Response
         """
         params = params or {}
 
@@ -601,7 +601,7 @@ class JarvisMCPServer:
                 return {"error": {"code": -32603, "message": "Interner Server-Fehler"}}
 
     async def _handle_ping(self) -> dict[str, Any]:
-        """Ping-Handler für Health-Checks."""
+        """Ping-Handler fuer Health-Checks."""
         self._request_count += 1
         return {}
 
@@ -610,10 +610,10 @@ class JarvisMCPServer:
     async def process_jsonrpc_message(self, message: dict[str, Any]) -> dict[str, Any] | None:
         """Verarbeitet eine JSON-RPC-2.0-Nachricht.
 
-        Unterstützt Requests (mit id) und Notifications (ohne id).
+        Unterstuetzt Requests (mit id) und Notifications (ohne id).
 
         Returns:
-            JSON-RPC-Response-Dict oder None für Notifications.
+            JSON-RPC-Response-Dict oder None fuer Notifications.
         """
         jsonrpc = message.get("jsonrpc", "2.0")
         method = message.get("method", "")
@@ -691,7 +691,7 @@ class JarvisMCPServer:
         """Liest JSON-RPC-Nachrichten von stdin, schreibt auf stdout.
 
         Implementiert das MCP stdio-Protokoll:
-        - Liest Zeile für Zeile von stdin
+        - Liest Zeile fuer Zeile von stdin
         - Jede Zeile ist ein JSON-RPC-2.0-Message
         - Responses werden als JSON-Zeile auf stdout geschrieben
         """
@@ -784,13 +784,13 @@ class JarvisMCPServer:
     ) -> dict[str, Any] | list[dict[str, Any]]:
         """Verarbeitet einen HTTP-Request (Streamable HTTP Transport).
 
-        Unterstützt:
+        Unterstuetzt:
         - Einzelne JSON-RPC-Messages
         - Batch-Requests (Array von Messages)
 
         Args:
             body: JSON-RPC-Message oder Array von Messages
-            auth_token: Optional Bearer Token für Authentifizierung
+            auth_token: Optional Bearer Token fuer Authentifizierung
 
         Returns:
             JSON-RPC-Response oder Array von Responses
@@ -884,7 +884,7 @@ class JarvisMCPServer:
     # ── Stats ────────────────────────────────────────────────────
 
     def stats(self) -> dict[str, Any]:
-        """Gibt Statistiken des MCP-Servers zurück."""
+        """Gibt Statistiken des MCP-Servers zurueck."""
         uptime = time.time() - self._start_time if self._start_time else 0
         return {
             "mode": self._config.mode.value,

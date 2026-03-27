@@ -47,11 +47,11 @@ AgentRunner = Callable[
 class Orchestrator:
     """Multi-Agent Orchestrator. [B§7.1]
 
-    Verwaltet Sub-Agent-Spawning, parallele Ausführung und
+    Verwaltet Sub-Agent-Spawning, parallele Ausfuehrung und
     Ergebnis-Aggregation. Erzwingt Policy-Limits.
 
     Der Orchestrator kennt NICHT die LLM-Logik -- er delegiert
-    die eigentliche Ausführung an eine AgentRunner-Funktion
+    die eigentliche Ausfuehrung an eine AgentRunner-Funktion
     (typischerweise ein vereinfachter Gateway-Loop).
     """
 
@@ -65,9 +65,9 @@ class Orchestrator:
         """Initialisiert den Orchestrator.
 
         Args:
-            policy_engine: Policy-Engine für Permission-Checks.
-            audit_trail: Audit-Trail für Logging.
-            runner: Funktion die einen Sub-Agent ausführt.
+            policy_engine: Policy-Engine fuer Permission-Checks.
+            audit_trail: Audit-Trail fuer Logging.
+            runner: Funktion die einen Sub-Agent ausfuehrt.
         """
         self._policy = policy_engine or PolicyEngine()
         self._audit = audit_trail
@@ -91,8 +91,8 @@ class Orchestrator:
     ) -> AgentHandle | PolicyViolation:
         """Spawnt einen neuen Sub-Agent.
 
-        Prüft Policy-Limits (inkl. Depth), erstellt Handle und startet
-        die Ausführung (noch nicht parallel).
+        Prueft Policy-Limits (inkl. Depth), erstellt Handle und startet
+        die Ausfuehrung (noch nicht parallel).
 
         Args:
             config: Konfiguration des Sub-Agents.
@@ -171,7 +171,7 @@ class Orchestrator:
         agent_id: str,
         session_id: str,
     ) -> AgentResult:
-        """Führt einen gespawnten Agent aus.
+        """Fuehrt einen gespawnten Agent aus.
 
         Args:
             agent_id: ID des Agents.
@@ -258,7 +258,7 @@ class Orchestrator:
         agent_ids: list[str],
         session_id: str,
     ) -> dict[str, AgentResult]:
-        """Führt mehrere Agents parallel aus.
+        """Fuehrt mehrere Agents parallel aus.
 
         Args:
             agent_ids: Liste der Agent-IDs.
@@ -304,7 +304,7 @@ class Orchestrator:
         parent_type: AgentType = AgentType.PLANNER,
         depth: int = 0,
     ) -> AgentResult:
-        """Convenience: Spawnt und führt einen Agent in einem Schritt aus.
+        """Convenience: Spawnt und fuehrt einen Agent in einem Schritt aus.
 
         Args:
             config: Sub-Agent-Konfiguration.
@@ -337,7 +337,7 @@ class Orchestrator:
         parent_type: AgentType = AgentType.PLANNER,
         depth: int = 0,
     ) -> list[AgentResult]:
-        """Spawnt und führt mehrere Agents parallel aus.
+        """Spawnt und fuehrt mehrere Agents parallel aus.
 
         Args:
             configs: Liste von Sub-Agent-Konfigurationen.
@@ -390,19 +390,19 @@ class Orchestrator:
         return results
 
     def get_handle(self, agent_id: str) -> AgentHandle | None:
-        """Gibt den Handle eines Agents zurück."""
+        """Gibt den Handle eines Agents zurueck."""
         return self._agents.get(agent_id)
 
     def get_result(self, agent_id: str) -> AgentResult | None:
-        """Gibt das Ergebnis eines Agents zurück."""
+        """Gibt das Ergebnis eines Agents zurueck."""
         return self._results.get(agent_id)
 
     def get_all_handles(self) -> list[AgentHandle]:
-        """Gibt alle Agent-Handles zurück."""
+        """Gibt alle Agent-Handles zurueck."""
         return list(self._agents.values())
 
     def get_active_agents(self) -> list[AgentHandle]:
-        """Gibt alle laufenden Agents zurück."""
+        """Gibt alle laufenden Agents zurueck."""
         return [h for h in self._agents.values() if h.status in ("pending", "running")]
 
     def cleanup_session(self, session_id: str) -> int:

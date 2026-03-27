@@ -1,12 +1,12 @@
-"""Shell-Tool für Jarvis -- mit echter Sandbox-Isolation.
+"""Shell-Tool fuer Jarvis -- mit echter Sandbox-Isolation.
 
-Führt Shell-Befehle in einer isolierten Umgebung aus:
-  - bubblewrap (bwrap): Linux-Namespaces, stärkste Isolation
+Fuehrt Shell-Befehle in einer isolierten Umgebung aus:
+  - bubblewrap (bwrap): Linux-Namespaces, staerkste Isolation
   - firejail: Application Sandboxing, gute Isolation
   - bare: Fallback ohne Sandbox (nur Timeout + Output-Limit)
 
-Der Gatekeeper blockiert destruktive Befehle VOR der Ausführung.
-Die Sandbox isoliert die Ausführung zusätzlich auf OS-Level.
+Der Gatekeeper blockiert destruktive Befehle VOR der Ausfuehrung.
+Die Sandbox isoliert die Ausfuehrung zusaetzlich auf OS-Level.
 Zusammen bilden sie ein Defense-in-Depth-System.
 
 Bibel-Referenz: §5.3 (jarvis-shell Server), §4.3 (Sandbox)
@@ -74,7 +74,7 @@ class ShellError(Exception):
 
 
 class ShellTools:
-    """Shell-Befehlsausführung mit echter Sandbox-Isolation. [B§5.3]
+    """Shell-Befehlsausfuehrung mit echter Sandbox-Isolation. [B§5.3]
 
     Security-Architektur (Defense in Depth):
       Layer 1: Gatekeeper -- Regex-Blocklist + Policy-Regeln
@@ -85,7 +85,7 @@ class ShellTools:
     def __init__(self, config: JarvisConfig) -> None:
         """Initialisiert ShellTools mit Sandbox.
 
-        Erkennt automatisch das beste verfügbare Sandbox-Level.
+        Erkennt automatisch das beste verfuegbare Sandbox-Level.
         """
         self._config = config
 
@@ -210,7 +210,7 @@ class ShellTools:
         _sandbox_max_memory_mb: int | None = None,
         _sandbox_max_processes: int | None = None,
     ) -> str:
-        """Führt einen Shell-Befehl in der Sandbox aus.
+        """Fuehrt einen Shell-Befehl in der Sandbox aus.
 
         Args:
             command: Shell-Befehl als String.

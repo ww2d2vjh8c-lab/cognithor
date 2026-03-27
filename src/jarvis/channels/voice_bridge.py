@@ -1,7 +1,7 @@
 """Voice-WebSocket-Bridge: Audio-Streaming vom Browser zum Voice-Channel.
 
-Empfängt Audio-Chunks über WebSocket, transkribiert via Whisper
-und leitet den Text an den Gateway weiter. Ermöglicht Echtzeit-
+Empfaengt Audio-Chunks ueber WebSocket, transkribiert via Whisper
+und leitet den Text an den Gateway weiter. Ermoeglicht Echtzeit-
 Sprachsteuerung direkt aus dem WebChat-Widget.
 
 Protokoll (Client → Server):
@@ -40,7 +40,7 @@ log = get_logger(__name__)
 
 @dataclass
 class AudioAccumulator:
-    """Sammelt Base64-encoded Audio-Chunks und gibt WAV zurück."""
+    """Sammelt Base64-encoded Audio-Chunks und gibt WAV zurueck."""
 
     # Max 100 MB pro Session (schuetzt vor Memory Exhaustion)
     MAX_BYTES: int = 104_857_600
@@ -72,7 +72,7 @@ class AudioAccumulator:
 
     @property
     def duration_estimate_seconds(self) -> float:
-        """Grobe Schätzung der Dauer (für WebM ~12kB/s bei Opus)."""
+        """Grobe Schaetzung der Dauer (fuer WebM ~12kB/s bei Opus)."""
         if self.format == "webm":
             return self._total_bytes / 12_000
         # PCM 16-bit mono
@@ -83,7 +83,7 @@ class AudioAccumulator:
         return len(self.chunks) == 0
 
     def get_blob(self) -> bytes:
-        """Gibt alle Chunks als einen Blob zurück."""
+        """Gibt alle Chunks als einen Blob zurueck."""
         return b"".join(self.chunks)
 
 
@@ -93,13 +93,13 @@ class AudioAccumulator:
 
 
 class VoiceWebSocketBridge:
-    """Brücke zwischen WebSocket-Audio und dem Voice-Channel.
+    """Bruecke zwischen WebSocket-Audio und dem Voice-Channel.
 
     Verarbeitet Audio-Streams aus dem Browser:
     1. Sammelt Chunks in einem Accumulator
-    2. Konvertiert via ffmpeg zu WAV (wenn nötig)
+    2. Konvertiert via ffmpeg zu WAV (wenn noetig)
     3. Transkribiert via Whisper
-    4. Sendet Transkription zurück an den Client
+    4. Sendet Transkription zurueck an den Client
     """
 
     def __init__(
@@ -119,7 +119,7 @@ class VoiceWebSocketBridge:
         )
 
     async def initialize(self) -> bool:
-        """Lädt das Whisper-Modell. Gibt False zurück wenn nicht verfügbar."""
+        """Laedt das Whisper-Modell. Gibt False zurueck wenn nicht verfuegbar."""
         try:
             from faster_whisper import WhisperModel
 

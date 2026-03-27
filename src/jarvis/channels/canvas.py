@@ -47,7 +47,7 @@ class CanvasManager:
     """Verwaltet Canvas-Inhalte pro Session.
 
     Jede Session hat einen eigenen Canvas-Zustand mit History.
-    Änderungen werden über einen Broadcaster an verbundene Clients gesendet.
+    Aenderungen werden ueber einen Broadcaster an verbundene Clients gesendet.
     """
 
     def __init__(self, broadcaster: CanvasBroadcaster | None = None) -> None:
@@ -56,7 +56,7 @@ class CanvasManager:
         self._lock = asyncio.Lock()
 
     def _get_state(self, session_id: str) -> CanvasState:
-        """Gibt den Canvas-Zustand für eine Session zurück (erstellt bei Bedarf)."""
+        """Gibt den Canvas-Zustand fuer eine Session zurueck (erstellt bei Bedarf)."""
         if session_id not in self._sessions:
             self._sessions[session_id] = CanvasState()
         return self._sessions[session_id]
@@ -66,8 +66,8 @@ class CanvasManager:
 
         Args:
             session_id: Die Session-ID.
-            html: HTML/CSS/JS-Inhalt für das Canvas.
-            title: Optionaler Titel für das Canvas-Panel.
+            html: HTML/CSS/JS-Inhalt fuer das Canvas.
+            title: Optionaler Titel fuer das Canvas-Panel.
         """
         import time
 
@@ -137,7 +137,7 @@ class CanvasManager:
         logger.debug("Canvas reset: session=%s", session_id)
 
     async def snapshot(self, session_id: str) -> str:
-        """Gibt den aktuellen Canvas-Inhalt zurück.
+        """Gibt den aktuellen Canvas-Inhalt zurueck.
 
         Args:
             session_id: Die Session-ID.
@@ -150,7 +150,7 @@ class CanvasManager:
             return state.current_html
 
     async def eval_js(self, session_id: str, js: str) -> None:
-        """Führt JavaScript im Canvas-Client aus.
+        """Fuehrt JavaScript im Canvas-Client aus.
 
         Note: The client renders the canvas in an iframe with sandbox=""
         which blocks script execution. This method is kept for future use
@@ -158,7 +158,7 @@ class CanvasManager:
 
         Args:
             session_id: Die Session-ID.
-            js: JavaScript-Code zur Ausführung im Canvas-iframe.
+            js: JavaScript-Code zur Ausfuehrung im Canvas-iframe.
         """
         _MAX_JS_LEN = 50_000
         if len(js) > _MAX_JS_LEN:
@@ -181,7 +181,7 @@ class CanvasManager:
         logger.debug("Canvas eval: session=%s len=%d", session_id, len(js))
 
     async def undo(self, session_id: str) -> str | None:
-        """Macht die letzte Canvas-Änderung rückgängig.
+        """Macht die letzte Canvas-Aenderung rueckgaengig.
 
         Args:
             session_id: Die Session-ID.
@@ -223,13 +223,13 @@ class CanvasManager:
         return state.current_html
 
     async def redo(self, session_id: str) -> str | None:
-        """Stellt die letzte rückgängig gemachte Änderung wieder her.
+        """Stellt die letzte rueckgaengig gemachte Aenderung wieder her.
 
         Args:
             session_id: Die Session-ID.
 
         Returns:
-            Der wiederhergestellte HTML-Inhalt oder None wenn kein Redo verfügbar.
+            Der wiederhergestellte HTML-Inhalt oder None wenn kein Redo verfuegbar.
         """
         async with self._lock:
             state = self._get_state(session_id)
@@ -263,20 +263,20 @@ class CanvasManager:
         return state.current_html
 
     def get_title(self, session_id: str) -> str:
-        """Gibt den aktuellen Canvas-Titel zurück."""
+        """Gibt den aktuellen Canvas-Titel zurueck."""
         state = self._sessions.get(session_id)
         return state.current_title if state else ""
 
     def has_content(self, session_id: str) -> bool:
-        """Prüft ob das Canvas Inhalt hat."""
+        """Prueft ob das Canvas Inhalt hat."""
         state = self._sessions.get(session_id)
         return bool(state and state.current_html)
 
     def history_count(self, session_id: str) -> int:
-        """Gibt die Anzahl der History-Einträge zurück."""
+        """Gibt die Anzahl der History-Eintraege zurueck."""
         state = self._sessions.get(session_id)
         return len(state.history) if state else 0
 
     def cleanup_session(self, session_id: str) -> None:
-        """Räumt den Canvas-Zustand einer Session auf."""
+        """Raeumt den Canvas-Zustand einer Session auf."""
         self._sessions.pop(session_id, None)

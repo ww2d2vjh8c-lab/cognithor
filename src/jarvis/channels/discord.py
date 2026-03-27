@@ -1,7 +1,7 @@
-"""Discord-Channel: Bidirektionale Kommunikation über Discord.
+"""Discord-Channel: Bidirektionale Kommunikation ueber Discord.
 
-Nutzt discord.py Gateway (WebSocket) für eingehende Nachrichten und
-die REST-API für ausgehende. Unterstützt:
+Nutzt discord.py Gateway (WebSocket) fuer eingehende Nachrichten und
+die REST-API fuer ausgehende. Unterstuetzt:
   - Eingehende Nachrichten (on_message Event)
   - App-Mentions (@Jarvis)
   - Ausgehende Nachrichten
@@ -12,7 +12,7 @@ Konfiguration:
   - JARVIS_DISCORD_TOKEN: Bot-Token
   - JARVIS_DISCORD_CHANNEL_ID: Standard-Kanal-ID
 
-Abhängigkeiten:
+Abhaengigkeiten:
   pip install discord.py
 
 Bibliothek-Referenz: §9.2 (Channel-Interface)
@@ -71,10 +71,10 @@ def _split_discord_message(text: str, limit: int = _DISCORD_MAX_LENGTH) -> list[
 
 
 class DiscordChannel(Channel):
-    """Bidirektionale Discord-Integration für Jarvis.
+    """Bidirektionale Discord-Integration fuer Jarvis.
 
-    Empfängt Nachrichten via Gateway WebSocket, sendet via REST-API,
-    und unterstützt interaktive Approvals über Reactions (✅/❌).
+    Empfaengt Nachrichten via Gateway WebSocket, sendet via REST-API,
+    und unterstuetzt interaktive Approvals ueber Reactions (✅/❌).
     """
 
     def __init__(
@@ -102,7 +102,7 @@ class DiscordChannel(Channel):
 
     @property
     def token(self) -> str:
-        """Bot-Token (entschlüsselt bei Zugriff)."""
+        """Bot-Token (entschluesselt bei Zugriff)."""
         return self._token_store.retrieve("discord_bot_token")
 
     @property
@@ -333,7 +333,7 @@ class DiscordChannel(Channel):
         card: AdaptiveCard,
         channel_id: int = 0,
     ) -> None:
-        """Sendet eine plattform-übergreifende AdaptiveCard als Discord Embed."""
+        """Sendet eine plattform-uebergreifende AdaptiveCard als Discord Embed."""
         client = self._client
         if not client or not self._running:
             return
@@ -429,7 +429,7 @@ class DiscordChannel(Channel):
             return False
 
     async def send_streaming_token(self, session_id: str, token: str) -> None:
-        """Buffert Streaming-Tokens und sendet gebündelt."""
+        """Buffert Streaming-Tokens und sendet gebuendelt."""
         async with self._stream_lock:
             buf = self._stream_buffers.setdefault(session_id, [])
             buf.append(token)

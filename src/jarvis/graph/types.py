@@ -378,9 +378,9 @@ class ExecutionRecord:
 
 
 class GraphDefinition:
-    """Container für Nodes und Edges mit Validierung.
+    """Container fuer Nodes und Edges mit Validierung.
 
-    Wird vom GraphBuilder erzeugt und vom GraphEngine ausgeführt.
+    Wird vom GraphBuilder erzeugt und vom GraphEngine ausgefuehrt.
     """
 
     def __init__(self, name: str = "", description: str = "") -> None:

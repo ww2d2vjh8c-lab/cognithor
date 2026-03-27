@@ -1,23 +1,23 @@
 """Knowledge Ingest Pipeline: Automatic ingestion of documents into RAG.
 
-Überwacht ein Ingest-Verzeichnis (~/.jarvis/ingest/) und verarbeitet
+Ueberwacht ein Ingest-Verzeichnis (~/.jarvis/ingest/) und verarbeitet
 neue Dateien automatisch:
 
-  1. Datei erkannt (neue/geänderte Datei im Watch-Verzeichnis)
+  1. Datei erkannt (neue/geaenderte Datei im Watch-Verzeichnis)
   2. Text extrahiert (PDF, DOCX, HTML, Markdown, TXT, CSV, JSON)
   3. In Chunks aufgeteilt (Token-basiert mit Overlap)
   4. In Memory-Index gespeichert (FTS5 + optional Embeddings)
   5. Datei in „processed" verschoben
 
-Unterstützte Formate:
+Unterstuetzte Formate:
   - .md, .txt, .csv, .json, .xml → Direkt lesen
   - .html → HTML-Tags strippen
   - .pdf → PyMuPDF/pdfplumber (via MediaPipeline)
   - .docx → python-docx (via MediaPipeline)
 
 Integration:
-  - Nutzt bestehenden MemoryManager.index_text() für Chunking + DB
-  - Nutzt MediaPipeline.extract_text() für PDF/DOCX
+  - Nutzt bestehenden MemoryManager.index_text() fuer Chunking + DB
+  - Nutzt MediaPipeline.extract_text() fuer PDF/DOCX
   - Optionale Embedding-Generierung via MemoryManager.index_with_embeddings()
 
 Bibel-Referenz: §7.1 (Knowledge Base), §4.3 (Memory Ingest)
@@ -114,8 +114,8 @@ class IngestResult:
 class TextExtractor:
     """Extrahiert Text aus verschiedenen Dateiformaten.
 
-    Nutzt die MediaPipeline für PDF/DOCX wenn verfügbar,
-    sonst direkte Extraktion für einfache Formate.
+    Nutzt die MediaPipeline fuer PDF/DOCX wenn verfuegbar,
+    sonst direkte Extraktion fuer einfache Formate.
     """
 
     def __init__(self) -> None:
@@ -141,7 +141,7 @@ class TextExtractor:
             Extrahierter Text.
 
         Raises:
-            ValueError: Wenn Format nicht unterstützt.
+            ValueError: Wenn Format nicht unterstuetzt.
             IOError: Wenn Datei nicht lesbar.
         """
         suffix = file_path.suffix.lower()
@@ -230,7 +230,7 @@ class TextExtractor:
 
 
 class IngestPipeline:
-    """Verarbeitet Dateien und fügt sie der Knowledge Base hinzu.
+    """Verarbeitet Dateien und fuegt sie der Knowledge Base hinzu.
 
     Usage:
         pipeline = IngestPipeline(config, memory_manager)
@@ -265,7 +265,7 @@ class IngestPipeline:
         self._load_processed_hashes()
 
     def _load_processed_hashes(self) -> None:
-        """Lädt Hashes bereits verarbeiteter Dateien."""
+        """Laedt Hashes bereits verarbeiteter Dateien."""
         for f in self._config.processed_dir.iterdir():
             if f.is_file():
                 self._processed_hashes.add(f.stem.split("_", 1)[0])
@@ -288,7 +288,7 @@ class IngestPipeline:
     async def ingest_file(self, file_path: Path) -> IngestResult:
         """Verarbeitet eine einzelne Datei.
 
-        1. Validierung (Größe, Format)
+        1. Validierung (Groesse, Format)
         2. Text-Extraktion
         3. Memory-Indexierung
         4. Verschieben nach processed/
@@ -472,9 +472,9 @@ class IngestPipeline:
     # ========================================================================
 
     async def watch(self) -> None:
-        """Überwacht das Ingest-Verzeichnis kontinuierlich.
+        """Ueberwacht das Ingest-Verzeichnis kontinuierlich.
 
-        Pollt in regelmäßigen Abständen. Kann mit stop() beendet werden.
+        Pollt in regelmaessigen Abstaenden. Kann mit stop() beendet werden.
         """
         self._running = True
         interval = self._config.poll_interval_seconds

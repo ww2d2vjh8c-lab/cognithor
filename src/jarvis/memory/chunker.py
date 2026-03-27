@@ -1,8 +1,8 @@
 """Sliding-window chunker with Markdown awareness. [B§4.8]
 
-Teilt Markdown-Dateien in überlappende Chunks auf.
+Teilt Markdown-Dateien in ueberlappende Chunks auf.
 Never breaks in the middle of a line.
-Bevorzugt Markdown-Überschriften am Chunk-Anfang.
+Bevorzugt Markdown-Ueberschriften am Chunk-Anfang.
 """
 
 from __future__ import annotations
@@ -40,19 +40,19 @@ _DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 
 
 def _estimate_tokens(text: str) -> int:
-    """Sprachbewusste Token-Schätzung.
+    """Sprachbewusste Token-Schaetzung.
 
     Kombiniert zwei Heuristiken:
       1. Wort-basiert: Jedes Wort ≈ 1.3 Tokens (BPE-Durchschnitt)
-      2. Komposita-Korrektur: Lange Wörter (≥16 Zeichen) werden
+      2. Komposita-Korrektur: Lange Woerter (≥16 Zeichen) werden
          typischerweise in 3-6 Tokens zerlegt statt 1-2
 
-    Genauer als chars/4, besonders für deutsche Texte mit
-    Komposita wie "Berufsunfähigkeitsversicherung" (≈8 Tokens)
+    Genauer als chars/4, besonders fuer deutsche Texte mit
+    Komposita wie "Berufsunfaehigkeitsversicherung" (≈8 Tokens)
     oder "Haftpflichtversicherungsgesellschaft" (≈7 Tokens).
 
     Returns:
-        Geschätzte Anzahl Tokens (Minimum 1).
+        Geschaetzte Anzahl Tokens (Minimum 1).
     """
     if not text:
         return 1
@@ -79,7 +79,7 @@ def _estimate_tokens(text: str) -> int:
 
 
 def _content_hash(text: str) -> str:
-    """SHA-256 Hash für Embedding-Cache."""
+    """SHA-256 Hash fuer Embedding-Cache."""
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
@@ -95,7 +95,7 @@ def _extract_date_from_path(path: str) -> datetime | None:
 
 
 def _find_header_positions(lines: list[str]) -> set[int]:
-    """Findet Zeilen-Indizes die Markdown-Überschriften sind."""
+    """Findet Zeilen-Indizes die Markdown-Ueberschriften sind."""
     return {i for i, line in enumerate(lines) if _HEADER_RE.match(line)}
 
 
@@ -121,13 +121,13 @@ def chunk_text(
     chunk_overlap_tokens: int = 80,
     tier: MemoryTier | None = None,
 ) -> list[Chunk]:
-    """Teilt Text in überlappende Chunks auf.
+    """Teilt Text in ueberlappende Chunks auf.
 
     Args:
         text: The text to split.
         source_path: Source file path.
-        chunk_size_tokens: Maximale Chunk-Größe in Tokens.
-        chunk_overlap_tokens: Überlappung zwischen Chunks in Tokens.
+        chunk_size_tokens: Maximale Chunk-Groesse in Tokens.
+        chunk_overlap_tokens: Ueberlappung zwischen Chunks in Tokens.
         tier: Explicit memory tier (otherwise derived from path).
 
     Returns:

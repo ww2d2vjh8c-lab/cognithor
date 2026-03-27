@@ -1,7 +1,7 @@
-"""Twitch-Channel: Bidirektionale Kommunikation über Twitch Chat (IRC/TMI).
+"""Twitch-Channel: Bidirektionale Kommunikation ueber Twitch Chat (IRC/TMI).
 
 Nutzt Twitch IRC (TMI) + optional Helix API via httpx.
-Unterstützt:
+Unterstuetzt:
   - Chat-Commands (!jarvis)
   - Whispers (Private Nachrichten)
   - Subscriber-Only Mode
@@ -12,7 +12,7 @@ Konfiguration:
   - JARVIS_TWITCH_CHANNEL: Channel-Name (ohne #)
   - JARVIS_TWITCH_ALLOWED_USERS: Erlaubte User
 
-Abhängigkeiten:
+Abhaengigkeiten:
   Optional: twitchio>=2.0 (Fallback: Raw IRC via TMI)
 """
 
@@ -35,10 +35,10 @@ _MIN_MSG_INTERVAL = 1.5  # Twitch Rate Limit
 
 
 class TwitchChannel(Channel):
-    """Twitch Chat Integration für Jarvis.
+    """Twitch Chat Integration fuer Jarvis.
 
     Verbindet sich zu Twitch IRC (TMI), liest Chat-Nachrichten
-    und antwortet. Unterstützt User-Whitelist für Sicherheit.
+    und antwortet. Unterstuetzt User-Whitelist fuer Sicherheit.
     """
 
     def __init__(
@@ -117,7 +117,7 @@ class TwitchChannel(Channel):
             logger.error("Twitch Senden fehlgeschlagen: %s", exc)
 
     async def _receive_loop(self) -> None:
-        """Empfängt und verarbeitet Twitch IRC-Nachrichten."""
+        """Empfaengt und verarbeitet Twitch IRC-Nachrichten."""
         if not self._reader:
             return
 

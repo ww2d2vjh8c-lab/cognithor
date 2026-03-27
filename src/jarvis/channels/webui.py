@@ -1,16 +1,16 @@
 """Web UI Channel: Browser-Interface mit WebSocket-Streaming.
 
-Erweitert den API-Channel um WebSocket-Support für Echtzeit-
-Kommunikation. Dient die Web-Oberfläche (React/Svelte) aus
+Erweitert den API-Channel um WebSocket-Support fuer Echtzeit-
+Kommunikation. Dient die Web-Oberflaeche (React/Svelte) aus
 und bietet Live-Streaming der Agent-Antworten.
 
 Features:
-  - WebSocket für bidirektionale Echtzeit-Kommunikation
-  - SSE-Fallback für ältere Clients
-  - Streaming-Tokens für flüssige Ausgabe
+  - WebSocket fuer bidirektionale Echtzeit-Kommunikation
+  - SSE-Fallback fuer aeltere Clients
+  - Streaming-Tokens fuer fluessige Ausgabe
   - Tool-Execution-Events (User sieht was passiert)
   - Inline-Approvals via WebSocket
-  - Static-File-Serving für Frontend
+  - Static-File-Serving fuer Frontend
 
 Bibel-Referenz: §9.3 (Web UI Channel)
 """
@@ -85,7 +85,7 @@ class WSMessageType:
 class WebUIChannel(Channel):
     """Web UI Channel mit WebSocket-Support. [B§9.3]
 
-    Erweitert die API um WebSocket-Verbindungen für Echtzeit-
+    Erweitert die API um WebSocket-Verbindungen fuer Echtzeit-
     Streaming und interaktive Tool-Visualisierung.
     """
 
@@ -147,7 +147,7 @@ class WebUIChannel(Channel):
 
     @property
     def _api_token(self) -> str | None:
-        """API-Token (entschlüsselt bei Zugriff)."""
+        """API-Token (entschluesselt bei Zugriff)."""
         if self._has_api_token:
             return self._token_store.retrieve("webui_channel_token")
         return None
@@ -173,7 +173,7 @@ class WebUIChannel(Channel):
         log.info("webui_channel_starting", host=self._host, port=self._port)
 
     async def stop(self) -> None:
-        """Stoppt den WebUI-Server und schließt WebSocket-Verbindungen."""
+        """Stoppt den WebUI-Server und schliesst WebSocket-Verbindungen."""
         # Close all WebSocket connections
         for ws in list(self._connections.values()):
             with contextlib.suppress(Exception):
@@ -188,7 +188,7 @@ class WebUIChannel(Channel):
         log.info("webui_channel_stopped")
 
     async def send(self, message: OutgoingMessage) -> None:
-        """Sendet Nachricht über WebSocket an den Client."""
+        """Sendet Nachricht ueber WebSocket an den Client."""
         ws = self._connections.get(message.session_id)
         if ws:
             await self._ws_send(
@@ -207,7 +207,7 @@ class WebUIChannel(Channel):
         action: PlannedAction,
         reason: str,
     ) -> bool:
-        """Sendet Approval-Anfrage über WebSocket."""
+        """Sendet Approval-Anfrage ueber WebSocket."""
         ws = self._connections.get(session_id)
         if not ws:
             log.warning("no_ws_connection_for_approval", session_id=session_id)
@@ -237,7 +237,7 @@ class WebUIChannel(Channel):
             self._pending_approvals.pop(request_id, None)
 
     async def send_streaming_token(self, session_id: str, token: str) -> None:
-        """Sendet einzelnes Streaming-Token über WebSocket."""
+        """Sendet einzelnes Streaming-Token ueber WebSocket."""
         ws = self._connections.get(session_id)
         if ws:
             await self._ws_send(
@@ -250,7 +250,7 @@ class WebUIChannel(Channel):
             )
 
     async def send_status(self, session_id: str, status: StatusType, text: str) -> None:
-        """Sendet Status-Update über WebSocket."""
+        """Sendet Status-Update ueber WebSocket."""
         ws = self._connections.get(session_id)
         if ws:
             await self._ws_send(
@@ -554,7 +554,7 @@ class WebUIChannel(Channel):
     ) -> None:
         """Verarbeitet eine eingehende WebSocket-Nachricht.
 
-        Unterstützt:
+        Unterstuetzt:
           - Text-Nachrichten
           - Sprachnachrichten (audio_base64 in metadata → Whisper-Transkription)
           - Datei-Uploads (file_base64 in metadata → Media-Pipeline)
@@ -711,8 +711,8 @@ class WebUIChannel(Channel):
     ) -> str | None:
         """Voice-Bridge: Transkribiert Base64-Audio via Whisper.
 
-        Empfängt Audio vom WebChat-Widget (Browser MediaRecorder),
-        speichert temporär und transkribiert lokal.
+        Empfaengt Audio vom WebChat-Widget (Browser MediaRecorder),
+        speichert temporaer und transkribiert lokal.
 
         Returns:
             Transkribierter Text oder None bei Fehler.
@@ -859,10 +859,10 @@ class WebUIChannel(Channel):
     ) -> str | None:
         """Verarbeitet einen Datei-Upload vom WebChat-Widget.
 
-        Speichert die Datei und extrahiert Text wenn möglich.
+        Speichert die Datei und extrahiert Text wenn moeglich.
 
         Returns:
-            Aufbereiteter Text für den Handler oder None.
+            Aufbereiteter Text fuer den Handler oder None.
         """
         import base64
         from pathlib import Path
@@ -942,7 +942,7 @@ class WebUIChannel(Channel):
             return None
 
     async def _ws_send(self, ws: Any, data: dict[str, Any]) -> None:
-        """Sendet JSON über WebSocket (mit Fehlerbehandlung)."""
+        """Sendet JSON ueber WebSocket (mit Fehlerbehandlung)."""
         try:
             await ws.send_text(json.dumps(data, ensure_ascii=False))
         except Exception as exc:
@@ -967,12 +967,12 @@ class WebUIChannel(Channel):
 
 
 def create_app() -> Any:
-    """ASGI-Factory für Standalone-Deployment.
+    """ASGI-Factory fuer Standalone-Deployment.
 
     Wird von ``uvicorn jarvis.channels.webui:create_app --factory`` aufgerufen
     (docker-compose.yml, jarvis-webui.service).
 
-    Konfiguration ausschließlich über Umgebungsvariablen:
+    Konfiguration ausschliesslich ueber Umgebungsvariablen:
       JARVIS_WEBUI_HOST          (default "127.0.0.1"; "0.0.0.0" fuer Docker)
       JARVIS_WEBUI_PORT          (default "8080", nur informativ)
       JARVIS_API_TOKEN           (optional, Bearer-Auth)
@@ -980,7 +980,7 @@ def create_app() -> Any:
       JARVIS_SSL_CERTFILE        (optional, PEM-Pfad)
       JARVIS_SSL_KEYFILE         (optional, PEM-Pfad)
 
-    Ohne Gateway gibt POST /api/v1/message → 503 zurück (korrekt).
+    Ohne Gateway gibt POST /api/v1/message → 503 zurueck (korrekt).
     """
     host = os.environ.get("JARVIS_WEBUI_HOST", "127.0.0.1")
     api_token = os.environ.get("JARVIS_API_TOKEN") or None

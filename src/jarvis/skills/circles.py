@@ -1,20 +1,20 @@
 """Trusted Circles: Web-of-Trust-based skill ecosystem.
 
-Löst das Ecosystem-Problem: P2P-Skills sind sicher, aber ohne
+Loest das Ecosystem-Problem: P2P-Skills sind sicher, aber ohne
 kritische Masse nutzlos. Trusted Circles schaffen kleine,
-vertrauenswürdige Peer-Gruppen (ähnlich PGP Web-of-Trust):
+vertrauenswuerdige Peer-Gruppen (aehnlich PGP Web-of-Trust):
 
   - Kreise: Geschlossene Gruppen mit gegenseitigem Vertrauen
   - Kuratierte Sammlungen: Review-basierte Skill-Empfehlungen
-  - Reputation-Boost: Circle-Mitgliedschaft erhöht Trust
+  - Reputation-Boost: Circle-Mitgliedschaft erhoeht Trust
   - Import-Filter: Nur Skills aus vertrauten Kreisen
 
 Architektur:
   TrustedCircle → Peer-Gruppe mit Invite-System
-  CuratedCollection → Geprüfte Skill-Sammlung
+  CuratedCollection → Gepruefte Skill-Sammlung
   CircleManager → Verwaltung + Integration mit SkillExchange
 
-Bibel-Referenz: §13 (P2P-Ökosystem -- Circle-Erweiterung)
+Bibel-Referenz: §13 (P2P-Oekosystem -- Circle-Erweiterung)
 """
 
 from __future__ import annotations
@@ -153,13 +153,13 @@ class CuratedSkill:
 
 @dataclass
 class TrustedCircle:
-    """Ein vertrauenswürdiger Kreis von Peers.
+    """Ein vertrauenswuerdiger Kreis von Peers.
 
     Funktioniert wie ein PGP Web-of-Trust:
     - Geschlossene Gruppe mit Einladungssystem
     - Mitglieder vertrauen einander automatisch
     - Geteilte Skills erhalten Reputation-Boost
-    - Circle-Name wird als Namespace für Skills verwendet
+    - Circle-Name wird als Namespace fuer Skills verwendet
     """
 
     circle_id: str
@@ -399,7 +399,7 @@ class TrustedCircle:
 class CuratedCollection:
     """Eine thematische Sammlung kuratierter Skills.
 
-    Kann über Circle-Grenzen hinweg geteilt werden.
+    Kann ueber Circle-Grenzen hinweg geteilt werden.
     Beispiele: "Versicherungs-Tools", "Developer-Utilities",
                "Familien-Helfer"
     """
@@ -438,9 +438,9 @@ class CuratedCollection:
 class CircleManager:
     """Manage Trusted Circles and integrate them with the ecosystem.
 
-    Verantwortlich für:
+    Verantwortlich fuer:
     - Circle CRUD
-    - Reputation-Boost für Circle-Mitglieder
+    - Reputation-Boost fuer Circle-Mitglieder
     - Import-Filter (nur Skills aus vertrauten Kreisen)
     - Kuratierte Sammlungen
     - Discovery (welche Circles gibt es?)
@@ -489,7 +489,7 @@ class CircleManager:
         return self._circles.get(circle_id)
 
     def delete_circle(self, circle_id: str, by_peer: str = "") -> bool:
-        """Löscht einen Circle (nur Owner)."""
+        """Loescht einen Circle (nur Owner)."""
         circle = self._circles.get(circle_id)
         if not circle:
             return False
@@ -604,10 +604,10 @@ class CircleManager:
             package_ids: Liste von Paket-IDs.
             publisher_map: Mapping package_id → publisher_id.
             requester_id: Eigene Peer-ID.
-            min_score: Mindest-Score für Ergebnisse.
+            min_score: Mindest-Score fuer Ergebnisse.
 
         Returns:
-            Sortierte Liste von (package_id, score), höchster Score zuerst.
+            Sortierte Liste von (package_id, score), hoechster Score zuerst.
         """
         scored = []
         for pkg_id in package_ids:

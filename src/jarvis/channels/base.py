@@ -69,21 +69,21 @@ class Channel(ABC):
         action: PlannedAction,
         reason: str,
     ) -> bool:
-        """Fragt den User um Erlaubnis für eine ORANGE-Aktion.
+        """Fragt den User um Erlaubnis fuer eine ORANGE-Aktion.
 
         Args:
             session_id: Aktive Session-ID
-            action: Die Aktion die bestätigt werden soll
-            reason: Warum Bestätigung nötig ist
+            action: Die Aktion die bestaetigt werden soll
+            reason: Warum Bestaetigung noetig ist
 
         Returns:
-            True wenn User bestätigt, False wenn abgelehnt.
+            True wenn User bestaetigt, False wenn abgelehnt.
         """
         ...
 
     @abstractmethod
     async def send_streaming_token(self, session_id: str, token: str) -> None:
-        """Sendet ein einzelnes Token (für Streaming-Ausgabe).
+        """Sendet ein einzelnes Token (fuer Streaming-Ausgabe).
 
         Args:
             session_id: Aktive Session-ID
@@ -94,7 +94,7 @@ class Channel(ABC):
     async def send_status(self, session_id: str, status: StatusType, text: str) -> None:
         """Sendet eine Status-Meldung an den User (z.B. 'Denke nach...').
 
-        Default: no-op. Channels können dies überschreiben.
+        Default: no-op. Channels koennen dies ueberschreiben.
 
         Args:
             session_id: Aktive Session-ID

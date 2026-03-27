@@ -1,11 +1,11 @@
-"""Live-Monitoring: Echtzeit-Überwachung des Jarvis-Systems.
+"""Live-Monitoring: Echtzeit-Ueberwachung des Jarvis-Systems.
 
 Stellt bereit:
-  - EventBus: Publish/Subscribe für System-Events
+  - EventBus: Publish/Subscribe fuer System-Events
   - MetricCollector: Zeitreihen-basierte Metriken (CPU, RAM, Tokens, Latenz)
   - AuditTrailViewer: Durchsuchbarer Audit-Log mit Retention
-  - HeartbeatMonitor: Status-Historie der Heartbeat-Ausführungen
-  - SSE-Stream: Server-Sent-Events für Live-Dashboard
+  - HeartbeatMonitor: Status-Historie der Heartbeat-Ausfuehrungen
+  - SSE-Stream: Server-Sent-Events fuer Live-Dashboard
 
 Bibel-Referenz: §15 (Monitoring & Observability)
 """
@@ -106,10 +106,10 @@ EventHandler = Callable[[SystemEvent], None]
 
 
 class EventBus:
-    """Publish/Subscribe Event-Bus für System-Events.
+    """Publish/Subscribe Event-Bus fuer System-Events.
 
-    Ermöglicht Echtzeit-Benachrichtigungen für das Monitoring-Dashboard.
-    Unterstützt synchrone und asynchrone Handler.
+    Ermoeglicht Echtzeit-Benachrichtigungen fuer das Monitoring-Dashboard.
+    Unterstuetzt synchrone und asynchrone Handler.
     """
 
     def __init__(self, max_history: int = 1000) -> None:
@@ -183,7 +183,7 @@ class EventBus:
             self._sse_queues.remove(q)
 
     def create_sse_stream(self) -> asyncio.Queue[SystemEvent]:
-        """Erstellt eine SSE-Queue für Live-Streaming."""
+        """Erstellt eine SSE-Queue fuer Live-Streaming."""
         queue: asyncio.Queue[SystemEvent] = asyncio.Queue(maxsize=100)
         self._sse_queues.append(queue)
         return queue
@@ -199,7 +199,7 @@ class EventBus:
         event_type: EventType | None = None,
         severity: str = "",
     ) -> list[SystemEvent]:
-        """Gibt die letzten Events zurück, optional gefiltert."""
+        """Gibt die letzten Events zurueck, optional gefiltert."""
         events = list(self._history)
         if event_type:
             events = [e for e in events if e.event_type == event_type]
@@ -232,9 +232,9 @@ class MetricPoint:
 
 
 class MetricCollector:
-    """Sammelt Zeitreihen-Metriken für das Dashboard.
+    """Sammelt Zeitreihen-Metriken fuer das Dashboard.
 
-    Unterstützt:
+    Unterstuetzt:
       - Gauge (aktueller Wert, z.B. RAM-Nutzung)
       - Counter (kumulative Werte, z.B. Nachrichten)
       - Histogram (Verteilung, z.B. Latenz)
@@ -269,7 +269,7 @@ class MetricCollector:
         return self._counters.get(name, 0.0)
 
     def get_history(self, name: str, last_n: int = 60) -> list[dict[str, Any]]:
-        """Gibt Zeitreihe einer Metrik zurück."""
+        """Gibt Zeitreihe einer Metrik zurueck."""
         points = list(self._history.get(name, []))
         return [
             {"value": p.value, "timestamp": p.timestamp, "labels": p.labels}
@@ -321,7 +321,7 @@ class AuditEntry:
 class AuditTrailViewer:
     """Durchsuchbarer Audit-Trail mit Retention.
 
-    Speichert Security-relevante Aktionen und ermöglicht
+    Speichert Security-relevante Aktionen und ermoeglicht
     Suche nach Zeitraum, Aktor, Aktion und Schweregrad.
     """
 
@@ -384,7 +384,7 @@ class AuditTrailViewer:
         return len(self._entries)
 
     def severity_counts(self) -> dict[str, int]:
-        """Zählt Einträge pro Schweregrad."""
+        """Zaehlt Eintraege pro Schweregrad."""
         counts: dict[str, int] = {}
         for entry in self._entries:
             counts[entry.severity] = counts.get(entry.severity, 0) + 1
@@ -398,7 +398,7 @@ class AuditTrailViewer:
 
 @dataclass
 class HeartbeatRun:
-    """Ergebnis einer Heartbeat-Ausführung."""
+    """Ergebnis einer Heartbeat-Ausfuehrung."""
 
     run_id: int
     started_at: datetime
@@ -425,13 +425,13 @@ class HeartbeatRun:
 
 
 class HeartbeatMonitor:
-    """Überwacht Heartbeat-Ausführungen mit Historie.
+    """Ueberwacht Heartbeat-Ausfuehrungen mit Historie.
 
     Tracks:
       - Letzte N Heartbeat-Runs
       - Erfolgs-/Fehlerrate
       - Durchschnittliche Dauer
-      - Nächster geplanter Run
+      - Naechster geplanter Run
     """
 
     def __init__(self, max_history: int = 200) -> None:
@@ -518,7 +518,7 @@ class HeartbeatMonitor:
 class MonitoringHub:
     """Zentrale Monitoring-Instanz die alle Subsysteme verbindet.
 
-    Stellt eine einzige Anlaufstelle für das Dashboard bereit.
+    Stellt eine einzige Anlaufstelle fuer das Dashboard bereit.
     Wird einmal erstellt und system-weit genutzt.
     """
 
@@ -558,7 +558,7 @@ class MonitoringHub:
         return event
 
     def dashboard_snapshot(self) -> dict[str, Any]:
-        """Komplett-Snapshot für das Dashboard."""
+        """Komplett-Snapshot fuer das Dashboard."""
         return {
             "events": {
                 "total": self.events.event_count,

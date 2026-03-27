@@ -1,6 +1,6 @@
 """Konfigurations-Assistenten (Wizards).
 
-Schritt-für-Schritt-Assistenten für komplexe Konfigurationsthemen:
+Schritt-fuer-Schritt-Assistenten fuer komplexe Konfigurationsthemen:
   - HeartbeatWizard: Heartbeat-Aufgaben erstellen
   - BindingWizard: Routing-Regeln definieren
   - AgentWizard: Agenten-Profile konfigurieren
@@ -68,7 +68,7 @@ def _get_model_options() -> list[dict[str, str]]:
 
 
 def _get_model_for_role(role: str, fallback: str = "") -> str:
-    """Liefert den Modellnamen für eine Rolle basierend auf dem Backend."""
+    """Liefert den Modellnamen fuer eine Rolle basierend auf dem Backend."""
     backend, provider_defaults = _get_backend_info()
 
     if backend == "ollama":
@@ -86,7 +86,7 @@ def _get_model_for_role(role: str, fallback: str = "") -> str:
 
 
 class WizardStepType(Enum):
-    """Eingabe-Typen für Wizard-Schritte."""
+    """Eingabe-Typen fuer Wizard-Schritte."""
 
     TEXT = "text"
     NUMBER = "number"
@@ -115,7 +115,7 @@ class WizardStep:
     depends_on: str = ""  # Step-ID von der dieser abhängt
 
     def validate(self, value: Any) -> tuple[bool, str]:
-        """Validiert die Eingabe für diesen Schritt."""
+        """Validiert die Eingabe fuer diesen Schritt."""
         if self.required and value is None:
             return False, f"'{self.title}' ist erforderlich"
 
@@ -156,7 +156,7 @@ class WizardStep:
 
 @dataclass
 class WizardTemplate:
-    """Vordefinierte Vorlage für einen Wizard."""
+    """Vordefinierte Vorlage fuer einen Wizard."""
 
     template_id: str
     name: str
@@ -186,7 +186,7 @@ class WizardResult:
 
 
 class BaseWizard:
-    """Basis-Klasse für alle Wizards."""
+    """Basis-Klasse fuer alle Wizards."""
 
     wizard_type: str = "base"
 
@@ -243,7 +243,7 @@ class BaseWizard:
         )
 
     def apply_template(self, template_id: str) -> dict[str, Any]:
-        """Wendet ein Template an und gibt vorausgefüllte Werte zurück."""
+        """Wendet ein Template an und gibt vorausgefuellte Werte zurueck."""
         template = self.get_template(template_id)
         if not template:
             return {}
@@ -272,7 +272,7 @@ class BaseWizard:
 
 
 class HeartbeatWizard(BaseWizard):
-    """Schritt-für-Schritt-Assistent für Heartbeat-Aufgaben."""
+    """Schritt-fuer-Schritt-Assistent fuer Heartbeat-Aufgaben."""
 
     wizard_type = "heartbeat"
 
@@ -409,7 +409,7 @@ class HeartbeatWizard(BaseWizard):
 
 
 class BindingWizard(BaseWizard):
-    """Schritt-für-Schritt-Assistent für Binding-Regeln."""
+    """Schritt-fuer-Schritt-Assistent fuer Binding-Regeln."""
 
     wizard_type = "binding"
 
@@ -551,7 +551,7 @@ class BindingWizard(BaseWizard):
 
 
 class AgentWizard(BaseWizard):
-    """Schritt-für-Schritt-Assistent für Agenten-Profile."""
+    """Schritt-fuer-Schritt-Assistent fuer Agenten-Profile."""
 
     wizard_type = "agent"
 
@@ -719,7 +719,7 @@ class AgentWizard(BaseWizard):
 
 
 class UserRole(Enum):
-    """Benutzerrollen für das Admin-Dashboard."""
+    """Benutzerrollen fuer das Admin-Dashboard."""
 
     OWNER = "owner"  # Voller Zugriff, kann alles
     ADMIN = "admin"  # Kann Konfiguration ändern
@@ -807,12 +807,12 @@ class DashboardUser:
     agent_scope: list[str] = field(default_factory=list)  # Leer = alle Agents
 
     def has_permission(self, resource: str, action: str) -> bool:
-        """Prüft ob der User eine Berechtigung hat."""
+        """Prueft ob der User eine Berechtigung hat."""
         perms = ROLE_PERMISSIONS.get(self.role, [])
         return any(p.resource == resource and p.action == action for p in perms)
 
     def can_access_agent(self, agent_id: str) -> bool:
-        """Prüft ob der User Zugriff auf einen bestimmten Agenten hat."""
+        """Prueft ob der User Zugriff auf einen bestimmten Agenten hat."""
         if self.role in (UserRole.OWNER, UserRole.ADMIN):
             return True  # Admins sehen alles
         if not self.agent_scope:
@@ -831,7 +831,7 @@ class DashboardUser:
 
 
 class RBACManager:
-    """Verwaltet Benutzer und Rollen für das Admin-Dashboard."""
+    """Verwaltet Benutzer und Rollen fuer das Admin-Dashboard."""
 
     def __init__(self) -> None:
         self._users: dict[str, DashboardUser] = {}
@@ -871,7 +871,7 @@ class RBACManager:
         return True
 
     def check_permission(self, user_id: str, resource: str, action: str) -> bool:
-        """Prüft ob ein User eine Berechtigung hat."""
+        """Prueft ob ein User eine Berechtigung hat."""
         user = self._users.get(user_id)
         if not user:
             return False
@@ -900,7 +900,7 @@ class RBACManager:
 
 
 class WizardRegistry:
-    """Zentrales Register aller verfügbaren Wizards."""
+    """Zentrales Register aller verfuegbaren Wizards."""
 
     def __init__(self) -> None:
         self._wizards: dict[str, BaseWizard] = {}

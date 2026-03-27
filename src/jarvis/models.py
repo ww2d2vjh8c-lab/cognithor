@@ -151,7 +151,7 @@ class IncomingMessage(BaseModel, frozen=True):
 
 
 class OutgoingMessage(BaseModel, frozen=True):
-    """Antwort die an den Channel zurückgeht. [B§9.1]"""
+    """Antwort die an den Channel zurueckgeht. [B§9.1]"""
 
     channel: str
     text: str
@@ -171,8 +171,8 @@ class OutgoingMessage(BaseModel, frozen=True):
 class PlannedAction(BaseModel, frozen=True):
     """Ein einzelner Schritt im Plan. [B§3.1]
 
-    Der Planner erstellt diese. Der Gatekeeper prüft jede einzeln.
-    Der Executor führt nur genehmigte aus.
+    Der Planner erstellt diese. Der Gatekeeper prueft jede einzeln.
+    Der Executor fuehrt nur genehmigte aus.
     """
 
     tool: str  # MCP-Tool-Name (z.B. "read_file", "exec_command")
@@ -184,9 +184,9 @@ class PlannedAction(BaseModel, frozen=True):
 
 
 class ActionPlan(BaseModel, frozen=True):
-    """Was der Planner dem Gatekeeper übergibt. [B§3.1]
+    """Was der Planner dem Gatekeeper uebergibt. [B§3.1]
 
-    Enthält das Ziel, die Begründung, und eine geordnete Liste von Schritten.
+    Enthaelt das Ziel, die Begruendung, und eine geordnete Liste von Schritten.
     Kann auch eine direkte Antwort ohne Schritte enthalten (einfache Fragen).
     """
 
@@ -206,19 +206,19 @@ class ActionPlan(BaseModel, frozen=True):
 
     @property
     def requires_tools(self) -> bool:
-        """True wenn der Plan Tool-Calls enthält."""
+        """True wenn der Plan Tool-Calls enthaelt."""
         return len(self.steps) > 0
 
     @property
     def has_actions(self) -> bool:
-        """Alias für requires_tools -- True wenn Steps vorhanden."""
+        """Alias fuer requires_tools -- True wenn Steps vorhanden."""
         return len(self.steps) > 0
 
 
 class GateDecision(BaseModel, frozen=True):
-    """Entscheidung des Gatekeepers für eine einzelne Aktion. [B§3.2]
+    """Entscheidung des Gatekeepers fuer eine einzelne Aktion. [B§3.2]
 
-    Immutable -- einmal getroffen, nie änderbar.
+    Immutable -- einmal getroffen, nie aenderbar.
     """
 
     status: GateStatus
@@ -232,17 +232,17 @@ class GateDecision(BaseModel, frozen=True):
 
     @property
     def matched_policy(self) -> str | None:
-        """Alias für policy_name (Rückwärtskompatibilität)."""
+        """Alias fuer policy_name (Rueckwaertskompatibilitaet)."""
         return self.policy_name or None
 
     @property
     def is_allowed(self) -> bool:
-        """True wenn die Aktion ausgeführt werden darf."""
+        """True wenn die Aktion ausgefuehrt werden darf."""
         return self.status in (GateStatus.ALLOW, GateStatus.INFORM, GateStatus.MASK)
 
     @property
     def needs_approval(self) -> bool:
-        """True wenn User-Bestätigung erforderlich ist."""
+        """True wenn User-Bestaetigung erforderlich ist."""
         return self.status == GateStatus.APPROVE
 
     @property
@@ -252,7 +252,7 @@ class GateDecision(BaseModel, frozen=True):
 
 
 class ToolResult(BaseModel, frozen=True):
-    """Ergebnis einer Tool-Ausführung. [B§3.3]"""
+    """Ergebnis einer Tool-Ausfuehrung. [B§3.3]"""
 
     tool_name: str
     content: str = ""
@@ -265,16 +265,16 @@ class ToolResult(BaseModel, frozen=True):
 
     @property
     def success(self) -> bool:
-        """True wenn die Ausführung erfolgreich war."""
+        """True wenn die Ausfuehrung erfolgreich war."""
         return not self.is_error
 
 
 class AuditEntry(BaseModel, frozen=True):
-    """Unveränderlicher Audit-Log-Eintrag. [B§3.2]
+    """Unveraenderlicher Audit-Log-Eintrag. [B§3.2]
 
     Jede Gatekeeper-Entscheidung wird protokolliert.
-    JSONL in gatekeeper.jsonl. Nur Append, nie geändert.
-    Flache Struktur für performante Log-Analyse.
+    JSONL in gatekeeper.jsonl. Nur Append, nie geaendert.
+    Flache Struktur fuer performante Log-Analyse.
     """
 
     id: str = Field(default_factory=_new_id)
@@ -300,7 +300,7 @@ class AuditEntry(BaseModel, frozen=True):
 
 
 class SandboxConfig(BaseModel):
-    """Konfiguration der Ausführungs-Sandbox. [B§3.3]"""
+    """Konfiguration der Ausfuehrungs-Sandbox. [B§3.3]"""
 
     level: SandboxLevel = SandboxLevel.PROCESS
     timeout_seconds: int = Field(default=30, ge=1, le=600)
@@ -326,8 +326,8 @@ class SandboxConfig(BaseModel):
 class SessionContext(BaseModel):
     """Kontext einer laufenden Sitzung. [B§9.1]
 
-    Mutable -- wird während der Session aktualisiert.
-    Jede Session gehört zu genau einem Agenten. Verschiedene Agenten
+    Mutable -- wird waehrend der Session aktualisiert.
+    Jede Session gehoert zu genau einem Agenten. Verschiedene Agenten
     haben getrennte Sessions und Working Memories.
     """
 
@@ -383,7 +383,7 @@ class SessionContext(BaseModel):
 
 
 class Chunk(BaseModel, frozen=True):
-    """Ein Text-Chunk für den Memory-Index. [B§4.8]"""
+    """Ein Text-Chunk fuer den Memory-Index. [B§4.8]"""
 
     id: str = Field(default_factory=_new_id)
     text: str
@@ -398,7 +398,7 @@ class Chunk(BaseModel, frozen=True):
 
 
 class Entity(BaseModel):
-    """Eine Entität im Wissens-Graphen. [B§4.4]"""
+    """Eine Entitaet im Wissens-Graphen. [B§4.4]"""
 
     id: str = Field(default_factory=_new_id)
     type: str  # "person", "company", "product", "project"
@@ -411,7 +411,7 @@ class Entity(BaseModel):
 
 
 class Relation(BaseModel):
-    """Eine Beziehung zwischen zwei Entitäten. [B§4.4]"""
+    """Eine Beziehung zwischen zwei Entitaeten. [B§4.4]"""
 
     id: str = Field(default_factory=_new_id)
     source_entity: str  # Entity-ID
@@ -469,7 +469,7 @@ class MemorySearchResult(BaseModel, frozen=True):
 
 
 class WorkingMemory(BaseModel):
-    """Aktiver Session-Kontext. Tier 5. Flüchtig. [B§4.6]
+    """Aktiver Session-Kontext. Tier 5. Fluechtig. [B§4.6]
 
     Lebt nur im RAM. Pre-Compaction Flush bei >80%.
     """
@@ -493,7 +493,7 @@ class WorkingMemory(BaseModel):
 
     @property
     def needs_compaction(self) -> bool:
-        """True wenn Pre-Compaction Flush nötig ist (>80%). [B§4.6]"""
+        """True wenn Pre-Compaction Flush noetig ist (>80%). [B§4.6]"""
         return self.usage_ratio > 0.80
 
     @staticmethod
@@ -617,10 +617,10 @@ class MCPToolInfo(BaseModel, frozen=True):
 
 
 class PolicyParamMatch(BaseModel, frozen=True):
-    """Bedingung für einen einzelnen Parameter. [B§3.2]
+    """Bedingung fuer einen einzelnen Parameter. [B§3.2]
 
-    Alle Felder sind optional -- nur gesetzte werden geprüft.
-    Alle müssen matchen (AND-Verknüpfung).
+    Alle Felder sind optional -- nur gesetzte werden geprueft.
+    Alle muessen matchen (AND-Verknuepfung).
     """
 
     regex: str | None = None
@@ -634,7 +634,7 @@ class PolicyParamMatch(BaseModel, frozen=True):
 class PolicyMatch(BaseModel, frozen=True):
     """Match-Kriterium einer Policy-Regel. [B§3.2]
 
-    tool: MCP-Tool-Name oder "*" für alle.
+    tool: MCP-Tool-Name oder "*" fuer alle.
     params: Dict von Param-Name → PolicyParamMatch.
             Key "*" matcht gegen alle Params (Wildcard).
     """
@@ -664,7 +664,7 @@ class PolicyRule(BaseModel, frozen=True):
 class CronJob(BaseModel):
     """Ein geplanter Cron-Job. [B§10.1]
 
-    Jobs können optional einem bestimmten Agenten zugeordnet werden.
+    Jobs koennen optional einem bestimmten Agenten zugeordnet werden.
     Ohne agent-Feld wird die Nachricht normal geroutet.
     """
 
@@ -699,7 +699,7 @@ class ExtractedFact(BaseModel, frozen=True):
 
 
 class ProcedureCandidate(BaseModel, frozen=True):
-    """Kandidat für eine neue oder aktualisierte Prozedur. [B§6.3]
+    """Kandidat fuer eine neue oder aktualisierte Prozedur. [B§6.3]
 
     Der Reflector erkennt wiederholbare Muster und erzeugt diese.
     """
@@ -729,11 +729,11 @@ class SessionSummary(BaseModel, frozen=True):
 
 
 class ReflectionResult(BaseModel):
-    """Vollständiges Ergebnis einer Reflexion über eine Session. [B§6.1]
+    """Vollstaendiges Ergebnis einer Reflexion ueber eine Session. [B§6.1]
 
     Wird vom Reflector erzeugt nach Ende einer Session.
-    Enthält Evaluation, extrahierte Fakten, Prozedur-Kandidaten und
-    eine Session-Zusammenfassung für das Episodic Memory.
+    Enthaelt Evaluation, extrahierte Fakten, Prozedur-Kandidaten und
+    eine Session-Zusammenfassung fuer das Episodic Memory.
     """
 
     session_id: str
@@ -768,7 +768,7 @@ class ReflectionResult(BaseModel):
 
 
 class AgentResult(BaseModel):
-    """Vollständiges Ergebnis eines Agent-Zyklus."""
+    """Vollstaendiges Ergebnis eines Agent-Zyklus."""
 
     response: str
     plans: list[ActionPlan] = Field(default_factory=list)

@@ -1,12 +1,12 @@
 """Jarvis · Marketplace governance.
 
-Strengeres Bewertungs-/Reputationssystem für das Skill-Ecosystem:
+Strengeres Bewertungs-/Reputationssystem fuer das Skill-Ecosystem:
 
   - ReputationEngine:    Trust-Score pro Publisher + Skill
-  - SkillRecallManager:  Zentraler Rückruf bösartiger Skills
-  - AbuseReporter:       Melde-System für verdächtige Skills
-  - GovernancePolicy:    Regel-Engine für automatische Aktionen
-  - ReviewQueue:         Warteschlange für manuelle Reviews
+  - SkillRecallManager:  Zentraler Rueckruf boesartiger Skills
+  - AbuseReporter:       Melde-System fuer verdaechtige Skills
+  - GovernancePolicy:    Regel-Engine fuer automatische Aktionen
+  - ReviewQueue:         Warteschlange fuer manuelle Reviews
 
 Architektur-Bibel: §7.4 (Marketplace-Security), §14.2 (Supply-Chain)
 """
@@ -34,7 +34,7 @@ class TrustLevel(Enum):
 
 @dataclass
 class ReputationScore:
-    """Reputations-Score für Publisher oder Skill."""
+    """Reputations-Score fuer Publisher oder Skill."""
 
     entity_id: str
     entity_type: str  # "publisher" oder "skill"
@@ -254,7 +254,7 @@ class RecallReason(Enum):
 
 @dataclass
 class RecallNotice:
-    """Rückruf-Benachrichtigung für einen Skill."""
+    """Rueckruf-Benachrichtigung fuer einen Skill."""
 
     recall_id: str
     skill_id: str
@@ -282,7 +282,7 @@ class RecallNotice:
 
 
 class SkillRecallManager:
-    """Zentraler Rückruf-Manager für bösartige Skills."""
+    """Zentraler Rueckruf-Manager fuer boesartige Skills."""
 
     def __init__(self, reputation: ReputationEngine | None = None) -> None:
         self._reputation = reputation or ReputationEngine()
@@ -386,7 +386,7 @@ class AbuseReport:
 
 
 class AbuseReporter:
-    """Melde-System für verdächtige Skills."""
+    """Melde-System fuer verdaechtige Skills."""
 
     AUTO_INVESTIGATE_THRESHOLD = 3  # Ab 3 Meldungen → auto-investigate
 
@@ -476,9 +476,9 @@ class GovernanceRule:
 
 
 class GovernancePolicy:
-    """Automatische Governance-Regeln für das Ecosystem.
+    """Automatische Governance-Regeln fuer das Ecosystem.
 
-    Regeln werden bei jeder Reputation-Änderung geprüft.
+    Regeln werden bei jeder Reputation-Aenderung geprueft.
     """
 
     DEFAULT_RULES = [
@@ -496,7 +496,7 @@ class GovernancePolicy:
         self._rules.append(rule)
 
     def evaluate(self, score: ReputationScore) -> list[dict[str, Any]]:
-        """Prüft alle Regeln gegen einen Score."""
+        """Prueft alle Regeln gegen einen Score."""
         actions: list[dict[str, Any]] = []
         for rule in self._rules:
             if not rule.enabled:

@@ -1,7 +1,7 @@
-"""IRC-Channel: Bidirektionale Kommunikation über IRC.
+"""IRC-Channel: Bidirektionale Kommunikation ueber IRC.
 
 Nutzt asyncio-basierte IRC-Verbindung (raw sockets).
-Unterstützt:
+Unterstuetzt:
   - Text-Nachrichten in Channels und Private Messages
   - Channel Join
   - Flood Protection
@@ -13,7 +13,7 @@ Konfiguration:
   - JARVIS_IRC_NICK: Bot-Nick
   - JARVIS_IRC_CHANNELS: Komma-separierte Channel-Liste
 
-Abhängigkeiten:
+Abhaengigkeiten:
   Optional: irc>=20.0 (Fallback: Raw asyncio sockets)
 """
 
@@ -34,7 +34,7 @@ _MAX_MSG_LENGTH = 450  # IRC max per line
 
 
 class IRCChannel(Channel):
-    """IRC Integration für Jarvis.
+    """IRC Integration fuer Jarvis.
 
     Verbindet sich zu einem IRC-Server, joint Channels und
     verarbeitet eingehende Nachrichten. Sendet Antworten mit
@@ -129,7 +129,7 @@ class IRCChannel(Channel):
             logger.error("IRC Senden fehlgeschlagen: %s", exc)
 
     async def _receive_loop(self) -> None:
-        """Empfängt und verarbeitet IRC-Nachrichten."""
+        """Empfaengt und verarbeitet IRC-Nachrichten."""
         if not self._reader:
             return
 

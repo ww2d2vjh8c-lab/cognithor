@@ -4,12 +4,12 @@ Central database for all memory indexes.
 Everything derivable from the Markdown source-of-truth files.
 
 Thread-Safety:
-SQLite im WAL-Modus unterstützt gleichzeitige Reads, aber nur einen
-Writer. Bei Multi-Channel-Betrieb (z.B. Telegram + CLI + Cron) können
-gleichzeitige Writes zu "database is locked" Fehlern führen.
+SQLite im WAL-Modus unterstuetzt gleichzeitige Reads, aber nur einen
+Writer. Bei Multi-Channel-Betrieb (z.B. Telegram + CLI + Cron) koennen
+gleichzeitige Writes zu "database is locked" Fehlern fuehren.
 
-Lösung: Alle Write-Operationen werden über ein threading.RLock
-serialisiert. Reads benötigen kein Lock (WAL erlaubt concurrent reads).
+Loesung: Alle Write-Operationen werden ueber ein threading.RLock
+serialisiert. Reads benoetigen kein Lock (WAL erlaubt concurrent reads).
 RLock statt Lock, da manche Write-Methoden intern andere Write-Methoden
 aufrufen (z.B. delete_entity → DELETE relations + DELETE entities).
 """
@@ -29,25 +29,25 @@ from jarvis.models import Chunk, Entity, MemoryTier, Relation
 
 
 def _serialize_vector(vec: list[float]) -> bytes:
-    """Serialisiert einen Float-Vektor zu Bytes (für sqlite-vec Kompatibilität)."""
+    """Serialisiert einen Float-Vektor zu Bytes (fuer sqlite-vec Kompatibilitaet)."""
     return struct.pack(f"{len(vec)}f", *vec)
 
 
 def _deserialize_vector(data: bytes) -> list[float]:
-    """Deserialisiert Bytes zurück zu Float-Vektor."""
+    """Deserialisiert Bytes zurueck zu Float-Vektor."""
     n = len(data) // 4
     return list(struct.unpack(f"{n}f", data))
 
 
 class MemoryIndex:
-    """SQLite-basierter Index für das Memory-System.
+    """SQLite-basierter Index fuer das Memory-System.
 
     Schema:
     - chunks: Alle Text-Chunks mit Metadaten
     - chunks_fts: FTS5 Volltextsuche (BM25)
     - embeddings: Vektor-Embeddings (content_hash → vector)
-    - entities: Wissens-Graph Entitäten
-    - relations: Beziehungen zwischen Entitäten
+    - entities: Wissens-Graph Entitaeten
+    - relations: Beziehungen zwischen Entitaeten
     """
 
     def __init__(self, db_path: str | Path) -> None:
@@ -65,8 +65,8 @@ class MemoryIndex:
     def conn(self) -> sqlite3.Connection:
         """Lazy connection. Create DB on first access.
 
-        Thread-safe: Connection-Erstellung ist über das Write-Lock geschützt,
-        da _init_schema() Schreiboperationen ausführt.
+        Thread-safe: Connection-Erstellung ist ueber das Write-Lock geschuetzt,
+        da _init_schema() Schreiboperationen ausfuehrt.
         """
         if self._conn is None:
             with self._write_lock:
@@ -116,7 +116,7 @@ class MemoryIndex:
                 tokenize='unicode61 remove_diacritics 2'
             );
 
-            -- Trigger für FTS5 Sync
+            -- Trigger fuer FTS5 Sync
             CREATE TRIGGER IF NOT EXISTS chunks_ai AFTER INSERT ON chunks BEGIN
                 INSERT INTO chunks_fts(rowid, text) VALUES (new.rowid, new.text);
             END;
@@ -142,7 +142,7 @@ class MemoryIndex:
                 created_at REAL NOT NULL
             );
 
-            -- Entitäten (Wissens-Graph)
+            -- Entitaeten (Wissens-Graph)
             CREATE TABLE IF NOT EXISTS entities (
                 id TEXT PRIMARY KEY,
                 type TEXT NOT NULL,
@@ -179,16 +179,16 @@ class MemoryIndex:
     # ── Chunk Operations ─────────────────────────────────────────
 
     def upsert_chunk(self, chunk: Chunk) -> None:
-        """Fügt einen Chunk ein oder aktualisiert ihn und committet.
+        """Fuegt einen Chunk ein oder aktualisiert ihn und committet.
 
-        Thread-safe: Geschützt über Write-Lock.
+        Thread-safe: Geschuetzt ueber Write-Lock.
         """
         with self._write_lock:
             self._upsert_chunk_impl(chunk)
             self.conn.commit()
 
     def _upsert_chunk_impl(self, chunk: Chunk) -> None:
-        """Internal: insert/update ohne Lock und ohne Commit (für Batch-Nutzung)."""
+        """Internal: insert/update ohne Lock und ohne Commit (fuer Batch-Nutzung)."""
         now = datetime.now().timestamp()
         ts = chunk.timestamp.timestamp() if chunk.timestamp else None
 
@@ -225,9 +225,9 @@ class MemoryIndex:
         )
 
     def upsert_chunks(self, chunks: list[Chunk]) -> int:
-        """Batch-Insert von Chunks. Returns Anzahl eingefügt.
+        """Batch-Insert von Chunks. Returns Anzahl eingefuegt.
 
-        Thread-safe: Geschützt über Write-Lock.
+        Thread-safe: Geschuetzt ueber Write-Lock.
         """
         now = datetime.now().timestamp()
         rows = []
@@ -270,21 +270,21 @@ class MemoryIndex:
         return len(rows)
 
     def delete_chunks_by_source(self, source_path: str) -> int:
-        """Löscht alle Chunks einer Quelldatei. Returns Anzahl gelöscht."""
+        """Loescht alle Chunks einer Quelldatei. Returns Anzahl geloescht."""
         with self._write_lock:
             cursor = self.conn.execute("DELETE FROM chunks WHERE source_path = ?", (source_path,))
             self.conn.commit()
             return cursor.rowcount
 
     def get_chunk_by_id(self, chunk_id: str) -> Chunk | None:
-        """Lädt einen Chunk anhand seiner ID."""
+        """Laedt einen Chunk anhand seiner ID."""
         row = self.conn.execute("SELECT * FROM chunks WHERE id = ?", (chunk_id,)).fetchone()
         if row is None:
             return None
         return self._row_to_chunk(row)
 
     def get_chunks_by_ids(self, chunk_ids: list[str]) -> dict[str, Chunk]:
-        """Lädt mehrere Chunks anhand ihrer IDs in einem Batch.
+        """Laedt mehrere Chunks anhand ihrer IDs in einem Batch.
 
         Nutzt SELECT ... WHERE id IN (...) statt einzelner Queries (N+1 vermeiden).
         Beachtet SQLite's Parameter-Limit von 999 und splittet bei Bedarf.
@@ -323,7 +323,7 @@ class MemoryIndex:
         return [self._row_to_chunk(r) for r in rows]
 
     def get_chunk_ids_by_hash(self, content_hash: str) -> list[str]:
-        """Chunk-IDs für einen Content-Hash (für inkrementelle Hash-Map-Updates)."""
+        """Chunk-IDs fuer einen Content-Hash (fuer inkrementelle Hash-Map-Updates)."""
         rows = self.conn.execute(
             "SELECT id FROM chunks WHERE content_hash = ?",
             (content_hash,),
@@ -331,12 +331,12 @@ class MemoryIndex:
         return [r["id"] for r in rows]
 
     def get_all_content_hashes(self) -> set[str]:
-        """Alle content_hashes im Index (für Embedding-Cache)."""
+        """Alle content_hashes im Index (fuer Embedding-Cache)."""
         rows = self.conn.execute("SELECT DISTINCT content_hash FROM chunks").fetchall()
         return {r["content_hash"] for r in rows}
 
     def count_chunks(self, tier: MemoryTier | None = None) -> int:
-        """Zählt Chunks, optional gefiltert nach Tier."""
+        """Zaehlt Chunks, optional gefiltert nach Tier."""
         if tier:
             row = self.conn.execute(
                 "SELECT COUNT(*) as cnt FROM chunks WHERE memory_tier = ?",
@@ -418,7 +418,7 @@ class MemoryIndex:
             self.conn.commit()
 
     def get_embedding(self, content_hash: str) -> list[float] | None:
-        """Lädt ein Embedding anhand des Content-Hash."""
+        """Laedt ein Embedding anhand des Content-Hash."""
         row = self.conn.execute(
             "SELECT vector FROM embeddings WHERE content_hash = ?",
             (content_hash,),
@@ -428,7 +428,7 @@ class MemoryIndex:
         return _deserialize_vector(row["vector"])
 
     def get_all_embeddings(self) -> dict[str, list[float]]:
-        """Lädt alle Embeddings. Returns {content_hash: vector}."""
+        """Laedt alle Embeddings. Returns {content_hash: vector}."""
         rows = self.conn.execute("SELECT content_hash, vector FROM embeddings").fetchall()
         return {r["content_hash"]: _deserialize_vector(r["vector"]) for r in rows}
 
@@ -436,10 +436,10 @@ class MemoryIndex:
         self,
         content_hashes: set[str],
     ) -> dict[str, list[float]]:
-        """Lädt nur Embeddings für die angegebenen Hashes (statt alle).
+        """Laedt nur Embeddings fuer die angegebenen Hashes (statt alle).
 
         Deutlich RAM-effizienter als get_all_embeddings() wenn nur wenige
-        Hashes geprüft werden müssen.
+        Hashes geprueft werden muessen.
         """
         if not content_hashes:
             return {}
@@ -472,7 +472,7 @@ class MemoryIndex:
     # ── Entity Operations ────────────────────────────────────────
 
     def upsert_entity(self, entity: Entity) -> None:
-        """Fügt eine Entität ein oder aktualisiert sie. Thread-safe."""
+        """Fuegt eine Entitaet ein oder aktualisiert sie. Thread-safe."""
         with self._write_lock:
             self.conn.execute(
                 """
@@ -501,7 +501,7 @@ class MemoryIndex:
             self.conn.commit()
 
     def get_entity_by_id(self, entity_id: str) -> Entity | None:
-        """Lädt eine Entität."""
+        """Laedt eine Entitaet."""
         row = self.conn.execute("SELECT * FROM entities WHERE id = ?", (entity_id,)).fetchone()
         if row is None:
             return None
@@ -512,7 +512,7 @@ class MemoryIndex:
         name: str | None = None,
         entity_type: str | None = None,
     ) -> list[Entity]:
-        """Sucht Entitäten nach Name und/oder Typ."""
+        """Sucht Entitaeten nach Name und/oder Typ."""
         conditions: list[str] = []
         params: list[Any] = []
 
@@ -532,7 +532,7 @@ class MemoryIndex:
         return [self._row_to_entity(r) for r in rows]
 
     def delete_entity(self, entity_id: str) -> bool:
-        """Löscht eine Entität und ihre Relationen. Thread-safe."""
+        """Loescht eine Entitaet und ihre Relationen. Thread-safe."""
         with self._write_lock:
             self.conn.execute(
                 "DELETE FROM relations WHERE source_entity = ? OR target_entity = ?",
@@ -543,14 +543,14 @@ class MemoryIndex:
             return cursor.rowcount > 0
 
     def count_entities(self) -> int:
-        """Zählt die Anzahl der Entitäten im Index."""
+        """Zaehlt die Anzahl der Entitaeten im Index."""
         row = self.conn.execute("SELECT COUNT(*) as cnt FROM entities").fetchone()
         return row["cnt"] if row else 0
 
     def update_entity_confidence(self, entity_id: str, new_confidence: float) -> bool:
         """Update the confidence score of an entity. Returns True if found.
 
-        Thread-safe: Geschützt über Write-Lock.
+        Thread-safe: Geschuetzt ueber Write-Lock.
         """
         with self._write_lock:
             cur = self.conn.execute(
@@ -563,7 +563,7 @@ class MemoryIndex:
     def update_relation_confidence(self, relation_id: str, new_confidence: float) -> bool:
         """Update the confidence score of a relation.
 
-        Thread-safe: Geschützt über Write-Lock.
+        Thread-safe: Geschuetzt ueber Write-Lock.
         """
         with self._write_lock:
             cur = self.conn.execute(
@@ -588,7 +588,7 @@ class MemoryIndex:
     # ── Relation Operations ──────────────────────────────────────
 
     def upsert_relation(self, relation: Relation) -> None:
-        """Fügt eine Relation ein oder aktualisiert sie. Thread-safe."""
+        """Fuegt eine Relation ein oder aktualisiert sie. Thread-safe."""
         with self._write_lock:
             self.conn.execute(
                 """
@@ -618,7 +618,7 @@ class MemoryIndex:
         entity_id: str,
         relation_type: str | None = None,
     ) -> list[Relation]:
-        """Alle Relationen einer Entität (als Quelle oder Ziel)."""
+        """Alle Relationen einer Entitaet (als Quelle oder Ziel)."""
         if relation_type:
             rows = self.conn.execute(
                 """SELECT * FROM relations
@@ -638,18 +638,18 @@ class MemoryIndex:
         entity_id: str,
         max_depth: int = 2,
     ) -> list[Entity]:
-        """Traversiert den Wissens-Graph ab einer Entität.
+        """Traversiert den Wissens-Graph ab einer Entitaet.
 
         Verwendet eine iterative BFS-Suche (statt rekursiver CTE) um
         Zyklen im Graphen sicher zu handhaben und exponentielle Blowups
-        bei dicht vernetzten Entitäten zu vermeiden.
+        bei dicht vernetzten Entitaeten zu vermeiden.
 
         Args:
-            entity_id: Start-Entität.
+            entity_id: Start-Entitaet.
             max_depth: Maximale Tiefe.
 
         Returns:
-            Alle erreichbaren Entitäten (ohne Start-Entität).
+            Alle erreichbaren Entitaeten (ohne Start-Entitaet).
         """
         visited: set[str] = {entity_id}
         frontier: set[str] = {entity_id}
@@ -695,7 +695,7 @@ class MemoryIndex:
         return entities
 
     def count_relations(self) -> int:
-        """Zählt die Anzahl der Relationen im Index."""
+        """Zaehlt die Anzahl der Relationen im Index."""
         row = self.conn.execute("SELECT COUNT(*) as cnt FROM relations").fetchone()
         return row["cnt"] if row else 0
 
@@ -754,7 +754,7 @@ class MemoryIndex:
             self.conn.execute("VACUUM")
 
     def stats(self) -> dict[str, int]:
-        """Statistiken über den Index."""
+        """Statistiken ueber den Index."""
         return {
             "chunks": self.count_chunks(),
             "embeddings": self.count_embeddings(),
@@ -763,7 +763,7 @@ class MemoryIndex:
         }
 
     def close(self) -> None:
-        """Schließt die Datenbankverbindung. Thread-safe."""
+        """Schliesst die Datenbankverbindung. Thread-safe."""
         with self._write_lock:
             if self._conn:
                 self._conn.close()

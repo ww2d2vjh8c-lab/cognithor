@@ -317,7 +317,7 @@ class MemoryManager:
         is not blocked.
 
         Returns:
-            Status-Dict mit Infos über den Zustand.
+            Status-Dict mit Infos ueber den Zustand.
         """
         return await anyio.to_thread.run_sync(self._initialize_sync)
 
@@ -328,7 +328,7 @@ class MemoryManager:
         are not running inside an async event loop (e.g. tests, CLI tools).
 
         Returns:
-            Status-Dict mit Infos über den Zustand.
+            Status-Dict mit Infos ueber den Zustand.
         """
         return self._initialize_sync()
 
@@ -381,9 +381,9 @@ class MemoryManager:
         *,
         top_k: int = 6,
     ) -> list[MemorySearchResult]:
-        """Synchrone BM25-only Suche (kein Embedding nötig).
+        """Synchrone BM25-only Suche (kein Embedding noetig).
 
-        Schneller Fallback wenn kein Embedding-Server verfügbar.
+        Schneller Fallback wenn kein Embedding-Server verfuegbar.
         """
         return self._search.search_bm25_only(query, top_k=top_k)
 
@@ -634,9 +634,9 @@ class MemoryManager:
     # ── Stats ────────────────────────────────────────────────────
 
     def set_media_pipeline(self, pipeline: Any) -> None:
-        """Setzt die MediaPipeline für Multimodal Memory.
+        """Setzt die MediaPipeline fuer Multimodal Memory.
 
-        Wird nach Initialisierung aufgerufen wenn MediaPipeline verfügbar.
+        Wird nach Initialisierung aufgerufen wenn MediaPipeline verfuegbar.
         """
         self._multimodal._pipeline = pipeline
         logger.info("Media-Pipeline für Multimodal Memory gesetzt")
@@ -705,7 +705,7 @@ class MemoryManager:
     # ── Cleanup ──────────────────────────────────────────────────
 
     async def close(self) -> None:
-        """Schließt alle Ressourcen."""
+        """Schliesst alle Ressourcen."""
         self._index.close()
         if self._episodic_store:
             self._episodic_store.close()

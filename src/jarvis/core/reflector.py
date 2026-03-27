@@ -126,11 +126,11 @@ class Reflector:
         Args:
             config: Jarvis-Konfiguration.
             ollama: LLM-Client (OllamaClient oder UnifiedLLMClient).
-            model_router: Model-Router für Modellauswahl.
-            audit_logger: Optionaler AuditLogger für LLM-Call-Protokollierung.
-            episodic_store: Optionaler EpisodicStore für Langzeit-Episoden.
-            causal_analyzer: Optionaler CausalAnalyzer für Tool-Sequenz-Lernen.
-            weight_optimizer: Optionaler SearchWeightOptimizer für Such-Feedback.
+            model_router: Model-Router fuer Modellauswahl.
+            audit_logger: Optionaler AuditLogger fuer LLM-Call-Protokollierung.
+            episodic_store: Optionaler EpisodicStore fuer Langzeit-Episoden.
+            causal_analyzer: Optionaler CausalAnalyzer fuer Tool-Sequenz-Lernen.
+            weight_optimizer: Optionaler SearchWeightOptimizer fuer Such-Feedback.
             reward_calculator: Optionaler RewardCalculator fuer Composite-Scores.
             cost_tracker: Optionaler CostTracker fuer LLM-Kosten-Tracking.
         """
@@ -169,7 +169,7 @@ class Reflector:
         max_results: int = 2,
         min_score: float = 0.3,
     ) -> list[str]:
-        """Findet passende Prozeduren für eine User-Nachricht. [B§6.3]
+        """Findet passende Prozeduren fuer eine User-Nachricht. [B§6.3]
 
         Extrahiert Keywords aus der Nachricht und sucht in den
         gespeicherten Prozeduren nach Matches.
@@ -177,7 +177,7 @@ class Reflector:
         Args:
             user_message: Die eingehende User-Nachricht
             procedural_memory: ProceduralMemory-Instanz
-            max_results: Maximale Anzahl zurückgegebener Prozeduren
+            max_results: Maximale Anzahl zurueckgegebener Prozeduren
             min_score: Minimaler Match-Score (0--1)
 
         Returns:
@@ -216,8 +216,8 @@ class Reflector:
     def extract_keywords(text: str) -> list[str]:
         """Extrahiert Suchbegriffe aus einer User-Nachricht. [B§6.3]
 
-        Einfache Stopwort-Filterung für Deutsch und Englisch.
-        Gibt max. 8 Keywords zurück (die längsten bevorzugt).
+        Einfache Stopwort-Filterung fuer Deutsch und Englisch.
+        Gibt max. 8 Keywords zurueck (die laengsten bevorzugt).
         """
         # Normalisieren
         text = text.lower().strip()
@@ -418,7 +418,7 @@ class Reflector:
         working_memory: WorkingMemory,
         agent_result: AgentResult,
     ) -> ReflectionResult:
-        """Führt den vollständigen Reflexions-Zyklus durch. [B§6.1]
+        """Fuehrt den vollstaendigen Reflexions-Zyklus durch. [B§6.1]
 
         Args:
             session: Session-Kontext der abgeschlossenen Session
@@ -572,7 +572,7 @@ class Reflector:
             memory_manager: MemoryManager-Instanz
 
         Returns:
-            Dict mit Anzahl geschriebener Einträge pro Tier.
+            Dict mit Anzahl geschriebener Eintraege pro Tier.
         """
         counts: dict[str, int] = {
             "episodic": 0,
@@ -607,10 +607,10 @@ class Reflector:
     # ------------------------------------------------------------------
 
     def _build_reflection_prompt(self) -> str:
-        """Erstellt den System-Prompt für die Reflexion. [B§6.2]"""
+        """Erstellt den System-Prompt fuer die Reflexion. [B§6.2]"""
         return """Du bist der Reflector. Analysiere die abgeschlossene Session.
 
-Antworte AUSSCHLIESSLICH als valides JSON-Objekt (kein Markdown, keine Erklärung).
+Antworte AUSSCHLIESSLICH als valides JSON-Objekt (kein Markdown, keine Erklaerung).
 
 Struktur:
 {
@@ -618,12 +618,12 @@ Struktur:
   "evaluation": "Kurze Bewertung ob das Ziel erreicht wurde",
   "extracted_facts": [
     {
-      "entity_name": "Name der Entität",
+      "entity_name": "Name der Entitaet",
       "entity_type": "person|company|product|project|concept",
       "attribute_key": "Attributname (optional)",
       "attribute_value": "Attributwert (optional)",
       "relation_type": "Beziehungstyp (optional, z.B. hat_police, arbeitet_bei)",
-      "relation_target": "Ziel-Entität der Beziehung (optional)"
+      "relation_target": "Ziel-Entitaet der Beziehung (optional)"
     }
   ],
   "procedure_candidate": {
@@ -632,7 +632,7 @@ Struktur:
     "prerequisite_text": "Was wird vorher gebraucht",
     "steps_text": "Nummerierte Schritte",
     "learned_text": "Was haben wir gelernt",
-    "failure_patterns": ["Muster die zu Fehlern führen"],
+    "failure_patterns": ["Muster die zu Fehlern fuehren"],
     "tools_required": ["tool1", "tool2"],
     "is_update": false
   },
@@ -653,7 +653,7 @@ Regeln:
 - extracted_facts: NUR konkrete, neue Fakten. Keine Vermutungen.
 - procedure_candidate: NUR wenn ein wiederholbares Muster erkennbar ist \
 (mind. 2 Tool-Schritte). Sonst null.
-- Bei einfachen Sessions: Kurze Reflexion reicht. Nicht alles muss gefüllt sein.
+- Bei einfachen Sessions: Kurze Reflexion reicht. Nicht alles muss gefuellt sein.
 - Antworte auf Deutsch."""
 
     def _format_session_for_reflection(
@@ -661,7 +661,7 @@ Regeln:
         working_memory: WorkingMemory,
         agent_result: AgentResult,
     ) -> str:
-        """Formatiert die Session-Daten für den Reflection-Prompt."""
+        """Formatiert die Session-Daten fuer den Reflection-Prompt."""
         parts: list[str] = []
 
         # Goal(s) from the plans
@@ -842,7 +842,7 @@ Regeln:
     def _fallback_reflection(
         self, session: SessionContext, agent_result: AgentResult
     ) -> ReflectionResult:
-        """Erstellt eine minimale Reflexion wenn das LLM nicht verfügbar ist."""
+        """Erstellt eine minimale Reflexion wenn das LLM nicht verfuegbar ist."""
         tools_used = list({tr.tool_name for tr in agent_result.tool_results})
         goals = [p.goal for p in agent_result.plans if p.goal]
 
@@ -905,7 +905,7 @@ Regeln:
         written = 0
 
         def _find_entity_by_name(name: str) -> Entity | None:
-            """Sucht eine Entität per Name (exakter Match bevorzugt)."""
+            """Sucht eine Entitaet per Name (exakter Match bevorzugt)."""
             results = indexer.search_entities(name=name)
             # Exakten Match bevorzugen
             for e in results:
@@ -916,7 +916,7 @@ Regeln:
         def _ensure_entity(
             name: str, entity_type: str, source: str, attrs: dict | None = None
         ) -> str:
-            """Erstellt oder findet eine Entität, gibt die ID zurück."""
+            """Erstellt oder findet eine Entitaet, gibt die ID zurueck."""
             existing = _find_entity_by_name(name)
             if existing:
                 return existing.id

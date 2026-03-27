@@ -1,7 +1,7 @@
 """HITL Notifier -- Multi-Channel-Benachrichtigung (v20).
 
-Unterstützt:
-  - In-App: Nachricht in internem Queue (für Dashboard/CLI)
+Unterstuetzt:
+  - In-App: Nachricht in internem Queue (fuer Dashboard/CLI)
   - Webhook: HTTP POST an externe URL
   - Callback: Registrierte Python-Callbacks
   - Log: Strukturiertes Logging
@@ -62,7 +62,7 @@ class NotificationRecord:
 
 
 class HITLNotifier:
-    """Multi-Channel-Notification-System für HITL-Requests."""
+    """Multi-Channel-Notification-System fuer HITL-Requests."""
 
     def __init__(self, max_history: int = 500) -> None:
         self._callbacks: dict[str, Callable[..., Awaitable[None]]] = {}
@@ -82,7 +82,7 @@ class HITLNotifier:
         self._callbacks.pop(name, None)
 
     def set_webhook_handler(self, handler: Callable[..., Awaitable[bool]]) -> None:
-        """Setzt den HTTP-Webhook-Handler (für Tests mockbar)."""
+        """Setzt den HTTP-Webhook-Handler (fuer Tests mockbar)."""
         self._webhook_handler = handler
 
     # ── Send Notifications ───────────────────────────────────────
@@ -90,7 +90,7 @@ class HITLNotifier:
     async def notify_new_request(
         self, request: ApprovalRequest, channels: list[NotificationChannel] | None = None
     ) -> int:
-        """Benachrichtigt über eine neue Approval-Anfrage."""
+        """Benachrichtigt ueber eine neue Approval-Anfrage."""
         channels = channels or request.config.notifications
         if not channels:
             channels = [NotificationChannel(channel_type=NotificationType.LOG)]
@@ -109,7 +109,7 @@ class HITLNotifier:
     async def notify_reminder(
         self, request: ApprovalRequest, channels: list[NotificationChannel] | None = None
     ) -> int:
-        """Sendet Erinnerung für ausstehende Approval."""
+        """Sendet Erinnerung fuer ausstehende Approval."""
         channels = channels or request.config.notifications
         if not channels:
             channels = [NotificationChannel(channel_type=NotificationType.LOG)]
@@ -131,7 +131,7 @@ class HITLNotifier:
         response: ApprovalResponse,
         channels: list[NotificationChannel] | None = None,
     ) -> int:
-        """Benachrichtigt über aufgelöste Approval."""
+        """Benachrichtigt ueber aufgeloeste Approval."""
         channels = channels or request.config.notifications
         if not channels:
             channels = [NotificationChannel(channel_type=NotificationType.LOG)]
@@ -153,7 +153,7 @@ class HITLNotifier:
     async def notify_escalated(
         self, request: ApprovalRequest, channels: list[NotificationChannel] | None = None
     ) -> int:
-        """Benachrichtigt über Eskalation."""
+        """Benachrichtigt ueber Eskalation."""
         channels = channels or request.config.notifications
         if not channels:
             channels = [NotificationChannel(channel_type=NotificationType.LOG)]
@@ -174,7 +174,7 @@ class HITLNotifier:
     async def _send(
         self, channel: NotificationChannel, request_id: str, message: str, payload: dict[str, Any]
     ) -> bool:
-        """Sendet eine Notification über den angegebenen Kanal."""
+        """Sendet eine Notification ueber den angegebenen Kanal."""
         try:
             success = False
 
@@ -277,7 +277,7 @@ class HITLNotifier:
     # ── In-App Queue ─────────────────────────────────────────────
 
     def get_pending_notifications(self, limit: int = 20) -> list[dict[str, Any]]:
-        """Gibt ungelesene In-App-Notifications zurück."""
+        """Gibt ungelesene In-App-Notifications zurueck."""
         return list(self._in_app_queue)[-limit:]
 
     def clear_in_app_queue(self) -> int:

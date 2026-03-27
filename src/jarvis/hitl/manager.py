@@ -1,12 +1,12 @@
 """Approval Manager -- Zentrale HITL-Verwaltung (v20).
 
 Verwaltet:
-  - Approval-Queue: Erstellen, Abrufen, Auflösen
+  - Approval-Queue: Erstellen, Abrufen, Aufloesen
   - Timeout-Handling: Automatische Eskalation bei Ablauf
   - Delegation: Weiterleitung an andere Reviewer
   - Multi-Approval: Mehrere Genehmigungen pro Request
   - Resume-Koordination: Verbindung mit v18 Graph Engine
-  - Telemetry: HITL-Metriken über v19
+  - Telemetry: HITL-Metriken ueber v19
 
 Usage:
     manager = ApprovalManager()
@@ -41,7 +41,7 @@ log = get_logger(__name__)
 
 
 class ApprovalManager:
-    """Zentrale Verwaltung für HITL-Approval-Workflows."""
+    """Zentrale Verwaltung fuer HITL-Approval-Workflows."""
 
     def __init__(self, notifier: HITLNotifier | None = None, max_pending: int = 500) -> None:
         self._notifier = notifier or HITLNotifier()
@@ -170,7 +170,7 @@ class ApprovalManager:
     async def wait_for_resolution(
         self, request_id: str, timeout: float | None = None
     ) -> ReviewTask | None:
-        """Wartet bis ein Request aufgelöst wird.
+        """Wartet bis ein Request aufgeloest wird.
 
         Args:
             request_id: ID der Anfrage
@@ -258,7 +258,7 @@ class ApprovalManager:
             log.info("hitl_paused_indefinitely", request_id=request_id)
 
     async def check_timeouts(self) -> int:
-        """Prüft alle offenen Requests auf Timeout."""
+        """Prueft alle offenen Requests auf Timeout."""
         timed_out = 0
         for request_id in list(self._tasks):
             task = self._tasks[request_id]
@@ -309,7 +309,7 @@ class ApprovalManager:
     def get_pending(
         self, *, assignee: str = "", priority: ReviewPriority | None = None, limit: int = 50
     ) -> list[ReviewTask]:
-        """Gibt offene Review-Tasks zurück."""
+        """Gibt offene Review-Tasks zurueck."""
         results: list[ReviewTask] = []
         for task in self._tasks.values():
             if not task.request.is_pending:
@@ -329,14 +329,14 @@ class ApprovalManager:
         return results[:limit]
 
     def get_by_execution(self, execution_id: str) -> list[ReviewTask]:
-        """Gibt alle Tasks einer Execution zurück."""
+        """Gibt alle Tasks einer Execution zurueck."""
         request_ids = self._by_execution.get(execution_id, [])
         return [self._tasks[rid] for rid in request_ids if rid in self._tasks]
 
     def get_history(
         self, *, limit: int = 50, status: ApprovalStatus | None = None
     ) -> list[ReviewTask]:
-        """Gibt historische Tasks zurück."""
+        """Gibt historische Tasks zurueck."""
         results = list(self._tasks.values())
         if status:
             results = [t for t in results if t.request.status == status]
@@ -346,7 +346,7 @@ class ApprovalManager:
     # ── Cleanup ──────────────────────────────────────────────────
 
     def cleanup(self, max_age_days: int = 30) -> int:
-        """Bereinigt alte aufgelöste Tasks."""
+        """Bereinigt alte aufgeloeste Tasks."""
         cutoff = time.time() - (max_age_days * 86400)
         removed = 0
         for request_id in list(self._tasks):

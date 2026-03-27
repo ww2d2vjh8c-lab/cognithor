@@ -39,7 +39,7 @@ class EmbeddingResult:
 
 @dataclass
 class EmbeddingStats:
-    """Statistiken über Embedding-Operationen."""
+    """Statistiken ueber Embedding-Operationen."""
 
     total_requests: int = 0
     cache_hits: int = 0
@@ -60,9 +60,9 @@ class EmbeddingStats:
 
 
 class EmbeddingProvider(ABC):
-    """Abstrakte Basisklasse für Embedding-Provider.
+    """Abstrakte Basisklasse fuer Embedding-Provider.
 
-    Kapselt die HTTP-Logik für verschiedene Embedding-APIs.
+    Kapselt die HTTP-Logik fuer verschiedene Embedding-APIs.
     Cache, LRU, and stats remain in EmbeddingClient.
     """
 
@@ -73,15 +73,15 @@ class EmbeddingProvider(ABC):
 
     @abstractmethod
     async def embed_batch_raw(self, model: str, texts: list[str]) -> list[list[float]]:
-        """Erzeugt Embeddings für eine Liste von Texten."""
+        """Erzeugt Embeddings fuer eine Liste von Texten."""
         ...
 
     async def close(self) -> None:
-        """Schließt den HTTP-Client (falls vorhanden)."""
+        """Schliesst den HTTP-Client (falls vorhanden)."""
 
 
 class OllamaEmbeddingProvider(EmbeddingProvider):
-    """Embedding-Provider für Ollama (POST /api/embed)."""
+    """Embedding-Provider fuer Ollama (POST /api/embed)."""
 
     def __init__(self, base_url: str = DEFAULT_BASE_URL, timeout: float = 30.0) -> None:
         self._base_url = base_url.rstrip("/")
@@ -127,7 +127,7 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
 
 
 class OpenAICompatibleEmbeddingProvider(EmbeddingProvider):
-    """Embedding-Provider für OpenAI-kompatible APIs (POST /embeddings).
+    """Embedding-Provider fuer OpenAI-kompatible APIs (POST /embeddings).
 
     Funktioniert mit: OpenAI, Mistral, GitHub Models, Bedrock, Together, etc.
     """
@@ -179,7 +179,7 @@ class OpenAICompatibleEmbeddingProvider(EmbeddingProvider):
 
 
 class GeminiEmbeddingProvider(EmbeddingProvider):
-    """Embedding-Provider für Google Gemini (embedContent REST API)."""
+    """Embedding-Provider fuer Google Gemini (embedContent REST API)."""
 
     API_URL = "https://generativelanguage.googleapis.com/v1beta"
 
@@ -226,10 +226,10 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
 
 
 class NullEmbeddingProvider(EmbeddingProvider):
-    """Dummy-Provider für Backends ohne Embedding-API.
+    """Dummy-Provider fuer Backends ohne Embedding-API.
 
     Wirft NotImplementedError — die Vektor-Suche wird deaktiviert,
-    BM25+Graph bleiben funktional (search.py fängt alle Exceptions ab).
+    BM25+Graph bleiben funktional (search.py faengt alle Exceptions ab).
     """
 
     def __init__(self, backend_name: str = "unknown") -> None:
@@ -302,7 +302,7 @@ def create_embedding_provider(config: JarvisConfig) -> EmbeddingProvider:
     """Factory: Create the appropriate EmbeddingProvider based on the config.
 
     Returns:
-        Konfigurierter EmbeddingProvider für das aktive Backend.
+        Konfigurierter EmbeddingProvider fuer das aktive Backend.
     """
     backend = config.llm_backend_type
 
@@ -378,9 +378,9 @@ class EmbeddingClient:
 
         Args:
             model: Name des Embedding-Modells.
-            base_url: Base-URL (nur für Rückwärtskompatibilität,
+            base_url: Base-URL (nur fuer Rueckwaertskompatibilitaet,
                 wird ignoriert wenn provider gesetzt).
-            dimensions: Erwartete Vektor-Dimensionalität.
+            dimensions: Erwartete Vektor-Dimensionalitaet.
             timeout: Request-Timeout in Sekunden.
             provider: Optionaler EmbeddingProvider. Default: OllamaEmbeddingProvider.
         """
@@ -401,7 +401,7 @@ class EmbeddingClient:
 
     @property
     def dimensions(self) -> int:
-        """Dimensionalität der Embedding-Vektoren."""
+        """Dimensionalitaet der Embedding-Vektoren."""
         return self._dimensions
 
     @property
@@ -421,20 +421,20 @@ class EmbeddingClient:
                 self._cache.popitem(last=False)  # evict oldest (FIFO/LRU)
 
     def load_cache(self, entries: dict[str, list[float]]) -> int:
-        """Lädt Embeddings in den In-Memory-Cache.
+        """Laedt Embeddings in den In-Memory-Cache.
 
         Args:
             entries: {content_hash: vector} Dict.
 
         Returns:
-            Anzahl geladener Einträge.
+            Anzahl geladener Eintraege.
         """
         for key, vector in entries.items():
             self._cache_put(key, vector)
         return len(entries)
 
     def get_cached(self, content_hash: str) -> list[float] | None:
-        """Prüft ob ein Embedding im Cache liegt.
+        """Prueft ob ein Embedding im Cache liegt.
 
         Promotes the entry to most-recently-used on access (LRU).
         """
@@ -444,7 +444,7 @@ class EmbeddingClient:
         return None
 
     async def embed_text(self, text: str, content_hash: str = "") -> EmbeddingResult:
-        """Generiert ein Embedding für einen Text.
+        """Generiert ein Embedding fuer einen Text.
 
         Args:
             text: The text to embed.
@@ -494,18 +494,18 @@ class EmbeddingClient:
         *,
         batch_size: int = 32,
     ) -> list[EmbeddingResult | None]:
-        """Generiert Embeddings für mehrere Texte.
+        """Generiert Embeddings fuer mehrere Texte.
 
-        Nutzt Cache wo möglich, batcht API-Calls.
+        Nutzt Cache wo moeglich, batcht API-Calls.
 
         Args:
             texts: Liste von Texten.
-            content_hashes: Optional zugehörige Cache-Keys.
+            content_hashes: Optional zugehoerige Cache-Keys.
             batch_size: Max Texte pro API-Call.
 
         Returns:
             Liste von EmbeddingResults (gleiche Reihenfolge wie Input).
-            Einträge können None sein wenn der API-Call fehlgeschlagen ist.
+            Eintraege koennen None sein wenn der API-Call fehlgeschlagen ist.
         """
         if content_hashes is None:
             content_hashes = [""] * len(texts)
@@ -569,7 +569,7 @@ class EmbeddingClient:
         return results
 
     async def close(self) -> None:
-        """Schließt den HTTP-Client."""
+        """Schliesst den HTTP-Client."""
         await self._provider.close()
 
 

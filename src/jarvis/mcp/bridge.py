@@ -1,16 +1,16 @@
 """MCP Bridge: Verbindet bestehende Builtin-Tools mit dem MCP-Server.
 
-Dieses Modul ist die zentrale Brücke zwischen dem bestehenden
+Dieses Modul ist die zentrale Bruecke zwischen dem bestehenden
 register_builtin_handler()-System und dem neuen MCP-Server-Modus.
 
 ARCHITEKTUR:
-  - Ohne MCP-Server: Tools laufen wie bisher über register_builtin_handler()
-  - Mit MCP-Server: Tools werden ZUSÄTZLICH über den MCP-Server exponiert
+  - Ohne MCP-Server: Tools laufen wie bisher ueber register_builtin_handler()
+  - Mit MCP-Server: Tools werden ZUSAeTZLICH ueber den MCP-Server exponiert
   - Der MCP-Server ist rein additiv -- er ersetzt nichts
 
-Verantwortlich für:
+Verantwortlich fuer:
   1. Bestehende Builtin-Handler in MCPToolDefs konvertieren
-  2. Tool-Annotations hinzufügen (readOnly, destructive, etc.)
+  2. Tool-Annotations hinzufuegen (readOnly, destructive, etc.)
   3. Resources und Prompts beim Server registrieren
   4. Discovery/Agent-Card aufbauen
   5. HTTP-Endpoints bereitstellen (wenn HTTP-Modus aktiv)
@@ -159,7 +159,7 @@ MCP_WORKSPACE_SAFE_TOOLS = frozenset(
 
 
 def _build_annotations(tool_name: str) -> dict[str, Any]:
-    """Erzeugt MCP-Annotations für ein Tool basierend auf seinem Namen."""
+    """Erzeugt MCP-Annotations fuer ein Tool basierend auf seinem Namen."""
     annotations: dict[str, Any] = {}
 
     if tool_name in READ_ONLY_TOOLS:
@@ -180,7 +180,7 @@ def _build_annotations(tool_name: str) -> dict[str, Any]:
 
 
 class MCPBridge:
-    """Zentrale Brücke zwischen Builtin-Handlers und MCP-Server.
+    """Zentrale Bruecke zwischen Builtin-Handlers und MCP-Server.
 
     Nutzung:
         bridge = MCPBridge(config)
@@ -216,7 +216,7 @@ class MCPBridge:
 
         Args:
             mcp_client: Der bestehende JarvisMCPClient mit registrierten Tools
-            memory: MemoryManager für Resource-Zugriff
+            memory: MemoryManager fuer Resource-Zugriff
 
         Returns:
             True wenn MCP-Server-Modus aktiviert wurde, False sonst.
@@ -310,7 +310,7 @@ class MCPBridge:
         """Konvertiert bestehende Builtin-Handler in MCPToolDefs.
 
         Liest alle registrierten Tools aus dem MCP-Client und
-        erstellt für jeden eine MCPToolDef mit Annotations.
+        erstellt fuer jeden eine MCPToolDef mit Annotations.
 
         Returns:
             Anzahl konvertierter Tools.
@@ -348,9 +348,9 @@ class MCPBridge:
     # ── Config Loading ───────────────────────────────────────────
 
     def _load_server_config(self) -> MCPServerConfig:
-        """Lädt die MCP-Server-Konfiguration.
+        """Laedt die MCP-Server-Konfiguration.
 
-        Prüft zuerst die Jarvis-Config, dann die MCP-Config-YAML.
+        Prueft zuerst die Jarvis-Config, dann die MCP-Config-YAML.
         Default: DISABLED.
         """
         import yaml
@@ -426,7 +426,7 @@ class MCPBridge:
         return await self._server.handle_http_request(body, auth_token=token)
 
     def get_agent_card(self) -> dict[str, Any]:
-        """Gibt die Agent Card zurück (für /.well-known/agent.json)."""
+        """Gibt die Agent Card zurueck (fuer /.well-known/agent.json)."""
         if self._discovery:
             return self._discovery.get_card()
         return {"error": "Discovery not initialized"}

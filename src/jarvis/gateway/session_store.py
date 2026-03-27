@@ -1,11 +1,11 @@
 """Session Store · SQLite-basierte Session-Persistenz. [B§9.1]
 
-Sessions überleben Gateway-Neustarts. Speichert SessionContext
+Sessions ueberleben Gateway-Neustarts. Speichert SessionContext
 und Working-Memory-Chat-History in SQLite.
 
 Tabellen:
   sessions      -- SessionContext-Felder
-  chat_history   -- Messages pro Session (für Working Memory)
+  chat_history   -- Messages pro Session (fuer Working Memory)
 """
 
 from __future__ import annotations
@@ -161,7 +161,7 @@ class SessionStore:
         user_id: str,
         agent_id: str = "jarvis",
     ) -> SessionContext | None:
-        """Lädt die letzte aktive Session für Channel+User+Agent."""
+        """Laedt die letzte aktive Session fuer Channel+User+Agent."""
         row = self.conn.execute(
             """
             SELECT * FROM sessions
@@ -210,7 +210,7 @@ class SessionStore:
     ) -> int:
         """Speichert die Chat-History einer Session.
 
-        Löscht vorherige History und schreibt alles neu
+        Loescht vorherige History und schreibt alles neu
         (einfach + idempotent).
 
         Only saves user and assistant messages — system messages
@@ -253,7 +253,7 @@ class SessionStore:
         session_id: str,
         limit: int = 50,
     ) -> list[Message]:
-        """Lädt die Chat-History einer Session.
+        """Laedt die Chat-History einer Session.
 
         Args:
             session_id: Session-ID
@@ -322,7 +322,7 @@ class SessionStore:
         return row["cnt"] if row else 0
 
     def cleanup_old_sessions(self, max_age_days: int = 30) -> int:
-        """Deaktiviert Sessions die älter als max_age_days sind.
+        """Deaktiviert Sessions die aelter als max_age_days sind.
 
         Returns:
             Anzahl deaktivierter Sessions.
@@ -391,7 +391,7 @@ class SessionStore:
         session_id: str,
         limit: int = 100,
     ) -> list[dict[str, str | float]]:
-        """Lädt Chat-Messages für eine Session als einfache Dicts.
+        """Laedt Chat-Messages fuer eine Session als einfache Dicts.
 
         Only returns user and assistant messages — system messages
         are filtered out even if they were persisted by older code.
@@ -420,7 +420,7 @@ class SessionStore:
         ]
 
     def update_session_title(self, session_id: str, title: str) -> bool:
-        """Setzt einen Display-Titel für eine Session.
+        """Setzt einen Display-Titel fuer eine Session.
 
         Returns:
             True wenn eine Zeile aktualisiert wurde.
@@ -433,7 +433,7 @@ class SessionStore:
         return cursor.rowcount > 0
 
     def update_session_folder(self, session_id: str, folder: str) -> bool:
-        """Setzt den Ordner für eine Session.
+        """Setzt den Ordner fuer eine Session.
 
         Returns:
             True wenn eine Zeile aktualisiert wurde.
@@ -450,7 +450,7 @@ class SessionStore:
         channel: str = "webui",
         user_id: str = "web_user",
     ) -> list[str]:
-        """Gibt alle eindeutigen Ordnernamen für einen Channel/User zurück.
+        """Gibt alle eindeutigen Ordnernamen fuer einen Channel/User zurueck.
 
         Returns:
             Sortierte Liste von Ordnernamen (ohne Leerstring).
@@ -611,7 +611,7 @@ class SessionStore:
         self.conn.commit()
 
     def load_channel_mapping(self, channel: str, key: str) -> str | None:
-        """Lädt ein einzelnes Channel-Mapping.
+        """Laedt ein einzelnes Channel-Mapping.
 
         Returns:
             Mapping-Value oder None wenn nicht vorhanden.
@@ -623,7 +623,7 @@ class SessionStore:
         return row["mapping_value"] if row else None
 
     def load_all_channel_mappings(self, channel: str) -> dict[str, str]:
-        """Lädt alle Mappings für einen Channel-Namespace.
+        """Laedt alle Mappings fuer einen Channel-Namespace.
 
         Returns:
             Dict von key → value.
@@ -635,10 +635,10 @@ class SessionStore:
         return {row["mapping_key"]: row["mapping_value"] for row in rows}
 
     def cleanup_channel_mappings(self, max_age_days: int = 30) -> int:
-        """Löscht veraltete Channel-Mappings.
+        """Loescht veraltete Channel-Mappings.
 
         Returns:
-            Anzahl gelöschter Einträge.
+            Anzahl geloeschter Eintraege.
         """
         cutoff = datetime.now(tz=UTC).timestamp() - (max_age_days * 86400)
         cursor = self.conn.execute(
@@ -700,7 +700,7 @@ class SessionStore:
         }
 
     def close(self) -> None:
-        """Schließt die DB-Verbindung."""
+        """Schliesst die DB-Verbindung."""
         if self._conn:
             self._conn.close()
             self._conn = None

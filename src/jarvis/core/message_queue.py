@@ -130,8 +130,8 @@ class DurableMessageQueue:
     """SQLite-based persistent message queue with priorities, retry and DLQ.
 
     Verwendet WAL-Modus und check_same_thread=False (gleiche Muster wie
-    session_store.py). Alle öffentlichen Methoden sind async, da sie
-    via asyncio.to_thread ausgeführt werden, um den Event-Loop nicht
+    session_store.py). Alle oeffentlichen Methoden sind async, da sie
+    via asyncio.to_thread ausgefuehrt werden, um den Event-Loop nicht
     zu blockieren.
     """
 
@@ -295,7 +295,7 @@ class DurableMessageQueue:
     async def fail(self, message_id: str, error: str) -> None:
         """Markiert eine Nachricht als fehlgeschlagen.
 
-        Wenn noch Retries übrig sind, wird die Nachricht wieder auf 'pending'
+        Wenn noch Retries uebrig sind, wird die Nachricht wieder auf 'pending'
         gesetzt. Ansonsten wird sie in die Dead-Letter-Queue verschoben
         (status = 'dead').
         """

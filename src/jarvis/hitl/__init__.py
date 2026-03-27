@@ -5,7 +5,7 @@ Professionelle HITL-Integration auf Graph-Ebene:
   - Multi-Approval, Eskalation, Timeout-Handling
   - Gate-Nodes mit bedingtem Human-Review
   - Multi-Channel-Notifications (In-App, Webhook, Callback)
-  - Selection/Edit-Nodes für strukturierte menschliche Eingabe
+  - Selection/Edit-Nodes fuer strukturierte menschliche Eingabe
 
 Usage:
     from jarvis.hitl import ApprovalManager, create_approval_node, HITLConfig

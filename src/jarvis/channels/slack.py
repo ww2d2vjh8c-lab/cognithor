@@ -1,7 +1,7 @@
-"""Slack-Channel: Bidirektionale Kommunikation über Slack.
+"""Slack-Channel: Bidirektionale Kommunikation ueber Slack.
 
-Nutzt Slack Socket Mode für eingehende Nachrichten (kein HTTP-Server nötig)
-und Web-API für ausgehende Nachrichten. Unterstützt:
+Nutzt Slack Socket Mode fuer eingehende Nachrichten (kein HTTP-Server noetig)
+und Web-API fuer ausgehende Nachrichten. Unterstuetzt:
   - Eingehende Nachrichten (message Event via Socket Mode)
   - Ausgehende Nachrichten (chat.postMessage)
   - Interaktive Approvals (Block Kit Buttons)
@@ -10,10 +10,10 @@ und Web-API für ausgehende Nachrichten. Unterstützt:
 
 Konfiguration:
   - JARVIS_SLACK_BOT_TOKEN: Bot-Token (xoxb-...)
-  - JARVIS_SLACK_APP_TOKEN: App-Token für Socket Mode (xapp-...)
-  - JARVIS_SLACK_CHANNEL: Standard-Kanal für Benachrichtigungen
+  - JARVIS_SLACK_APP_TOKEN: App-Token fuer Socket Mode (xapp-...)
+  - JARVIS_SLACK_CHANNEL: Standard-Kanal fuer Benachrichtigungen
 
-Abhängigkeiten:
+Abhaengigkeiten:
   pip install slack_sdk slack_bolt
 
 Fallback: Ohne App-Token arbeitet der Channel wie bisher (nur senden).
@@ -41,10 +41,10 @@ logger = logging.getLogger(__name__)
 
 
 class SlackChannel(Channel):
-    """Bidirektionale Slack-Integration für Jarvis.
+    """Bidirektionale Slack-Integration fuer Jarvis.
 
-    Empfängt Nachrichten via Socket Mode, sendet via Web-API,
-    und unterstützt interaktive Approvals über Block Kit Buttons.
+    Empfaengt Nachrichten via Socket Mode, sendet via Web-API,
+    und unterstuetzt interaktive Approvals ueber Block Kit Buttons.
     Ohne App-Token: reiner Send-Only-Modus (backward-compatible).
     """
 
@@ -74,12 +74,12 @@ class SlackChannel(Channel):
 
     @property
     def token(self) -> str:
-        """Bot-Token (entschlüsselt bei Zugriff)."""
+        """Bot-Token (entschluesselt bei Zugriff)."""
         return self._token_store.retrieve("slack_bot_token")
 
     @property
     def app_token(self) -> str:
-        """App-Token für Socket Mode (entschlüsselt bei Zugriff)."""
+        """App-Token fuer Socket Mode (entschluesselt bei Zugriff)."""
         if self._has_app_token:
             return self._token_store.retrieve("slack_app_token")
         return ""
@@ -129,7 +129,7 @@ class SlackChannel(Channel):
         )
 
     async def _start_socket_mode(self) -> None:
-        """Startet Socket Mode für eingehende Events + interaktive Buttons."""
+        """Startet Socket Mode fuer eingehende Events + interaktive Buttons."""
         try:
             from slack_bolt.adapter.socket_mode.async_handler import (  # type: ignore[import-untyped]
                 AsyncSocketModeHandler,
@@ -335,7 +335,7 @@ class SlackChannel(Channel):
         card: AdaptiveCard,
         channel: str = "",
     ) -> None:
-        """Sendet eine plattform-übergreifende AdaptiveCard als Slack-Nachricht."""
+        """Sendet eine plattform-uebergreifende AdaptiveCard als Slack-Nachricht."""
         if not self._client:
             return
 
@@ -380,7 +380,7 @@ class SlackChannel(Channel):
     ) -> bool:
         """Fragt den User per Block Kit Buttons um Erlaubnis.
 
-        Falls nicht bidirektional: gibt False zurück (wie bisher).
+        Falls nicht bidirektional: gibt False zurueck (wie bisher).
         """
         if not self._bidirectional or not self._client:
             logger.warning("Slack: Approval nicht möglich (kein Socket Mode)")

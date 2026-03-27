@@ -1,9 +1,9 @@
 """TTLDict — Generisches Dict mit Time-To-Live und LRU-Eviction.
 
-Für Channel-Dicts die sonst unbegrenzt wachsen (Session-Maps, Typing-Tasks, etc.).
-Sync-only — kein asyncio.Lock nötig, da dict-ops nicht yielden.
+Fuer Channel-Dicts die sonst unbegrenzt wachsen (Session-Maps, Typing-Tasks, etc.).
+Sync-only — kein asyncio.Lock noetig, da dict-ops nicht yielden.
 
-Referenz: Stabilitäts-Verbesserung §5 (Memory-Begrenzung)
+Referenz: Stabilitaets-Verbesserung §5 (Memory-Begrenzung)
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ class TTLDict[KT, VT]:
     """Dict mit TTL-Ablauf und LRU-Eviction.
 
     Args:
-        max_size: Maximale Anzahl Einträge (LRU-Eviction bei Überschreitung).
+        max_size: Maximale Anzahl Eintraege (LRU-Eviction bei Ueberschreitung).
         ttl_seconds: Standard-TTL in Sekunden.
         cleanup_interval: Sekunden zwischen periodischen Sweeps (Default: 60).
     """
@@ -78,7 +78,7 @@ class TTLDict[KT, VT]:
         self._maybe_cleanup(now)
 
     def get(self, key: KT, default: VT | None = None) -> VT | None:
-        """Gibt den Wert zurück oder default wenn abgelaufen/nicht vorhanden."""
+        """Gibt den Wert zurueck oder default wenn abgelaufen/nicht vorhanden."""
         now = time.monotonic()
         self._maybe_cleanup(now)
 
@@ -96,7 +96,7 @@ class TTLDict[KT, VT]:
         return entry.value
 
     def pop(self, key: KT, *args: VT) -> VT:
-        """Entfernt und gibt den Wert zurück. Wie dict.pop()."""
+        """Entfernt und gibt den Wert zurueck. Wie dict.pop()."""
         entry = self._data.pop(key, None)
         if entry is None:
             if args:
@@ -105,10 +105,10 @@ class TTLDict[KT, VT]:
         return entry.value
 
     def setdefault(self, key: KT, default: VT | None = None) -> VT | None:
-        """Gibt den Wert zurück wenn vorhanden, sonst setzt default und gibt ihn zurück.
+        """Gibt den Wert zurueck wenn vorhanden, sonst setzt default und gibt ihn zurueck.
 
-        Verhält sich wie dict.setdefault(): fehlender Key mit default=None
-        speichert und gibt None zurück (kein KeyError).
+        Verhaelt sich wie dict.setdefault(): fehlender Key mit default=None
+        speichert und gibt None zurueck (kein KeyError).
         """
         now = time.monotonic()
         self._maybe_cleanup(now)
@@ -127,21 +127,21 @@ class TTLDict[KT, VT]:
         return default
 
     def clear(self) -> None:
-        """Entfernt alle Einträge."""
+        """Entfernt alle Eintraege."""
         self._data.clear()
 
     def keys(self) -> list[KT]:
-        """Gibt nicht-abgelaufene Keys zurück."""
+        """Gibt nicht-abgelaufene Keys zurueck."""
         self._purge_expired()
         return list(self._data.keys())
 
     def values(self) -> list[VT]:
-        """Gibt nicht-abgelaufene Values zurück."""
+        """Gibt nicht-abgelaufene Values zurueck."""
         self._purge_expired()
         return [e.value for e in self._data.values()]
 
     def items(self) -> list[tuple[KT, VT]]:
-        """Gibt nicht-abgelaufene (key, value)-Paare zurück."""
+        """Gibt nicht-abgelaufene (key, value)-Paare zurueck."""
         self._purge_expired()
         return [(k, e.value) for k, e in self._data.items()]
 
@@ -217,25 +217,25 @@ class TTLDict[KT, VT]:
     # ------------------------------------------------------------------
 
     def _maybe_cleanup(self, now: float) -> None:
-        """Periodischer Sweep abgelaufener Einträge."""
+        """Periodischer Sweep abgelaufener Eintraege."""
         if now - self._last_cleanup < self._cleanup_interval:
             return
         self._last_cleanup = now
         self._purge_expired()
 
     def purge_expired(self) -> int:
-        """Entfernt alle abgelaufenen Einträge (public API).
+        """Entfernt alle abgelaufenen Eintraege (public API).
 
         Returns:
-            Anzahl entfernter Einträge.
+            Anzahl entfernter Eintraege.
         """
         return self._purge_expired()
 
     def _purge_expired(self) -> int:
-        """Entfernt alle abgelaufenen Einträge.
+        """Entfernt alle abgelaufenen Eintraege.
 
         Returns:
-            Anzahl entfernter Einträge.
+            Anzahl entfernter Eintraege.
         """
         now = time.monotonic()
         expired_keys = [k for k, e in self._data.items() if now >= e.expires_at]

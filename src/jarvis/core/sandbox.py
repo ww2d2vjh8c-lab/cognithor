@@ -344,8 +344,8 @@ class FirejailSandbox:
 class WindowsJobObjectSandbox:
     """Windows Job Object Sandbox -- Windows-native Prozess-Isolation.
 
-    Nutzt Win32 Job Objects für:
-    - Memory-Limit: Beschränkt den Arbeitsspeicher pro Prozess
+    Nutzt Win32 Job Objects fuer:
+    - Memory-Limit: Beschraenkt den Arbeitsspeicher pro Prozess
     - CPU-Zeit-Limit: Begrenzt CPU-Nutzung
     - Prozess-Limit: Maximale Anzahl aktiver Prozesse
     - Kill-on-Close: Alle Prozesse werden beendet wenn der Job geschlossen wird
@@ -358,7 +358,7 @@ class WindowsJobObjectSandbox:
 
     @staticmethod
     def is_available() -> bool:
-        """Prüft ob Windows Job Objects verfügbar sind."""
+        """Prueft ob Windows Job Objects verfuegbar sind."""
         return sys.platform == "win32"
 
     async def execute(
@@ -370,7 +370,7 @@ class WindowsJobObjectSandbox:
         max_processes: int = 64,
         max_cpu_seconds: int = 10,
     ) -> SandboxResult:
-        """Führt einen Befehl mit Windows Job Object Isolation aus.
+        """Fuehrt einen Befehl mit Windows Job Object Isolation aus.
 
         Args:
             command: Shell-Befehl.
@@ -381,7 +381,7 @@ class WindowsJobObjectSandbox:
             max_cpu_seconds: CPU-Zeit-Limit in Sekunden.
 
         Returns:
-            SandboxResult mit Ausführungsergebnis.
+            SandboxResult mit Ausfuehrungsergebnis.
         """
         import ctypes
 
@@ -531,7 +531,7 @@ class WindowsJobObjectSandbox:
 
 
 class SandboxExecutor:
-    """Führt Befehle in der sichersten verfügbaren Sandbox aus.
+    """Fuehrt Befehle in der sichersten verfuegbaren Sandbox aus.
 
     Automatisches Fallback:
         bwrap → firejail → bare (kein Sandbox)
@@ -555,7 +555,7 @@ class SandboxExecutor:
         self._detect_sandbox()
 
     def _detect_sandbox(self) -> None:
-        """Ermittelt das beste verfügbare Sandbox-Level."""
+        """Ermittelt das beste verfuegbare Sandbox-Level."""
         preferred = self._config.preferred_level
 
         if preferred == SandboxLevel.BWRAP and BwrapSandbox.is_available():
@@ -618,7 +618,7 @@ class SandboxExecutor:
         max_memory_mb: int | None = None,
         max_processes: int | None = None,
     ) -> SandboxResult:
-        """Führt einen Befehl in der Sandbox aus.
+        """Fuehrt einen Befehl in der Sandbox aus.
 
         Args:
             command: Shell-Befehl.
@@ -685,7 +685,7 @@ class SandboxExecutor:
         timeout: int,
         level: SandboxLevel,
     ) -> SandboxResult:
-        """Führt einen gesandboxten Befehl aus."""
+        """Fuehrt einen gesandboxten Befehl aus."""
         log.info(
             "sandbox_exec_start",
             level=level.value,
@@ -764,7 +764,7 @@ class SandboxExecutor:
         max_memory_mb: int,
         max_processes: int,
     ) -> SandboxResult:
-        """Führt Befehl mit Windows Job Object Isolation aus.
+        """Fuehrt Befehl mit Windows Job Object Isolation aus.
 
         Args:
             command: Shell-Befehl.
@@ -799,7 +799,7 @@ class SandboxExecutor:
         cwd: str,
         timeout: int,
     ) -> SandboxResult:
-        """Bare-Ausführung ohne Sandbox (Fallback)."""
+        """Bare-Ausfuehrung ohne Sandbox (Fallback)."""
         log.warning("bare_exec_no_sandbox", command=command[:200], cwd=cwd)
 
         env = _build_sandbox_env(working_dir=cwd)
@@ -858,7 +858,7 @@ class SandboxExecutor:
         stdout_bytes: bytes,
         stderr_bytes: bytes,
     ) -> tuple[str, str, bool]:
-        """Decodiert und beschränkt Output-Größe."""
+        """Decodiert und beschraenkt Output-Groesse."""
 
         def decode(data: bytes) -> str:
             if not data:

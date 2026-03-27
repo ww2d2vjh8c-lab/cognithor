@@ -1,10 +1,10 @@
-"""Interaktive UI-Komponenten für Slack und Discord.
+"""Interaktive UI-Komponenten fuer Slack und Discord.
 
 Erweitert die Sende-Only-Channels um:
   - SlackMessageBuilder: Block Kit Rich Messages, Modals, Forms
   - DiscordMessageBuilder: Embeds, Buttons, Select-Menus
   - ProgressTracker: Fortschritts-Updates in Echtzeit
-  - AdaptiveCards: Plattform-übergreifende strukturierte Nachrichten
+  - AdaptiveCards: Plattform-uebergreifende strukturierte Nachrichten
 
 Bibel-Referenz: §9 (Gateway & Channels)
 """
@@ -139,7 +139,7 @@ class FormField:
 class SlackMessageBuilder:
     """Baut Slack Block Kit Nachrichten.
 
-    Unterstützt:
+    Unterstuetzt:
     - Rich Text mit Markdown
     - Buttons und Actions
     - Sections mit Feldern
@@ -157,7 +157,7 @@ class SlackMessageBuilder:
         return self
 
     def section(self, text: str, *, accessory: dict[str, Any] | None = None) -> SlackMessageBuilder:
-        """Fügt eine Markdown-Section hinzu."""
+        """Fuegt eine Markdown-Section hinzu."""
         block: dict[str, Any] = {
             "type": "section",
             "text": {"type": "mrkdwn", "text": text},
@@ -168,7 +168,7 @@ class SlackMessageBuilder:
         return self
 
     def fields(self, field_pairs: list[tuple[str, str]]) -> SlackMessageBuilder:
-        """Fügt eine Section mit Feldern hinzu (Key-Value-Paare)."""
+        """Fuegt eine Section mit Feldern hinzu (Key-Value-Paare)."""
         fields = []
         for label, value in field_pairs:
             fields.append({"type": "mrkdwn", "text": f"*{label}*\n{value}"})
@@ -189,7 +189,7 @@ class SlackMessageBuilder:
         return self
 
     def context(self, elements: list[str]) -> SlackMessageBuilder:
-        """Fügt einen Context-Block hinzu (kleine Schrift)."""
+        """Fuegt einen Context-Block hinzu (kleine Schrift)."""
         self._blocks.append(
             {
                 "type": "context",
@@ -206,7 +206,7 @@ class SlackMessageBuilder:
         style: ButtonStyle = ButtonStyle.DEFAULT,
         url: str = "",
     ) -> SlackMessageBuilder:
-        """Fügt einen Standalone-Button hinzu."""
+        """Fuegt einen Standalone-Button hinzu."""
         btn: dict[str, Any] = {
             "type": "button",
             "text": {"type": "plain_text", "text": text},
@@ -237,7 +237,7 @@ class SlackMessageBuilder:
         return self
 
     def progress_bar(self, percent: int, label: str = "") -> SlackMessageBuilder:
-        """Simulierte Fortschrittsanzeige mit Emoji-Blöcken."""
+        """Simulierte Fortschrittsanzeige mit Emoji-Bloecken."""
         filled = percent // 10
         empty = 10 - filled
         bar = "█" * filled + "░" * empty
@@ -289,7 +289,7 @@ class SlackMessageBuilder:
 
 
 class DiscordColor(Enum):
-    """Standard-Farben für Discord-Embeds."""
+    """Standard-Farben fuer Discord-Embeds."""
 
     SUCCESS = 0x2ECC71
     WARNING = 0xF39C12
@@ -301,7 +301,7 @@ class DiscordColor(Enum):
 class DiscordMessageBuilder:
     """Baut Discord Rich Messages mit Embeds und Components.
 
-    Unterstützt:
+    Unterstuetzt:
     - Embeds (Titel, Beschreibung, Felder, Footer, Thumbnail)
     - Buttons mit Styles
     - Select-Menus
@@ -316,7 +316,7 @@ class DiscordMessageBuilder:
         self._current_embed: dict[str, Any] | None = None
 
     def content(self, text: str) -> DiscordMessageBuilder:
-        """Setzt den Text-Content (außerhalb Embed)."""
+        """Setzt den Text-Content (ausserhalb Embed)."""
         self._content = text
         return self
 
@@ -346,7 +346,7 @@ class DiscordMessageBuilder:
         value: str,
         inline: bool = True,
     ) -> DiscordMessageBuilder:
-        """Fügt ein Feld zum aktuellen Embed hinzu."""
+        """Fuegt ein Feld zum aktuellen Embed hinzu."""
         if not self._current_embed:
             self.embed()
         assert self._current_embed is not None
@@ -410,7 +410,7 @@ class DiscordMessageBuilder:
         disabled: bool = False,
         url: str = "",
     ) -> DiscordMessageBuilder:
-        """Fügt einen Button hinzu."""
+        """Fuegt einen Button hinzu."""
         STYLE_MAP = {
             ButtonStyle.PRIMARY: 1,
             ButtonStyle.DANGER: 4,
@@ -442,7 +442,7 @@ class DiscordMessageBuilder:
         min_values: int = 1,
         max_values: int = 1,
     ) -> DiscordMessageBuilder:
-        """Fügt ein Select-Menu hinzu."""
+        """Fuegt ein Select-Menu hinzu."""
         menu: dict[str, Any] = {
             "type": 3,  # STRING_SELECT
             "custom_id": custom_id,
@@ -525,7 +525,7 @@ class DiscordMessageBuilder:
             self._current_embed = None
 
     def _add_to_action_row(self, component: dict[str, Any]) -> None:
-        """Fügt Component in letzte Action-Row ein oder erstellt neue."""
+        """Fuegt Component in letzte Action-Row ein oder erstellt neue."""
         if (
             self._components
             and self._components[-1].get("type") == 1
@@ -570,9 +570,9 @@ class ProgressStep:
 
 
 class ProgressTracker:
-    """Multi-Step Progress-Tracker für UI-Channels.
+    """Multi-Step Progress-Tracker fuer UI-Channels.
 
-    Erstellt formatierte Fortschritts-Nachrichten für
+    Erstellt formatierte Fortschritts-Nachrichten fuer
     Slack (Block Kit) und Discord (Embeds).
     """
 
@@ -583,7 +583,7 @@ class ProgressTracker:
         self._started_at = time.time()
 
     def start_step(self, index: int | None = None) -> ProgressStep | None:
-        """Startet den nächsten (oder angegebenen) Schritt."""
+        """Startet den naechsten (oder angegebenen) Schritt."""
         idx = index if index is not None else self._current_index + 1
         if 0 <= idx < len(self._steps):
             self._current_index = idx
@@ -594,7 +594,7 @@ class ProgressTracker:
         return None
 
     def complete_step(self, index: int | None = None, message: str = "") -> ProgressStep | None:
-        """Schließt aktuellen Schritt ab."""
+        """Schliesst aktuellen Schritt ab."""
         idx = index if index is not None else self._current_index
         if 0 <= idx < len(self._steps):
             step = self._steps[idx]
@@ -638,7 +638,7 @@ class ProgressTracker:
         return list(self._steps)
 
     def to_slack_blocks(self) -> list[dict[str, Any]]:
-        """Generiert Slack Block Kit Blocks für Fortschritts-Anzeige."""
+        """Generiert Slack Block Kit Blocks fuer Fortschritts-Anzeige."""
         builder = SlackMessageBuilder()
         builder.header(self._title)
 
@@ -654,7 +654,7 @@ class ProgressTracker:
         return builder.build()["blocks"]
 
     def to_discord_embed(self) -> dict[str, Any]:
-        """Generiert Discord Embed für Fortschritts-Anzeige."""
+        """Generiert Discord Embed fuer Fortschritts-Anzeige."""
         color = (
             DiscordColor.SUCCESS
             if self.is_complete and not self.has_failures
@@ -685,7 +685,7 @@ class ProgressTracker:
 
 
 class AdaptiveCard:
-    """Plattform-übergreifende Rich-Message.
+    """Plattform-uebergreifende Rich-Message.
 
     Kann in Slack Block Kit und Discord Embeds gerendert werden.
     Abstrahiert die Unterschiede zwischen den Plattformen.
@@ -844,7 +844,7 @@ class SlashCommandRegistry:
         """Dispatcht einen Slash-Command an seinen Handler.
 
         Returns:
-            Response-Dict für den Channel.
+            Response-Dict fuer den Channel.
         """
         handler = self._handlers.get(name)
         if not handler:
@@ -994,7 +994,7 @@ class SignatureVerifier:
 
 @dataclass
 class InteractionState:
-    """Temporärer State für Button-Callbacks und Multi-Step-Workflows."""
+    """Temporaerer State fuer Button-Callbacks und Multi-Step-Workflows."""
 
     interaction_id: str
     user_id: str
@@ -1007,7 +1007,7 @@ class InteractionState:
 
 
 class InteractionStateStore:
-    """Persistiert temporäre Interaction-States.
+    """Persistiert temporaere Interaction-States.
 
     Stellt sicher dass nach einem Button-Klick der richtige
     Kontext wiederhergestellt werden kann.
@@ -1079,10 +1079,10 @@ class InteractionStateStore:
 
 
 class FallbackRenderer:
-    """Rendert interaktive Inhalte für Nicht-Interaktive-Clients.
+    """Rendert interaktive Inhalte fuer Nicht-Interaktive-Clients.
 
     Wandelt Buttons, Formulare und Cards in reinen Text um,
-    z.B. für E-Mail-Benachrichtigungen oder einfache Chat-Clients.
+    z.B. fuer E-Mail-Benachrichtigungen oder einfache Chat-Clients.
     """
 
     @staticmethod

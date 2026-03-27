@@ -1,18 +1,18 @@
 """Enhanced Retrieval: Advanced RAG techniques on top of hybrid search.
 
 Baut auf der bestehenden HybridSearch (BM25+Vektor+Graph) auf und
-ergänzt fünf wesentliche Fähigkeiten:
+ergaenzt fuenf wesentliche Faehigkeiten:
 
 1. Query-Dekomposition: Komplexe Fragen in Teilfragen zerlegen
 1. Reciprocal Rank Fusion (RRF): Multi-Query-Ergebnisse intelligent mergen
-1. Corrective RAG: Relevanz-Prüfung mit automatischem Re-Retrieval
-1. Frequenz-Gewichtung: Oft referenzierte Chunks höher ranken
+1. Corrective RAG: Relevanz-Pruefung mit automatischem Re-Retrieval
+1. Frequenz-Gewichtung: Oft referenzierte Chunks hoeher ranken
 1. Episodenkompression: Alte Episoden zu Zusammenfassungen verdichten
 
 Architektur:
 User-Query → QueryDecomposer → [sub_query_1, sub_query_2, …]
 → HybridSearch × N Queries
-→ RRF-Merge → Vorläufige Ergebnisse
+→ RRF-Merge → Vorlaeufige Ergebnisse
 → CorrectionStage → Relevanz-Check
 → FrequencyBoost → Finale Ergebnisse
 
@@ -414,12 +414,12 @@ def _extract_german_entities(text: str) -> set[str]:
     """Extrahiert Named Entities aus deutschem Text.
 
     Strategie:
-      1. Alle großgeschriebenen Wörter als Kandidaten
-      2. Häufige Alltagsnomen herausfiltern
-      3. Mehrwort-Entitäten bevorzugen ("Deutsche Bank", "Rotes Kreuz")
-      4. Am Satzanfang stehende Wörter ignorieren (dort ist
-         Großschreibung grammatikalisch bedingt, nicht semantisch)
-      5. Artikel und Pronomen aus Mehrwort-Entitäten entfernen
+      1. Alle grossgeschriebenen Woerter als Kandidaten
+      2. Haeufige Alltagsnomen herausfiltern
+      3. Mehrwort-Entitaeten bevorzugen ("Deutsche Bank", "Rotes Kreuz")
+      4. Am Satzanfang stehende Woerter ignorieren (dort ist
+         Grossschreibung grammatikalisch bedingt, nicht semantisch)
+      5. Artikel und Pronomen aus Mehrwort-Entitaeten entfernen
       6. Satzzeichen an Wortenden bereinigen ("Berlin." -> "Berlin")
 
     Returns:
@@ -478,9 +478,9 @@ def _extract_german_entities(text: str) -> set[str]:
 
 
 def _count_german_entities_in_text(text: str) -> int:
-    """Zählt Named Entities in einem Text (für Scoring).
+    """Zaehlt Named Entities in einem Text (fuer Scoring).
 
-    Schnellere Variante von _extract_german_entities die nur zählt
+    Schnellere Variante von _extract_german_entities die nur zaehlt
     statt eine Menge aufzubauen.
     """
     count = 0
@@ -518,14 +518,14 @@ class QueryDecomposer:
     """Zerlegt komplexe Fragen in mehrere Teilfragen.
 
     Zwei Modi:
-      - Rule-based: Schnell, deterministisch, kein LLM nötig
-      - LLM-based: Bessere Qualität für komplexe Fragen
+      - Rule-based: Schnell, deterministisch, kein LLM noetig
+      - LLM-based: Bessere Qualitaet fuer komplexe Fragen
 
     Rule-based Strategien:
       - Konjunktionen splitten ("X und Y" -> "X", "Y")
       - Vergleiche erkennen ("Unterschied zwischen A und B" -> "A", "B")
       - Aspekte extrahieren ("Vorteile und Nachteile von X" -> "Vorteile X", "Nachteile X")
-      - Zeitliche Aspekte ("X früher vs heute" -> "X historisch", "X aktuell")
+      - Zeitliche Aspekte ("X frueher vs heute" -> "X historisch", "X aktuell")
     """
 
     # Conjunction patterns
@@ -552,7 +552,7 @@ class QueryDecomposer:
 
     def __init__(self, llm_fn: Callable[..., Any] | None = None) -> None:
         """Args:
-        llm_fn: Optionale async LLM-Funktion für bessere Dekomposition.
+        llm_fn: Optionale async LLM-Funktion fuer bessere Dekomposition.
         """
         self._llm_fn = llm_fn
 
@@ -560,7 +560,7 @@ class QueryDecomposer:
         """Zerlegt eine Query in Teilfragen (rule-based).
 
         Args:
-            query: Ursprüngliche Nutzerfrage.
+            query: Urspruengliche Nutzerfrage.
 
         Returns:
             DecomposedQuery mit original + sub_queries.
@@ -613,9 +613,9 @@ class QueryDecomposer:
         )
 
     async def decompose_with_llm(self, query: str) -> DecomposedQuery:
-        """Zerlegt via LLM (bessere Qualität, langsamer).
+        """Zerlegt via LLM (bessere Qualitaet, langsamer).
 
-        Falls kein LLM verfügbar, fällt auf rule-based zurück.
+        Falls kein LLM verfuegbar, faellt auf rule-based zurueck.
         """
         if self._llm_fn is None:
             return self.decompose(query)
@@ -664,7 +664,7 @@ def reciprocal_rank_fusion(
 
     Args:
         result_lists: Liste von Ergebnislisten (je eine pro Sub-Query).
-        k: RRF-Konstante (höher = weniger Einfluss der Rankposition).
+        k: RRF-Konstante (hoeher = weniger Einfluss der Rankposition).
         top_n: Max Ergebnisse (None = alle).
 
     Returns:
@@ -716,7 +716,7 @@ def reciprocal_rank_fusion(
 
 @dataclass
 class RelevanceVerdict:
-    """Ergebnis der Relevanz-Prüfung."""
+    """Ergebnis der Relevanz-Pruefung."""
 
     relevant_results: list[MemorySearchResult]
     irrelevant_results: list[MemorySearchResult]
@@ -725,7 +725,7 @@ class RelevanceVerdict:
 
 
 class CorrectiveRAG:
-    """Prüft Retrieval-Ergebnisse auf Relevanz und triggert Re-Retrieval.
+    """Prueft Retrieval-Ergebnisse auf Relevanz und triggert Re-Retrieval.
 
     Zwei Modi:
       - Heuristic: Schnell, basiert auf Score-Schwellwerten + Overlap
@@ -735,7 +735,7 @@ class CorrectiveRAG:
       1. Ergebnisse erhalten
       2. Relevanz bewerten (heuristic oder LLM)
       3. Wenn <min_relevant: Alternative Query generieren -> Re-Retrieval
-      4. Ergebnisse zusammenführen
+      4. Ergebnisse zusammenfuehren
     """
 
     def __init__(
@@ -757,9 +757,9 @@ class CorrectiveRAG:
         """Heuristische Relevanz-Bewertung.
 
         Kriterien:
-          - Score über Schwellwert
+          - Score ueber Schwellwert
           - Wort-Overlap zwischen Query und Chunk-Text
-          - Entitäts-Overlap
+          - Entitaets-Overlap
         """
         query_words = set(re.findall(r"\w+", query.lower()))
         relevant: list[MemorySearchResult] = []
@@ -801,8 +801,8 @@ class CorrectiveRAG:
 
         Strategien:
           - Synonyme/Umformulierungen
-          - Kürzere Version (nur Schlüsselwörter)
-          - Breitere Version (ohne Einschränkungen)
+          - Kuerzere Version (nur Schluesselwoerter)
+          - Breitere Version (ohne Einschraenkungen)
         """
         words = original_query.split()
         alternatives: list[str] = []
@@ -885,13 +885,13 @@ class CorrectiveRAG:
 class FrequencyTracker:
     """Trackt wie oft Chunks abgerufen werden.
 
-    Häufig referenzierte Chunks erhalten einen Boost,
+    Haeufig referenzierte Chunks erhalten einen Boost,
     weil sie vermutlich wichtiger sind.
 
     Formel: frequency_boost = 1.0 + log(1 + access_count) * weight
 
     Der logarithmische Faktor verhindert dass ein Chunk
-    durch häufigen Zugriff unverhältnismäßig dominiert.
+    durch haeufigen Zugriff unverhaeltnismaessig dominiert.
     """
 
     def __init__(self, *, frequency_weight: float = 0.1) -> None:
@@ -959,7 +959,7 @@ class FrequencyTracker:
         return self._access_counts.most_common(n)
 
     def clear(self) -> None:
-        """Setzt alle Zähler zurück."""
+        """Setzt alle Zaehler zurueck."""
         self._access_counts.clear()
 
     def stats(self) -> dict[str, Any]:
@@ -1002,19 +1002,19 @@ class EpisodicCompressor:
     """Komprimiert alte Episoden zu Zusammenfassungen.
 
     Workflow:
-      1. Episoden älter als retention_days identifizieren
-      2. In Wochen-Blöcke gruppieren
+      1. Episoden aelter als retention_days identifizieren
+      2. In Wochen-Bloecke gruppieren
       3. Pro Block: LLM-Zusammenfassung erstellen (oder heuristic)
       4. Zusammenfassung ins Semantic Memory speichern
       5. Original-Episoden optional archivieren
 
     Zwei Modi:
       - LLM-based: Hochwertige Zusammenfassungen
-      - Heuristic: Extrahiert Schlüsselsätze und Entitäten
+      - Heuristic: Extrahiert Schluesselsaetze und Entitaeten
 
     Args:
-        retention_days: Episoden älter als X Tage komprimieren.
-        llm_fn: Async-Funktion für LLM-Aufrufe.
+        retention_days: Episoden aelter als X Tage komprimieren.
+        llm_fn: Async-Funktion fuer LLM-Aufrufe.
     """
 
     def __init__(
@@ -1032,10 +1032,10 @@ class EpisodicCompressor:
         *,
         reference_date: date | None = None,
     ) -> list[date]:
-        """Identifiziert Episoden die komprimiert werden können.
+        """Identifiziert Episoden die komprimiert werden koennen.
 
         Args:
-            episode_dates: Verfügbare Episoden-Daten.
+            episode_dates: Verfuegbare Episoden-Daten.
             reference_date: Referenzdatum (default: heute).
 
         Returns:
@@ -1047,7 +1047,7 @@ class EpisodicCompressor:
         return [d for d in episode_dates if d.toordinal() <= cutoff]
 
     def group_into_weeks(self, dates: list[date]) -> list[tuple[date, date]]:
-        """Gruppiert Daten in Wochen-Blöcke.
+        """Gruppiert Daten in Wochen-Bloecke.
 
         Returns:
             Liste von (start_date, end_date) Tupeln.
@@ -1080,13 +1080,13 @@ class EpisodicCompressor:
         end_date: date,
         max_sentences: int = 5,
     ) -> CompressedEpisode:
-        """Heuristische Kompression: Extrahiert Schlüsselsätze.
+        """Heuristische Kompression: Extrahiert Schluesselsaetze.
 
         Strategie:
-          - Sätze mit Named Entities bevorzugen
-          - Längere Sätze (mehr Info) bevorzugen
+          - Saetze mit Named Entities bevorzugen
+          - Laengere Saetze (mehr Info) bevorzugen
           - Duplikate entfernen
-          - Entitäten extrahieren (Großgeschriebene Wörter)
+          - Entitaeten extrahieren (Grossgeschriebene Woerter)
         """
         all_sentences: list[str] = []
         entity_set: set[str] = set()
@@ -1152,7 +1152,7 @@ class EpisodicCompressor:
     ) -> CompressedEpisode:
         """LLM-basierte Kompression: Hochwertige Zusammenfassung.
 
-        Falls kein LLM verfügbar, fällt auf heuristic zurück.
+        Falls kein LLM verfuegbar, faellt auf heuristic zurueck.
         """
         if self._llm_fn is None or not entries:
             return self.compress_heuristic(
@@ -1201,7 +1201,7 @@ class EnhancedSearchPipeline:
         pipeline = EnhancedSearchPipeline(hybrid_search=my_search)
         results = await pipeline.search("Vergleich BU-Tarife WWK vs Allianz")
 
-    Die Pipeline führt automatisch:
+    Die Pipeline fuehrt automatisch:
       1. Query-Dekomposition (wenn query komplex genug)
       2. Mehrfach-Suche mit HybridSearch
       3. RRF-Merge der Ergebnisse
@@ -1240,7 +1240,7 @@ class EnhancedSearchPipeline:
         top_k: int = 6,
         tier_filter: MemoryTier | None = None,
     ) -> list[MemorySearchResult]:
-        """Führt die vollständige Enhanced-Search-Pipeline aus.
+        """Fuehrt die vollstaendige Enhanced-Search-Pipeline aus.
 
         Args:
             query: Nutzerfrage.

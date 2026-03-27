@@ -4,9 +4,9 @@ Jarvis wartet nicht nur auf User-Input, sondern handelt proaktiv:
   - E-Mail-Triage (neue Mails scannen, priorisieren, Zusammenfassung)
   - Tagesbriefings (morgens/abends automatisch zusammenstellen)
   - Kalender-Abgleich (bevorstehende Termine vorbereiten)
-  - To-Do-Erinnerungen (fällige Aufgaben nachfassen)
-  - Skill-Updates (neue P2P-Skills prüfen)
-  - Memory-Pflege (stale Entitäten prunen, Compressor laufen lassen)
+  - To-Do-Erinnerungen (faellige Aufgaben nachfassen)
+  - Skill-Updates (neue P2P-Skills pruefen)
+  - Memory-Pflege (stale Entitaeten prunen, Compressor laufen lassen)
 
 Architektur:
   EventSource → HeartbeatScheduler → TaskQueue → AgentRouter
@@ -15,12 +15,12 @@ Architektur:
                                                      ↓
                                                   Executor
 
-Jede proaktive Aktion durchläuft den Gatekeeper.
+Jede proaktive Aktion durchlaeuft den Gatekeeper.
 Der User kann pro EventType:
   - ENABLED/DISABLED setzen
   - Intervall konfigurieren
-  - Priorität festlegen
-  - Genehmigungsmodus (auto/ask) wählen
+  - Prioritaet festlegen
+  - Genehmigungsmodus (auto/ask) waehlen
 
 Bibel-Referenz: §7.1 (Proaktive Automation)
 """
@@ -57,7 +57,7 @@ class EventType(Enum):
 
 
 class ApprovalMode(Enum):
-    """Genehmigungsmodus für proaktive Aktionen."""
+    """Genehmigungsmodus fuer proaktive Aktionen."""
 
     AUTO = "auto"  # Automatisch ausführen (nur informieren)
     ASK = "ask"  # User um Genehmigung bitten
@@ -82,9 +82,9 @@ class TaskStatus(Enum):
 
 @dataclass
 class EventConfig:
-    """Konfiguration für einen Event-Typ.
+    """Konfiguration fuer einen Event-Typ.
 
-    Steuert Intervall, Priorität und Genehmigungsmodus.
+    Steuert Intervall, Prioritaet und Genehmigungsmodus.
     """
 
     event_type: EventType
@@ -100,7 +100,7 @@ class EventConfig:
 
     @property
     def is_in_quiet_hours(self) -> bool:
-        """Prüft ob aktuell Ruhezeit ist."""
+        """Prueft ob aktuell Ruhezeit ist."""
         if self.quiet_hours_start < 0 or self.quiet_hours_end < 0:
             return False
         hour = datetime.now(UTC).hour
@@ -146,7 +146,7 @@ class ProactiveTask:
 
     @property
     def duration_seconds(self) -> float:
-        """Dauer der Ausführung."""
+        """Dauer der Ausfuehrung."""
         if not self.started_at or not self.completed_at:
             return 0.0
         try:
@@ -164,7 +164,7 @@ class ProactiveTask:
 
 @dataclass
 class EventTrigger:
-    """Ein ausgelöstes Ereignis von einer EventSource."""
+    """Ein ausgeloestes Ereignis von einer EventSource."""
 
     event_type: EventType
     payload: dict[str, Any] = field(default_factory=dict)
@@ -175,12 +175,12 @@ class EventTrigger:
 
 
 class EventSource:
-    """Erkennt Ereignisse die proaktive Aktionen auslösen.
+    """Erkennt Ereignisse die proaktive Aktionen ausloesen.
 
-    Prüft verschiedene Quellen (simuliert für Offline-Betrieb):
+    Prueft verschiedene Quellen (simuliert fuer Offline-Betrieb):
       - E-Mail-Eingang (IMAP-Check)
-      - Kalender-Änderungen
-      - Fällige To-Dos
+      - Kalender-Aenderungen
+      - Faellige To-Dos
       - P2P-Skill-Updates
       - Zeitbasierte Trigger (Briefings)
     """
@@ -193,13 +193,13 @@ class EventSource:
         self,
         configs: dict[EventType, EventConfig],
     ) -> list[EventTrigger]:
-        """Prüft alle konfigurierten Quellen auf neue Ereignisse.
+        """Prueft alle konfigurierten Quellen auf neue Ereignisse.
 
         Args:
             configs: Aktive Event-Konfigurationen.
 
         Returns:
-            Liste ausgelöster Trigger.
+            Liste ausgeloester Trigger.
         """
         triggers: list[EventTrigger] = []
         now = time.monotonic()
@@ -232,7 +232,7 @@ class EventSource:
         self._manual_triggers.append(trigger)
 
     def reset_timer(self, event_type: EventType) -> None:
-        """Setzt den Timer für einen Event-Typ zurück."""
+        """Setzt den Timer fuer einen Event-Typ zurueck."""
         self._last_check.pop(event_type, None)
 
 
@@ -242,10 +242,10 @@ class EventSource:
 
 
 class TaskQueue:
-    """Priorisierte Queue für proaktive Tasks.
+    """Priorisierte Queue fuer proaktive Tasks.
 
-    Tasks werden nach Priorität (hoch zuerst) und Erstellzeit
-    (ältere zuerst) sortiert abgearbeitet.
+    Tasks werden nach Prioritaet (hoch zuerst) und Erstellzeit
+    (aeltere zuerst) sortiert abgearbeitet.
     """
 
     def __init__(self, max_size: int = 200) -> None:
@@ -261,14 +261,14 @@ class TaskQueue:
         return sum(1 for t in self._queue if t.status == TaskStatus.PENDING)
 
     def enqueue(self, task: ProactiveTask) -> None:
-        """Fügt einen Task hinzu."""
+        """Fuegt einen Task hinzu."""
         self._queue.append(task)
 
     def dequeue(self) -> ProactiveTask | None:
-        """Gibt den höchst-priorisierten pending Task zurück.
+        """Gibt den hoechst-priorisierten pending Task zurueck.
 
         Returns:
-            Nächster Task oder None.
+            Naechster Task oder None.
         """
         best: ProactiveTask | None = None
         _best_idx: int = -1
@@ -313,7 +313,7 @@ class TaskQueue:
         return False
 
     def skip(self, task_id: str, reason: str = "") -> bool:
-        """Markiert einen Task als übersprungen."""
+        """Markiert einen Task als uebersprungen."""
         for task in self._queue:
             if task.task_id == task_id:
                 task.status = TaskStatus.SKIPPED
@@ -373,7 +373,7 @@ TaskHandler = Callable[[ProactiveTask], Coroutine[Any, Any, str]]
 class HeartbeatScheduler:
     """Orchestriert proaktive Aufgaben.
 
-    Der Heartbeat prüft regelmäßig auf Ereignisse, erstellt
+    Der Heartbeat prueft regelmaessig auf Ereignisse, erstellt
     Tasks und delegiert sie an die registrierten Handler.
 
     Usage:
@@ -405,7 +405,7 @@ class HeartbeatScheduler:
         self._init_defaults()
 
     def _init_defaults(self) -> None:
-        """Setzt Standard-Konfigurationen für alle Event-Typen."""
+        """Setzt Standard-Konfigurationen fuer alle Event-Typen."""
         defaults = [
             EventConfig(
                 EventType.EMAIL_TRIAGE,
@@ -469,7 +469,7 @@ class HeartbeatScheduler:
             event_type: Zu konfigurierender Event.
             enabled: Aktivieren/Deaktivieren.
             interval_seconds: Intervall in Sekunden.
-            priority: Priorität (1-10).
+            priority: Prioritaet (1-10).
             approval_mode: Genehmigungsmodus.
             agent_name: Ziel-Agent.
             quiet_hours: Ruhezeiten (start_hour, end_hour).
@@ -513,7 +513,7 @@ class HeartbeatScheduler:
         event_type: EventType,
         handler: TaskHandler,
     ) -> None:
-        """Registriert einen async Handler für einen Event-Typ.
+        """Registriert einen async Handler fuer einen Event-Typ.
 
         Handler-Signatur: async def handler(task: ProactiveTask) -> str
         """
@@ -527,7 +527,7 @@ class HeartbeatScheduler:
     async def tick(self) -> list[ProactiveTask]:
         """Ein Heartbeat-Zyklus.
 
-        1. EventSource prüfen → Trigger sammeln
+        1. EventSource pruefen → Trigger sammeln
         2. Trigger → Tasks erstellen
         3. Tasks aus Queue abarbeiten
 
@@ -605,7 +605,7 @@ class HeartbeatScheduler:
     # ── Manual Triggers ─────────────────────────────────────────
 
     def trigger_now(self, event_type: EventType, **payload: Any) -> str:
-        """Löst ein Ereignis sofort aus (überspringt Timer).
+        """Loest ein Ereignis sofort aus (ueberspringt Timer).
 
         Returns:
             Task-ID.

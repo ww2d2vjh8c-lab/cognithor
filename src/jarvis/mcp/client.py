@@ -1,6 +1,6 @@
 """MCP-Client: Verbindet sich mit mehreren MCP-Servern gleichzeitig.
 
-Verantwortlich für:
+Verantwortlich fuer:
   - Start und Verwaltung aller konfigurierten MCP-Server
   - Sammeln aller Tool-Schemas aus allen Servern
   - Dispatching von Tool-Calls an den richtigen Server
@@ -128,7 +128,7 @@ class JarvisMCPClient:
     ) -> None:
         """Registriert einen eingebauten Tool-Handler (ohne MCP-Server).
 
-        Nützlich für Phase 1 wo wir MCP-Server noch nicht als
+        Nuetzlich fuer Phase 1 wo wir MCP-Server noch nicht als
         separate Prozesse starten, sondern direkt einbetten.
         """
         self._builtin_handlers[tool_name] = handler
@@ -141,7 +141,7 @@ class JarvisMCPClient:
         log.debug("builtin_tool_registered", tool=tool_name)
 
     def get_handler(self, tool_name: str) -> Any | None:
-        """Gibt den registrierten Handler für ein builtin-Tool zurück (oder None)."""
+        """Gibt den registrierten Handler fuer ein builtin-Tool zurueck (oder None)."""
         return self._builtin_handlers.get(tool_name)
 
     async def call_tool(
@@ -149,7 +149,7 @@ class JarvisMCPClient:
         name: str,
         params: dict[str, Any],
     ) -> ToolCallResult:
-        """Ruft ein Tool auf dem zuständigen MCP-Server auf.
+        """Ruft ein Tool auf dem zustaendigen MCP-Server auf.
 
         Args:
             name: Tool-Name (z.B. "read_file")
@@ -212,10 +212,10 @@ class JarvisMCPClient:
             )
 
     def get_tool_schemas(self) -> dict[str, Any]:
-        """Gibt alle verfügbaren Tool-Schemas zurück.
+        """Gibt alle verfuegbaren Tool-Schemas zurueck.
 
         Returns:
-            Dict von Tool-Name → Schema (für den Planner-Prompt).
+            Dict von Tool-Name → Schema (fuer den Planner-Prompt).
         """
         schemas = {}
         for name, info in self._tool_registry.items():
@@ -227,7 +227,7 @@ class JarvisMCPClient:
         return schemas
 
     def get_tool_list(self) -> list[str]:
-        """Gibt eine sortierte Liste aller Tool-Namen zurück."""
+        """Gibt eine sortierte Liste aller Tool-Namen zurueck."""
         return sorted(self._tool_registry.keys())
 
     @property
@@ -326,7 +326,7 @@ class JarvisMCPClient:
         """Verbindet sich mit einem stdio-basierten MCP-Server.
 
         Startet den Server als Subprocess und nutzt das MCP SDK
-        für die Kommunikation über stdin/stdout.
+        fuer die Kommunikation ueber stdin/stdout.
         """
         try:
             from mcp.client import ClientSession  # type: ignore[attr-defined]
@@ -466,7 +466,7 @@ class JarvisMCPClient:
             raise
 
     def _load_server_configs(self) -> dict[str, MCPServerConfig]:
-        """Lädt MCP-Server-Konfiguration aus YAML."""
+        """Laedt MCP-Server-Konfiguration aus YAML."""
         configs: dict[str, MCPServerConfig] = {}
 
         config_path = self._config.mcp_config_file
@@ -509,7 +509,7 @@ class JarvisMCPClient:
         uri: str,
         callback: Any,
     ) -> bool:
-        """Abonniert Änderungen an einer MCP-Ressource."""
+        """Abonniert Aenderungen an einer MCP-Ressource."""
         conn = self._servers.get(server_name)
         if not conn or not conn.session:
             log.warning("mcp_subscribe_no_connection", server=server_name)

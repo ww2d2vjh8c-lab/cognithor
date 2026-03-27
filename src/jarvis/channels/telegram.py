@@ -1,11 +1,11 @@
-"""Telegram-Channel: Kommunikation über Telegram-Bot.
+"""Telegram-Channel: Kommunikation ueber Telegram-Bot.
 
 Features:
   - User-ID-Whitelist (Sicherheit)
-  - Inline-Keyboards für Approval-Workflow
+  - Inline-Keyboards fuer Approval-Workflow
   - Voice-Messages: Automatische Transkription via Whisper
   - Foto-/Dokument-Empfang mit Beschreibung
-  - Typing-Indicator während der Verarbeitung
+  - Typing-Indicator waehrend der Verarbeitung
   - Datei-Versand (Bilder, PDFs, etc.)
   - Reconnect bei Verbindungsabbruch
   - Streaming-Simulation (lange Nachrichten in Teilen)
@@ -14,9 +14,9 @@ Features:
 
 Bibel-Referenz: §9.3 (Telegram Channel)
 
-Benötigt: pip install 'python-telegram-bot>=21.0,<22'
+Benoetigt: pip install 'python-telegram-bot>=21.0,<22'
 Konfiguration: JARVIS_TELEGRAM_TOKEN und JARVIS_TELEGRAM_ALLOWED_USERS
-Optional für Webhook: JARVIS_TELEGRAM_USE_WEBHOOK, JARVIS_TELEGRAM_WEBHOOK_URL
+Optional fuer Webhook: JARVIS_TELEGRAM_USE_WEBHOOK, JARVIS_TELEGRAM_WEBHOOK_URL
 """
 
 from __future__ import annotations
@@ -86,15 +86,15 @@ class TelegramChannel(Channel):
         Args:
             token: Telegram Bot API Token.
             allowed_users: Erlaubte Telegram-User-IDs. None = alle erlaubt.
-            workspace_dir: Verzeichnis für heruntergeladene Medien.
+            workspace_dir: Verzeichnis fuer heruntergeladene Medien.
             max_reconnect_attempts: Maximale Reconnect-Versuche.
-            session_store: Optionaler SessionStore für persistente Mappings.
+            session_store: Optionaler SessionStore fuer persistente Mappings.
             use_webhook: Webhook statt Polling verwenden.
-            webhook_url: Externe URL, die Telegram für Updates nutzt.
-            webhook_port: Lokaler Port für den Webhook-Server.
-            webhook_host: Lokaler Bind-Host für den Webhook-Server.
-            ssl_certfile: Pfad zum SSL-Zertifikat (PEM) für TLS.
-            ssl_keyfile: Pfad zum SSL-Privat-Key (PEM) für TLS.
+            webhook_url: Externe URL, die Telegram fuer Updates nutzt.
+            webhook_port: Lokaler Port fuer den Webhook-Server.
+            webhook_host: Lokaler Bind-Host fuer den Webhook-Server.
+            ssl_certfile: Pfad zum SSL-Zertifikat (PEM) fuer TLS.
+            ssl_keyfile: Pfad zum SSL-Privat-Key (PEM) fuer TLS.
         """
         self._token_store = get_token_store()
         self._token_store.store("telegram_bot_token", token)
@@ -133,7 +133,7 @@ class TelegramChannel(Channel):
 
     @property
     def token(self) -> str:
-        """Bot-API-Token (entschlüsselt bei Zugriff)."""
+        """Bot-API-Token (entschluesselt bei Zugriff)."""
         return self._token_store.retrieve("telegram_bot_token")
 
     @property
@@ -145,7 +145,7 @@ class TelegramChannel(Channel):
         """Startet den Telegram-Bot.
 
         Args:
-            handler: Async-Callback für eingehende Nachrichten.
+            handler: Async-Callback fuer eingehende Nachrichten.
         """
         self._handler = handler
 
@@ -239,7 +239,7 @@ class TelegramChannel(Channel):
         self._cleanup_task = asyncio.create_task(self._periodic_ttl_cleanup())
 
     async def _periodic_ttl_cleanup(self) -> None:
-        """Periodischer Sweep abgelaufener TTLDict-Einträge (alle 5 Minuten)."""
+        """Periodischer Sweep abgelaufener TTLDict-Eintraege (alle 5 Minuten)."""
         while self._running:
             try:
                 await asyncio.sleep(300)  # 5 Minuten
@@ -354,7 +354,7 @@ class TelegramChannel(Channel):
             return web.Response(status=500)
 
     async def _handle_health(self, request: Any) -> Any:
-        """Health-Check-Endpoint für den Webhook-Server."""
+        """Health-Check-Endpoint fuer den Webhook-Server."""
         from aiohttp import web
 
         return web.json_response(
@@ -429,15 +429,15 @@ class TelegramChannel(Channel):
         action: PlannedAction,
         reason: str,
     ) -> bool:
-        """Fragt den User via Inline-Keyboard um Bestätigung.
+        """Fragt den User via Inline-Keyboard um Bestaetigung.
 
         Args:
             session_id: Aktive Session-ID.
-            action: Die zu bestätigende Aktion.
-            reason: Begründung für die Bestätigung.
+            action: Die zu bestaetigende Aktion.
+            reason: Begruendung fuer die Bestaetigung.
 
         Returns:
-            True wenn User bestätigt, False bei Ablehnung oder Timeout.
+            True wenn User bestaetigt, False bei Ablehnung oder Timeout.
         """
         if self._app is None:
             return False
@@ -509,7 +509,7 @@ class TelegramChannel(Channel):
                 self._approval_results.pop(approval_id, None)
 
     async def send_streaming_token(self, session_id: str, token: str) -> None:
-        """Streaming ist bei Telegram nicht sinnvoll unterstützt.
+        """Streaming ist bei Telegram nicht sinnvoll unterstuetzt.
 
         Telegram hat kein echtes Token-Streaming. Nachrichten werden
         als Ganzes gesendet (via send()).
@@ -540,7 +540,7 @@ class TelegramChannel(Channel):
     async def _on_telegram_message(self, update: Any, context: Any) -> None:
         """Verarbeitet eingehende Telegram-Textnachrichten.
 
-        Prüft User-Whitelist und leitet an den Gateway-Handler weiter.
+        Prueft User-Whitelist und leitet an den Gateway-Handler weiter.
         """
         if update.effective_message is None or update.effective_user is None:
             return
@@ -562,8 +562,8 @@ class TelegramChannel(Channel):
     async def _on_voice_message(self, update: Any, context: Any) -> None:
         """Verarbeitet Sprachnachrichten: Download → Transkription → Gateway.
 
-        Nutzt faster-whisper oder whisper.cpp für lokale Transkription.
-        Fallback: Nachricht an den User, dass Voice nicht verfügbar ist.
+        Nutzt faster-whisper oder whisper.cpp fuer lokale Transkription.
+        Fallback: Nachricht an den User, dass Voice nicht verfuegbar ist.
         """
         if update.effective_message is None or update.effective_user is None:
             return
@@ -612,7 +612,7 @@ class TelegramChannel(Channel):
         """Verarbeitet Fotos: Direkte Vision-Analyse (umgeht Planner).
 
         Fotos werden direkt mit dem Vision-LLM analysiert, statt den Planner
-        entscheiden zu lassen -- das ist zuverlässiger und schneller.
+        entscheiden zu lassen -- das ist zuverlaessiger und schneller.
         Bei komplexen Captions (Follow-Up-Fragen) wird das Analyseergebnis
         als Kontext an den Planner weitergereicht.
         """
@@ -770,7 +770,7 @@ class TelegramChannel(Channel):
         """Nachbearbeitung des Vision-Outputs durch ein Text-LLM.
 
         Korrigiert Rechtschreibung, Grammatik, Satzbau und Satzzeichen.
-        Bei Fehler wird der Rohtext unverändert zurückgegeben.
+        Bei Fehler wird der Rohtext unveraendert zurueckgegeben.
         """
         try:
             import httpx
@@ -867,7 +867,7 @@ class TelegramChannel(Channel):
         """Transkribiert eine Audiodatei mit faster-whisper (lokal).
 
         Returns:
-            Transkribierter Text oder None wenn nicht verfügbar.
+            Transkribierter Text oder None wenn nicht verfuegbar.
         """
         try:
             import os
@@ -893,9 +893,9 @@ class TelegramChannel(Channel):
             return None
 
     def _start_typing(self, chat_id: int) -> asyncio.Task[None] | None:
-        """Startet den Typing-Indicator für einen Chat.
+        """Startet den Typing-Indicator fuer einen Chat.
 
-        Telegram setzt den Indicator nach ~5 Sekunden zurück,
+        Telegram setzt den Indicator nach ~5 Sekunden zurueck,
         daher wird er periodisch erneuert bis stop_typing aufgerufen wird.
         """
         if self._app is None:
@@ -1025,10 +1025,10 @@ class TelegramChannel(Channel):
 def _split_message(text: str) -> list[str]:
     """Teilt eine Nachricht in Telegram-kompatible Teile.
 
-    Versucht an Zeilenumbrüchen zu splitten, nicht mitten in Wörtern.
+    Versucht an Zeilenumbruechen zu splitten, nicht mitten in Woertern.
 
     Args:
-        text: Der vollständige Nachrichtentext.
+        text: Der vollstaendige Nachrichtentext.
 
     Returns:
         Liste von Nachrichtenteilen (max. MAX_MESSAGE_LENGTH Zeichen).

@@ -2,7 +2,7 @@
 
 Public API:
     MemoryManager      -- Central interface (use this!)
-    CoreMemory         -- Tier 1: Identität (CORE.md)
+    CoreMemory         -- Tier 1: Identitaet (CORE.md)
     EpisodicMemory     -- Tier 2: Daily log
     SemanticMemory     -- Tier 3: Knowledge graph
     ProceduralMemory   -- Tier 4: Learned skills

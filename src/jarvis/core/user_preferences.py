@@ -90,7 +90,7 @@ class UserPreferenceStore:
             log.warning("user_preferences_table_creation_failed", exc_info=exc)
 
     def close(self) -> None:
-        """Schließt die DB-Verbindung."""
+        """Schliesst die DB-Verbindung."""
         try:
             self._conn.close()
         except Exception as exc:

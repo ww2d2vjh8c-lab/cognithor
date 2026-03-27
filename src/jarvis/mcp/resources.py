@@ -1,15 +1,15 @@
 """MCP Resources: Exponiert Jarvis-Daten als MCP-Resources.
 
 Resources sind read-only Datenquellen die externe MCP-Clients
-abfragen können -- im Gegensatz zu Tools, die Aktionen ausführen.
+abfragen koennen -- im Gegensatz zu Tools, die Aktionen ausfuehren.
 
 Registrierte Resources:
   - jarvis://memory/core         → Core Memory (CORE.md)
-  - jarvis://memory/episodes     → Letzte episodische Einträge
+  - jarvis://memory/episodes     → Letzte episodische Eintraege
   - jarvis://memory/stats        → Memory-Statistiken
-  - jarvis://memory/entity/{id}  → Einzelne Entität (Template)
+  - jarvis://memory/entity/{id}  → Einzelne Entitaet (Template)
   - jarvis://config/status       → System-Status
-  - jarvis://config/tools        → Verfügbare Tools
+  - jarvis://config/tools        → Verfuegbare Tools
   - jarvis://config/agents       → Registrierte Agenten
   - jarvis://workspace/files     → Workspace-Verzeichnisbaum
 
@@ -42,7 +42,7 @@ class JarvisResourceProvider:
     """Stellt Jarvis-Daten als MCP-Resources bereit.
 
     Verbindet sich mit dem Memory-Manager und der Config,
-    um Daten über das MCP-Resource-Protokoll verfügbar zu machen.
+    um Daten ueber das MCP-Resource-Protokoll verfuegbar zu machen.
     """
 
     def __init__(
@@ -175,7 +175,7 @@ class JarvisResourceProvider:
             return f"# Fehler beim Lesen der Core Memory\n\n{exc}"
 
     def _read_episodes(self, **kwargs: Any) -> str:
-        """Liest die letzten episodischen Einträge."""
+        """Liest die letzten episodischen Eintraege."""
         if self._memory is None:
             return json.dumps({"episodes": [], "error": "Memory nicht initialisiert"})
 
@@ -209,7 +209,7 @@ class JarvisResourceProvider:
             return json.dumps({"error": str(exc)})
 
     def _read_entity(self, **kwargs: Any) -> str:
-        """Liest eine einzelne Entität."""
+        """Liest eine einzelne Entitaet."""
         uri = kwargs.get("uri", "")
         entity_id = uri.rsplit("/", 1)[-1] if "/" in uri else ""
 

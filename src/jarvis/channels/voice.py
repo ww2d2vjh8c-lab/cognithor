@@ -1,16 +1,16 @@
 """Voice Channel: Sprachein-/ausgabe mit Whisper STT + Piper TTS.
 
-Lokale Sprachverarbeitung ohne Cloud-Abhängigkeit.
-Whisper (faster-whisper) für Speech-to-Text,
-Piper TTS für Text-to-Speech. Voice Activity Detection
-für automatische Aufnahmeerkennung.
+Lokale Sprachverarbeitung ohne Cloud-Abhaengigkeit.
+Whisper (faster-whisper) fuer Speech-to-Text,
+Piper TTS fuer Text-to-Speech. Voice Activity Detection
+fuer automatische Aufnahmeerkennung.
 
 Features:
   - Whisper STT (GPU-beschleunigt via faster-whisper)
   - Piper TTS (lokal, Deutsch, schnell)
   - Voice Activity Detection (VAD) mit Silero
   - Hotkey-Aktivierung (Push-to-Talk)
-  - Audio-Streaming über WebSocket
+  - Audio-Streaming ueber WebSocket
   - Konfigurierbare Sprache und Stimme
 
 Bibel-Referenz: §9.3 (Voice Channel), §12.2 (Optionale Dependencies)
@@ -41,14 +41,14 @@ log = get_logger(__name__)
 
 
 class STTBackend(StrEnum):
-    """Unterstützte Speech-to-Text Backends."""
+    """Unterstuetzte Speech-to-Text Backends."""
 
     WHISPER = "whisper"  # faster-whisper (lokal, GPU)
     WHISPER_CPP = "whisper_cpp"  # whisper.cpp (lokal, CPU-optimiert)
 
 
 class TTSBackend(StrEnum):
-    """Unterstützte Text-to-Speech Backends."""
+    """Unterstuetzte Text-to-Speech Backends."""
 
     PIPER = "piper"  # Piper TTS (lokal, schnell)
     ESPEAK = "espeak"  # eSpeak-NG (Fallback, immer verfügbar)
@@ -57,7 +57,7 @@ class TTSBackend(StrEnum):
 
 @dataclass
 class VoiceConfig:
-    """Konfiguration für den Voice-Channel."""
+    """Konfiguration fuer den Voice-Channel."""
 
     # STT
     stt_backend: STTBackend = STTBackend.WHISPER
@@ -106,7 +106,7 @@ class AudioBuffer:
     _total_frames: int = 0
 
     def add_chunk(self, chunk: bytes) -> None:
-        """Fügt einen Audio-Chunk hinzu."""
+        """Fuegt einen Audio-Chunk hinzu."""
         self._chunks.append(chunk)
         self._total_frames += len(chunk) // 2  # 16-bit mono
 
@@ -118,7 +118,7 @@ class AudioBuffer:
         self._total_frames = 0
 
     def get_audio_data(self) -> bytes:
-        """Gibt alle gesammelten Audio-Daten zurück."""
+        """Gibt alle gesammelten Audio-Daten zurueck."""
         return b"".join(self._chunks)
 
     @property
@@ -156,14 +156,14 @@ class STTEngine:
         self._model: Any = None
 
     async def load(self) -> None:
-        """Lädt das STT-Modell."""
+        """Laedt das STT-Modell."""
         if self._config.stt_backend == STTBackend.WHISPER:
             await self._load_whisper()
         else:
             log.warning("stt_backend_not_implemented", backend=self._config.stt_backend)
 
     async def _load_whisper(self) -> None:
-        """Lädt faster-whisper Modell."""
+        """Laedt faster-whisper Modell."""
         try:
             from faster_whisper import WhisperModel
 
@@ -215,7 +215,7 @@ class STTEngine:
             return text
 
     def _transcribe_sync(self, audio_path: str) -> str:
-        """Synchrone Transkription (für run_in_executor)."""
+        """Synchrone Transkription (fuer run_in_executor)."""
         segments, info = self._model.transcribe(
             audio_path,
             language=self._config.stt_language,
@@ -250,7 +250,7 @@ class TTSEngine:
         self._synthesizer: Any = None
 
     async def load(self) -> None:
-        """Lädt das TTS-Modell."""
+        """Laedt das TTS-Modell."""
         if self._config.tts_backend == TTSBackend.PIPER:
             await self._load_piper()
         elif self._config.tts_backend == TTSBackend.ESPEAK:
@@ -261,7 +261,7 @@ class TTSEngine:
             log.warning("tts_backend_not_implemented", backend=self._config.tts_backend)
 
     async def _load_piper(self) -> None:
-        """Lädt Piper TTS Modell."""
+        """Laedt Piper TTS Modell."""
         try:
             import piper  # noqa: F401
 
@@ -380,7 +380,7 @@ class VADDetector:
     """Voice Activity Detection mit Energie-basiertem Fallback.
 
     Erkennt ob der User gerade spricht. Verwendet Silero VAD
-    wenn verfügbar, sonst einfache Energie-Schwelle.
+    wenn verfuegbar, sonst einfache Energie-Schwelle.
     """
 
     # Gepinnter Release-Tag fuer reproduzierbaren Download (kein `main`-Branch)
@@ -431,7 +431,7 @@ class VADDetector:
             self._use_silero = False
 
     def is_speech(self, audio_chunk: bytes) -> bool:
-        """Prüft ob ein Audio-Chunk Sprache enthält.
+        """Prueft ob ein Audio-Chunk Sprache enthaelt.
 
         Args:
             audio_chunk: 16-bit mono PCM Audio
@@ -476,10 +476,10 @@ class VADDetector:
 
 
 class VoiceChannel(Channel):
-    """Voice Channel: Sprachein-/ausgabe für Jarvis. [B§9.3]
+    """Voice Channel: Sprachein-/ausgabe fuer Jarvis. [B§9.3]
 
-    Nutzt Whisper für STT, Piper für TTS und optional
-    Silero für Voice Activity Detection.
+    Nutzt Whisper fuer STT, Piper fuer TTS und optional
+    Silero fuer Voice Activity Detection.
     """
 
     def __init__(self, config: VoiceConfig | None = None) -> None:
@@ -497,7 +497,7 @@ class VoiceChannel(Channel):
         return "voice"
 
     async def start(self, handler: MessageHandler) -> None:
-        """Lädt alle Modelle und startet den Voice-Channel."""
+        """Laedt alle Modelle und startet den Voice-Channel."""
         self._handler = handler
         log.info("voice_channel_loading_models")
 
@@ -528,7 +528,7 @@ class VoiceChannel(Channel):
         action: PlannedAction,
         reason: str,
     ) -> bool:
-        """Fragt den User per Sprache um Bestätigung.
+        """Fragt den User per Sprache um Bestaetigung.
 
         Spricht die Frage, wartet auf 'Ja' oder 'Nein'.
         """
@@ -549,7 +549,7 @@ class VoiceChannel(Channel):
         pass
 
     async def listen_once(self, timeout: float = 30.0) -> str | None:
-        """Nimmt eine einzelne Äußerung auf und transkribiert sie.
+        """Nimmt eine einzelne Aeusserung auf und transkribiert sie.
 
         Returns:
             Transkribierter Text oder None bei Timeout
@@ -575,7 +575,7 @@ class VoiceChannel(Channel):
         """Verarbeitet einen Audio-Chunk (von WebSocket oder Mikrofon).
 
         Verwendet VAD zur Erkennung von Sprech-Pausen.
-        Gibt transkribierten Text zurück wenn eine Äußerung
+        Gibt transkribierten Text zurueck wenn eine Aeusserung
         erkannt wurde, sonst None.
 
         Args:

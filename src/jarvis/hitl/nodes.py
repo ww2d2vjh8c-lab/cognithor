@@ -1,11 +1,11 @@
 """HITL Nodes -- Graph-kompatible HITL-Handler (v20).
 
-Erstellt Node-Handler für v18 GraphBuilder die HITL-Interaktion
-auslösen. Jeder Handler:
-  1. Erstellt ApprovalRequest über ApprovalManager
+Erstellt Node-Handler fuer v18 GraphBuilder die HITL-Interaktion
+ausloesen. Jeder Handler:
+  1. Erstellt ApprovalRequest ueber ApprovalManager
   2. Wartet auf Resolution (oder Timeout)
   3. Mergt Response-Daten in GraphState
-  4. Gibt modifizierten State zurück
+  4. Gibt modifizierten State zurueck
 
 Usage mit GraphBuilder:
     from jarvis.hitl import create_approval_node, create_gate_node
@@ -19,7 +19,7 @@ Usage mit GraphBuilder:
         .add_node("review", create_approval_node(
             manager,
             config=HITLConfig(
-                title="Ergebnis prüfen",
+                title="Ergebnis pruefen",
                 assignees=["supervisor"],
                 priority=ReviewPriority.HIGH,
             ),
@@ -251,11 +251,11 @@ def create_gate_node(
 ) -> Callable[[GraphState], Awaitable[GraphState]]:
     """Erstellt einen Gate-Node-Handler.
 
-    Prüft zuerst automatisch via check_fn:
-    - True → Gate passiert automatisch (kein HITL nötig)
+    Prueft zuerst automatisch via check_fn:
+    - True → Gate passiert automatisch (kein HITL noetig)
     - False → HITL-Approval erforderlich
 
-    Ideal für bedingte Human-Review (z.B. nur bei hohem Risiko).
+    Ideal fuer bedingte Human-Review (z.B. nur bei hohem Risiko).
     """
     cfg = HITLConfig(
         node_kind=HITLNodeKind.GATE,
@@ -283,10 +283,10 @@ def create_selection_node(
 ) -> Callable[[GraphState], Awaitable[GraphState]]:
     """Erstellt einen Selection-Node-Handler.
 
-    Mensch wählt eine Option aus der vorgegebenen Liste.
+    Mensch waehlt eine Option aus der vorgegebenen Liste.
 
     State-Output:
-        __hitl_selection__: gewählte Option
+        __hitl_selection__: gewaehlte Option
     """
     cfg = HITLConfig(
         node_kind=HITLNodeKind.SELECTION,
@@ -361,7 +361,7 @@ def create_edit_node(
 
 
 def _extract_context(state: GraphState, keys: list[str]) -> dict[str, Any]:
-    """Extrahiert Kontext-Daten aus State für den Reviewer."""
+    """Extrahiert Kontext-Daten aus State fuer den Reviewer."""
     if not keys:
         # Alle nicht-internen Keys
         return {k: v for k, v in state.items() if not k.startswith("__")}

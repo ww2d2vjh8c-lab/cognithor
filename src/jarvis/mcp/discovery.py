@@ -1,13 +1,13 @@
 """MCP Discovery: Agent Card und Service-Discovery.
 
-Implementiert das /.well-known/agent.json-Muster für Agent-Discovery,
-kompatibel mit dem MCP-Ökosystem und vorbereitet auf A2A-Integration.
+Implementiert das /.well-known/agent.json-Muster fuer Agent-Discovery,
+kompatibel mit dem MCP-Oekosystem und vorbereitet auf A2A-Integration.
 
 Features:
   - AgentCard: JSON-Beschreibung der Jarvis-Instanz
   - Capability-Announcements
   - Health-Endpoint
-  - Versionierung und Kompatibilitäts-Flags
+  - Versionierung und Kompatibilitaets-Flags
 
 Die Agent Card wird als REST-Endpoint exponiert und kann von
 anderen Agenten, MCP-Clients und Discovery-Services abgefragt werden.
@@ -34,7 +34,7 @@ log = get_logger(__name__)
 
 @dataclass
 class AgentSkill:
-    """Eine einzelne Fähigkeit des Agenten."""
+    """Eine einzelne Faehigkeit des Agenten."""
 
     id: str
     name: str
@@ -71,7 +71,7 @@ class AgentAuth:
 
 @dataclass
 class AgentCard:
-    """Vollständige Agent Card für Discovery.
+    """Vollstaendige Agent Card fuer Discovery.
 
     Kompatibel mit:
     - MCP Server Discovery
@@ -174,7 +174,7 @@ class DiscoveryManager:
     """Verwaltet die Agent Card und Discovery-Endpoints.
 
     Erstellt und aktualisiert die Agent Card basierend auf den
-    tatsächlich registrierten Tools, Resources und Prompts.
+    tatsaechlich registrierten Tools, Resources und Prompts.
     """
 
     def __init__(
@@ -200,7 +200,7 @@ class DiscoveryManager:
         """Erstellt die Agent Card basierend auf aktuellem Stand.
 
         Args:
-            tool_names: Liste der verfügbaren Tool-Namen
+            tool_names: Liste der verfuegbaren Tool-Namen
             resource_count: Anzahl registrierter Resources
             prompt_count: Anzahl registrierter Prompts
             server_mode: MCP-Server-Modus
@@ -258,7 +258,7 @@ class DiscoveryManager:
         return self._card
 
     def get_card(self) -> dict[str, Any]:
-        """Gibt die aktuelle Agent Card als Dict zurück."""
+        """Gibt die aktuelle Agent Card als Dict zurueck."""
         if self._card is None:
             self.build_card()
         return self._card.to_dict()  # type: ignore[union-attr]

@@ -6,7 +6,7 @@ State-Machine:
   HALF_OPEN → (half_open_max_calls Erfolge)        → CLOSED
   HALF_OPEN → (ein Fehler)                         → OPEN
 
-Referenz: Stabilitäts-Verbesserung §8 (Channel Circuit Breaker)
+Referenz: Stabilitaets-Verbesserung §8 (Channel Circuit Breaker)
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ T = TypeVar("T")
 
 
 class CircuitState(StrEnum):
-    """Circuit-Breaker-Zustände."""
+    """Circuit-Breaker-Zustaende."""
 
     closed = "closed"
     open = "open"
@@ -45,14 +45,14 @@ class CircuitBreakerOpen(Exception):
 
 
 class CircuitBreaker:
-    """Async Circuit Breaker für externe API-Aufrufe.
+    """Async Circuit Breaker fuer externe API-Aufrufe.
 
     Args:
-        name: Bezeichnung des Circuit Breakers (für Logging).
+        name: Bezeichnung des Circuit Breakers (fuer Logging).
         failure_threshold: Konsekutive Fehler bis OPEN.
         recovery_timeout: Sekunden bis HALF_OPEN nach OPEN.
         half_open_max_calls: Erfolge in HALF_OPEN bis CLOSED.
-        excluded_exceptions: Exception-Typen die nicht als Failure zählen.
+        excluded_exceptions: Exception-Typen die nicht als Failure zaehlen.
     """
 
     def __init__(
@@ -102,10 +102,10 @@ class CircuitBreaker:
         }
 
     async def call(self, coro: Awaitable[T]) -> T:
-        """Führt eine async Operation unter Circuit-Breaker-Schutz aus.
+        """Fuehrt eine async Operation unter Circuit-Breaker-Schutz aus.
 
         Args:
-            coro: Awaitable das ausgeführt werden soll.
+            coro: Awaitable das ausgefuehrt werden soll.
 
         Returns:
             Ergebnis der Operation.

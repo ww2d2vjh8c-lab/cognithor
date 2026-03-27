@@ -1,6 +1,6 @@
 """Jarvis · Konfigurations-API Routes.
 
-REST-Endpoints für die Konfigurationsverwaltung via WebUI:
+REST-Endpoints fuer die Konfigurationsverwaltung via WebUI:
 
   - GET/PATCH /api/v1/config          → Gesamte Konfiguration
   - GET/PATCH /api/v1/config/{section} → Einzelne Sektion
@@ -60,9 +60,9 @@ def create_config_routes(
 
     Args:
         app: FastAPI-App-Instanz.
-        config_manager: ConfigManager für Read/Write.
-        verify_token_dep: Optional FastAPI Depends() für Auth.
-        gateway: Optional Gateway-Instanz für Singleton-Zugriff.
+        config_manager: ConfigManager fuer Read/Write.
+        verify_token_dep: Optional FastAPI Depends() fuer Auth.
+        gateway: Optional Gateway-Instanz fuer Singleton-Zugriff.
     """
     deps = [verify_token_dep] if verify_token_dep else []
 
@@ -133,7 +133,7 @@ def _register_system_routes(
 
     @app.get("/api/v1/status", dependencies=deps)
     async def get_system_status() -> dict[str, Any]:
-        """Gibt den aktuellen System-Status zurück."""
+        """Gibt den aktuellen System-Status zurueck."""
         status: dict[str, Any] = {
             "timestamp": time.time(),
             "config_version": config_manager.config.version,
@@ -185,7 +185,7 @@ def _register_system_routes(
 
     @app.get("/api/v1/overview", dependencies=deps)
     async def get_overview() -> dict[str, Any]:
-        """Gibt eine kompakte Konfigurationsübersicht zurück."""
+        """Gibt eine kompakte Konfigurationsuebersicht zurueck."""
         try:
             from jarvis.gateway.config_api import ConfigManager as CfgMgr
 
@@ -451,7 +451,7 @@ def _register_system_routes(
 
     @app.delete("/api/v1/credentials/{service}/{key}", dependencies=deps)
     async def delete_credential(service: str, key: str, agent_id: str = "") -> dict[str, Any]:
-        """Löscht ein Credential."""
+        """Loescht ein Credential."""
         try:
             from jarvis.security.credentials import CredentialStore
 
@@ -495,7 +495,7 @@ def _register_system_routes(
 
     @app.delete("/api/v1/bindings/{name}", dependencies=deps)
     async def delete_binding(name: str) -> dict[str, Any]:
-        """Löscht eine Binding-Regel."""
+        """Loescht eine Binding-Regel."""
         try:
             from jarvis.gateway.config_api import ConfigManager as CfgMgr
 
@@ -578,7 +578,7 @@ def _register_system_routes(
 
     @app.get("/api/v1/wizards", dependencies=deps)
     async def list_wizards() -> dict[str, Any]:
-        """Alle verfügbaren Konfigurations-Assistenten."""
+        """Alle verfuegbaren Konfigurations-Assistenten."""
         from jarvis.gateway.wizards import WizardRegistry
 
         reg = WizardRegistry()
@@ -597,7 +597,7 @@ def _register_system_routes(
 
     @app.post("/api/v1/wizards/{wizard_type}/run", dependencies=deps)
     async def run_wizard(wizard_type: str, body: dict[str, Any]) -> dict[str, Any]:
-        """Führt einen Wizard aus und generiert Konfiguration."""
+        """Fuehrt einen Wizard aus und generiert Konfiguration."""
         from jarvis.gateway.wizards import WizardRegistry
 
         reg = WizardRegistry()
@@ -632,7 +632,7 @@ def _register_system_routes(
 
     @app.get("/api/v1/rbac/roles", dependencies=deps)
     async def rbac_roles() -> dict[str, Any]:
-        """Alle verfügbaren Rollen und ihre Berechtigungen."""
+        """Alle verfuegbaren Rollen und ihre Berechtigungen."""
         from jarvis.gateway.wizards import ROLE_PERMISSIONS
 
         return {
@@ -644,7 +644,7 @@ def _register_system_routes(
 
     @app.get("/api/v1/rbac/check", dependencies=deps)
     async def rbac_check(user_id: str, resource: str, action: str) -> dict[str, Any]:
-        """Prüft eine Berechtigung."""
+        """Prueft eine Berechtigung."""
         from jarvis.gateway.wizards import RBACManager
 
         mgr = RBACManager()
@@ -672,7 +672,7 @@ def _register_system_routes(
 
     @app.get("/api/v1/agent-heartbeat/dashboard", dependencies=deps)
     async def agent_heartbeat_dashboard() -> dict[str, Any]:
-        """Globale Dashboard-Übersicht aller Agent-Heartbeats."""
+        """Globale Dashboard-Uebersicht aller Agent-Heartbeats."""
         try:
             from jarvis.core.agent_heartbeat import AgentHeartbeatScheduler
 
@@ -683,7 +683,7 @@ def _register_system_routes(
 
     @app.get("/api/v1/agent-heartbeat/{agent_id}", dependencies=deps)
     async def agent_heartbeat_summary(agent_id: str) -> dict[str, Any]:
-        """Heartbeat-Zusammenfassung für einen Agent."""
+        """Heartbeat-Zusammenfassung fuer einen Agent."""
         try:
             from jarvis.core.agent_heartbeat import AgentHeartbeatScheduler
 
@@ -713,7 +713,7 @@ def _register_config_routes(
 
     @app.get("/api/v1/config", dependencies=deps)
     async def get_config() -> dict[str, Any]:
-        """Gibt die gesamte Konfiguration zurück (ohne Secrets)."""
+        """Gibt die gesamte Konfiguration zurueck (ohne Secrets)."""
         data = config_manager.read()
         data["_meta"] = {
             "editable_sections": config_manager.editable_sections(),
@@ -755,7 +755,7 @@ def _register_config_routes(
 
     @app.post("/api/v1/config/reload", dependencies=deps)
     async def reload_config() -> dict[str, Any]:
-        """Lädt die Konfiguration neu aus der Datei."""
+        """Laedt die Konfiguration neu aus der Datei."""
         config_manager.reload()
         if gateway is not None and hasattr(gateway, "reload_components"):
             gateway.reload_components(prompts=True, policies=True, core_memory=True, config=True)
@@ -924,7 +924,7 @@ def _register_config_routes(
 
     @app.get("/api/v1/config/presets", dependencies=deps)
     async def list_presets() -> dict[str, Any]:
-        """Listet verfügbare Konfigurations-Presets."""
+        """Listet verfuegbare Konfigurations-Presets."""
         return {
             "presets": [
                 {
@@ -992,7 +992,7 @@ def _register_config_routes(
 
     @app.get("/api/v1/config/{section}", dependencies=deps)
     async def get_config_section(section: str) -> dict[str, Any]:
-        """Gibt eine einzelne Konfigurations-Sektion zurück."""
+        """Gibt eine einzelne Konfigurations-Sektion zurueck."""
         result = config_manager.read_section(section)
         if result is None:
             return {"error": f"Sektion '{section}' nicht gefunden", "status": 404}
@@ -1143,7 +1143,7 @@ def _register_session_routes(
 
     @app.get("/api/v1/isolation/quotas", dependencies=deps)
     async def isolation_quotas() -> dict[str, Any]:
-        """Quota-Übersicht aller Agents."""
+        """Quota-Uebersicht aller Agents."""
         try:
             from jarvis.core.isolation import MultiUserIsolation
 
@@ -1177,7 +1177,7 @@ def _register_session_routes(
 
     @app.get("/api/v1/isolation/tenants", dependencies=deps)
     async def isolation_tenants() -> dict[str, Any]:
-        """Tenant-Übersicht."""
+        """Tenant-Uebersicht."""
         enforcer = getattr(gateway, "_isolation_enforcer", None)
         if enforcer is None:
             return {"total_tenants": 0}
@@ -1225,7 +1225,7 @@ def _register_session_routes(
 
     @app.get("/api/v1/sessions/list", dependencies=deps)
     async def list_sessions(channel: str = "webui", limit: int = 50) -> dict[str, Any]:
-        """Aktive Sessions für die Chat-History-Sidebar auflisten."""
+        """Aktive Sessions fuer die Chat-History-Sidebar auflisten."""
         store = _get_session_store()
         if not store:
             return {"sessions": []}
@@ -1293,7 +1293,7 @@ def _register_session_routes(
 
     @app.post("/api/v1/sessions/new", dependencies=deps)
     async def create_new_session() -> dict[str, Any]:
-        """Neue leere Session erstellen und ID zurückgeben."""
+        """Neue leere Session erstellen und ID zurueckgeben."""
         store = _get_session_store()
         if not store:
             raise HTTPException(status_code=503, detail="Session store not available")
@@ -1376,7 +1376,7 @@ def _register_memory_routes(
 
     @app.post("/api/v1/memory/hygiene/scan", dependencies=deps)
     async def memory_hygiene_scan(request: Request) -> dict[str, Any]:
-        """Memory-Einträge auf Injection/Credentials/Widersprüche scannen."""
+        """Memory-Eintraege auf Injection/Credentials/Widersprueche scannen."""
         try:
             from jarvis.memory.hygiene import MemoryHygieneEngine
 
@@ -1406,7 +1406,7 @@ def _register_memory_routes(
 
     @app.get("/api/v1/memory/hygiene/quarantine", dependencies=deps)
     async def memory_quarantine() -> dict[str, Any]:
-        """Quarantäne-Liste."""
+        """Quarantaene-Liste."""
         engine = getattr(gateway, "_memory_hygiene", None)
         if engine is None:
             return {"quarantined": []}
@@ -1416,7 +1416,7 @@ def _register_memory_routes(
 
     @app.get("/api/v1/memory/integrity", dependencies=deps)
     async def memory_integrity() -> dict[str, Any]:
-        """Memory-Integritäts-Status."""
+        """Memory-Integritaets-Status."""
         checker = getattr(gateway, "_integrity_checker", None)
         if checker is None:
             return {"total_checks": 0, "last_score": 100}
@@ -1488,7 +1488,7 @@ def _register_memory_routes(
 
     @app.get("/api/v1/memory/graph/entities", dependencies=deps)
     async def knowledge_graph_entities() -> dict[str, Any]:
-        """Alle Entitäten und Beziehungen im Wissensgraph."""
+        """Alle Entitaeten und Beziehungen im Wissensgraph."""
         semantic = getattr(gateway, "_semantic_memory", None)
         if semantic is None:
             return {"entities": [], "relations": []}
@@ -1532,7 +1532,7 @@ def _register_memory_routes(
 
     @app.get("/api/v1/memory/graph/entities/{entity_id}/relations", dependencies=deps)
     async def knowledge_graph_entity_relations(entity_id: str) -> dict[str, Any]:
-        """Beziehungen einer bestimmten Entität."""
+        """Beziehungen einer bestimmten Entitaet."""
         semantic = getattr(gateway, "_semantic_memory", None)
         if semantic is None:
             return {"relations": []}
@@ -1574,7 +1574,7 @@ def _register_skill_routes(
 
     @app.get("/api/v1/marketplace/feed", dependencies=deps)
     async def marketplace_feed() -> dict[str, Any]:
-        """Kuratierter Feed für die Startseite."""
+        """Kuratierter Feed fuer die Startseite."""
         try:
             from jarvis.skills.marketplace import SkillMarketplace
 
@@ -1802,7 +1802,7 @@ def _register_skill_routes(
 
     @app.get("/api/v1/models/available", dependencies=deps)
     async def available_models() -> dict[str, Any]:
-        """Listet alle in Ollama/Backend verfügbaren Modelle auf."""
+        """Listet alle in Ollama/Backend verfuegbaren Modelle auf."""
         router = getattr(gateway, "_model_router", None)
         if router is None:
             return {"models": [], "source": "none"}
@@ -1851,7 +1851,7 @@ def _register_skill_routes(
 
     @app.get("/api/v1/i18n/locales", dependencies=deps)
     async def i18n_locales() -> dict[str, Any]:
-        """Verfügbare Sprachen."""
+        """Verfuegbare Sprachen."""
         mgr = getattr(gateway, "_i18n", None)
         if mgr is None:
             return {"locales": [], "default": "de"}
@@ -1859,7 +1859,7 @@ def _register_skill_routes(
 
     @app.get("/api/v1/i18n/translate/{key}", dependencies=deps)
     async def i18n_translate(key: str, locale: str = "") -> dict[str, Any]:
-        """Einzelnen Key übersetzen."""
+        """Einzelnen Key uebersetzen."""
         mgr = getattr(gateway, "_i18n", None)
         if mgr is None:
             return {"key": key, "translation": key}
@@ -1885,7 +1885,7 @@ def _register_skill_routes(
 
     @app.get("/api/v1/skill-cli/templates", dependencies=deps)
     async def skill_cli_templates() -> dict[str, Any]:
-        """Verfügbare Skill-Templates."""
+        """Verfuegbare Skill-Templates."""
         cli = getattr(gateway, "_skill_cli", None)
         if cli is None:
             return {"templates": []}
@@ -1932,7 +1932,7 @@ def _register_monitoring_routes(
 
     @app.get("/api/v1/monitoring/dashboard", dependencies=deps)
     async def monitoring_dashboard() -> dict[str, Any]:
-        """Komplett-Snapshot für das Live-Dashboard."""
+        """Komplett-Snapshot fuer das Live-Dashboard."""
         return get_hub().dashboard_snapshot()
 
     @app.get("/api/v1/monitoring/metrics", dependencies=deps)
@@ -2050,7 +2050,7 @@ def _register_monitoring_routes(
 
     @app.get("/api/v1/monitoring/stream", dependencies=deps)
     async def monitoring_sse_stream() -> Any:
-        """Server-Sent-Events Stream für Live-Monitoring."""
+        """Server-Sent-Events Stream fuer Live-Monitoring."""
         from starlette.responses import StreamingResponse
 
         hub = get_hub()
@@ -2257,7 +2257,7 @@ def _register_security_routes(
 
     @app.get("/api/v1/compliance/decisions", dependencies=deps)
     async def compliance_decisions() -> dict[str, Any]:
-        """Decision-Log Übersicht."""
+        """Decision-Log Uebersicht."""
         decision_log = getattr(gateway, "_decision_log", None)
         if decision_log is None:
             return {
@@ -2432,7 +2432,7 @@ def _register_security_routes(
 
     @app.get("/api/v1/framework/team", dependencies=deps)
     async def framework_team() -> dict[str, Any]:
-        """Security-Team Übersicht."""
+        """Security-Team Uebersicht."""
         team = getattr(gateway, "_security_team", None)
         if team is None:
             return {"members": [], "stats": {"total_members": 0}}
@@ -2567,7 +2567,7 @@ def _register_governance_routes(
 
     @app.get("/api/v1/governance/reputation/{entity_id}", dependencies=deps)
     async def governance_reputation_detail(entity_id: str) -> dict[str, Any]:
-        """Reputation-Score für ein Entity."""
+        """Reputation-Score fuer ein Entity."""
         engine = getattr(gateway, "_reputation_engine", None)
         if engine is None:
             return {"error": "Reputation-Engine nicht verfügbar"}
@@ -2641,7 +2641,7 @@ def _register_governance_routes(
 
     @app.get("/api/v1/economics/stats", dependencies=deps)
     async def economics_stats() -> dict[str, Any]:
-        """Wirtschaftsgovernance Übersicht."""
+        """Wirtschaftsgovernance Uebersicht."""
         gov = getattr(gateway, "_economic_governor", None)
         if gov is None:
             return {"budget": {}, "costs": {}, "bias": {}, "fairness": {}, "ethics": {}}
@@ -2749,7 +2749,7 @@ def _register_governance_routes(
 
     @app.get("/api/v1/impact/mitigations", dependencies=deps)
     async def impact_mitigations() -> dict[str, Any]:
-        """Mitigationsmaßnahmen."""
+        """Mitigationsmassnahmen."""
         ia = getattr(gateway, "_impact_assessor", None)
         if ia is None:
             return {"total": 0}

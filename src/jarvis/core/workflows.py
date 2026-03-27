@@ -1,14 +1,14 @@
 """Jarvis · Workflow-Templates & Ecosystem Security Policy.
 
-Punkt 6: Beispiel-Workflows für Endanwender
-  - WorkflowTemplate:  Vordefinierte Abläufe (Team-Onboarding, Sales-Pipeline, etc.)
-  - WorkflowEngine:    Ausführung & Tracking von Workflow-Instanzen
-  - TemplateLibrary:   Katalog aller verfügbaren Templates
+Punkt 6: Beispiel-Workflows fuer Endanwender
+  - WorkflowTemplate:  Vordefinierte Ablaeufe (Team-Onboarding, Sales-Pipeline, etc.)
+  - WorkflowEngine:    Ausfuehrung & Tracking von Workflow-Instanzen
+  - TemplateLibrary:   Katalog aller verfuegbaren Templates
 
 Punkt 8: Zentrale Sicherheitsrichtlinien
-  - EcosystemPolicy:   Mindestanforderungen für das Skill-Ecosystem
+  - EcosystemPolicy:   Mindestanforderungen fuer das Skill-Ecosystem
   - PolicyEnforcer:     Erzwingt Standards bei Skill-Installation
-  - ComplianceBadge:    Zertifizierungs-System für Skills
+  - ComplianceBadge:    Zertifizierungs-System fuer Skills
 
 Architektur-Bibel: §9.4 (Workflows), §11.5 (Ecosystem-Security)
 """
@@ -251,7 +251,7 @@ class WorkflowInstance:
 
 
 class WorkflowEngine:
-    """Ausführung und Tracking von Workflow-Instanzen."""
+    """Ausfuehrung und Tracking von Workflow-Instanzen."""
 
     def __init__(self) -> None:
         self._instances: dict[str, WorkflowInstance] = {}
@@ -323,7 +323,7 @@ class WorkflowEngine:
 
 
 class TemplateLibrary:
-    """Katalog aller verfügbaren Workflow-Templates."""
+    """Katalog aller verfuegbaren Workflow-Templates."""
 
     def __init__(self, *, load_builtins: bool = True) -> None:
         self._templates: dict[str, WorkflowTemplate] = {}
@@ -378,7 +378,7 @@ class SecurityTier(Enum):
 
 @dataclass
 class SkillSecurityRequirement:
-    """Mindestanforderung für Skill-Sicherheit."""
+    """Mindestanforderung fuer Skill-Sicherheit."""
 
     requirement_id: str
     name: str
@@ -439,7 +439,7 @@ _ECOSYSTEM_REQUIREMENTS: list[SkillSecurityRequirement] = [
 
 @dataclass
 class ComplianceBadge:
-    """Zertifizierungs-Badge für einen Skill."""
+    """Zertifizierungs-Badge fuer einen Skill."""
 
     badge_id: str
     skill_id: str
@@ -469,7 +469,7 @@ class ComplianceBadge:
 
 
 class EcosystemPolicy:
-    """Zentrale Sicherheitsrichtlinien für das Skill-Ecosystem."""
+    """Zentrale Sicherheitsrichtlinien fuer das Skill-Ecosystem."""
 
     def __init__(
         self,
@@ -565,7 +565,7 @@ class EcosystemPolicy:
         return badge
 
     def meets_minimum(self, skill_id: str) -> bool:
-        """Prüft ob ein Skill die Mindestanforderungen erfüllt."""
+        """Prueft ob ein Skill die Mindestanforderungen erfuellt."""
         badge = self._badges.get(skill_id)
         if not badge:
             return False

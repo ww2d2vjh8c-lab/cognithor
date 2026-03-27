@@ -1,11 +1,11 @@
-"""Dateisystem-Tools für Jarvis.
+"""Dateisystem-Tools fuer Jarvis.
 
-Implementiert als eingebaute Handler (Phase 1) und als FastMCP-Server (später).
-Alle Operationen prüfen Pfade gegen die Sandbox-Konfiguration.
+Implementiert als eingebaute Handler (Phase 1) und als FastMCP-Server (spaeter).
+Alle Operationen pruefen Pfade gegen die Sandbox-Konfiguration.
 
 Tools:
   - read_file: Datei lesen (mit optionalem Zeilenbereich)
-  - write_file: Datei erstellen/überschreiben (atomar)
+  - write_file: Datei erstellen/ueberschreiben (atomar)
   - edit_file: String ersetzen (str_replace-Logik)
   - list_directory: Verzeichnisbaum auflisten
 
@@ -91,10 +91,10 @@ class FileSystemTools:
         Verhindert:
           - Path Traversal (../../etc/passwd)
           - Symlink-Escapes
-          - Zugriff außerhalb erlaubter Verzeichnisse
+          - Zugriff ausserhalb erlaubter Verzeichnisse
 
         Raises:
-            FileSystemError: Wenn Pfad ungültig oder nicht erlaubt.
+            FileSystemError: Wenn Pfad ungueltig oder nicht erlaubt.
         """
         try:
             path = Path(path_str).expanduser().resolve()
@@ -123,7 +123,7 @@ class FileSystemTools:
         """Liest eine Datei. Optional nur bestimmte Zeilen.
 
         Args:
-            path: Dateipfad (wird gegen Sandbox geprüft)
+            path: Dateipfad (wird gegen Sandbox geprueft)
             line_start: Erste Zeile (0-basiert, inklusive)
             line_end: Letzte Zeile (-1 = bis Ende, inklusive)
 
@@ -175,9 +175,9 @@ class FileSystemTools:
         return content
 
     def write_file(self, path: str, content: str) -> str:
-        """Erstellt oder überschreibt eine Datei atomar.
+        """Erstellt oder ueberschreibt eine Datei atomar.
 
-        Schreibt zuerst in eine temporäre Datei, dann rename.
+        Schreibt zuerst in eine temporaere Datei, dann rename.
         So wird bei einem Absturz nie eine halb-geschriebene Datei erzeugt.
 
         Args:
@@ -185,7 +185,7 @@ class FileSystemTools:
             content: Zu schreibender Inhalt
 
         Returns:
-            Bestätigungsnachricht.
+            Bestaetigungsnachricht.
         """
         validated = self._validate_path(path)
 
@@ -233,7 +233,7 @@ class FileSystemTools:
             new_text: Neuer Text
 
         Returns:
-            Bestätigungsnachricht mit Zeilenänderungen.
+            Bestaetigungsnachricht mit Zeilenaenderungen.
         """
         if len(old_text) > self.MAX_EDIT_SIZE:
             raise FileSystemError(
@@ -351,7 +351,7 @@ class FileSystemTools:
 
     @staticmethod
     def _format_size(size: int) -> str:
-        """Formatiert Dateigröße in menschenlesbares Format."""
+        """Formatiert Dateigroesse in menschenlesbares Format."""
         if size < 1024:
             return f"{size} B"
         if size < 1_048_576:
@@ -366,7 +366,7 @@ def register_fs_tools(
     """Registriert Dateisystem-Tools beim MCP-Client.
 
     Returns:
-        FileSystemTools-Instanz für direkten Zugriff.
+        FileSystemTools-Instanz fuer direkten Zugriff.
     """
     fs = FileSystemTools(config)
 

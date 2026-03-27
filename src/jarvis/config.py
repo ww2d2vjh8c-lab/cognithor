@@ -109,11 +109,11 @@ class PlannerConfig(BaseModel):
 class WebConfig(BaseModel):
     """Web-Tools Konfiguration. [B§5.3]
 
-    Suchbackends (Priorität: SearXNG > Brave > Google CSE > DuckDuckGo):
-      - SearXNG: Self-hosted, keine API-Keys nötig
+    Suchbackends (Prioritaet: SearXNG > Brave > Google CSE > DuckDuckGo):
+      - SearXNG: Self-hosted, keine API-Keys noetig
       - Brave Search: Schnell, 2000 Anfragen/Monat kostenlos
       - Google CSE: Custom Search Engine, 100 Anfragen/Tag kostenlos
-      - DuckDuckGo: Immer verfügbar, kein API-Key nötig (Standard-Fallback)
+      - DuckDuckGo: Immer verfuegbar, kein API-Key noetig (Standard-Fallback)
     """
 
     searxng_url: str = ""
@@ -142,16 +142,16 @@ class WebConfig(BaseModel):
 
     # ── Limits (bisher hardcoded in web.py) ────────────────────────────────
     max_fetch_bytes: int = Field(default=500_000, ge=10_000, le=10_000_000)
-    """Maximale Antwortgröße beim URL-Fetch (Bytes)."""
+    """Maximale Antwortgroesse beim URL-Fetch (Bytes)."""
 
     max_text_chars: int = Field(default=20_000, ge=1000, le=200_000)
     """Maximale Zeichenzahl des extrahierten Textes."""
 
     fetch_timeout_seconds: int = Field(default=15, ge=5, le=120)
-    """HTTP-Timeout für URL-Fetch (Sekunden)."""
+    """HTTP-Timeout fuer URL-Fetch (Sekunden)."""
 
     search_timeout_seconds: int = Field(default=10, ge=5, le=60)
-    """Timeout für Suchmaschinen-Anfragen (Sekunden)."""
+    """Timeout fuer Suchmaschinen-Anfragen (Sekunden)."""
 
     max_search_results: int = Field(default=10, ge=1, le=50)
     """Maximale Anzahl Suchergebnisse."""
@@ -163,17 +163,17 @@ class WebConfig(BaseModel):
     """Wartezeit bei DuckDuckGo Rate-Limiting (Sekunden)."""
 
     ddg_cache_ttl_seconds: int = Field(default=3600, ge=60, le=86400)
-    """Cache-TTL für DuckDuckGo-Ergebnisse (Sekunden)."""
+    """Cache-TTL fuer DuckDuckGo-Ergebnisse (Sekunden)."""
 
     search_and_read_max_chars: int = Field(default=5000, ge=1000, le=50_000)
     """Maximale Zeichenzahl pro Seite bei search_and_read."""
 
     # ── HTTP Request Tool ──────────────────────────────────────────────────
     http_request_max_body_bytes: int = Field(default=1_048_576, ge=1024, le=10_485_760)
-    """Maximale Body-Größe für http_request (Bytes). Standard: 1 MB."""
+    """Maximale Body-Groesse fuer http_request (Bytes). Standard: 1 MB."""
 
     http_request_timeout_seconds: int = Field(default=30, ge=1, le=120)
-    """Standard-Timeout für http_request (Sekunden)."""
+    """Standard-Timeout fuer http_request (Sekunden)."""
 
     http_request_rate_limit_seconds: float = Field(default=1.0, ge=0.0, le=30.0)
     """Mindestabstand zwischen http_request-Aufrufen (Sekunden). 0 = kein Limit."""
@@ -183,10 +183,10 @@ class BrowserConfig(BaseModel):
     """Browser-Automation Konfiguration (Playwright)."""
 
     max_text_length: int = Field(default=8000, ge=1000, le=100_000)
-    """Maximale Textlänge die ans LLM zurückgegeben wird."""
+    """Maximale Textlaenge die ans LLM zurueckgegeben wird."""
 
     max_js_length: int = Field(default=50_000, ge=1000, le=500_000)
-    """Maximale JavaScript-Scriptlänge (Zeichen)."""
+    """Maximale JavaScript-Scriptlaenge (Zeichen)."""
 
     default_timeout_ms: int = Field(default=30_000, ge=5000, le=120_000)
     """Standard-Browser-Timeout (Millisekunden)."""
@@ -195,31 +195,31 @@ class BrowserConfig(BaseModel):
     """Standard-Viewport-Breite (Pixel)."""
 
     default_viewport_height: int = Field(default=720, ge=240, le=2160)
-    """Standard-Viewport-Höhe (Pixel)."""
+    """Standard-Viewport-Hoehe (Pixel)."""
 
 
 class FilesystemConfig(BaseModel):
     """Dateisystem-Tools Konfiguration."""
 
     max_tree_entries: int = Field(default=200, ge=10, le=10_000)
-    """Maximale Einträge im Verzeichnisbaum-Listing."""
+    """Maximale Eintraege im Verzeichnisbaum-Listing."""
 
 
 class ShellConfig(BaseModel):
     """Shell-Execution Konfiguration."""
 
     default_timeout_seconds: int = Field(default=30, ge=5, le=600)
-    """Standard-Timeout für Shell-Befehle (Sekunden)."""
+    """Standard-Timeout fuer Shell-Befehle (Sekunden)."""
 
     max_log_command_length: int = Field(default=200, ge=50, le=2000)
-    """Maximale Befehlslänge im Log."""
+    """Maximale Befehlslaenge im Log."""
 
     max_redacted_log_prefix: int = Field(default=50, ge=10, le=500)
-    """Maximale Präfixlänge für geschwärzte Log-Einträge."""
+    """Maximale Praefixlaenge fuer geschwaerzte Log-Eintraege."""
 
 
 class ToolsConfig(BaseModel):
-    """Konfiguration für Desktop-Automation und Desktop-Tools."""
+    """Konfiguration fuer Desktop-Automation und Desktop-Tools."""
 
     computer_use_enabled: bool = Field(
         default=False,
@@ -243,16 +243,16 @@ class MediaConfig(BaseModel):
     """Media-Pipeline Konfiguration."""
 
     max_extract_length: int = Field(default=15_000, ge=1000, le=100_000)
-    """Maximale Textlänge für LLM-Kontext bei Extraktion."""
+    """Maximale Textlaenge fuer LLM-Kontext bei Extraktion."""
 
     max_image_file_size: int = Field(default=10_485_760, ge=1_048_576, le=104_857_600)
-    """Maximale Bilddateigröße für Base64-Encoding (Bytes)."""
+    """Maximale Bilddateigroesse fuer Base64-Encoding (Bytes)."""
 
     max_extract_file_size: int = Field(default=52_428_800, ge=1_048_576, le=524_288_000)
-    """Maximale Dateigröße für Dokument-Extraktion (Bytes)."""
+    """Maximale Dateigroesse fuer Dokument-Extraktion (Bytes)."""
 
     max_audio_file_size: int = Field(default=104_857_600, ge=1_048_576, le=1_073_741_824)
-    """Maximale Audio-Dateigröße (Bytes)."""
+    """Maximale Audio-Dateigroesse (Bytes)."""
 
     max_image_dimension: int = Field(default=8192, ge=256, le=16384)
     """Maximale Bilddimension in Pixel."""
@@ -261,17 +261,17 @@ class MediaConfig(BaseModel):
     """Standard-Maximalbreite bei Bild-Resize."""
 
     default_max_height: int = Field(default=1024, ge=64, le=8192)
-    """Standard-Maximalhöhe bei Bild-Resize."""
+    """Standard-Maximalhoehe bei Bild-Resize."""
 
 
 class SynthesisConfig(BaseModel):
     """Knowledge-Synthesis Konfiguration."""
 
     max_source_chars: int = Field(default=4000, ge=500, le=50_000)
-    """Maximale Zeichenzahl pro Quelle für LLM-Kontext."""
+    """Maximale Zeichenzahl pro Quelle fuer LLM-Kontext."""
 
     max_context_chars: int = Field(default=25_000, ge=5000, le=200_000)
-    """Maximale Gesamtgröße des Kontexts für das LLM."""
+    """Maximale Gesamtgroesse des Kontexts fuer das LLM."""
 
 
 class EmailConfig(BaseModel):
@@ -288,13 +288,13 @@ class EmailConfig(BaseModel):
     """IMAP-Server Hostname (z.B. 'imap.gmail.com')."""
 
     imap_port: int = Field(default=993, ge=1, le=65535)
-    """IMAP-Server Port (Standard: 993 für SSL)."""
+    """IMAP-Server Port (Standard: 993 fuer SSL)."""
 
     smtp_host: str = ""
     """SMTP-Server Hostname (z.B. 'smtp.gmail.com')."""
 
     smtp_port: int = Field(default=465, ge=1, le=65535)
-    """SMTP-Server Port (Standard: 465 für SSL, 587 für STARTTLS)."""
+    """SMTP-Server Port (Standard: 465 fuer SSL, 587 fuer STARTTLS)."""
 
     username: str = ""
     """E-Mail-Benutzername (oft die E-Mail-Adresse)."""
@@ -306,7 +306,7 @@ class EmailConfig(BaseModel):
 class CalendarConfig(BaseModel):
     """Kalender-Tools Konfiguration (ICS/CalDAV).
 
-    Primär: Lokale ICS-Datei (immer verfügbar).
+    Primaer: Lokale ICS-Datei (immer verfuegbar).
     Optional: CalDAV-Client wenn ``caldav``-Bibliothek installiert.
     """
 
@@ -333,17 +333,17 @@ class CodeConfig(BaseModel):
     """Code-Execution Konfiguration."""
 
     max_code_size: int = Field(default=1_048_576, ge=1024, le=10_485_760)
-    """Maximale Code-Größe (Bytes)."""
+    """Maximale Code-Groesse (Bytes)."""
 
     default_timeout_seconds: int = Field(default=60, ge=5, le=600)
-    """Standard-Timeout für Python-Ausführung (Sekunden)."""
+    """Standard-Timeout fuer Python-Ausfuehrung (Sekunden)."""
 
 
 class PersonalityConfig(BaseModel):
     """Personality Engine Konfiguration."""
 
     warmth: float = Field(default=0.7, ge=0.0, le=1.0)
-    """Wärme-Level: 0.0 = neutral/sachlich, 1.0 = sehr warm und empathisch."""
+    """Waerme-Level: 0.0 = neutral/sachlich, 1.0 = sehr warm und empathisch."""
 
     humor: float = Field(default=0.3, ge=0.0, le=1.0)
     """Humor-Level: 0.0 = ernst, 1.0 = spielerisch."""
@@ -352,10 +352,10 @@ class PersonalityConfig(BaseModel):
     """Soll Jarvis am Ende Nachfragen stellen?"""
 
     success_celebration: bool = True
-    """Soll Jarvis erfolgreiche Aktionen positiv bestätigen?"""
+    """Soll Jarvis erfolgreiche Aktionen positiv bestaetigen?"""
 
     greeting_enabled: bool = True
-    """Soll Jarvis Tageszeit-abhängige Grüße verwenden?"""
+    """Soll Jarvis Tageszeit-abhaengige Gruesse verwenden?"""
 
 
 class IdentityConfig(BaseModel):
@@ -396,42 +396,42 @@ class ExecutorConfig(BaseModel):
     """Executor Konfiguration."""
 
     default_timeout_seconds: int = Field(default=30, ge=5, le=600)
-    """Standard-Timeout für Tool-Ausführung (Sekunden)."""
+    """Standard-Timeout fuer Tool-Ausfuehrung (Sekunden)."""
 
     max_output_chars: int = Field(default=10_000, ge=1000, le=100_000)
-    """Maximale Tool-Output-Länge (Zeichen)."""
+    """Maximale Tool-Output-Laenge (Zeichen)."""
 
     max_retries: int = Field(default=3, ge=0, le=10)
     """Maximale Wiederholungsversuche bei transienten Fehlern."""
 
     backoff_base_delay_seconds: float = Field(default=1.0, ge=0.1, le=30.0)
-    """Basis-Verzögerung für exponentiellen Backoff (Sekunden)."""
+    """Basis-Verzoegerung fuer exponentiellen Backoff (Sekunden)."""
 
     max_parallel_tools: int = Field(default=4, ge=1, le=16)
-    """Maximale Anzahl parallel ausgeführter Tools (DAG-Execution)."""
+    """Maximale Anzahl parallel ausgefuehrter Tools (DAG-Execution)."""
 
     # Tool-spezifische Timeouts
     media_analyze_image_timeout: int = Field(default=180, ge=30, le=600)
-    """Timeout für Bildanalyse (Sekunden)."""
+    """Timeout fuer Bildanalyse (Sekunden)."""
 
     media_transcribe_audio_timeout: int = Field(default=120, ge=30, le=600)
-    """Timeout für Audio-Transkription (Sekunden)."""
+    """Timeout fuer Audio-Transkription (Sekunden)."""
 
     media_extract_text_timeout: int = Field(default=120, ge=30, le=600)
-    """Timeout für Text-Extraktion (Sekunden)."""
+    """Timeout fuer Text-Extraktion (Sekunden)."""
 
     media_tts_timeout: int = Field(default=120, ge=30, le=600)
-    """Timeout für Text-to-Speech (Sekunden)."""
+    """Timeout fuer Text-to-Speech (Sekunden)."""
 
     run_python_timeout: int = Field(default=120, ge=30, le=600)
-    """Timeout für Python-Code-Ausführung (Sekunden)."""
+    """Timeout fuer Python-Code-Ausfuehrung (Sekunden)."""
 
 
 class VaultConfig(BaseModel):
     """Knowledge Vault Konfiguration — Obsidian-kompatibles Markdown-Vault.
 
-    Persistente Wissensablage für Recherchen, Meeting-Notizen, Projektnotizen
-    und tägliche Zusammenfassungen. Notizen verwenden Obsidian-kompatibles
+    Persistente Wissensablage fuer Recherchen, Meeting-Notizen, Projektnotizen
+    und taegliche Zusammenfassungen. Notizen verwenden Obsidian-kompatibles
     YAML-Frontmatter und [[Backlinks]].
     """
 
@@ -469,10 +469,10 @@ class ContextPipelineConfig(BaseModel):
     """Anzahl Vault-Suchergebnisse (~10-50ms)."""
 
     episode_days: int = 2
-    """Anzahl Tage für Episoden-Kontext (heute + gestern)."""
+    """Anzahl Tage fuer Episoden-Kontext (heute + gestern)."""
 
     min_query_length: int = 8
-    """Mindestlänge der User-Nachricht für Kontext-Suche."""
+    """Mindestlaenge der User-Nachricht fuer Kontext-Suche."""
 
     max_context_chars: int = 8000
     """Maximale Zeichenzahl des injizierten Kontexts."""
@@ -537,9 +537,9 @@ class MemoryConfig(BaseModel):
         """Validator um sicherzustellen, dass die Gewichtungen der Hybrid-Suche
         sich sinnvoll verhalten.
 
-        Falls die Summe der Gewichte von Vektor-, BM25- und Graph-Kanal größer
+        Falls die Summe der Gewichte von Vektor-, BM25- und Graph-Kanal groesser
         als 1.0 ist, werden alle drei Gewichte so skaliert, dass ihre Summe
-        1.0 ergibt. Dies verhindert ungewollte Überskalierung und sorgt für
+        1.0 ergibt. Dies verhindert ungewollte Ueberskalierung und sorgt fuer
         konsistente Scores.
         """
         total = self.weight_vector + self.weight_bm25 + self.weight_graph
@@ -556,13 +556,13 @@ class MemoryConfig(BaseModel):
 
 
 class HeartbeatConfig(BaseModel):
-    """Konfiguration für den Heartbeat-Mechanismus.
+    """Konfiguration fuer den Heartbeat-Mechanismus.
 
-    Wenn aktiviert, führt Jarvis in regelmäßigen Abständen einen
+    Wenn aktiviert, fuehrt Jarvis in regelmaessigen Abstaenden einen
     "Heartbeat" aus. Dabei werden Aufgaben aus einer Checklist-Datei
-    (standardmäßig ``HEARTBEAT.md``) gelesen und als Systemnachricht
+    (standardmaessig ``HEARTBEAT.md``) gelesen und als Systemnachricht
     an den Gateway gesendet. Auf diese Weise kann Jarvis proaktiv
-    überprüfen, ob neue E-Mails, Kalendertermine oder Aufgaben
+    ueberpruefen, ob neue E-Mails, Kalendertermine oder Aufgaben
     Aufmerksamkeit erfordern, ohne dass der Nutzer eine Anfrage stellt.
     """
 
@@ -571,47 +571,47 @@ class HeartbeatConfig(BaseModel):
     keine periodische Heartbeat-Nachricht gesendet."""
 
     interval_minutes: int = Field(default=30, ge=1, le=1440)
-    """Interval in Minuten zwischen zwei Heartbeat-Läufen.
-    Standardwert sind 30 Minuten. Der zulässige Wertebereich liegt
+    """Interval in Minuten zwischen zwei Heartbeat-Laeufen.
+    Standardwert sind 30 Minuten. Der zulaessige Wertebereich liegt
     zwischen 1 und 1440 Minuten (24 Stunden)."""
 
     checklist_file: str = "HEARTBEAT.md"
-    """Dateiname der Checklist im ``jarvis_home``. Diese Datei enthält
+    """Dateiname der Checklist im ``jarvis_home``. Diese Datei enthaelt
     Text oder Bullet-Points, die beim Heartbeat an den Agenten
-    übermittelt werden. Falls die Datei nicht existiert, wird eine
+    uebermittelt werden. Falls die Datei nicht existiert, wird eine
     leere Nachricht gesendet."""
 
     channel: str = "cli"
-    """Name des Kanals, über den Heartbeat-Meldungen gesendet werden.
-    Standard ist ``cli``; weitere gültige Werte sind die Namen der
+    """Name des Kanals, ueber den Heartbeat-Meldungen gesendet werden.
+    Standard ist ``cli``; weitere gueltige Werte sind die Namen der
     registrierten Channels (z. B. ``telegram``, ``webui``)."""
 
     model: str = "qwen3:8b"
-    """Name des Modells, das für Heartbeat-Kommunikation verwendet
+    """Name des Modells, das fuer Heartbeat-Kommunikation verwendet
     werden soll. Dieser Wert wird im Cron-Job ignoriert, ist aber
     vorhanden, damit sich Heartbeats semantisch wie CronJobs verhalten."""
 
 
 class PluginsConfig(BaseModel):
-    """Konfiguration für das Plugin-Ökosystem.
+    """Konfiguration fuer das Plugin-Oekosystem.
 
-    Plugins stellen zusätzliche Skills (Prozeduren, Tools oder
+    Plugins stellen zusaetzliche Skills (Prozeduren, Tools oder
     Channel-Erweiterungen) bereit. Sie werden in einem separaten
     Verzeichnis abgelegt und zur Laufzeit geladen. Automatische
-    Updates können deaktiviert werden, wenn der Nutzer volle Kontrolle
-    über installierte Plugins wünscht.
+    Updates koennen deaktiviert werden, wenn der Nutzer volle Kontrolle
+    ueber installierte Plugins wuenscht.
     """
 
     skills_dir: str = "skills"
     """Relativer Name des Verzeichnisses im ``jarvis_home``, in dem
-    zusätzliche Skills installiert werden. Der Standardwert ist
-    ``skills``. Dies führt dazu, dass externe Prozeduren in
+    zusaetzliche Skills installiert werden. Der Standardwert ist
+    ``skills``. Dies fuehrt dazu, dass externe Prozeduren in
     ``~/.jarvis/skills`` abgelegt werden."""
 
     auto_update: bool = False
-    """Legt fest, ob Jarvis beim Start automatisch nach Updates für
-    installierte Plugins sucht und diese einspielt. Standardmäßig
-    deaktiviert, um ungewollte Änderungen zu verhindern."""
+    """Legt fest, ob Jarvis beim Start automatisch nach Updates fuer
+    installierte Plugins sucht und diese einspielt. Standardmaessig
+    deaktiviert, um ungewollte Aenderungen zu verhindern."""
 
 
 class MarketplaceConfig(BaseModel):
@@ -722,13 +722,13 @@ class CommunityMarketplaceConfig(BaseModel):
 
 
 class DashboardConfig(BaseModel):
-    """Konfiguration für das optionale Web-Dashboard.
+    """Konfiguration fuer das optionale Web-Dashboard.
 
-    Das Dashboard bietet eine grafische Oberfläche zur Überwachung von
-    Cron-Jobs, Heartbeats, Skills und Speicherzuständen. Es kann
+    Das Dashboard bietet eine grafische Oberflaeche zur Ueberwachung von
+    Cron-Jobs, Heartbeats, Skills und Speicherzustaenden. Es kann
     aktiviert werden, wenn FastAPI oder ein kompatibler Web-Server
     installiert ist. Der Standard-Port ist 9090. Das Dashboard ist
-    standardmäßig deaktiviert, um ungewollte Netzwerkschnittstellen zu
+    standardmaessig deaktiviert, um ungewollte Netzwerkschnittstellen zu
     vermeiden.
     """
 
@@ -740,10 +740,10 @@ class DashboardConfig(BaseModel):
 
 
 class ModelOverrideConfig(BaseModel):
-    """Konfiguration für Modell-Overrides pro Skill.
+    """Konfiguration fuer Modell-Overrides pro Skill.
 
-    Mit diesem Mapping können Nutzer für einzelne Skills alternative
-    Modelle definieren. Der Schlüssel ist der Skill-Name (Dateiname ohne
+    Mit diesem Mapping koennen Nutzer fuer einzelne Skills alternative
+    Modelle definieren. Der Schluessel ist der Skill-Name (Dateiname ohne
     Erweiterung), der Wert der interne Modell-Name (z. B. "qwen3:32b").
     """
 
@@ -1569,7 +1569,7 @@ class SecurityConfig(BaseModel):
     )
     # Maximum recursion depth for sub-agent delegations
     max_sub_agent_depth: int = Field(default=3, ge=1, le=10)
-    """Maximale Verschachtelungstiefe für Sub-Agent-Aufrufe via handle_message."""
+    """Maximale Verschachtelungstiefe fuer Sub-Agent-Aufrufe via handle_message."""
 
     # TLS configuration for webhook server and API
     ssl_certfile: str = Field(default="", description="Pfad zum SSL-Zertifikat (PEM)")
@@ -1717,7 +1717,7 @@ class DatabaseConfig(BaseModel):
 
 
 class QueueConfig(BaseModel):
-    """Konfiguration für die Durable Message Queue."""
+    """Konfiguration fuer die Durable Message Queue."""
 
     enabled: bool = Field(default=False, description="Durable message queue aktivieren")
     max_size: int = Field(default=10_000, ge=100, le=1_000_000)
@@ -2016,7 +2016,7 @@ class JarvisConfig(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         """Automatically adjusts model names to the chosen LLM backend.
 
-        Wenn der Nutzer ein anderes Backend als Ollama wählt (z.B. durch
+        Wenn der Nutzer ein anderes Backend als Ollama waehlt (z.B. durch
         Setzen von llm_backend_type oder Eingabe eines API-Keys), werden
         die Standard-Ollama-Modellnamen (qwen3:32b, qwen3:8b, etc.)
         automatisch durch passende Provider-Modelle ersetzt.
@@ -2413,50 +2413,50 @@ _DEFAULT_CORE_MEMORY = """\
 # Identitaet
 
 Ich bin Jarvis, das lokale, autonome Agent-Betriebssystem von {owner_name}.
-Ich laufe vollständig auf dem lokalen Rechner -- keine Cloud, keine externen APIs,
+Ich laufe vollstaendig auf dem lokalen Rechner -- keine Cloud, keine externen APIs,
 und damit voll DSGVO-konform. Mein Zuhause ist `~/.jarvis/`.
 
 {owner_name} ist der Besitzer und Benutzer dieses Systems.
 
 ## Persoenlichkeit
 
-Ich bin kompetent, direkt und effizient. Ich kommuniziere prägnant und
-respektvoll, ohne unnötige Floskeln. Wenn etwas nicht funktioniert,
-formuliere ich das klar und mache konstruktive Vorschläge zur Verbesserung.
+Ich bin kompetent, direkt und effizient. Ich kommuniziere praegnant und
+respektvoll, ohne unnoetige Floskeln. Wenn etwas nicht funktioniert,
+formuliere ich das klar und mache konstruktive Vorschlaege zur Verbesserung.
 Ich duze {owner_name} und stelle Fragen, wenn Informationen fehlen oder ich
 unsicher bin. Ich rate nicht -- ich frage nach.
 
 ## Fachgebiet
 
-Jarvis ist nicht auf eine bestimmte Branche beschränkt. Ich unterstütze
+Jarvis ist nicht auf eine bestimmte Branche beschraenkt. Ich unterstuetze
 {owner_name} bei einer Vielzahl von Aufgaben wie Recherche, Projekt- und
 Organisationsmanagement, Dateiverwaltung, Notizen und Planung. Neue
-Fähigkeiten können jederzeit durch Prozeduren hinzugefügt oder angepasst
+Faehigkeiten koennen jederzeit durch Prozeduren hinzugefuegt oder angepasst
 werden.
 
 ## Harte Regeln -- IMMER einhalten
 
-1. DATENSCHUTZ: Niemals persönliche Informationen (Namen, Adressen,
+1. DATENSCHUTZ: Niemals persoenliche Informationen (Namen, Adressen,
    Geburtsdaten, Vertragsnummern oder Gesundheitsdaten) in Logs, Shell-Ausgaben
-   oder unverschlüsselte Dateien schreiben.
+   oder unverschluesselte Dateien schreiben.
 2. DATENBLEIBEN: Alle Daten bleiben lokal. Kein Upload, kein Cloud-Sync.
 3. E-MAILS: E-Mails IMMER als Entwurf vorlegen. Niemals automatisch
-   versenden, es sei denn {owner_name} bestätigt es ausdrücklich.
+   versenden, es sei denn {owner_name} bestaetigt es ausdruecklich.
 4. SHELL: Keine destruktiven Befehle (rm -rf, mkfs, dd). Im Zweifel nachfragen.
 5. PLAN-LIMIT: Maximal 25 Iterationen pro Anfrage. Danach zusammenfassen
    und nachfragen.
-6. SICHERHEIT: Keine illegalen, unsicheren oder gegen Policies verstoßenden
-   Handlungen ausführen.
+6. SICHERHEIT: Keine illegalen, unsicheren oder gegen Policies verstossenden
+   Handlungen ausfuehren.
 
 ## Technisches Umfeld
 
--- Hardware: Hängt vom System ab (z. B. leistungsfähige GPU empfohlen für
-  große Modelle)
+-- Hardware: Haengt vom System ab (z. B. leistungsfaehige GPU empfohlen fuer
+  grosse Modelle)
 -- LLM: Standard-Modelle via Ollama (lokal)
--- Planner: z. B. „qwen3:32b" für umfangreiche Planung
--- Executor: z. B. „qwen3:8b" für schnelle Tool-Aufrufe
--- Coder: Modell für Code-Generierung (optional)
--- Embeddings: Modell für Hybrid-Suche (z. B. „nomic-embed-text")
+-- Planner: z. B. „qwen3:32b" fuer umfangreiche Planung
+-- Executor: z. B. „qwen3:8b" fuer schnelle Tool-Aufrufe
+-- Coder: Modell fuer Code-Generierung (optional)
+-- Embeddings: Modell fuer Hybrid-Suche (z. B. „nomic-embed-text")
 
 ## Praeferenzen
 
@@ -2464,9 +2464,9 @@ werden.
 -- Codesprache: Python
 -- Zeitzone: Europe/Berlin
 -- Anrede: {owner_name} (Du)
--- Kommunikation: Direkt, substanziell, ohne Füllwörter
+-- Kommunikation: Direkt, substanziell, ohne Fuellwoerter
 -- Bei Unsicherheit: Lieber nachfragen als raten
--- Ausgabeformat: Markdown für strukturierte Inhalte, Plaintext für kurze
+-- Ausgabeformat: Markdown fuer strukturierte Inhalte, Plaintext fuer kurze
   Antworten
 """
 
@@ -2488,13 +2488,13 @@ rules:
     match:
       tool: email_send
     action: APPROVE
-    reason: "E-Mail-Versand erfordert Bestätigung"
+    reason: "E-Mail-Versand erfordert Bestaetigung"
 
   - name: file_delete_requires_approval
     match:
       tool: delete_file
     action: APPROVE
-    reason: "Datei löschen erfordert Bestätigung"
+    reason: "Datei loeschen erfordert Bestaetigung"
 
   - name: file_write_inform
     match:
@@ -2618,7 +2618,7 @@ jobs:
       1. Heutige Termine
       2. Ungelesene E-Mails (Zusammenfassung)
       3. Offene Aufgaben aus gestern
-      4. Wetter für Nürnberg
+      4. Wetter fuer Nuernberg
     channel: telegram
     model: qwen3:8b
     enabled: false
@@ -2626,7 +2626,7 @@ jobs:
   weekly_review:
     schedule: "0 18 * * 5"
     prompt: |
-      Wochenrückblick:
+      Wochenrueckblick:
       - Was wurde diese Woche erledigt?
       - Welche neuen Prozeduren wurden gelernt?
       - Was ist noch offen?
@@ -2719,10 +2719,10 @@ _DEFAULT_HEARTBEAT_MD = """\
 
 Dies ist die Standard-Heartbeat-Datei. Du kannst diese Liste beliebig
 anpassen, um periodische Erinnerungen oder Checks zu definieren. Jede
-Zeile stellt einen zu überprüfenden Punkt dar. Beispiel:
+Zeile stellt einen zu ueberpruefenden Punkt dar. Beispiel:
 
-- 📬 Neue E-Mails prüfen
-- 📅 Kalendertermine für heute zusammenfassen
+- 📬 Neue E-Mails pruefen
+- 📅 Kalendertermine fuer heute zusammenfassen
 - 📝 Offene Aufgaben aus der To-Do-Liste anzeigen
 - 🔔 Benachrichtigungen aus externen Diensten abrufen
 

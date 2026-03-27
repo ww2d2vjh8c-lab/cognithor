@@ -1,17 +1,17 @@
-"""Talk Mode: Kontinuierlicher Gesprächsmodus.
+"""Talk Mode: Kontinuierlicher Gespraechsmodus.
 
 Flow:
   [Idle: Wake Word Detection aktiv]
       ↓ "Jarvis" erkannt
-  [Beep/Vibration als Bestätigung]
+  [Beep/Vibration als Bestaetigung]
       ↓
-  [Zuhören: STT mit VAD-basiertem End-of-Speech]
+  [Zuhoeren: STT mit VAD-basiertem End-of-Speech]
       ↓ Stille erkannt → Transkription
   [Verarbeiten: Text → Gateway → Agent-Loop]
       ↓ Antwort
   [Sprechen: TTS streamt Antwort]
       ↓ Sprache beendet
-  [Zurück zu Idle / oder auto_listen=True → weiter zuhören]
+  [Zurueck zu Idle / oder auto_listen=True → weiter zuhoeren]
 
 Bibel-Referenz: §9.3 (Voice Channel Extension)
 """
@@ -32,7 +32,7 @@ log = get_logger(__name__)
 
 
 class TalkMode:
-    """Kontinuierlicher Gesprächsmodus: Wake Word → Zuhören → Antwort → Wiederholen."""
+    """Kontinuierlicher Gespraechsmodus: Wake Word → Zuhoeren → Antwort → Wiederholen."""
 
     def __init__(
         self,
@@ -140,7 +140,7 @@ class TalkMode:
             return False
 
     async def _play_confirmation(self) -> None:
-        """Spielt einen kurzen Bestätigungston."""
+        """Spielt einen kurzen Bestaetigungston."""
         # Generate a simple beep tone
         import io
         import struct

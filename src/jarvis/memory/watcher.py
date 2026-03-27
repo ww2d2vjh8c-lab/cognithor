@@ -22,9 +22,9 @@ if TYPE_CHECKING:
 
 
 class MemoryFileHandler:
-    """Verarbeitet Filesystem-Events für Memory-Dateien.
+    """Verarbeitet Filesystem-Events fuer Memory-Dateien.
 
-    Sammelt Änderungen und verarbeitet sie gebatcht.
+    Sammelt Aenderungen und verarbeitet sie gebatcht.
     """
 
     def __init__(
@@ -32,14 +32,14 @@ class MemoryFileHandler:
         callback: Callable[[str], None],
         debounce_seconds: float = 2.0,
     ) -> None:
-        """Initialisiert den DebounceState für Dateiänderungs-Tracking."""
+        """Initialisiert den DebounceState fuer Dateiaenderungs-Tracking."""
         self._callback = callback
         self._debounce = debounce_seconds
         self._pending: dict[str, float] = {}  # path → last_event_time
         self._lock = threading.Lock()
 
     def on_file_changed(self, path: str) -> None:
-        """Registriert eine Dateiänderung."""
+        """Registriert eine Dateiaenderung."""
         if not path.endswith(".md"):
             return
 
@@ -47,7 +47,7 @@ class MemoryFileHandler:
             self._pending[path] = time.time()
 
     def process_pending(self) -> list[str]:
-        """Verarbeitet ausstehende Änderungen (nach Debounce).
+        """Verarbeitet ausstehende Aenderungen (nach Debounce).
 
         Returns:
             Liste der verarbeiteten Pfade.
@@ -72,10 +72,10 @@ class MemoryFileHandler:
 
 
 class MemoryWatcher:
-    """Überwacht das Memory-Verzeichnis auf Dateiänderungen.
+    """Ueberwacht das Memory-Verzeichnis auf Dateiaenderungen.
 
     Verwendet einen einfachen Polling-Ansatz als Fallback
-    wenn watchdog nicht verfügbar ist.
+    wenn watchdog nicht verfuegbar ist.
     """
 
     def __init__(
@@ -98,7 +98,7 @@ class MemoryWatcher:
 
     @property
     def is_running(self) -> bool:
-        """Prüft ob der Watcher aktiv ist."""
+        """Prueft ob der Watcher aktiv ist."""
         return self._running
 
     def start(self) -> None:
@@ -137,10 +137,10 @@ class MemoryWatcher:
         watcher = self
 
         class Handler(FileSystemEventHandler):
-            """Watchdog-Event-Handler für Dateiänderungen."""
+            """Watchdog-Event-Handler fuer Dateiaenderungen."""
 
             def on_modified(self, event: Any) -> None:
-                """Reagiert auf Dateiänderungen."""
+                """Reagiert auf Dateiaenderungen."""
                 if not event.is_directory:
                     watcher._handler.on_file_changed(event.src_path)
 
@@ -171,7 +171,7 @@ class MemoryWatcher:
         self._scan_files()
 
         def _poll_loop() -> None:
-            """Polling-basiertes Fallback wenn watchdog nicht verfügbar."""
+            """Polling-basiertes Fallback wenn watchdog nicht verfuegbar."""
             while self._running:
                 time.sleep(self._poll_interval)
                 self._check_changes()
@@ -190,7 +190,7 @@ class MemoryWatcher:
                 self._file_mtimes[str(f)] = f.stat().st_mtime
 
     def _check_changes(self) -> None:
-        """Prüft auf geänderte oder neue Dateien."""
+        """Prueft auf geaenderte oder neue Dateien."""
         if not self._dir.exists():
             return
 

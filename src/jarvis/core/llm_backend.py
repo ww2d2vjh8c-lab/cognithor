@@ -1330,8 +1330,8 @@ class ClaudeCodeBackend(LLMBackend):
 def create_backend(config: JarvisConfig) -> LLMBackend:
     """Erstellt das konfigurierte LLM-Backend.
 
-    Liest `config.llm_backend` und gibt die passende Implementierung zurück.
-    Default: Ollama (lokal, keine API-Keys nötig).
+    Liest `config.llm_backend` und gibt die passende Implementierung zurueck.
+    Default: Ollama (lokal, keine API-Keys noetig).
     """
     backend_type = getattr(config, "llm_backend_type", "ollama")
 

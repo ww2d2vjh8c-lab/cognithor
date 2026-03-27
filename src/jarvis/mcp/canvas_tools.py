@@ -1,4 +1,4 @@
-"""MCP-Tools für das Live Canvas.
+"""MCP-Tools fuer das Live Canvas.
 
 Stellt MCP-kompatible Tools bereit, die der Agent nutzen kann um
 HTML/CSS/JS-Inhalte in das Canvas-Panel des Clients zu pushen.
@@ -7,7 +7,7 @@ Tools:
   - canvas_push: HTML/CSS/JS ans Canvas pushen
   - canvas_reset: Canvas leeren
   - canvas_snapshot: Aktuellen Canvas-Inhalt lesen
-  - canvas_eval: JavaScript im Canvas ausführen
+  - canvas_eval: JavaScript im Canvas ausfuehren
 """
 
 from __future__ import annotations
@@ -19,23 +19,23 @@ logger = logging.getLogger(__name__)
 
 
 class CanvasTools:
-    """MCP-Tool-Definitionen für das Live Canvas.
+    """MCP-Tool-Definitionen fuer das Live Canvas.
 
     Wird vom MCP-Server registriert und stellt dem Agent
-    Canvas-Operationen als Tools zur Verfügung.
+    Canvas-Operationen als Tools zur Verfuegung.
     """
 
     def __init__(self, canvas_manager: Any) -> None:
         """Initialisiert die Canvas-Tools.
 
         Args:
-            canvas_manager: CanvasManager-Instanz für Canvas-Operationen.
+            canvas_manager: CanvasManager-Instanz fuer Canvas-Operationen.
         """
         self._canvas = canvas_manager
 
     @property
     def tool_definitions(self) -> list[dict[str, Any]]:
-        """Gibt die MCP-Tool-Definitionen zurück."""
+        """Gibt die MCP-Tool-Definitionen zurueck."""
         return [
             {
                 "name": "canvas_push",

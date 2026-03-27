@@ -236,10 +236,10 @@ class Planner:
         Args:
             config: Jarvis-Konfiguration.
             ollama: LLM-Client (OllamaClient oder UnifiedLLMClient).
-                    Muss `chat(model, messages, **kwargs)` unterstützen.
-            model_router: Model-Router für Modellauswahl.
-            audit_logger: Optionaler AuditLogger für LLM-Call-Protokollierung.
-            causal_analyzer: Optionaler CausalAnalyzer für Tool-Vorschlaege.
+                    Muss `chat(model, messages, **kwargs)` unterstuetzen.
+            model_router: Model-Router fuer Modellauswahl.
+            audit_logger: Optionaler AuditLogger fuer LLM-Call-Protokollierung.
+            causal_analyzer: Optionaler CausalAnalyzer fuer Tool-Vorschlaege.
             task_profiler: Optionaler TaskProfiler fuer Selbsteinschaetzung.
             cost_tracker: Optionaler CostTracker fuer LLM-Kosten-Tracking.
             personality_engine: Optionale PersonalityEngine fuer warme Antworten.
@@ -297,9 +297,9 @@ class Planner:
     def _load_prompt_from_file(
         self, filename: str, fallback: str, fallback_txt: str = "", preset_key: str = ""
     ) -> str:
-        """Lädt einen Prompt von Disk (.md bevorzugt, .txt als Migration-Fallback).
+        """Laedt einen Prompt von Disk (.md bevorzugt, .txt als Migration-Fallback).
 
-        Priorität: Disk .md → Disk .txt → i18n Preset → Hardcoded Fallback.
+        Prioritaet: Disk .md → Disk .txt → i18n Preset → Hardcoded Fallback.
         """
         try:
             prompts_dir = self._config.jarvis_home / "prompts"
@@ -330,7 +330,7 @@ class Planner:
         return fallback
 
     def reload_prompts(self) -> None:
-        """Lädt alle Prompt-Templates neu von Disk."""
+        """Laedt alle Prompt-Templates neu von Disk."""
         self._system_prompt_template = self._load_prompt_from_file(
             "SYSTEM_PROMPT.md", SYSTEM_PROMPT, preset_key="plannerSystem"
         )
@@ -375,12 +375,12 @@ class Planner:
         temperature_override: float | None = None,
         top_p_override: float | None = None,
     ) -> ActionPlan:
-        """Erstellt einen Plan für eine User-Nachricht.
+        """Erstellt einen Plan fuer eine User-Nachricht.
 
         Args:
             user_message: Die Nachricht des Users
             working_memory: Aktiver Session-Kontext (Memory, History)
-            tool_schemas: Verfügbare Tools als JSON-Schema
+            tool_schemas: Verfuegbare Tools als JSON-Schema
 
         Returns:
             ActionPlan mit Schritten oder einer direkten Antwort.
@@ -700,7 +700,7 @@ class Planner:
         """Formuliert eine finale Antwort basierend auf Tool-Ergebnissen.
 
         Wird am Ende des Agent-Loops aufgerufen, wenn alle Tools
-        ausgeführt wurden und eine zusammenfassende Antwort nötig ist.
+        ausgefuehrt wurden und eine zusammenfassende Antwort noetig ist.
         """
         model = self._router.select_model("summarization", "medium")
         messages = self._build_formulate_messages(user_message, results, working_memory)
@@ -1167,7 +1167,7 @@ class Planner:
         working_memory: WorkingMemory,
         user_message: str,
     ) -> list[dict[str, Any]]:
-        """Baut die Message-Liste für Ollama."""
+        """Baut die Message-Liste fuer Ollama."""
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": system_prompt},
         ]
@@ -1203,13 +1203,13 @@ class Planner:
 
     @staticmethod
     def _sanitize_json_escapes(json_str: str) -> str:
-        """Repariert ungültige Escape-Sequenzen in LLM-generiertem JSON.
+        """Repariert ungueltige Escape-Sequenzen in LLM-generiertem JSON.
 
-        LLMs erzeugen häufig Bash/Regex-Code mit Backslashes (\\s, \\d, \\b, etc.)
-        die in JSON-Strings ungültig sind. Diese Methode verdoppelt alleinstehende
-        Backslashes die kein gültiges JSON-Escape bilden.
+        LLMs erzeugen haeufig Bash/Regex-Code mit Backslashes (\\s, \\d, \\b, etc.)
+        die in JSON-Strings ungueltig sind. Diese Methode verdoppelt alleinstehende
+        Backslashes die kein gueltiges JSON-Escape bilden.
 
-        Gültige JSON-Escapes: \\\", \\\\, \\/, \\b, \\f, \\n, \\r, \\t, \\uXXXX
+        Gueltige JSON-Escapes: \\\", \\\\, \\/, \\b, \\f, \\n, \\r, \\t, \\uXXXX
         """
         # Replace backslashes that do not introduce a valid JSON escape
         # Negative lookahead: backslash followed by something that is NOT a valid escape

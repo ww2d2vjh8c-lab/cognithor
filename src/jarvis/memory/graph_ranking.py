@@ -2,14 +2,14 @@
 
 Erweitert den bestehenden Wissensgraphen um:
 
-  1. PageRank: Berechnet die Wichtigkeit jeder Entität basierend
-     auf ihrer Vernetzung im Graphen. Stark vernetzte Entitäten
-     (z.B. "WWK") erhalten höheren Score als isolierte.
+  1. PageRank: Berechnet die Wichtigkeit jeder Entitaet basierend
+     auf ihrer Vernetzung im Graphen. Stark vernetzte Entitaeten
+     (z.B. "WWK") erhalten hoeheren Score als isolierte.
 
-  2. Staleness-Detection: Erkennt veraltete Entitäten anhand
+  2. Staleness-Detection: Erkennt veraltete Entitaeten anhand
      von updated_at, und senkt deren Score automatisch.
 
-  3. Auto-Pruning: Entfernt Entitäten mit niedrigem Confidence-Score
+  3. Auto-Pruning: Entfernt Entitaeten mit niedrigem Confidence-Score
      UND hoher Staleness (konfigurierbar).
 
   4. Graph-Score-Boost: Nutzt PageRank-Werte um die Graph-Komponente
@@ -17,12 +17,12 @@ Erweitert den bestehenden Wissensgraphen um:
 
 Algorithmus:
   PageRank iteriert: PR(A) = (1-d)/N + d × Σ PR(T)/C(T)
-  wobei d=0.85 (Damping), N=Anzahl Entitäten, C(T)=Ausgangsgrad von T.
+  wobei d=0.85 (Damping), N=Anzahl Entitaeten, C(T)=Ausgangsgrad von T.
 
 Integration:
   - GraphRanking.compute_pagerank() → {entity_id: rank}
   - GraphRanking.boost_graph_scores() → Multipliziert Graph-Scores
-  - GraphRanking.prune_stale() → Entfernt veraltete Entitäten
+  - GraphRanking.prune_stale() → Entfernt veraltete Entitaeten
 
 Bibel-Referenz: §4.4 (Wissens-Graph), §4.10 (Graph Ranking)
 """
@@ -47,7 +47,7 @@ logger = logging.getLogger("jarvis.memory.graph_ranking")
 
 @dataclass
 class EntityRank:
-    """PageRank-Ergebnis für eine Entität."""
+    """PageRank-Ergebnis fuer eine Entitaet."""
 
     entity_id: str
     entity_name: str
@@ -58,7 +58,7 @@ class EntityRank:
 
     @property
     def is_stale(self) -> bool:
-        """Entität gilt als veraltet wenn staleness > 0.7."""
+        """Entitaet gilt als veraltet wenn staleness > 0.7."""
         return self.staleness > 0.7
 
 
@@ -78,12 +78,12 @@ class PruneResult:
 
 
 class GraphRanking:
-    """PageRank und Graph-Analyse für den Wissensgraphen.
+    """PageRank und Graph-Analyse fuer den Wissensgraphen.
 
     Args:
-        index: MemoryIndex für Graph-Zugriff.
+        index: MemoryIndex fuer Graph-Zugriff.
         damping: PageRank Damping-Faktor (Standard: 0.85).
-        staleness_half_life: Halbwertszeit für Staleness in Tagen.
+        staleness_half_life: Halbwertszeit fuer Staleness in Tagen.
     """
 
     def __init__(
@@ -233,7 +233,7 @@ class GraphRanking:
         """Die N wichtigsten Entitäten nach Combined Score.
 
         Returns:
-            Sortierte Liste (höchster Score zuerst).
+            Sortierte Liste (hoechster Score zuerst).
         """
         ranked = sorted(
             self._ranks.values(),
@@ -243,13 +243,13 @@ class GraphRanking:
         return ranked[:n]
 
     def stale_entities(self, threshold: float = 0.7) -> list[EntityRank]:
-        """Entitäten mit hoher Staleness.
+        """Entitaeten mit hoher Staleness.
 
         Args:
             threshold: Staleness-Schwellwert (0.0-1.0).
 
         Returns:
-            Liste veralteter Entitäten.
+            Liste veralteter Entitaeten.
         """
         return [r for r in self._ranks.values() if r.staleness > threshold]
 
@@ -297,7 +297,7 @@ class GraphRanking:
     ) -> list[MemorySearchResult]:
         """Boosted Graph-Scores der Suchergebnisse mit PageRank.
 
-        Chunks die Entitäten mit hohem PageRank referenzieren
+        Chunks die Entitaeten mit hohem PageRank referenzieren
         erhalten einen Score-Boost.
 
         Args:
@@ -331,7 +331,7 @@ class GraphRanking:
     def _compute_chunk_boost(self, chunk: Any) -> float:
         """Calculate the PageRank boost for a chunk.
 
-        Basiert auf den Entitäten die im Chunk referenziert werden.
+        Basiert auf den Entitaeten die im Chunk referenziert werden.
         """
         entity_ids = getattr(chunk, "entities", []) or []
         if not entity_ids:
@@ -366,15 +366,15 @@ class GraphRanking:
     ) -> PruneResult:
         """Remove stale, low-trust entities.
 
-        Kriterien (alle müssen zutreffen):
+        Kriterien (alle muessen zutreffen):
           - Staleness > threshold
           - Confidence < min_confidence
-          - Degree <= min_degree (isolierte Entitäten bevorzugt)
+          - Degree <= min_degree (isolierte Entitaeten bevorzugt)
 
         Args:
-            staleness_threshold: Mindest-Staleness für Pruning.
-            min_confidence: Maximaler Confidence-Wert für Pruning.
-            min_degree: Maximaler Vernetzungsgrad für Pruning.
+            staleness_threshold: Mindest-Staleness fuer Pruning.
+            min_confidence: Maximaler Confidence-Wert fuer Pruning.
+            min_degree: Maximaler Vernetzungsgrad fuer Pruning.
             dry_run: Wenn True, nur simulieren.
 
         Returns:
@@ -434,14 +434,14 @@ class GraphRanking:
         entity_id: str,
         delta: float,
     ) -> float | None:
-        """Passt den Confidence-Wert einer Entität an.
+        """Passt den Confidence-Wert einer Entitaet an.
 
-        Positive delta → Entität wird vertrauenswürdiger.
-        Negative delta → Entität wird weniger vertrauenswürdig.
+        Positive delta → Entitaet wird vertrauenswuerdiger.
+        Negative delta → Entitaet wird weniger vertrauenswuerdig.
 
         Args:
             entity_id: Entity-ID.
-            delta: Änderung (-1.0 bis +1.0).
+            delta: Aenderung (-1.0 bis +1.0).
 
         Returns:
             Neuer Confidence-Wert oder None wenn nicht gefunden.
@@ -458,7 +458,7 @@ class GraphRanking:
         return new_conf
 
     def touch_entity(self, entity_id: str) -> bool:
-        """Aktualisiert den Zeitstempel einer Entität (Reset Staleness).
+        """Aktualisiert den Zeitstempel einer Entitaet (Reset Staleness).
 
         Args:
             entity_id: Entity-ID.
@@ -503,11 +503,11 @@ class GraphRanking:
         }
 
     def find_isolated_entities(self) -> list[EntityRank]:
-        """Findet Entitäten ohne Verbindungen (degree=0)."""
+        """Findet Entitaeten ohne Verbindungen (degree=0)."""
         return [r for r in self._ranks.values() if r.degree == 0]
 
     def find_hub_entities(self, min_degree: int = 5) -> list[EntityRank]:
-        """Findet stark vernetzte Hub-Entitäten."""
+        """Findet stark vernetzte Hub-Entitaeten."""
         hubs = [r for r in self._ranks.values() if r.degree >= min_degree]
         hubs.sort(key=lambda r: r.degree, reverse=True)
         return hubs

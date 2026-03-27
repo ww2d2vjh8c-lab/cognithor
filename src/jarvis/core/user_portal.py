@@ -1,12 +1,12 @@
 """Jarvis · Endnutzer-Portal.
 
-Nicht-technisches Dashboard für Endanwender:
+Nicht-technisches Dashboard fuer Endanwender:
 
   - UserConsent:           Einwilligungsmanagement (DSGVO Art. 7)
   - ConsentManager:        Verwaltet Einwilligungen pro Nutzer
-  - DecisionView:          Verständliche Entscheidungsdarstellung
-  - UserNotification:      Benachrichtigungen für Endnutzer
-  - UserActivityLog:       Nachvollziehbare Aktivitätshistorie
+  - DecisionView:          Verstaendliche Entscheidungsdarstellung
+  - UserNotification:      Benachrichtigungen fuer Endnutzer
+  - UserActivityLog:       Nachvollziehbare Aktivitaetshistorie
   - UserPortal:            Hauptklasse
 
 Architektur-Bibel: §16.4 (Endnutzer-Transparenz), §17.1 (DSGVO-Compliance)
@@ -81,8 +81,8 @@ class ConsentManager:
     """Verwaltet Einwilligungen pro Nutzer (DSGVO-konform).
 
     Args:
-        db_path: Pfad zur SQLite-Datenbank für persistente Speicherung.
-                 None = In-Memory (für Tests / Abwärtskompatibilität).
+        db_path: Pfad zur SQLite-Datenbank fuer persistente Speicherung.
+                 None = In-Memory (fuer Tests / Abwaertskompatibilitaet).
     """
 
     # Pflicht-Einwilligungen fuer Versicherungsberatung
@@ -236,7 +236,7 @@ class ConsentManager:
         return any(c.purpose == purpose and c.is_valid for c in self.user_consents(user_id))
 
     def can_advise(self, user_id: str) -> bool:
-        """Prüft ob alle Pflicht-Einwilligungen für Beratung vorliegen."""
+        """Prueft ob alle Pflicht-Einwilligungen fuer Beratung vorliegen."""
         return all(self.has_consent(user_id, p) for p in self.REQUIRED_FOR_INSURANCE)
 
     def user_consents(self, user_id: str) -> list[UserConsent]:
@@ -291,7 +291,7 @@ class ConsentManager:
 
 @dataclass
 class SimpleDecisionView:
-    """Verständliche Entscheidungsdarstellung für Endnutzer.
+    """Verstaendliche Entscheidungsdarstellung fuer Endnutzer.
 
     Keine technischen Details -- nur was der Nutzer wissen muss.
     """
@@ -324,7 +324,7 @@ class SimpleDecisionView:
 
 
 class DecisionViewBuilder:
-    """Erstellt verständliche Entscheidungsansichten."""
+    """Erstellt verstaendliche Entscheidungsansichten."""
 
     CONFIDENCE_LABELS = {
         (0.9, 1.0): "Sehr hohe Sicherheit",
@@ -398,7 +398,7 @@ class NotificationType(Enum):
 
 @dataclass
 class UserNotification:
-    """Eine Benachrichtigung für den Endnutzer."""
+    """Eine Benachrichtigung fuer den Endnutzer."""
 
     notification_id: str
     user_id: str
@@ -420,7 +420,7 @@ class UserNotification:
 
 
 class NotificationCenter:
-    """Benachrichtigungszentrale für Endnutzer."""
+    """Benachrichtigungszentrale fuer Endnutzer."""
 
     def __init__(self) -> None:
         self._notifications: dict[str, list[UserNotification]] = {}
@@ -482,7 +482,7 @@ class NotificationCenter:
 
 @dataclass
 class UserActivity:
-    """Eine nachvollziehbare Nutzeraktivität."""
+    """Eine nachvollziehbare Nutzeraktivitaet."""
 
     activity_id: str
     user_id: str
@@ -502,7 +502,7 @@ class UserActivity:
 
 
 class UserActivityLog:
-    """Nachvollziehbare Aktivitätshistorie (Art. 15 DSGVO Auskunftsrecht)."""
+    """Nachvollziehbare Aktivitaetshistorie (Art. 15 DSGVO Auskunftsrecht)."""
 
     def __init__(self) -> None:
         self._activities: dict[str, list[UserActivity]] = {}
@@ -540,7 +540,7 @@ class UserActivityLog:
         return data_counts
 
     def export_user_data(self, user_id: str) -> dict[str, Any]:
-        """DSGVO Art. 20: Datenportabilität."""
+        """DSGVO Art. 20: Datenportabilitaet."""
         return {
             "user_id": user_id,
             "activities": [a.to_dict() for a in self._activities.get(user_id, [])],
@@ -549,7 +549,7 @@ class UserActivityLog:
         }
 
     def delete_user_data(self, user_id: str) -> int:
-        """DSGVO Art. 17: Recht auf Löschung."""
+        """DSGVO Art. 17: Recht auf Loeschung."""
         activities = self._activities.pop(user_id, [])
         return len(activities)
 
@@ -596,7 +596,7 @@ class UserPortal:
         return self._activities
 
     def onboard_user(self, user_id: str) -> list[UserConsent]:
-        """Erstellt alle Pflicht-Einwilligungsanfragen für einen neuen Nutzer."""
+        """Erstellt alle Pflicht-Einwilligungsanfragen fuer einen neuen Nutzer."""
         consents = []
         for purpose in ConsentPurpose:
             c = self._consents.request_consent(
@@ -616,7 +616,7 @@ class UserPortal:
         return consents
 
     def user_dashboard(self, user_id: str) -> dict[str, Any]:
-        """Aggregierte Dashboard-Daten für einen Endnutzer."""
+        """Aggregierte Dashboard-Daten fuer einen Endnutzer."""
         return {
             "consents": [c.to_dict() for c in self._consents.user_consents(user_id)],
             "can_advise": self._consents.can_advise(user_id),
@@ -626,7 +626,7 @@ class UserPortal:
         }
 
     def exercise_right_to_erasure(self, user_id: str) -> dict[str, int]:
-        """DSGVO Art. 17: Komplettlöschung aller Nutzerdaten."""
+        """DSGVO Art. 17: Komplettloeschung aller Nutzerdaten."""
         withdrawn = self._consents.withdraw_all(user_id)
         deleted = self._activities.delete_user_data(user_id)
         return {"consents_withdrawn": withdrawn, "activities_deleted": deleted}

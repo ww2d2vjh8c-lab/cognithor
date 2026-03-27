@@ -1,11 +1,11 @@
 """Jarvis · Ecosystem control & security training.
 
-Strenge Kuration und Notfall-Updates für das Skill-Ökosystem:
+Strenge Kuration und Notfall-Updates fuer das Skill-Oekosystem:
 
   - SkillCurator:          Manuelle und automatische Skill-Kuration
   - EmergencyUpdater:      Zentralisierte Notfall-Patches
-  - FraudDetector:         Erkennt betrügerische/schädliche Skills
-  - SecurityTrainer:       Trainingsmaterialien für Agent-Security
+  - FraudDetector:         Erkennt betruegerische/schaedliche Skills
+  - SecurityTrainer:       Trainingsmaterialien fuer Agent-Security
   - TrustBoundaryManager:  Vertrauensgrenzen zwischen Agenten
   - EcosystemController:   Hauptklasse, orchestriert alles
 
@@ -98,7 +98,7 @@ class SkillCurator:
         return review
 
     def auto_review(self, skill_id: str, criteria_results: dict[str, bool]) -> CurationReview:
-        """Automatische Prüfung aller Kriterien."""
+        """Automatische Pruefung aller Kriterien."""
         self._counter += 1
         all_passed = all(criteria_results.values())
         status = (
@@ -198,7 +198,7 @@ class UpdateSeverity(Enum):
 
 @dataclass
 class EmergencyPatch:
-    """Notfall-Patch für das Ecosystem."""
+    """Notfall-Patch fuer das Ecosystem."""
 
     patch_id: str
     severity: UpdateSeverity
@@ -221,7 +221,7 @@ class EmergencyPatch:
 
 
 class EmergencyUpdater:
-    """Zentralisierte Notfall-Patches für das Skill-Ecosystem."""
+    """Zentralisierte Notfall-Patches fuer das Skill-Ecosystem."""
 
     def __init__(self) -> None:
         self._patches: list[EmergencyPatch] = []
@@ -287,7 +287,7 @@ class EmergencyUpdater:
 
 @dataclass
 class FraudSignal:
-    """Ein Betrugs-Signal für einen Skill."""
+    """Ein Betrugs-Signal fuer einen Skill."""
 
     signal_id: str
     skill_id: str
@@ -309,10 +309,10 @@ class FraudSignal:
 
 
 class FraudDetector:
-    """Erkennt betrügerische oder schädliche Skills.
+    """Erkennt betruegerische oder schaedliche Skills.
 
-    Prüft auf:
-      - Name-Squatting (ähnliche Namen wie populäre Skills)
+    Prueft auf:
+      - Name-Squatting (aehnliche Namen wie populaere Skills)
       - Crypto-Mining-Patterns
       - Data-Theft-Indikatoren
       - Reputation-Gaming
@@ -474,7 +474,7 @@ class FraudDetector:
 
 @dataclass
 class TrainingModule:
-    """Ein Trainingsmodul für Security-Teams."""
+    """Ein Trainingsmodul fuer Security-Teams."""
 
     module_id: str
     title: str
@@ -518,7 +518,7 @@ class TrainingProgress:
 
 
 class SecurityTrainer:
-    """Trainingsmaterialien für Agent-spezifische Security-Risiken."""
+    """Trainingsmaterialien fuer Agent-spezifische Security-Risiken."""
 
     DEFAULT_MODULES = [
         TrainingModule(
@@ -757,7 +757,7 @@ class EcosystemController:
     def full_skill_review(
         self, skill_id: str, code: str, metadata: dict[str, Any] | None = None
     ) -> dict[str, Any]:
-        """Vollständige Prüfung eines Skills: Kuration + Fraud-Scan."""
+        """Vollstaendige Pruefung eines Skills: Kuration + Fraud-Scan."""
         fraud_signals = self._fraud.scan(skill_id, code, metadata)
         has_fraud = len(fraud_signals) > 0
 

@@ -1,18 +1,18 @@
 """Jarvis · Memory hygiene framework.
 
-Schutz des RAG-Gedächtnisses vor Manipulation:
+Schutz des RAG-Gedaechtnisses vor Manipulation:
 
-  - InjectionScanner:      Erkennt Prompt-Injections in Memory-Einträgen
-  - ContradictionChecker:  Findet widersprüchliche Fakten
+  - InjectionScanner:      Erkennt Prompt-Injections in Memory-Eintraegen
+  - ContradictionChecker:  Findet widerspruechliche Fakten
   - CredentialLeakDetector: Erkennt versehentlich gespeicherte Secrets
-  - IntegrityVerifier:     Prüft Hashes und Zeitstempel-Konsistenz
+  - IntegrityVerifier:     Prueft Hashes und Zeitstempel-Konsistenz
   - MemoryHygieneEngine:   Orchestriert alle Checks
 
-Architektur-Bibel: §7 (Memory-Schichten), §14.7 (Memory-Integrität)
+Architektur-Bibel: §7 (Memory-Schichten), §14.7 (Memory-Integritaet)
 
 Memory-Poisoning ist ein realer Angriffsvektor bei RAG-Systemen:
-  - Bösartige Einträge können Agent-Verhalten manipulieren
-  - Widersprüchliche Fakten degradieren die Antwortqualität
+  - Boesartige Eintraege koennen Agent-Verhalten manipulieren
+  - Widerspruechliche Fakten degradieren die Antwortqualitaet
   - Credentials in Episoden-Logs sind ein Datenleck-Risiko
 """
 
@@ -163,10 +163,10 @@ _INJECTION_PATTERNS: list[tuple[str, ThreatSeverity, str]] = [
 
 
 class InjectionScanner:
-    """Erkennt Prompt-Injections in Memory-Einträgen.
+    """Erkennt Prompt-Injections in Memory-Eintraegen.
 
     Scannt Memory-Content auf bekannte Injection-Patterns
-    und markiert verdächtige Einträge zur Quarantäne.
+    und markiert verdaechtige Eintraege zur Quarantaene.
     """
 
     def __init__(
@@ -201,7 +201,7 @@ class InjectionScanner:
         return threats
 
     def is_clean(self, content: str) -> bool:
-        """Schnellprüfung: True wenn keine Injection erkannt."""
+        """Schnellpruefung: True wenn keine Injection erkannt."""
         return all(not pattern.search(content) for pattern, _, _ in self._compiled)
 
 
@@ -229,8 +229,8 @@ _CREDENTIAL_PATTERNS: list[tuple[str, ThreatSeverity, str]] = [
 class CredentialLeakDetector:
     """Erkennt versehentlich gespeicherte Credentials in Memory.
 
-    Secrets in Memory-Einträgen sind ein Datenleck-Risiko,
-    da sie bei RAG-Retrieval exponiert werden können.
+    Secrets in Memory-Eintraegen sind ein Datenleck-Risiko,
+    da sie bei RAG-Retrieval exponiert werden koennen.
     """
 
     def __init__(
@@ -286,17 +286,17 @@ class FactAssertion:
 
 
 class ContradictionChecker:
-    """Findet widersprüchliche Fakten im Memory.
+    """Findet widerspruechliche Fakten im Memory.
 
-    Wenn zwei Memory-Einträge entgegengesetzte Behauptungen
-    über dasselbe Subjekt machen, wird ein Widerspruch markiert.
+    Wenn zwei Memory-Eintraege entgegengesetzte Behauptungen
+    ueber dasselbe Subjekt machen, wird ein Widerspruch markiert.
     """
 
     def __init__(self) -> None:
         self._facts: dict[str, list[FactAssertion]] = {}
 
     def add_fact(self, fact: FactAssertion) -> list[MemoryThreat]:
-        """Fügt einen Fakt hinzu und prüft auf Widersprüche."""
+        """Fuegt einen Fakt hinzu und prueft auf Widersprueche."""
         threats: list[MemoryThreat] = []
 
         key = fact.key
@@ -324,7 +324,7 @@ class ContradictionChecker:
         return threats
 
     def check_consistency(self) -> list[MemoryThreat]:
-        """Prüft alle gespeicherten Fakten auf Widersprüche."""
+        """Prueft alle gespeicherten Fakten auf Widersprueche."""
         threats: list[MemoryThreat] = []
         for key, facts in self._facts.items():
             values = set(f.value.lower() for f in facts)
@@ -359,10 +359,10 @@ class ContradictionChecker:
 
 
 class IntegrityVerifier:
-    """Prüft die Integrität von Memory-Einträgen.
+    """Prueft die Integritaet von Memory-Eintraegen.
 
     Verifiziert Hashes, Zeitstempel-Konsistenz und
-    erkennt manipulierte Einträge.
+    erkennt manipulierte Eintraege.
     """
 
     def __init__(self) -> None:
@@ -375,7 +375,7 @@ class IntegrityVerifier:
         return h
 
     def verify_entry(self, entry_id: str, content: str) -> bool:
-        """Prüft ob ein Eintrag seit der Registrierung verändert wurde."""
+        """Prueft ob ein Eintrag seit der Registrierung veraendert wurde."""
         expected = self._hashes.get(entry_id)
         if not expected:
             return True  # Unbekannter Eintrag = nicht verifizierbar
@@ -383,7 +383,7 @@ class IntegrityVerifier:
         return actual == expected
 
     def check_integrity(self, entry_id: str, content: str) -> MemoryThreat | None:
-        """Prüft Integrität und gibt ggf. eine Bedrohung zurück."""
+        """Prueft Integritaet und gibt ggf. eine Bedrohung zurueck."""
         if not self.verify_entry(entry_id, content):
             return MemoryThreat(
                 threat_id=f"INT-{entry_id[:8]}",
@@ -444,11 +444,11 @@ class MemoryHygieneEngine:
         *,
         auto_quarantine: bool = True,
     ) -> HygieneReport:
-        """Scannt eine Batch von Memory-Einträgen.
+        """Scannt eine Batch von Memory-Eintraegen.
 
         Args:
             entries: Liste von Dicts mit 'id' und 'content' Keys.
-            auto_quarantine: Bei True werden gefährliche Einträge quarantäniert.
+            auto_quarantine: Bei True werden gefaehrliche Eintraege quarantaeniert.
         """
         start = time.time()
         report = HygieneReport(
@@ -537,9 +537,9 @@ class MemorySnapshot:
 
 
 class MemoryVersionControl:
-    """Versionskontrolle für den Memory-Store.
+    """Versionskontrolle fuer den Memory-Store.
 
-    Erstellt periodische Snapshots und erkennt unerwartete Änderungen.
+    Erstellt periodische Snapshots und erkennt unerwartete Aenderungen.
     """
 
     def __init__(self) -> None:
@@ -580,7 +580,7 @@ class MemoryVersionControl:
         """Erkennt unerwarteten Drift zwischen aufeinanderfolgenden Snapshots.
 
         Args:
-            max_change_rate: Max. erlaubte Änderungsrate in % pro Snapshot.
+            max_change_rate: Max. erlaubte Aenderungsrate in % pro Snapshot.
 
         Returns:
             Drift-Analyse mit Warnungen.
@@ -626,7 +626,7 @@ class MemoryVersionControl:
 
 
 class DuplicateDetector:
-    """Erkennt Dubletten und quasi-identische Einträge im Memory-Store."""
+    """Erkennt Dubletten und quasi-identische Eintraege im Memory-Store."""
 
     @staticmethod
     def find_duplicates(
@@ -635,7 +635,7 @@ class DuplicateDetector:
         key_field: str = "content",
         threshold: float = 0.9,
     ) -> list[tuple[int, int, float]]:
-        """Findet Duplikate basierend auf Textähnlichkeit.
+        """Findet Duplikate basierend auf Textaehnlichkeit.
 
         Returns:
             Liste von (index_a, index_b, similarity) Tupeln.
@@ -653,7 +653,7 @@ class DuplicateDetector:
 
     @staticmethod
     def _similarity(a: str, b: str) -> float:
-        """Einfache Jaccard-Ähnlichkeit auf Wort-Ebene."""
+        """Einfache Jaccard-Aehnlichkeit auf Wort-Ebene."""
         if not a or not b:
             return 0.0
         words_a = set(a.lower().split())
@@ -704,12 +704,12 @@ class PoisoningAlert:
 class PoisoningPreventor:
     """Erkennt und verhindert Memory-Poisoning-Angriffe.
 
-    Prüft neue Einträge auf verdächtige Muster:
-    - Plötzliche Themenwechsel
+    Prueft neue Eintraege auf verdaechtige Muster:
+    - Ploetzliche Themenwechsel
     - Eingebettete Anweisungen
-    - Autoritäts-Behauptungen
+    - Autoritaets-Behauptungen
     - Wiederholte Injections
-    - Widersprüche zur Baseline
+    - Widersprueche zur Baseline
     - Spam-Inhalte
     """
 
@@ -800,7 +800,7 @@ class PoisoningPreventor:
     def scan_batch(
         self, entries: list[dict[str, Any]], key: str = "content"
     ) -> list[PoisoningAlert]:
-        """Scannt eine Batch von Einträgen."""
+        """Scannt eine Batch von Eintraegen."""
         all_alerts = []
         for i, entry in enumerate(entries):
             content = str(entry.get(key, ""))
@@ -851,7 +851,7 @@ class PoisoningPreventor:
 
 @dataclass
 class SourceTrust:
-    """Vertrauenswürdigkeit einer Wissensquelle."""
+    """Vertrauenswuerdigkeit einer Wissensquelle."""
 
     source_id: str
     name: str
@@ -881,7 +881,7 @@ class SourceTrust:
 
 
 class SourceIntegrityChecker:
-    """Bewertet die Vertrauenswürdigkeit von Wissensquellen."""
+    """Bewertet die Vertrauenswuerdigkeit von Wissensquellen."""
 
     def __init__(self) -> None:
         self._sources: dict[str, SourceTrust] = {}

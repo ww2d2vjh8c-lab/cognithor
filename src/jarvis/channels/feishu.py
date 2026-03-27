@@ -1,7 +1,7 @@
-"""Feishu/Lark Channel: Bidirektionale Kommunikation über Feishu.
+"""Feishu/Lark Channel: Bidirektionale Kommunikation ueber Feishu.
 
 Nutzt Feishu Open API (REST via httpx).
-Unterstützt:
+Unterstuetzt:
   - Text-Nachrichten
   - Interactive Cards mit Approval-Workflow
   - Event Subscription
@@ -11,7 +11,7 @@ Konfiguration:
   - JARVIS_FEISHU_APP_ID: App ID
   - JARVIS_FEISHU_APP_SECRET: App Secret
 
-Abhängigkeiten:
+Abhaengigkeiten:
   Nur httpx (bereits als Core-Dependency vorhanden)
 """
 
@@ -34,10 +34,10 @@ _FEISHU_API_BASE = "https://open.feishu.cn/open-apis"
 
 
 class FeishuChannel(Channel):
-    """Feishu/Lark Integration für Jarvis.
+    """Feishu/Lark Integration fuer Jarvis.
 
-    Empfängt Nachrichten via Event Subscription (Webhook),
-    sendet via REST API. Nutzt Tenant Access Token für Auth.
+    Empfaengt Nachrichten via Event Subscription (Webhook),
+    sendet via REST API. Nutzt Tenant Access Token fuer Auth.
     """
 
     def __init__(

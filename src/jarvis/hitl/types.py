@@ -1,10 +1,10 @@
 """Human-in-the-Loop Types -- v20.
 
-Datenmodelle für HITL-Workflows auf Graph-Ebene:
+Datenmodelle fuer HITL-Workflows auf Graph-Ebene:
   - ApprovalRequest:   Anfrage an menschlichen Reviewer
   - ApprovalResponse:  Entscheidung des Reviewers
   - EscalationPolicy:  Eskalations-Regeln (Timeout, Delegation)
-  - ReviewTask:        Vollständiger Review-Auftrag mit Kontext
+  - ReviewTask:        Vollstaendiger Review-Auftrag mit Kontext
   - HITLConfig:        Konfiguration pro HITL-Knoten
   - NotificationChannel: Benachrichtigungs-Kanal-Definition
 
@@ -40,7 +40,7 @@ class ApprovalStatus(str, Enum):
 
 
 class ReviewPriority(str, Enum):
-    """Priorität eines Reviews."""
+    """Prioritaet eines Reviews."""
 
     LOW = "low"
     NORMAL = "normal"
@@ -105,7 +105,7 @@ class NotificationChannel:
 
 @dataclass
 class EscalationPolicy:
-    """Regeln für Timeout und Eskalation.
+    """Regeln fuer Timeout und Eskalation.
 
     Definiert was passiert wenn innerhalb von timeout_seconds
     keine Antwort kommt.
@@ -134,7 +134,7 @@ class EscalationPolicy:
 
 @dataclass
 class HITLConfig:
-    """Konfiguration für einen HITL-Knoten."""
+    """Konfiguration fuer einen HITL-Knoten."""
 
     node_kind: HITLNodeKind = HITLNodeKind.APPROVAL
     title: str = ""
@@ -282,7 +282,7 @@ class ApprovalResponse:
 
 @dataclass
 class ReviewTask:
-    """Vollständiger Review-Auftrag mit Kontext für UI/API."""
+    """Vollstaendiger Review-Auftrag mit Kontext fuer UI/API."""
 
     request: ApprovalRequest
     responses: list[ApprovalResponse] = field(default_factory=list)

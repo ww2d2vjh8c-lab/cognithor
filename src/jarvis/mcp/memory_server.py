@@ -1,19 +1,19 @@
-"""Memory-Tools für Jarvis · MCP-Server für das 5-Tier Memory-System.
+"""Memory-Tools fuer Jarvis · MCP-Server fuer das 5-Tier Memory-System.
 
 Exponiert das Cognitive Memory-System als Tool-Calls, damit der Planner
-über den normalen MCP-Kanal auf alle Memory-Tiers zugreifen kann.
+ueber den normalen MCP-Kanal auf alle Memory-Tiers zugreifen kann.
 
 Tools:
-  - search_memory: Hybrid-Suche über alle Memory-Tiers (BM25 + Vektor + Graph)
+  - search_memory: Hybrid-Suche ueber alle Memory-Tiers (BM25 + Vektor + Graph)
   - save_to_memory: Speichert Information in den passenden Tier
-  - get_entity: Lädt eine Entität mit Relationen aus dem Wissens-Graphen
-  - add_entity: Erstellt eine neue Entität im Wissens-Graphen
-  - add_relation: Erstellt eine Relation zwischen zwei Entitäten
-  - get_core_memory: Gibt die aktuelle Core Memory (CORE.md) zurück
-  - get_recent_episodes: Lädt die letzten Tageslog-Einträge
+  - get_entity: Laedt eine Entitaet mit Relationen aus dem Wissens-Graphen
+  - add_entity: Erstellt eine neue Entitaet im Wissens-Graphen
+  - add_relation: Erstellt eine Relation zwischen zwei Entitaeten
+  - get_core_memory: Gibt die aktuelle Core Memory (CORE.md) zurueck
+  - get_recent_episodes: Laedt die letzten Tageslog-Eintraege
   - search_procedures: Sucht nach gelernten Prozeduren/Skills
   - record_procedure_usage: Meldet Erfolg/Misserfolg einer Prozedur
-  - memory_stats: Gibt Gesamtstatistiken des Memory-Systems zurück
+  - memory_stats: Gibt Gesamtstatistiken des Memory-Systems zurueck
 
 Bibel-Referenz: §5.3 (jarvis-memory Server)
 """
@@ -38,7 +38,7 @@ class MemoryToolsError(Exception):
 
 
 class MemoryTools:
-    """Memory-Operationen als Tool-Calls für den Planner. [B§5.3]
+    """Memory-Operationen als Tool-Calls fuer den Planner. [B§5.3]
 
     Wrapper um den MemoryManager, der alle Operationen als
     einfache Funktionen mit String-Ein/Ausgabe exponiert.
@@ -59,11 +59,11 @@ class MemoryTools:
         """Durchsucht das Memory-System mit Hybrid-Suche.
 
         Kombiniert BM25 (lexikalisch), Vektor (semantisch) und
-        Graph-Traversal für optimale Ergebnisse. Nutzt synchronen
-        BM25-Fallback wenn kein Embedding-Server verfügbar.
+        Graph-Traversal fuer optimale Ergebnisse. Nutzt synchronen
+        BM25-Fallback wenn kein Embedding-Server verfuegbar.
 
         Args:
-            query: Natürlichsprachliche Suchanfrage.
+            query: Natuerlichsprachliche Suchanfrage.
             top_k: Maximale Anzahl Ergebnisse (1-20, Default: 6).
             tier: Optionaler Filter auf einen Tier
                   ("core"|"episodic"|"semantic"|"procedural"|"").
@@ -100,7 +100,7 @@ class MemoryTools:
 
     @staticmethod
     def _format_results(results: list[MemorySearchResult]) -> str:
-        """Formatiert Suchergebnisse für den Planner.
+        """Formatiert Suchergebnisse fuer den Planner.
 
         Args:
             results: Liste von MemorySearchResult.
@@ -142,11 +142,11 @@ class MemoryTools:
             content: Der zu speichernde Text.
             tier: Ziel-Tier ("episodic"|"semantic"|"procedural").
                   Core ist nicht direkt beschreibbar.
-            topic: Thema/Überschrift (für Episodic: wird als Titel verwendet).
-            source_path: Optionaler Quellpfad (für Semantic/Procedural).
+            topic: Thema/Ueberschrift (fuer Episodic: wird als Titel verwendet).
+            source_path: Optionaler Quellpfad (fuer Semantic/Procedural).
 
         Returns:
-            Bestätigungsnachricht.
+            Bestaetigungsnachricht.
         """
         if not content.strip():
             return "Fehler: Leerer Inhalt."
@@ -170,10 +170,10 @@ class MemoryTools:
 
         Args:
             content: Der Eintrag-Text.
-            topic: Überschrift des Eintrags.
+            topic: Ueberschrift des Eintrags.
 
         Returns:
-            Bestätigungsnachricht.
+            Bestaetigungsnachricht.
         """
         topic = topic or "Notiz"
         self._memory.episodic.append_entry(topic=topic, content=content)
@@ -188,7 +188,7 @@ class MemoryTools:
             source_path: Virtueller Quellpfad.
 
         Returns:
-            Bestätigungsnachricht mit Chunk-Anzahl.
+            Bestaetigungsnachricht mit Chunk-Anzahl.
         """
         if not source_path:
             source_path = f"knowledge/auto/{date.today().isoformat()}.md"
@@ -204,7 +204,7 @@ class MemoryTools:
             source_path: Dateiname (z.B. "bu-angebot-erstellen.md").
 
         Returns:
-            Bestätigungsnachricht.
+            Bestaetigungsnachricht.
         """
         if not source_path:
             source_path = f"auto-{date.today().isoformat()}.md"
@@ -233,13 +233,13 @@ class MemoryTools:
     # ── Entity/Relation (Wissens-Graph) ──────────────────────────
 
     def get_entity(self, name: str) -> str:
-        """Lädt eine Entität mit allen Relationen aus dem Wissens-Graphen.
+        """Laedt eine Entitaet mit allen Relationen aus dem Wissens-Graphen.
 
         Args:
-            name: Name der Entität (Teilmatch, case-insensitive).
+            name: Name der Entitaet (Teilmatch, case-insensitive).
 
         Returns:
-            Formatierte Entität mit Attributen und Relationen.
+            Formatierte Entitaet mit Attributen und Relationen.
         """
         if not name.strip():
             return "Fehler: Leerer Name."
@@ -291,16 +291,16 @@ class MemoryTools:
         attributes: str = "{}",
         source_file: str = "",
     ) -> str:
-        """Erstellt eine neue Entität im Wissens-Graphen.
+        """Erstellt eine neue Entitaet im Wissens-Graphen.
 
         Args:
-            name: Anzeigename der Entität.
+            name: Anzeigename der Entitaet.
             entity_type: Typ (z.B. "person", "company", "product", "project").
-            attributes: JSON-String mit zusätzlichen Attributen.
-            source_file: Quell-Datei aus der die Entität gelernt wurde.
+            attributes: JSON-String mit zusaetzlichen Attributen.
+            source_file: Quell-Datei aus der die Entitaet gelernt wurde.
 
         Returns:
-            Bestätigungsnachricht mit Entity-ID.
+            Bestaetigungsnachricht mit Entity-ID.
         """
         if not name.strip():
             return "Fehler: Leerer Name."
@@ -329,18 +329,18 @@ class MemoryTools:
         target_name: str,
         attributes: str = "{}",
     ) -> str:
-        """Erstellt eine Relation zwischen zwei Entitäten.
+        """Erstellt eine Relation zwischen zwei Entitaeten.
 
-        Sucht die Entitäten anhand des Namens. Beide müssen existieren.
+        Sucht die Entitaeten anhand des Namens. Beide muessen existieren.
 
         Args:
-            source_name: Name der Quell-Entität.
+            source_name: Name der Quell-Entitaet.
             relation_type: Art der Beziehung (z.B. "hat_police", "arbeitet_bei").
-            target_name: Name der Ziel-Entität.
-            attributes: JSON-String mit zusätzlichen Attributen.
+            target_name: Name der Ziel-Entitaet.
+            attributes: JSON-String mit zusaetzlichen Attributen.
 
         Returns:
-            Bestätigungsnachricht.
+            Bestaetigungsnachricht.
         """
         # Entitaeten suchen
         sources = self._memory.index.search_entities(source_name)
@@ -375,10 +375,10 @@ class MemoryTools:
     # ── Core Memory ──────────────────────────────────────────────
 
     def get_core_memory(self) -> str:
-        """Gibt die aktuelle Core Memory (CORE.md) zurück.
+        """Gibt die aktuelle Core Memory (CORE.md) zurueck.
 
         Returns:
-            Vollständiger Inhalt der CORE.md.
+            Vollstaendiger Inhalt der CORE.md.
         """
         content = self._memory.core.load()
         if not content:
@@ -388,13 +388,13 @@ class MemoryTools:
     # ── Episodic ─────────────────────────────────────────────────
 
     def get_recent_episodes(self, days: int = 3) -> str:
-        """Lädt die letzten Tageslog-Einträge.
+        """Laedt die letzten Tageslog-Eintraege.
 
         Args:
-            days: Anzahl Tage zurück (1-30, Default: 3).
+            days: Anzahl Tage zurueck (1-30, Default: 3).
 
         Returns:
-            Formatierte Tageslog-Einträge.
+            Formatierte Tageslog-Eintraege.
         """
         days = max(1, min(30, days))
 
@@ -491,10 +491,10 @@ class MemoryTools:
     # ── Stats ────────────────────────────────────────────────────
 
     def memory_stats(self) -> str:
-        """Gibt Gesamtstatistiken des Memory-Systems zurück.
+        """Gibt Gesamtstatistiken des Memory-Systems zurueck.
 
         Returns:
-            Formatierte Übersicht aller Memory-Tiers und Indizes.
+            Formatierte Uebersicht aller Memory-Tiers und Indizes.
         """
         stats = self._memory.stats()
 
@@ -531,7 +531,7 @@ def register_memory_tools(
         memory: Initialisierter MemoryManager.
 
     Returns:
-        MemoryTools-Instanz für direkten Zugriff.
+        MemoryTools-Instanz fuer direkten Zugriff.
     """
     mt = MemoryTools(memory)
 

@@ -6,7 +6,7 @@ Erweitert das Memory-System um multimodale Suche:
   - Dokumente → Extrahierter Text → Chunks → Embeddings
 
 Cross-modale Suche: Eine Textfrage findet relevante Bilder,
-Audio-Clips und Dokumente über ihre textuelle Repräsentation.
+Audio-Clips und Dokumente ueber ihre textuelle Repraesentation.
 
 Architektur:
   MediaPipeline.analyze_image() → Beschreibung
@@ -41,7 +41,7 @@ logger = logging.getLogger("jarvis.memory.multimodal")
 
 
 class MediaType(Enum):
-    """Unterstützte Medientypen."""
+    """Unterstuetzte Medientypen."""
 
     IMAGE = "image"
     AUDIO = "audio"
@@ -53,8 +53,8 @@ class MediaType(Enum):
 class MediaAsset:
     """Ein indexiertes Medien-Asset.
 
-    Speichert die Verknüpfung zwischen Original-Datei,
-    textueller Repräsentation und den daraus erzeugten Chunks.
+    Speichert die Verknuepfung zwischen Original-Datei,
+    textueller Repraesentation und den daraus erzeugten Chunks.
     """
 
     id: str
@@ -93,7 +93,7 @@ def detect_media_type(file_path: str | Path) -> MediaType | None:
     """Erkennt den Medientyp anhand der Dateiendung.
 
     Returns:
-        MediaType oder None wenn nicht unterstützt.
+        MediaType oder None wenn nicht unterstuetzt.
     """
     suffix = Path(file_path).suffix.lower()
     if suffix in _IMAGE_EXTS:
@@ -130,11 +130,11 @@ class MultimodalMemory:
       2. Text extrahieren (via MediaPipeline oder direkt)
       3. Text chunken + in Memory-Index speichern
       4. Asset-Metadaten tracken
-      5. Cross-modale Suche über normale HybridSearch
+      5. Cross-modale Suche ueber normale HybridSearch
 
     Args:
-        memory_manager: MemoryManager für Index + Embedding-Zugriff.
-        media_pipeline: MediaPipeline für Bild/Audio/Dokument-Verarbeitung.
+        memory_manager: MemoryManager fuer Index + Embedding-Zugriff.
+        media_pipeline: MediaPipeline fuer Bild/Audio/Dokument-Verarbeitung.
     """
 
     def __init__(
@@ -184,7 +184,7 @@ class MultimodalMemory:
             file_path: Pfad zur Mediendatei.
             text_override: Wenn gesetzt, wird dieser Text statt Extraktion verwendet.
             media_type: Expliziter Medientyp (sonst Auto-Detect).
-            metadata: Zusätzliche Metadaten.
+            metadata: Zusaetzliche Metadaten.
 
         Returns:
             MediaAsset oder None bei Fehler.
@@ -292,7 +292,7 @@ class MultimodalMemory:
         media_type: MediaType | None = None,
         top_k: int = 5,
     ) -> list[tuple[MediaAsset, float]]:
-        """Sucht in Media-Assets via BM25 über deren Text-Repräsentation.
+        """Sucht in Media-Assets via BM25 ueber deren Text-Repraesentation.
 
         Schnelle, synchrone Suche ohne Embedding-Server.
 

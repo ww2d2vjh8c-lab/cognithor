@@ -1,6 +1,6 @@
 """Jarvis channels module.
 
-Alle Kommunikationskanäle zwischen User und Gateway.
+Alle Kommunikationskanaele zwischen User und Gateway.
 Bibel-Referenz: §9 (Gateway & Channels)
 """
 

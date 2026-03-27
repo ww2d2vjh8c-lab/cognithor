@@ -1,17 +1,17 @@
-"""Google Chat Channel: Bidirektionale Kommunikation über Google Chat.
+"""Google Chat Channel: Bidirektionale Kommunikation ueber Google Chat.
 
-Nutzt Google Chat API (REST via httpx) mit Pub/Sub oder Webhook für Events.
-Unterstützt:
+Nutzt Google Chat API (REST via httpx) mit Pub/Sub oder Webhook fuer Events.
+Unterstuetzt:
   - Text-Nachrichten in Spaces und DMs
-  - Cards für strukturierte Antworten
-  - Approval-Buttons über interaktive Cards
+  - Cards fuer strukturierte Antworten
+  - Approval-Buttons ueber interaktive Cards
   - Streaming (Buffer → einzelne Nachricht)
 
 Konfiguration:
   - JARVIS_GOOGLE_CHAT_CREDENTIALS: Pfad zur Service Account JSON
   - JARVIS_GOOGLE_CHAT_ALLOWED_SPACES: Erlaubte Space-IDs
 
-Abhängigkeiten:
+Abhaengigkeiten:
   pip install google-auth google-api-core
 """
 
@@ -32,10 +32,10 @@ _CHAT_API_BASE = "https://chat.googleapis.com/v1"
 
 
 class GoogleChatChannel(Channel):
-    """Google Chat Integration für Jarvis.
+    """Google Chat Integration fuer Jarvis.
 
-    Empfängt Nachrichten via Webhook/Pub/Sub, sendet via REST API.
-    Unterstützt Spaces, DMs und interaktive Cards.
+    Empfaengt Nachrichten via Webhook/Pub/Sub, sendet via REST API.
+    Unterstuetzt Spaces, DMs und interaktive Cards.
     """
 
     def __init__(
@@ -108,7 +108,7 @@ class GoogleChatChannel(Channel):
         logger.info("GoogleChatChannel gestoppt")
 
     def _is_space_allowed(self, space_name: str) -> bool:
-        """Prüft ob der Space erlaubt ist."""
+        """Prueft ob der Space erlaubt ist."""
         if not self._allowed_spaces:
             return True  # Keine Whitelist = alles erlaubt
         return space_name in self._allowed_spaces
@@ -133,7 +133,7 @@ class GoogleChatChannel(Channel):
             payload: Das JSON-Payload vom Webhook.
 
         Returns:
-            Optional: Synchrone Antwort für den Webhook.
+            Optional: Synchrone Antwort fuer den Webhook.
         """
         event_type = payload.get("type", "")
 

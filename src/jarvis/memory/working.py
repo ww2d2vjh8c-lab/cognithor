@@ -68,7 +68,7 @@ class WorkingMemoryManager:
 
     Responsibilities:
     - Token-Budget Tracking
-    - Entscheidung wann Compaction nötig ist
+    - Entscheidung wann Compaction noetig ist
     - FIFO-Entfernung alter Chat-History
     - Injection von relevanten Memories
     """
@@ -115,17 +115,17 @@ class WorkingMemoryManager:
 
     @property
     def max_tokens(self) -> int:
-        """Maximales Token-Budget für die Working Memory."""
+        """Maximales Token-Budget fuer die Working Memory."""
         return self._max_tokens
 
     @property
     def available_chat_tokens(self) -> int:
-        """Verfügbare Tokens für Chat-History."""
+        """Verfuegbare Tokens fuer Chat-History."""
         return max(0, self._max_tokens - self._static_budget)
 
     @property
     def current_chat_tokens(self) -> int:
-        """Geschätzte Tokens in der aktuellen Chat-History."""
+        """Geschaetzte Tokens in der aktuellen Chat-History."""
         return sum(self._estimate_message_tokens(m) for m in self._memory.chat_history)
 
     @property
@@ -138,7 +138,7 @@ class WorkingMemoryManager:
 
     @property
     def needs_compaction(self) -> bool:
-        """True wenn Pre-Compaction Flush nötig ist."""
+        """True wenn Pre-Compaction Flush noetig ist."""
         return self.usage_ratio > self._config.compaction_threshold
 
     # ── Session Management ───────────────────────────────────────
@@ -153,12 +153,12 @@ class WorkingMemoryManager:
         return self._memory
 
     def add_message(self, message: Message) -> None:
-        """Fügt eine Nachricht zur Chat-History hinzu."""
+        """Fuegt eine Nachricht zur Chat-History hinzu."""
         self._memory.add_message(message)
         self._update_token_count()
 
     def add_tool_result(self, result: ToolResult) -> None:
-        """Fügt ein Tool-Ergebnis hinzu."""
+        """Fuegt ein Tool-Ergebnis hinzu."""
         self._memory.add_tool_result(result)
 
     def set_plan(self, plan: ActionPlan | None) -> None:
@@ -180,13 +180,13 @@ class WorkingMemoryManager:
     # ── Compaction ───────────────────────────────────────────────
 
     def compact(self) -> CompactionResult:
-        """Pre-Compaction: Entfernt älteste Chat-History Einträge.
+        """Pre-Compaction: Entfernt aelteste Chat-History Eintraege.
 
-        Behält die letzten N Nachrichten (aus Config).
+        Behaelt die letzten N Nachrichten (aus Config).
         Extrahiert keine Fakten -- das macht der Reflector separat.
 
         Returns:
-            CompactionResult mit Infos über was entfernt wurde.
+            CompactionResult mit Infos ueber was entfernt wurde.
         """
         keep_n = self._config.compaction_keep_last_n
         history = self._memory.chat_history
@@ -223,9 +223,9 @@ class WorkingMemoryManager:
         return result
 
     def get_removable_messages(self) -> list[Message]:
-        """Gibt die Nachrichten zurück die bei Compaction entfernt werden.
+        """Gibt die Nachrichten zurueck die bei Compaction entfernt werden.
 
-        Nützlich für den Reflector, der vorher Fakten extrahieren kann.
+        Nuetzlich fuer den Reflector, der vorher Fakten extrahieren kann.
         """
         keep_n = self._config.compaction_keep_last_n
         history = self._memory.chat_history
@@ -236,7 +236,7 @@ class WorkingMemoryManager:
     # ── Context Building ─────────────────────────────────────────
 
     def build_context_parts(self) -> dict[str, str]:
-        """Baut die einzelnen Kontext-Teile für den LLM-Prompt.
+        """Baut die einzelnen Kontext-Teile fuer den LLM-Prompt.
 
         Returns:
             Dict mit benannten Kontext-Teilen.
@@ -284,10 +284,10 @@ class WorkingMemoryManager:
 
     @staticmethod
     def _estimate_message_tokens(msg: Message) -> int:
-        """Sprachbewusste Token-Schätzung pro Nachricht.
+        """Sprachbewusste Token-Schaetzung pro Nachricht.
 
         Nutzt die Heuristik aus dem Chunker (Wort-basiert + Komposita-Korrektur)
-        statt der groben ``len(text) // 4`` Schätzung.
+        statt der groben ``len(text) // 4`` Schaetzung.
         """
         text = msg.content or ""
         return _estimate_tokens(text) + _MESSAGE_OVERHEAD_TOKENS

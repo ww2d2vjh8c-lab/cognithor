@@ -1,6 +1,6 @@
 """Jarvis · Enterprise-Konnektoren.
 
-Interoperabilität mit Unternehmenssystemen:
+Interoperabilitaet mit Unternehmenssystemen:
 
   - TeamsConnector:      Microsoft Teams Bot Framework Integration
   - JiraConnector:       Atlassian Jira REST API v3
@@ -29,7 +29,7 @@ from typing import Any
 
 
 class ConnectorScope(Enum):
-    """Berechtigungsscopes für Konnektoren."""
+    """Berechtigungsscopes fuer Konnektoren."""
 
     # Teams
     TEAMS_READ_MESSAGES = "teams:read_messages"
@@ -62,7 +62,7 @@ class ConnectorScope(Enum):
 
 @dataclass
 class ScopePolicy:
-    """Scope-Policy für einen Agenten pro Konnektor."""
+    """Scope-Policy fuer einen Agenten pro Konnektor."""
 
     agent_id: str
     connector_id: str
@@ -88,8 +88,8 @@ class ScopePolicy:
 class ScopeGuard:
     """Erzwingt Least-Privilege pro Konnektor und Agent.
 
-    Jede Konnektor-Aktion wird gegen die Scope-Policy geprüft.
-    Verstöße werden geloggt.
+    Jede Konnektor-Aktion wird gegen die Scope-Policy geprueft.
+    Verstoesse werden geloggt.
     """
 
     def __init__(self) -> None:
@@ -102,7 +102,7 @@ class ScopeGuard:
         self._policies[key] = policy
 
     def check(self, agent_id: str, connector_id: str, scope: ConnectorScope) -> bool:
-        """Prüft ob der Agent den Scope für diesen Konnektor hat."""
+        """Prueft ob der Agent den Scope fuer diesen Konnektor hat."""
         key = f"{agent_id}:{connector_id}"
         policy = self._policies.get(key)
 
@@ -200,7 +200,7 @@ class ConnectorConfig:
 
 
 class BaseConnector:
-    """Basis-Klasse für Enterprise-Konnektoren."""
+    """Basis-Klasse fuer Enterprise-Konnektoren."""
 
     def __init__(self, config: ConnectorConfig) -> None:
         self._config = config
@@ -216,7 +216,7 @@ class BaseConnector:
         return self._status
 
     def connect(self) -> bool:
-        """Verbindung herstellen (wird von Subklassen überschrieben)."""
+        """Verbindung herstellen (wird von Subklassen ueberschrieben)."""
         self._status = ConnectorStatus.CONNECTED
         return True
 
@@ -250,9 +250,9 @@ class BaseConnector:
 class TeamsConnector(BaseConnector):
     """Microsoft Teams Bot Framework Integration.
 
-    Unterstützt:
+    Unterstuetzt:
       - Nachrichten empfangen und senden
-      - Channel-Übersicht
+      - Channel-Uebersicht
       - Adaptive Cards
     """
 
@@ -307,7 +307,7 @@ class TeamsConnector(BaseConnector):
 class JiraConnector(BaseConnector):
     """Atlassian Jira REST API v3 Integration.
 
-    Unterstützt:
+    Unterstuetzt:
       - Issues lesen, erstellen, aktualisieren
       - Transitions (Workflow)
       - Projekte auflisten
@@ -384,7 +384,7 @@ class JiraConnector(BaseConnector):
 class ServiceNowConnector(BaseConnector):
     """ServiceNow Table API Integration.
 
-    Unterstützt:
+    Unterstuetzt:
       - Incidents erstellen/lesen/aktualisieren
       - Knowledge-Base lesen
     """
@@ -475,7 +475,7 @@ class ServiceNowConnector(BaseConnector):
 class ConnectorRegistry:
     """Verwaltung aller Enterprise-Konnektoren.
 
-    Registriert, konfiguriert und verwaltet alle verfügbaren
+    Registriert, konfiguriert und verwaltet alle verfuegbaren
     Konnektoren mit Scope-Enforcement.
     """
 

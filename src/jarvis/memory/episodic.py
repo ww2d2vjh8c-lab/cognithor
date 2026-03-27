@@ -14,7 +14,7 @@ class EpisodicMemory:
     """Manage daily log files under ~/.jarvis/memory/episodes/.
 
     Format: episodes/YYYY-MM-DD.md
-    Einträge: ## HH:MM · Thema
+    Eintraege: ## HH:MM · Thema
     """
 
     def __init__(self, episodes_dir: str | Path) -> None:
@@ -41,7 +41,7 @@ class EpisodicMemory:
         *,
         timestamp: datetime | None = None,
     ) -> str:
-        """Fügt einen Eintrag zum Tageslog hinzu. Append-only.
+        """Fuegt einen Eintrag zum Tageslog hinzu. Append-only.
 
         Args:
             topic: Short title of the entry.
@@ -79,7 +79,7 @@ class EpisodicMemory:
         """Return the daily log for a specific date.
 
         Args:
-            d: Das gewünschte Datum.
+            d: Das gewuenschte Datum.
 
         Returns:
             File content or empty string.
@@ -139,12 +139,12 @@ class EpisodicMemory:
         """Delete episode files older than ``retention_days``.
 
         Args:
-            retention_days: Maximales Alter in Tagen. Dateien, die älter
+            retention_days: Maximales Alter in Tagen. Dateien, die aelter
                 sind, werden entfernt. Wenn ``retention_days`` <= 0,
                 passiert nichts.
 
         Returns:
-            Anzahl der gelöschten Dateien.
+            Anzahl der geloeschten Dateien.
         """
         if retention_days <= 0:
             return 0

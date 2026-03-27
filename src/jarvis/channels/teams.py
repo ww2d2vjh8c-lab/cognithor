@@ -103,7 +103,7 @@ class TeamsChannel(Channel):
 
     @property
     def _app_password(self) -> str:
-        """App-Passwort (entschlüsselt bei Zugriff)."""
+        """App-Passwort (entschluesselt bei Zugriff)."""
         if self._has_app_password:
             return self._token_store.retrieve("teams_app_password")
         return ""

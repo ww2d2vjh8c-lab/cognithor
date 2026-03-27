@@ -20,7 +20,7 @@ logger = logging.getLogger("jarvis.memory.semantic")
 
 
 class SemanticMemory:
-    """Verwaltet den Wissens-Graphen · Entitäten + Relationen.
+    """Verwaltet den Wissens-Graphen · Entitaeten + Relationen.
 
     Source of Truth: ~/.jarvis/memory/knowledge/*.md
     Index: SQLite (entities + relations Tabellen)
@@ -33,7 +33,7 @@ class SemanticMemory:
 
     @property
     def directory(self) -> Path:
-        """Gibt das Knowledge-Verzeichnis zurück."""
+        """Gibt das Knowledge-Verzeichnis zurueck."""
         return self._dir
 
     def ensure_directory(self) -> None:
@@ -52,12 +52,12 @@ class SemanticMemory:
         source_file: str = "",
         confidence: float = 1.0,
     ) -> Entity:
-        """Erstellt eine neue Entität.
+        """Erstellt eine neue Entitaet.
 
         Args:
-            name: Name der Entität.
+            name: Name der Entitaet.
             entity_type: Typ (person, company, product, project).
-            attributes: Zusätzliche Attribute.
+            attributes: Zusaetzliche Attribute.
             source_file: Quelldatei.
             confidence: Vertrauenswert 0-1.
 
@@ -83,7 +83,7 @@ class SemanticMemory:
         attributes: dict[str, Any] | None = None,
         confidence: float | None = None,
     ) -> Entity | None:
-        """Aktualisiert eine Entität.
+        """Aktualisiert eine Entitaet.
 
         Returns:
             Die aktualisierte Entity oder None wenn nicht gefunden.
@@ -104,7 +104,7 @@ class SemanticMemory:
         return entity
 
     def get_entity(self, entity_id: str) -> Entity | None:
-        """Lädt eine Entität."""
+        """Laedt eine Entitaet."""
         return self._index.get_entity_by_id(entity_id)
 
     def find_entities(
@@ -112,11 +112,11 @@ class SemanticMemory:
         name: str | None = None,
         entity_type: str | None = None,
     ) -> list[Entity]:
-        """Sucht Entitäten."""
+        """Sucht Entitaeten."""
         return self._index.search_entities(name=name, entity_type=entity_type)
 
     def delete_entity(self, entity_id: str) -> bool:
-        """Löscht eine Entität und ihre Relationen."""
+        """Loescht eine Entitaet und ihre Relationen."""
         return self._index.delete_entity(entity_id)
 
     # ── Relation CRUD ────────────────────────────────────────────
@@ -131,7 +131,7 @@ class SemanticMemory:
         source_file: str = "",
         confidence: float = 1.0,
     ) -> Relation | None:
-        """Erstellt eine neue Relation zwischen zwei Entitäten.
+        """Erstellt eine neue Relation zwischen zwei Entitaeten.
 
         Args:
             source_id: Quell-Entity ID.
@@ -139,7 +139,7 @@ class SemanticMemory:
             target_id: Ziel-Entity ID.
 
         Returns:
-            Die erstellte Relation oder None wenn Entitäten nicht existieren.
+            Die erstellte Relation oder None wenn Entitaeten nicht existieren.
         """
         # Pruefe ob beide Entitaeten existieren
         if self._index.get_entity_by_id(source_id) is None:
@@ -171,11 +171,11 @@ class SemanticMemory:
         entity_id: str,
         relation_type: str | None = None,
     ) -> list[Relation]:
-        """Alle Relationen einer Entität."""
+        """Alle Relationen einer Entitaet."""
         return self._index.get_relations_for_entity(entity_id, relation_type)
 
     def get_neighbors(self, entity_id: str, max_depth: int = 1) -> list[Entity]:
-        """Nachbar-Entitäten im Graph."""
+        """Nachbar-Entitaeten im Graph."""
         return self._index.graph_traverse(entity_id, max_depth=max_depth)
 
     # ── Convenience ──────────────────────────────────────────────
@@ -184,7 +184,7 @@ class SemanticMemory:
         self,
         entity_id: str,
     ) -> tuple[Entity | None, list[tuple[Relation, Entity]]]:
-        """Lädt eine Entität mit all ihren Relationen und verbundenen Entitäten.
+        """Laedt eine Entitaet mit all ihren Relationen und verbundenen Entitaeten.
 
         Returns:
             (entity, [(relation, connected_entity), ...])
@@ -208,7 +208,7 @@ class SemanticMemory:
         """Exportiert eine lesbare Zusammenfassung des Wissens-Graphen.
 
         Returns:
-            Markdown-formatierte Übersicht.
+            Markdown-formatierte Uebersicht.
         """
         entities = self._index.search_entities()
         if not entities:

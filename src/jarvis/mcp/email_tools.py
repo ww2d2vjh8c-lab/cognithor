@@ -1,17 +1,17 @@
-"""E-Mail-Tools für Jarvis: IMAP-Lesezugriff und SMTP-Versand.
+"""E-Mail-Tools fuer Jarvis: IMAP-Lesezugriff und SMTP-Versand.
 
-Ermöglicht dem Agenten E-Mail-Verwaltung über IMAP und SMTP.
+Ermoeglicht dem Agenten E-Mail-Verwaltung ueber IMAP und SMTP.
 
 Tools:
   - email_read_inbox: Letzte E-Mails abrufen
   - email_search: E-Mails durchsuchen
-  - email_send: E-Mail versenden (ORANGE — erfordert Bestätigung)
+  - email_send: E-Mail versenden (ORANGE — erfordert Bestaetigung)
   - email_summarize: Posteingang zusammenfassen (algorithmisch)
 
 Sicherheit:
   - SSL/TLS erzwungen (IMAP4_SSL, SMTP_SSL/STARTTLS)
   - Passwort nur aus Umgebungsvariable (NIE in Config gespeichert)
-  - Anhang-Pfade gegen Workspace-Sandbox geprüft
+  - Anhang-Pfade gegen Workspace-Sandbox geprueft
   - Rate-Limit: max 10 Sendungen pro Stunde
 
 Bibel-Referenz: §5.3 (jarvis-email Server)
@@ -64,7 +64,7 @@ class EmailError(Exception):
 
 
 def _strip_html(html: str) -> str:
-    """Entfernt HTML-Tags und gibt reinen Text zurück."""
+    """Entfernt HTML-Tags und gibt reinen Text zurueck."""
     text = _HTML_TAG_RE.sub("", html)
     # Collapse whitespace
     text = re.sub(r"\s+", " ", text).strip()
@@ -86,7 +86,7 @@ def _decode_header(raw: str | None) -> str:
 
 
 def _extract_body_preview(msg: email.message.Message) -> tuple[str, bool]:
-    """Extrahiert eine Text-Vorschau und prüft auf Anhänge.
+    """Extrahiert eine Text-Vorschau und prueft auf Anhaenge.
 
     Returns:
         (preview_text, has_attachments)
@@ -144,7 +144,7 @@ def _parse_email_message(msg: email.message.Message, uid: str) -> dict[str, Any]
 
 
 class EmailTools:
-    """E-Mail-Operationen über IMAP/SMTP. [B§5.3]
+    """E-Mail-Operationen ueber IMAP/SMTP. [B§5.3]
 
     Attributes:
         _imap_host: IMAP-Server Hostname.
@@ -227,10 +227,10 @@ class EmailTools:
         )
 
     def _check_send_rate_limit(self) -> None:
-        """Prüft das Rate-Limit für E-Mail-Versand.
+        """Prueft das Rate-Limit fuer E-Mail-Versand.
 
         Raises:
-            EmailError: Wenn das Limit überschritten ist.
+            EmailError: Wenn das Limit ueberschritten ist.
         """
         now = time.monotonic()
         one_hour_ago = now - 3600
@@ -242,7 +242,7 @@ class EmailTools:
             )
 
     async def _get_imap_connection(self) -> imaplib.IMAP4_SSL:
-        """Gibt eine gecachte oder neue IMAP-Verbindung zurück."""
+        """Gibt eine gecachte oder neue IMAP-Verbindung zurueck."""
         async with self._imap_lock:
             now = time.monotonic()
             # Verbindung wiederverwenden, wenn sie nicht aelter als 5 Minuten ist
@@ -283,7 +283,7 @@ class EmailTools:
         search_criteria: str,
         max_count: int,
     ) -> list[dict[str, Any]]:
-        """Synchrones Abrufen von E-Mails über IMAP.
+        """Synchrones Abrufen von E-Mails ueber IMAP.
 
         Args:
             conn: IMAP-Verbindung.
@@ -438,19 +438,19 @@ class EmailTools:
         html: bool = False,
         attachments: list[str] | None = None,
     ) -> str:
-        """Sendet eine E-Mail über SMTP.
+        """Sendet eine E-Mail ueber SMTP.
 
         Args:
-            to: Empfänger (einzeln oder Liste).
+            to: Empfaenger (einzeln oder Liste).
             subject: Betreff.
             body: Nachrichtentext.
-            cc: CC-Empfänger (optional).
-            bcc: BCC-Empfänger (optional).
+            cc: CC-Empfaenger (optional).
+            bcc: BCC-Empfaenger (optional).
             html: HTML-Format (Default: False).
             attachments: Liste von Datei-Pfaden (im Workspace).
 
         Returns:
-            Bestätigungsnachricht.
+            Bestaetigungsnachricht.
         """
         # Rate-Limit pruefen
         self._check_send_rate_limit()
@@ -571,7 +571,7 @@ class EmailTools:
     ) -> str:
         """Fasst den Posteingang algorithmisch zusammen.
 
-        Gruppiert E-Mails nach Absender und Thread, gibt Statistiken zurück.
+        Gruppiert E-Mails nach Absender und Thread, gibt Statistiken zurueck.
 
         Args:
             count: Anzahl E-Mails zum Analysieren (1-50, Default: 20).
@@ -650,7 +650,7 @@ class EmailTools:
 
 
 def _format_email_list(emails: list[dict[str, Any]], folder: str, unread_only: bool) -> str:
-    """Formatiert eine E-Mail-Liste für die Ausgabe."""
+    """Formatiert eine E-Mail-Liste fuer die Ausgabe."""
     label = f"E-Mails in {folder}"
     if unread_only:
         label += " (ungelesen)"
@@ -677,7 +677,7 @@ def register_email_tools(
 ) -> EmailTools | None:
     """Registriert E-Mail-Tools beim MCP-Client.
 
-    Registriert nur, wenn email.enabled=True und Credentials verfügbar sind.
+    Registriert nur, wenn email.enabled=True und Credentials verfuegbar sind.
 
     Args:
         mcp_client: JarvisMCPClient-Instanz.

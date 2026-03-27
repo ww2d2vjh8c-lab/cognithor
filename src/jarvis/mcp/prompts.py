@@ -1,17 +1,17 @@
 """MCP Prompts: Exponiert Jarvis-Prompt-Templates als MCP-Prompts.
 
 MCP-Prompts sind wiederverwendbare Prompt-Templates die externe
-Clients nutzen können um strukturierte LLM-Anfragen zu stellen.
+Clients nutzen koennen um strukturierte LLM-Anfragen zu stellen.
 
 Registrierte Prompts:
   - analyze_document    → Dokument-Analyse mit Sprach- und Fokuswahl
-  - summarize           → Text-Zusammenfassung mit konfigurierbarer Länge
+  - summarize           → Text-Zusammenfassung mit konfigurierbarer Laenge
   - insurance_advisor   → Versicherungsberatung (BU, bAV, etc.)
   - code_review         → Code-Review mit Sicherheitsfokus
-  - translate           → Übersetzung mit Kontextbewahrung
+  - translate           → Uebersetzung mit Kontextbewahrung
   - brainstorm          → Strukturiertes Brainstorming
-  - explain_concept     → Konzepterklärung für verschiedene Zielgruppen
-  - daily_briefing      → Tägliches Briefing aus Memory
+  - explain_concept     → Konzepterklaerung fuer verschiedene Zielgruppen
+  - daily_briefing      → Taegliches Briefing aus Memory
 
 OPTIONAL: Wird nur registriert wenn MCP-Server-Modus aktiviert ist.
 
@@ -249,7 +249,7 @@ class JarvisPromptProvider:
         language: str = "de",
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """Generiert Messages für Dokument-Analyse."""
+        """Generiert Messages fuer Dokument-Analyse."""
         lang_instruction = (
             "Antworte auf Deutsch." if language == "de" else f"Respond in {language}."
         )
@@ -279,7 +279,7 @@ class JarvisPromptProvider:
         style: str = "professional",
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """Generiert Messages für Zusammenfassung."""
+        """Generiert Messages fuer Zusammenfassung."""
         length_map = {
             "short": "in 2-3 Sätzen",
             "medium": "in einem Absatz (ca. 100 Wörter)",
@@ -314,7 +314,7 @@ class JarvisPromptProvider:
         question: str = "",
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """Generiert Messages für Versicherungsberatung."""
+        """Generiert Messages fuer Versicherungsberatung."""
         product_context = {
             "bu": "Berufsunfähigkeitsversicherung (BU) -- Absicherung der Arbeitskraft",
             "bav": "Betriebliche Altersversorgung (bAV) -- Arbeitgeberfinanzierte Vorsorge",
@@ -350,7 +350,7 @@ class JarvisPromptProvider:
         focus: str = "all",
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """Generiert Messages für Code-Review."""
+        """Generiert Messages fuer Code-Review."""
         focus_instructions = {
             "security": (
                 "Fokussiere auf Sicherheitslücken: Injection, "
@@ -390,7 +390,7 @@ class JarvisPromptProvider:
         domain: str = "general",
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """Generiert Messages für Übersetzung."""
+        """Generiert Messages fuer Uebersetzung."""
         domain_hint = {
             "insurance": "Behalte Versicherungsfachbegriffe bei oder übersetze sie korrekt.",
             "legal": (
@@ -423,7 +423,7 @@ class JarvisPromptProvider:
         constraints: str = "",
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """Generiert Messages für Brainstorming."""
+        """Generiert Messages fuer Brainstorming."""
         method_instructions = {
             "freeform": "Generiere möglichst viele kreative Ideen ohne Einschränkungen.",
             "six_hats": (
@@ -456,7 +456,7 @@ class JarvisPromptProvider:
         use_analogies: str = "true",
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """Generiert Messages für Konzepterklärung."""
+        """Generiert Messages fuer Konzepterklaerung."""
         audience_style = {
             "beginner": "Erkläre einfach und verständlich, vermeide Fachbegriffe.",
             "intermediate": "Nutze Fachbegriffe, aber erkläre sie kurz.",
@@ -482,7 +482,7 @@ class JarvisPromptProvider:
         date: str = "",
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """Generiert Messages für tägliches Briefing."""
+        """Generiert Messages fuer taegliches Briefing."""
         from datetime import date as date_cls
 
         target_date = date or date_cls.today().isoformat()

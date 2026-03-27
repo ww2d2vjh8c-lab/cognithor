@@ -103,14 +103,14 @@ class MatrixChannel(Channel):
 
     @property
     def _access_token(self) -> str:
-        """Access-Token (entschlüsselt bei Zugriff)."""
+        """Access-Token (entschluesselt bei Zugriff)."""
         if self._has_access_token:
             return self._token_store.retrieve("matrix_access_token")
         return ""
 
     @property
     def _password(self) -> str:
-        """Passwort (entschlüsselt bei Zugriff)."""
+        """Passwort (entschluesselt bei Zugriff)."""
         if self._has_password:
             return self._token_store.retrieve("matrix_password")
         return ""

@@ -1,19 +1,19 @@
 """Skill Package: Official package format for Jarvis skills.
 
-Definiert das standardisierte Format für Skill-Pakete, die über
-P2P-Netzwerke oder lokale Verzeichnisse verteilt werden können.
+Definiert das standardisierte Format fuer Skill-Pakete, die ueber
+P2P-Netzwerke oder lokale Verzeichnisse verteilt werden koennen.
 
 Komponenten:
 
   1. SkillManifest: YAML-basiertes Manifest mit Name, Version,
-     Trigger-Wörtern, benötigten Tools, Sandbox-Rechten und
-     Abhängigkeiten.
+     Trigger-Woertern, benoetigten Tools, Sandbox-Rechten und
+     Abhaengigkeiten.
 
-  2. PackageSigner: Ed25519-basierte digitale Signaturen für
-     Authentizität und Integrität.
+  2. PackageSigner: Ed25519-basierte digitale Signaturen fuer
+     Authentizitaet und Integritaet.
 
   3. CodeAnalyzer: Statische Analyse des Skill-Codes auf
-     gefährliche Patterns (eval, exec, subprocess, network, etc.).
+     gefaehrliche Patterns (eval, exec, subprocess, network, etc.).
 
   4. PackageBuilder: Erstellt signierte Pakete aus Skills.
 
@@ -22,7 +22,7 @@ Komponenten:
 
 Sicherheitsmodell:
   - Jedes Paket MUSS signiert sein (Herausgeber-Zertifikat)
-  - Jedes Paket wird vor Installation durch CodeAnalyzer geprüft
+  - Jedes Paket wird vor Installation durch CodeAnalyzer geprueft
   - Heruntergeladene Skills laufen in strikter Sandbox
   - Kein Netzwerkzugriff, begrenzter Speicher, isoliertes Dateisystem
 
@@ -95,7 +95,7 @@ class AnalysisVerdict(Enum):
 
 
 class SandboxPermission(Enum):
-    """Granulare Sandbox-Rechte für Skills."""
+    """Granulare Sandbox-Rechte fuer Skills."""
 
     FILE_READ = "file_read"  # Read files (workspace)
     FILE_WRITE = "file_write"  # Write files (workspace)
@@ -113,7 +113,7 @@ class SandboxPermission(Enum):
 
 @dataclass
 class SkillManifest:
-    """Paket-Manifest: Beschreibt einen Skill vollständig.
+    """Paket-Manifest: Beschreibt einen Skill vollstaendig.
 
     Wird als manifest.yaml in jedes Paket eingebettet.
     """
@@ -246,9 +246,9 @@ class PackageSignature:
 class PackageSigner:
     """Signiert und verifiziert Skill-Pakete.
 
-    Unterstützt:
+    Unterstuetzt:
       - Ed25519 (asymmetrisch, bevorzugt — Verifizierer braucht nur den Public Key)
-      - HMAC-SHA256 (symmetrischer Fallback für Abwärtskompatibilität)
+      - HMAC-SHA256 (symmetrischer Fallback fuer Abwaertskompatibilitaet)
 
     Konstruktor-Varianten:
       - PackageSigner(private_key="hex-string")  → HMAC-Modus (Legacy)
@@ -378,7 +378,7 @@ class PackageSigner:
             signature: Zu verifizierende Signatur.
 
         Returns:
-            True wenn die Signatur gültig ist.
+            True wenn die Signatur gueltig ist.
         """
         if signature.algorithm == "ed25519":
             if self._ed25519_public is None:
@@ -462,10 +462,10 @@ _SUSPICIOUS_PATTERNS: list[tuple[str, str]] = [
 class CodeAnalyzer:
     """Statische Analyse von Skill-Code auf Sicherheitsrisiken.
 
-    Prüft Python-Code auf gefährliche und verdächtige Patterns.
-    Zusätzliche Checks:
-      - Code-Länge (>2000 Zeilen = verdächtig)
-      - Manifest-Permissions vs. tatsächlicher Code
+    Prueft Python-Code auf gefaehrliche und verdaechtige Patterns.
+    Zusaetzliche Checks:
+      - Code-Laenge (>2000 Zeilen = verdaechtig)
+      - Manifest-Permissions vs. tatsaechlicher Code
     """
 
     def __init__(
@@ -489,7 +489,7 @@ class CodeAnalyzer:
 
         Args:
             code: Python-Quellcode.
-            manifest: Optional, für Permission-Cross-Check.
+            manifest: Optional, fuer Permission-Cross-Check.
 
         Returns:
             AnalysisReport mit Verdict und Findings.
@@ -595,7 +595,7 @@ class CodeAnalyzer:
 
 @dataclass
 class SkillPackage:
-    """Ein vollständiges, verteilbares Skill-Paket.
+    """Ein vollstaendiges, verteilbares Skill-Paket.
 
     Struktur:
       manifest.json    -- Paket-Metadaten
@@ -613,7 +613,7 @@ class SkillPackage:
 
     @property
     def content_hash(self) -> str:
-        """SHA-256 über Code + Tests (reproduzierbar)."""
+        """SHA-256 ueber Code + Tests (reproduzierbar)."""
         content = (self.code + self.test_code).encode()
         return hashlib.sha256(content).hexdigest()
 
@@ -731,7 +731,7 @@ class SkillPackage:
 
     @staticmethod
     def _add_bytes_to_tar(tar: tarfile.TarFile, name: str, data: bytes) -> None:
-        """Fügt Bytes als Datei zum tar hinzu."""
+        """Fuegt Bytes als Datei zum tar hinzu."""
         import tarfile as tf
 
         info = tf.TarInfo(name=name)
@@ -783,13 +783,13 @@ class PackageBuilder:
             code: Python-Quellcode.
             test_code: Unit-Tests.
             documentation: Markdown-Dokumentation.
-            skip_analysis: Analyse überspringen (nur für Tests).
+            skip_analysis: Analyse ueberspringen (nur fuer Tests).
 
         Returns:
             Fertiges SkillPackage.
 
         Raises:
-            ValueError: Bei Validierungsfehlern oder gefährlichem Code.
+            ValueError: Bei Validierungsfehlern oder gefaehrlichem Code.
         """
         # 1. Validate manifest
         errors = manifest.validate()
@@ -850,15 +850,15 @@ class PackageInstaller:
     """Installiert verifizierte Skill-Pakete in die lokale Umgebung.
 
     Workflow:
-      1. Signatur prüfen (wenn vorhanden)
+      1. Signatur pruefen (wenn vorhanden)
       2. Code analysieren
       3. Sandbox-Rechte aus Manifest ableiten
       4. Dateien in Skills-Verzeichnis schreiben
       5. In SkillRegistry registrieren
 
     Args:
-        skills_dir: Verzeichnis für installierte Skills.
-        trusted_signers: Vertrauenswürdige Herausgeber-IDs.
+        skills_dir: Verzeichnis fuer installierte Skills.
+        trusted_signers: Vertrauenswuerdige Herausgeber-IDs.
         require_signature: True = nur signierte Pakete installieren.
     """
 
@@ -1005,13 +1005,13 @@ class PackageInstaller:
         return True
 
     def sandbox_config_for(self, name: str) -> dict[str, Any]:
-        """Generiert Sandbox-Konfiguration für ein installiertes Paket.
+        """Generiert Sandbox-Konfiguration fuer ein installiertes Paket.
 
         Args:
             name: Paketname.
 
         Returns:
-            Sandbox-Config Dict für AgentRouter.
+            Sandbox-Config Dict fuer AgentRouter.
         """
         package = self._installed.get(name)
         if not package:

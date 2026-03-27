@@ -1,7 +1,7 @@
-"""Kalender-Tools für Jarvis: ICS-basiert mit optionalem CalDAV.
+"""Kalender-Tools fuer Jarvis: ICS-basiert mit optionalem CalDAV.
 
-Ermöglicht dem Agenten Kalender-Verwaltung über lokale ICS-Dateien
-und optional über CalDAV-Server.
+Ermoeglicht dem Agenten Kalender-Verwaltung ueber lokale ICS-Dateien
+und optional ueber CalDAV-Server.
 
 Tools:
   - calendar_today: Heutige Termine anzeigen
@@ -10,7 +10,7 @@ Tools:
   - calendar_check_availability: Freie Zeitfenster finden
 
 ICS-Parsing:
-  - Primär: ``icalendar``-Bibliothek (optional)
+  - Primaer: ``icalendar``-Bibliothek (optional)
   - Fallback: Manueller VEVENT-Parser (kein externes Dependency)
   - Basis-RRULE-Support (DAILY, WEEKLY, MONTHLY)
 
@@ -62,7 +62,7 @@ class CalendarError(Exception):
 
 
 def _get_local_timezone() -> timezone:
-    """Gibt die lokale Systemzeitzone zurück."""
+    """Gibt die lokale Systemzeitzone zurueck."""
     try:
         import time as _time
 
@@ -105,10 +105,10 @@ def _get_configured_timezone(tz_str: str) -> timezone:
 def _parse_ics_datetime(value: str) -> datetime:
     """Parst ein ICS-Datum/Zeitformat.
 
-    Unterstützt:
+    Unterstuetzt:
       - 20240115T103000Z (UTC)
       - 20240115T103000 (lokal)
-      - 20240115 (ganztägig)
+      - 20240115 (ganztaegig)
       - Mit TZID-Prefix
     """
     # Remove TZID prefix if present
@@ -142,7 +142,7 @@ def _format_ics_date(d: date) -> str:
 
 
 class _VEvent:
-    """Interner Repräsentant eines Kalender-Events."""
+    """Interner Repraesentant eines Kalender-Events."""
 
     __slots__ = (
         "all_day",
@@ -223,7 +223,7 @@ def _parse_rrule_instances(
 ) -> Generator[_VEvent, None, None]:
     """Generiert Instanzen eines wiederkehrenden Events innerhalb eines Zeitraums.
 
-    Unterstützt: FREQ=DAILY, WEEKLY, MONTHLY mit optionalem COUNT und UNTIL.
+    Unterstuetzt: FREQ=DAILY, WEEKLY, MONTHLY mit optionalem COUNT und UNTIL.
     """
     if not event.rrule or not event.dtstart:
         if event.dtstart and range_start <= event.dtstart <= range_end:
@@ -295,7 +295,7 @@ def _parse_rrule_instances(
 def _parse_ics_manual(content: str) -> list[_VEvent]:
     """Manueller ICS-Parser als Fallback (kein icalendar-Dependency).
 
-    Parst BEGIN:VEVENT...END:VEVENT Blöcke.
+    Parst BEGIN:VEVENT...END:VEVENT Bloecke.
     """
     events: list[_VEvent] = []
     in_event = False
@@ -441,7 +441,7 @@ def _parse_ics_with_library(content: str) -> list[_VEvent]:
 
 
 class CalendarTools:
-    """Kalender-Operationen über lokale ICS-Dateien. [B§5.3]
+    """Kalender-Operationen ueber lokale ICS-Dateien. [B§5.3]
 
     Attributes:
         _ics_path: Pfad zur lokalen ICS-Datei.
@@ -498,7 +498,7 @@ class CalendarTools:
         range_start: datetime,
         range_end: datetime,
     ) -> list[_VEvent]:
-        """Gibt alle Events in einem Zeitraum zurück (inkl. Wiederholungen)."""
+        """Gibt alle Events in einem Zeitraum zurueck (inkl. Wiederholungen)."""
         raw_events = self._read_events()
         result: list[_VEvent] = []
 
@@ -521,7 +521,7 @@ class CalendarTools:
         return result
 
     def _append_event(self, event: _VEvent) -> None:
-        """Fügt ein Event zur ICS-Datei hinzu."""
+        """Fuegt ein Event zur ICS-Datei hinzu."""
         content = ""
         if self._ics_path.exists():
             content = self._ics_path.read_text(encoding="utf-8")
@@ -611,10 +611,10 @@ class CalendarTools:
             end: Endzeit im ISO-Format (optional, Default: Start + 1h).
             location: Ort (optional).
             description: Beschreibung (optional).
-            all_day: Ganztägig (Default: False).
+            all_day: Ganztaegig (Default: False).
 
         Returns:
-            Bestätigungsnachricht.
+            Bestaetigungsnachricht.
         """
         if not title:
             raise CalendarError("Kein Titel angegeben.")
@@ -678,7 +678,7 @@ class CalendarTools:
 
         Args:
             date: Datum im ISO-Format (Default: heute).
-            duration_minutes: Gewünschte Dauer in Minuten (Default: 60).
+            duration_minutes: Gewuenschte Dauer in Minuten (Default: 60).
             work_hours_start: Beginn der Arbeitszeit (Default: 09:00).
             work_hours_end: Ende der Arbeitszeit (Default: 17:00).
 
@@ -793,7 +793,7 @@ class CalendarTools:
 
 
 def _format_events(events: list[_VEvent], title: str) -> str:
-    """Formatiert eine Event-Liste für die Ausgabe."""
+    """Formatiert eine Event-Liste fuer die Ausgabe."""
     lines = [title, "=" * len(title), ""]
 
     for event in events:

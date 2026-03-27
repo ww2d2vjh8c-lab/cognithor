@@ -1,9 +1,9 @@
-"""Mattermost-Channel: Bidirektionale Kommunikation über Mattermost.
+"""Mattermost-Channel: Bidirektionale Kommunikation ueber Mattermost.
 
 Nutzt Mattermost REST API v4 + WebSocket Events.
-Unterstützt:
+Unterstuetzt:
   - Text-Nachrichten in Channels
-  - Reactions für Approvals
+  - Reactions fuer Approvals
   - File Uploads
   - Slash-Commands
 
@@ -12,7 +12,7 @@ Konfiguration:
   - JARVIS_MATTERMOST_TOKEN: Bot-Token oder Personal Access Token
   - JARVIS_MATTERMOST_CHANNEL: Standard-Channel-ID
 
-Abhängigkeiten:
+Abhaengigkeiten:
   Nur httpx (bereits als Core-Dependency vorhanden)
 """
 
@@ -31,9 +31,9 @@ logger = logging.getLogger(__name__)
 
 
 class MattermostChannel(Channel):
-    """Bidirektionale Mattermost-Integration für Jarvis.
+    """Bidirektionale Mattermost-Integration fuer Jarvis.
 
-    Empfängt Nachrichten via WebSocket, sendet via REST API v4.
+    Empfaengt Nachrichten via WebSocket, sendet via REST API v4.
     """
 
     def __init__(
@@ -61,7 +61,7 @@ class MattermostChannel(Channel):
 
     @property
     def _token(self) -> str:
-        """Bot-Token (entschlüsselt bei Zugriff)."""
+        """Bot-Token (entschluesselt bei Zugriff)."""
         if self._has_token:
             return self._token_store_ref.retrieve("mattermost_token")
         return ""
@@ -117,7 +117,7 @@ class MattermostChannel(Channel):
         logger.info("MattermostChannel gestartet")
 
     async def _websocket_loop(self) -> None:
-        """WebSocket-Verbindung für Echtzeit-Events."""
+        """WebSocket-Verbindung fuer Echtzeit-Events."""
         ws_url = self._url.replace("https://", "wss://").replace("http://", "ws://")
         ws_url = f"{ws_url}/api/v4/websocket"
 
@@ -217,7 +217,7 @@ class MattermostChannel(Channel):
                 )
 
     async def _on_reaction(self, reaction: dict[str, Any]) -> None:
-        """Verarbeitet Reactions (für Approvals).
+        """Verarbeitet Reactions (fuer Approvals).
 
         Nur der User, der die Aktion urspruenglich ausgeloest hat,
         darf genehmigen oder ablehnen.

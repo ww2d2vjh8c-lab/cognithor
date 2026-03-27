@@ -1,6 +1,6 @@
-"""Config-API: REST-Endpoints für Jarvis-Konfiguration.
+"""Config-API: REST-Endpoints fuer Jarvis-Konfiguration.
 
-Stellt CRUD-Endpoints bereit für:
+Stellt CRUD-Endpoints bereit fuer:
   - Heartbeat-Konfiguration
   - Agent-Profile
   - Binding-Regeln
@@ -106,7 +106,7 @@ class PresetInfo(BaseModel):
 
 
 class ConfigOverview(BaseModel):
-    """Gesamtübersicht der Konfiguration."""
+    """Gesamtuebersicht der Konfiguration."""
 
     version: str
     owner_name: str
@@ -220,9 +220,9 @@ PRESETS: dict[str, dict[str, Any]] = {
 class ConfigManager:
     """Verwaltet Jarvis-Konfiguration mit CRUD-Operationen.
 
-    Hält eine In-Memory-Kopie der Konfiguration und kann
-    Änderungen in config.yaml persistieren.
-    Thread-safe über einfache Methoden-Granularität.
+    Haelt eine In-Memory-Kopie der Konfiguration und kann
+    Aenderungen in config.yaml persistieren.
+    Thread-safe ueber einfache Methoden-Granularitaet.
     """
 
     def __init__(self, config: Any) -> None:
@@ -237,7 +237,7 @@ class ConfigManager:
         self._load_from_config()
 
     def _load_from_config(self) -> None:
-        """Lädt Agent-Profile und Bindings aus der Konfiguration."""
+        """Laedt Agent-Profile und Bindings aus der Konfiguration."""
         # Agents aus Config extrahieren
         if hasattr(self._config, "agents"):
             for agent in self._config.agents:
@@ -258,7 +258,7 @@ class ConfigManager:
     # ------------------------------------------------------------------
 
     def get_overview(self) -> ConfigOverview:
-        """Gibt eine Konfigurationsübersicht zurück."""
+        """Gibt eine Konfigurationsuebersicht zurueck."""
         return ConfigOverview(
             version=getattr(self._config, "version", "0.0.0"),
             owner_name=getattr(self._config, "owner_name", "User"),
@@ -337,7 +337,7 @@ class ConfigManager:
         return data
 
     def delete_agent(self, name: str) -> bool:
-        """Löscht ein Agent-Profil."""
+        """Loescht ein Agent-Profil."""
         if name == "jarvis":
             return False  # Default-Agent kann nicht gelöscht werden
         if name in self._agents:
@@ -375,7 +375,7 @@ class ConfigManager:
         return data
 
     def delete_binding(self, name: str) -> bool:
-        """Löscht eine Binding-Regel."""
+        """Loescht eine Binding-Regel."""
         for i, b in enumerate(self._bindings):
             if b.get("name") == name:
                 self._bindings.pop(i)
@@ -424,7 +424,7 @@ class ConfigManager:
     # ------------------------------------------------------------------
 
     def list_presets(self) -> list[PresetInfo]:
-        """Listet verfügbare Presets."""
+        """Listet verfuegbare Presets."""
         return [
             PresetInfo(
                 name=key,
@@ -439,7 +439,7 @@ class ConfigManager:
         """Wendet ein Preset an.
 
         Returns:
-            Dict mit angewandten Änderungen oder Fehler.
+            Dict mit angewandten Aenderungen oder Fehler.
         """
         preset = PRESETS.get(preset_name)
         if not preset:

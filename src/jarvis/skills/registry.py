@@ -1,9 +1,9 @@
 """Skill Registry: Loading, matching & injecting skills into the agent loop.
 
 Skills sind Markdown-Dateien mit YAML-Frontmatter die beschreiben,
-WANN und WIE Jarvis bestimmte Aufgaben ausführt. Die Registry:
+WANN und WIE Jarvis bestimmte Aufgaben ausfuehrt. Die Registry:
 
-  1. Lädt Skills beim Start aus ~/.jarvis/skills/ + data/procedures/
+  1. Laedt Skills beim Start aus ~/.jarvis/skills/ + data/procedures/
   2. Matched User-Nachrichten gegen Skill-Trigger (Keyword + Fuzzy)
   3. Injiziert den besten Skill als Kontext in die Working Memory
   4. Trackt Nutzungsstatistiken und Erfolgsraten
@@ -161,7 +161,7 @@ class SkillRegistry:
         """Load skills from multiple directories.
 
         Later directories override earlier ones (user > default).
-        Unterstützt sowohl flache .md-Dateien als auch P2P-installierte
+        Unterstuetzt sowohl flache .md-Dateien als auch P2P-installierte
         Skills in Unterverzeichnissen (mit skill.md).
 
         Returns:
@@ -406,18 +406,18 @@ class SkillRegistry:
         Scoring:
           - Exakter Keyword-Match: 1.0
           - Partial Keyword-Match: 0.5-0.9 (SequenceMatcher)
-          - Wortüberlappung: 0.1-0.5
-          - Bonus: +0.1 für hohe Erfolgsrate
+          - Wortueberlappung: 0.1-0.5
+          - Bonus: +0.1 fuer hohe Erfolgsrate
           - Bonus: +0.05 * priority
 
         Args:
             query: User-Nachricht.
             top_k: Maximale Anzahl Ergebnisse.
             min_score: Mindest-Score.
-            available_tools: Wenn angegeben, nur Skills deren Tools verfügbar sind.
+            available_tools: Wenn angegeben, nur Skills deren Tools verfuegbar sind.
 
         Returns:
-            Sortierte Liste von SkillMatch (höchster Score zuerst).
+            Sortierte Liste von SkillMatch (hoechster Score zuerst).
         """
         if not query.strip():
             return []
@@ -585,7 +585,7 @@ class SkillRegistry:
         return len([s for s in self._skills.values() if s.enabled])
 
     def stats(self) -> dict[str, Any]:
-        """Statistik-Übersicht."""
+        """Statistik-Uebersicht."""
         return {
             "total": self.count,
             "enabled": self.enabled_count,
@@ -615,7 +615,7 @@ class SkillRegistry:
         Args:
             query: User-Nachricht.
             working_memory: WorkingMemory-Objekt mit injected_procedures.
-            available_tools: Liste verfügbarer Tool-Namen.
+            available_tools: Liste verfuegbarer Tool-Namen.
 
         Returns:
             Der verwendete SkillMatch, oder None.

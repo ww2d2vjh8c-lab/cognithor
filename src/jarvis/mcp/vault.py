@@ -1,6 +1,6 @@
-"""Knowledge Vault — Obsidian-kompatibles Markdown-Vault für persistente Notizen.
+"""Knowledge Vault — Obsidian-kompatibles Markdown-Vault fuer persistente Notizen.
 
-Ermöglicht dem Agenten Wissensartikel, Recherche-Ergebnisse, Meeting-Notizen
+Ermoeglicht dem Agenten Wissensartikel, Recherche-Ergebnisse, Meeting-Notizen
 und Projektnotizen in einem strukturierten Markdown-Vault zu speichern.
 
 Tools:
@@ -8,8 +8,8 @@ Tools:
   - vault_search: Volltextsuche mit Ordner/Tag/Datum-Filter
   - vault_list: Notizen auflisten, gefiltert und sortiert
   - vault_read: Einzelne Notiz lesen (per Titel, Pfad oder Slug)
-  - vault_update: An Notiz anhängen, Tags ergänzen, Timestamp aktualisieren
-  - vault_link: Verknüpfung zwischen Notizen erstellen
+  - vault_update: An Notiz anhaengen, Tags ergaenzen, Timestamp aktualisieren
+  - vault_link: Verknuepfung zwischen Notizen erstellen
 
 Format: Obsidian-kompatibles Markdown mit YAML-Frontmatter.
 """
@@ -81,7 +81,7 @@ class VaultTools:
         Verhindert Path-Traversal-Angriffe (../../etc/passwd).
 
         Returns:
-            Aufgelöster Pfad wenn gültig, sonst None.
+            Aufgeloester Pfad wenn gueltig, sonst None.
         """
         try:
             resolved = path.resolve()
@@ -189,7 +189,7 @@ class VaultTools:
         return "\n".join(lines)
 
     def _resolve_folder(self, folder: str) -> str:
-        """Löst einen logischen Ordnernamen zu einem Pfad auf."""
+        """Loest einen logischen Ordnernamen zu einem Pfad auf."""
         # Direct mapping: logical name → directory name
         if folder in self._default_folders:
             return self._default_folders[folder]
@@ -218,7 +218,7 @@ class VaultTools:
             tags: Kommagetrennte Tags (z.B. 'finanzen, tesla').
             folder: Ordner (research/meetings/knowledge/projects/daily).
             sources: Kommagetrennte Quell-URLs.
-            linked_notes: Kommagetrennte Titel verknüpfter Notizen.
+            linked_notes: Kommagetrennte Titel verknuepfter Notizen.
         """
         if not title.strip():
             return "Fehler: Kein Titel angegeben."
@@ -445,8 +445,8 @@ class VaultTools:
 
         Args:
             identifier: Titel, Pfad oder Slug der Notiz.
-            append_content: Text der an die Notiz angehängt wird.
-            add_tags: Neue Tags (kommagetrennt) die ergänzt werden.
+            append_content: Text der an die Notiz angehaengt wird.
+            add_tags: Neue Tags (kommagetrennt) die ergaenzt werden.
         """
         if not identifier.strip():
             return "Fehler: Kein Identifier angegeben."
@@ -499,7 +499,7 @@ class VaultTools:
         source_note: str,
         target_note: str,
     ) -> str:
-        """Erstellt eine bidirektionale Verknüpfung zwischen zwei Notizen.
+        """Erstellt eine bidirektionale Verknuepfung zwischen zwei Notizen.
 
         Args:
             source_note: Titel/Pfad/Slug der Quell-Notiz.
@@ -641,7 +641,7 @@ class VaultTools:
         return str(value).strip()
 
     def _replace_frontmatter_field(self, content: str, field: str, value: Any) -> str:
-        """Ersetzt oder fügt ein Feld im YAML-Frontmatter hinzu."""
+        """Ersetzt oder fuegt ein Feld im YAML-Frontmatter hinzu."""
         data, start, end = self._parse_frontmatter(content)
         if start < 0:
             # No frontmatter present — nothing to replace
@@ -662,7 +662,7 @@ class VaultTools:
         return new_fm + body
 
     def _add_linked_note(self, content: str, note_title: str) -> str:
-        """Fügt eine Notiz zur linked_notes-Liste im Frontmatter hinzu."""
+        """Fuegt eine Notiz zur linked_notes-Liste im Frontmatter hinzu."""
         data, start, _ = self._parse_frontmatter(content)
         if start < 0:
             return content

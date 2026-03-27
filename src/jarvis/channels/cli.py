@@ -2,7 +2,7 @@
 
 Features:
   - Farbige Ausgabe (via Rich)
-  - Token-für-Token Streaming
+  - Token-fuer-Token Streaming
   - Approval-Workflow ([j/n] im Terminal)
   - Graceful Exit (Ctrl+C, /quit)
 
@@ -55,7 +55,7 @@ class CliChannel(Channel):
 
     @property
     def name(self) -> str:
-        """Gibt den Channel-Namen zurück."""
+        """Gibt den Channel-Namen zurueck."""
         return "cli"
 
     async def start(self, handler: MessageHandler) -> None:
@@ -176,7 +176,7 @@ class CliChannel(Channel):
                 return False
 
     async def send_streaming_token(self, session_id: str, token: str) -> None:
-        """Gibt ein einzelnes Token aus (für Streaming)."""
+        """Gibt ein einzelnes Token aus (fuer Streaming)."""
         self._console.print(token, end="", highlight=False)
 
     async def send_status(self, session_id: str, status: StatusType, text: str) -> None:

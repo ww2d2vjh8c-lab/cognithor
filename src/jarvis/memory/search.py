@@ -43,7 +43,7 @@ def recency_decay(
       - Nach 60 Tagen: 0.250
       - Nach 90 Tagen: 0.125
 
-    CORE.md und Einträge ohne Datum bekommen immer 1.0.
+    CORE.md und Eintraege ohne Datum bekommen immer 1.0.
 
     Args:
         source_date: Datum des Eintrags.
@@ -67,12 +67,12 @@ def recency_decay(
 
 
 class HybridSearch:
-    """3-Kanal Hybrid-Suche über den Memory-Index.
+    """3-Kanal Hybrid-Suche ueber den Memory-Index.
 
-    Kanäle:
+    Kanaele:
     1. BM25 (FTS5) -- lexikalische Treffer
-    2. Vektor (Cosine Similarity) -- semantische Ähnlichkeit
-    3. Graph-Traversal -- Beziehungsnähe
+    2. Vektor (Cosine Similarity) -- semantische Aehnlichkeit
+    3. Graph-Traversal -- Beziehungsnaehe
 
     Ergebnisse werden per gewichtetem Score gemerged.
     """
@@ -148,7 +148,7 @@ class HybridSearch:
         enable_vector: bool = True,
         enable_graph: bool = True,
     ) -> list[MemorySearchResult]:
-        """Führt eine Hybrid-Suche durch.
+        """Fuehrt eine Hybrid-Suche durch.
 
         Args:
             query: Suchtext.
@@ -159,7 +159,7 @@ class HybridSearch:
             enable_graph: Graph-Kanal aktivieren.
 
         Returns:
-            Sortierte Liste von MemorySearchResult (höchster Score zuerst).
+            Sortierte Liste von MemorySearchResult (hoechster Score zuerst).
         """
         if not query.strip():
             return []
@@ -307,9 +307,9 @@ class HybridSearch:
         return results[:top_k]
 
     def search_bm25_only(self, query: str, top_k: int = 10) -> list[MemorySearchResult]:
-        """Synchrone BM25-only Suche (kein Embedding nötig).
+        """Synchrone BM25-only Suche (kein Embedding noetig).
 
-        Nützlich für schnelle lexikalische Lookups.
+        Nuetzlich fuer schnelle lexikalische Lookups.
         """
         bm25_results = self._index.search_bm25(query, top_k=top_k)
         if not bm25_results:
@@ -351,8 +351,8 @@ class HybridSearch:
     def _build_chunk_hash_map(self) -> dict[str, list[str]]:
         """Baut ein Mapping content_hash → [chunk_ids].
 
-        Wird für Vektor-Suche gebraucht um von Embedding
-        zurück zum Chunk zu kommen.
+        Wird fuer Vektor-Suche gebraucht um von Embedding
+        zurueck zum Chunk zu kommen.
 
         Wird lazy gecacht und via run_in_executor aufgerufen,
         um den Event-Loop nicht zu blockieren.
@@ -364,8 +364,8 @@ class HybridSearch:
         return mapping
 
     def _graph_search(self, query: str) -> dict[str, float]:
-        """Graph-basierte Suche: Findet Entitäten die zum Query passen,
-        dann Chunks die mit diesen Entitäten verknüpft sind.
+        """Graph-basierte Suche: Findet Entitaeten die zum Query passen,
+        dann Chunks die mit diesen Entitaeten verknuepft sind.
 
         Uses SQL-level filtering via MemoryIndex.get_chunks_with_entity_overlap()
         instead of loading all chunks and parsing JSON in Python (eliminates

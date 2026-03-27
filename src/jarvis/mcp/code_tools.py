@@ -1,8 +1,8 @@
-"""Code-Tools für Jarvis -- Python-REPL und Code-Analyse als MCP-Tools.
+"""Code-Tools fuer Jarvis -- Python-REPL und Code-Analyse als MCP-Tools.
 
 Zwei Tools:
-  - run_python: Führt Python-Code in der Sandbox aus (temp-Datei + SandboxExecutor)
-  - analyze_code: Kombiniert CodeSmellDetector + CodeAuditor für strukturierte Analyse
+  - run_python: Fuehrt Python-Code in der Sandbox aus (temp-Datei + SandboxExecutor)
+  - analyze_code: Kombiniert CodeSmellDetector + CodeAuditor fuer strukturierte Analyse
 
 Factory: register_code_tools(mcp_client, config) → CodeTools
 
@@ -48,7 +48,7 @@ class CodeTools:
     """Python-REPL und Code-Analyse mit Sandbox-Isolation.
 
     Security-Architektur:
-      - run_python: Code wird als temp-Datei geschrieben und via SandboxExecutor ausgeführt
+      - run_python: Code wird als temp-Datei geschrieben und via SandboxExecutor ausgefuehrt
       - analyze_code: Read-only, risikolos (AST-basiert)
       - Workspace-Confinement: Alle temp-Dateien im Workspace
     """
@@ -109,10 +109,10 @@ class CodeTools:
         timeout: int | None = None,
         working_dir: str | None = None,
     ) -> str:
-        """Führt Python-Code in der Sandbox aus.
+        """Fuehrt Python-Code in der Sandbox aus.
 
-        Schreibt den Code in eine temporäre .py-Datei im Workspace,
-        führt sie über den SandboxExecutor aus und bereinigt anschließend.
+        Schreibt den Code in eine temporaere .py-Datei im Workspace,
+        fuehrt sie ueber den SandboxExecutor aus und bereinigt anschliessend.
 
         Args:
             code: Python-Code als String.
@@ -239,8 +239,8 @@ class CodeTools:
     ) -> str:
         """Analysiert Python-Code auf Smells und Sicherheitsprobleme.
 
-        Kombiniert CodeSmellDetector (Qualität) und CodeAuditor (Sicherheit)
-        für einen strukturierten Bericht.
+        Kombiniert CodeSmellDetector (Qualitaet) und CodeAuditor (Sicherheit)
+        fuer einen strukturierten Bericht.
 
         Args:
             code: Python-Code als String (optional wenn file_path gegeben).

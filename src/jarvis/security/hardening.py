@@ -213,7 +213,7 @@ echo "🔬 Jarvis Security-Check vor Commit..."
 
 # 1. Credential-Scan
 if grep -rn "api_key\|password\|secret.*=.*['\"]" --include="*.py" src/; then
-    echo "❌ BLOCKED: Mögliche Credentials im Code gefunden!"
+    echo "❌ BLOCKED: Moegliche Credentials im Code gefunden!"
     exit 1
 fi
 

@@ -1,23 +1,23 @@
 """Knowledge Synthesis — Quellen-Fusion, Widerspruchserkennung, Zeitlinien.
 
-Orchestriert Vault, Memory, Web und LLM zu einer zusammenhängenden
+Orchestriert Vault, Memory, Web und LLM zu einer zusammenhaengenden
 Wissensanalyse. Transformiert isolierte Informationsfragmente in
-ein kohärentes, temporales Verständnis.
+ein kohaerentes, temporales Verstaendnis.
 
 Tools:
-  - knowledge_synthesize: Vollständige Wissenssynthese zu einem Thema
-  - knowledge_contradictions: Widersprüche zwischen gespeichertem und neuem Wissen erkennen
+  - knowledge_synthesize: Vollstaendige Wissenssynthese zu einem Thema
+  - knowledge_contradictions: Widersprueche zwischen gespeichertem und neuem Wissen erkennen
   - knowledge_timeline: Temporale Kette zu einem Thema aufbauen
-  - knowledge_gaps: Wissenslücken identifizieren und Recherche vorschlagen
+  - knowledge_gaps: Wissensluecken identifizieren und Recherche vorschlagen
 
 Architektur:
   KnowledgeSynthesizer orchestriert intern:
   1. MemoryTools.search_memory() — Gespeichertes Wissen abrufen
-  2. MemoryTools.get_entity() — Entitäten und Relationen laden
-  3. MemoryTools.get_recent_episodes() — Episodisches Gedächtnis
+  2. MemoryTools.get_entity() — Entitaeten und Relationen laden
+  3. MemoryTools.get_recent_episodes() — Episodisches Gedaechtnis
   4. VaultTools.vault_search() — Vault-Notizen durchsuchen
   5. WebTools.web_search() / search_and_read() — Frisches Web-Wissen
-  6. LLM — Synthese, Widerspruchserkennung, Zeitlinien, Lückenanalyse
+  6. LLM — Synthese, Widerspruchserkennung, Zeitlinien, Lueckenanalyse
 """
 
 from __future__ import annotations
@@ -45,9 +45,9 @@ _DEFAULT_MAX_CONTEXT_CHARS = 25000
 
 
 class KnowledgeSynthesizer:
-    """Orchestriert Wissensquellen und synthetisiert kohärentes Verständnis.
+    """Orchestriert Wissensquellen und synthetisiert kohaerentes Verstaendnis.
 
-    Injizierte Abhängigkeiten (via Setter):
+    Injizierte Abhaengigkeiten (via Setter):
       - LLM-Funktion: async (prompt, model) -> str
       - MemoryTools: sync search_memory(), get_entity(), get_recent_episodes()
       - VaultTools: async vault_search(), vault_save()
@@ -93,7 +93,7 @@ class KnowledgeSynthesizer:
         self._web_tools = web_tools
 
     def _check_ready(self) -> str | None:
-        """Prüft ob alle Abhängigkeiten injiziert sind.
+        """Prueft ob alle Abhaengigkeiten injiziert sind.
 
         Returns:
             Fehlermeldung oder None wenn bereit.
@@ -116,7 +116,7 @@ class KnowledgeSynthesizer:
         include_episodes: bool = True,
         web_results: int = 3,
     ) -> dict[str, str]:
-        """Sammelt alle verfügbaren Quellen zu einem Thema.
+        """Sammelt alle verfuegbaren Quellen zu einem Thema.
 
         Returns:
             Dict mit Quelltyp → Inhalt:
@@ -231,10 +231,10 @@ class KnowledgeSynthesizer:
         language: str = "de",
         save_to_vault: bool = False,
     ) -> str:
-        """Vollständige Wissenssynthese zu einem Thema.
+        """Vollstaendige Wissenssynthese zu einem Thema.
 
-        Sammelt alle Quellen (Memory, Vault, Web), erkennt Widersprüche,
-        baut Zeitlinien, bewertet Konfidenz und identifiziert Wissenslücken.
+        Sammelt alle Quellen (Memory, Vault, Web), erkennt Widersprueche,
+        baut Zeitlinien, bewertet Konfidenz und identifiziert Wissensluecken.
 
         Args:
             topic: Das zu synthetisierende Thema oder die Fragestellung.
@@ -317,17 +317,17 @@ class KnowledgeSynthesizer:
         topic: str,
         language: str = "de",
     ) -> str:
-        """Erkennt Widersprüche zwischen gespeichertem und neuem Wissen.
+        """Erkennt Widersprueche zwischen gespeichertem und neuem Wissen.
 
         Vergleicht was Jarvis gespeichert hat (Memory + Vault) mit
         aktuellen Web-Informationen und identifiziert Diskrepanzen.
 
         Args:
-            topic: Thema für die Widerspruchsanalyse.
+            topic: Thema fuer die Widerspruchsanalyse.
             language: Ausgabesprache.
 
         Returns:
-            Liste der Widersprüche mit Quellen und Bewertung.
+            Liste der Widersprueche mit Quellen und Bewertung.
         """
         error = self._check_ready()
         if error:
@@ -391,7 +391,7 @@ class KnowledgeSynthesizer:
         Vault-Notizen und Web-Recherche.
 
         Args:
-            topic: Thema für die Zeitlinie.
+            topic: Thema fuer die Zeitlinie.
             language: Ausgabesprache.
 
         Returns:
@@ -431,17 +431,17 @@ class KnowledgeSynthesizer:
         topic: str,
         language: str = "de",
     ) -> str:
-        """Identifiziert Wissenslücken und schlägt Recherchen vor.
+        """Identifiziert Wissensluecken und schlaegt Recherchen vor.
 
-        Analysiert was Jarvis zu einem Thema weiß und was fehlt.
-        Gibt konkrete Such-Vorschläge zurück.
+        Analysiert was Jarvis zu einem Thema weiss und was fehlt.
+        Gibt konkrete Such-Vorschlaege zurueck.
 
         Args:
-            topic: Thema für die Lückenanalyse.
+            topic: Thema fuer die Lueckenanalyse.
             language: Ausgabesprache.
 
         Returns:
-            Wissenslücken mit priorisierten Recherche-Vorschlägen.
+            Wissensluecken mit priorisierten Recherche-Vorschlaegen.
         """
         error = self._check_ready()
         if error:
@@ -482,7 +482,7 @@ def _build_synthesis_prompt(
     language: str,
     source_types: list[str],
 ) -> str:
-    """Baut den LLM-Prompt für die vollständige Wissenssynthese."""
+    """Baut den LLM-Prompt fuer die vollstaendige Wissenssynthese."""
     lang = "Antworte auf Deutsch." if language == "de" else "Answer in English."
 
     source_info = ", ".join(source_types) if source_types else "keine"
@@ -493,11 +493,11 @@ def _build_synthesis_prompt(
         "deep": "Detailliert, mit vollständiger Analyse aller Aspekte.",
     }.get(depth, "Ausgewogen.")
 
-    return f"""Du bist ein Analyst für Wissenssynthese. {lang}
+    return f"""Du bist ein Analyst fuer Wissenssynthese. {lang}
 
 AUFGABE: Erstelle eine umfassende Wissenssynthese zum Thema: "{topic}"
 
-Dir stehen folgende Informationsquellen zur Verfügung: {source_info}
+Dir stehen folgende Informationsquellen zur Verfuegung: {source_info}
 Detailtiefe: {detail_level}
 
 Erstelle deine Synthese mit GENAU diesen Abschnitten:
@@ -507,29 +507,29 @@ Erstelle deine Synthese mit GENAU diesen Abschnitten:
 ### Kernerkenntnisse
 Die 3-7 wichtigsten Fakten/Erkenntnisse, priorisiert nach Relevanz.
 Jede Erkenntnis mit Konfidenz-Indikator:
-- ★★★ = durch mehrere Quellen bestätigt
-- ★★☆ = durch eine zuverlässige Quelle gestützt
+- ★★★ = durch mehrere Quellen bestaetigt
+- ★★☆ = durch eine zuverlaessige Quelle gestuetzt
 - ★☆☆ = nur eine Quelle oder unsicher
 
 ### Quellenvergleich
-Wo stimmen die Quellen überein? Wo gibt es Abweichungen?
+Wo stimmen die Quellen ueberein? Wo gibt es Abweichungen?
 Nenne konkret, welche Quelle was sagt.
 
 ### Widersprueche & Diskrepanzen
-Falls Widersprüche zwischen gespeichertem Wissen und neuen Informationen bestehen:
+Falls Widersprueche zwischen gespeichertem Wissen und neuen Informationen bestehen:
 - Was war bekannt vs. was ist neu?
 - Welche Information ist wahrscheinlich korrekt und warum?
 
 ### Zeitliche Entwicklung
-Falls zeitliche Aspekte erkennbar: Was hat sich verändert?
-Kausalkette aufzeigen: X führte zu Y, daraus folgt Z.
+Falls zeitliche Aspekte erkennbar: Was hat sich veraendert?
+Kausalkette aufzeigen: X fuehrte zu Y, daraus folgt Z.
 
 ### Wissensluecken
 Was fehlt noch? Welche Fragen sind offen?
-Konkrete Vorschläge für Nachrecherche (als Suchbegriffe).
+Konkrete Vorschlaege fuer Nachrecherche (als Suchbegriffe).
 
 ### Fazit & Empfehlung
-2-3 Sätze: Was ist der aktuelle Stand? Was sollte der Nutzer als nächstes tun?
+2-3 Saetze: Was ist der aktuelle Stand? Was sollte der Nutzer als naechstes tun?
 
 INFORMATIONSQUELLEN:
 ---
@@ -538,9 +538,9 @@ INFORMATIONSQUELLEN:
 
 REGELN:
 - Erfinde KEINE Informationen. Basiere alles auf den gelieferten Quellen.
-- Wenn Quellen fehlen oder widersprüchlich sind, sage das explizit.
+- Wenn Quellen fehlen oder widerspruechlich sind, sage das explizit.
 - Markiere Unsicherheiten transparent.
-- Bevorzuge bei Widersprüchen die Primärquelle (Web > Memory wenn aktueller)."""
+- Bevorzuge bei Widerspruechen die Primaerquelle (Web > Memory wenn aktueller)."""
 
 
 def _build_contradiction_prompt(
@@ -549,32 +549,32 @@ def _build_contradiction_prompt(
     web_context: str,
     language: str,
 ) -> str:
-    """Baut den Prompt für die Widerspruchsanalyse."""
+    """Baut den Prompt fuer die Widerspruchsanalyse."""
     lang = "Antworte auf Deutsch." if language == "de" else "Answer in English."
 
-    return f"""Du bist ein Analyst für Widerspruchserkennung. {lang}
+    return f"""Du bist ein Analyst fuer Widerspruchserkennung. {lang}
 
 AUFGABE: Vergleiche das gespeicherte Wissen mit aktuellen Web-Informationen
 zum Thema: "{topic}"
 
-Identifiziere ALLE Widersprüche, Diskrepanzen und veralteten Informationen.
+Identifiziere ALLE Widersprueche, Diskrepanzen und veralteten Informationen.
 
 Struktur deiner Analyse:
 
 ## Widerspruchsanalyse: {topic}
 
 ### Bestaetigte Fakten
-Informationen die sowohl gespeichert als auch aktuell bestätigt sind.
+Informationen die sowohl gespeichert als auch aktuell bestaetigt sind.
 
 ### Widersprueche
-Für jeden Widerspruch:
+Fuer jeden Widerspruch:
 | Aspekt | Gespeichert | Aktuell (Web) | Bewertung |
 |--------|-------------|---------------|-----------|
 | ...    | ...         | ...           | Welche Version ist korrekt? |
 
 ### Veraltete Informationen
 Was im Speicher steht, aber nicht mehr aktuell ist.
-Empfehlung: Aktualisieren / Löschen / Beibehalten mit Vermerk.
+Empfehlung: Aktualisieren / Loeschen / Beibehalten mit Vermerk.
 
 ### Neue Erkenntnisse
 Informationen aus dem Web, die noch nicht gespeichert waren.
@@ -590,7 +590,7 @@ AKTUELLE WEB-INFORMATIONEN:
 {web_context}
 ---
 
-Sei präzise. Nenne konkret was gespeichert war und was die Web-Quellen sagen."""
+Sei praezise. Nenne konkret was gespeichert war und was die Web-Quellen sagen."""
 
 
 def _build_timeline_prompt(
@@ -598,10 +598,10 @@ def _build_timeline_prompt(
     context: str,
     language: str,
 ) -> str:
-    """Baut den Prompt für den Zeitlinien-Aufbau."""
+    """Baut den Prompt fuer den Zeitlinien-Aufbau."""
     lang = "Antworte auf Deutsch." if language == "de" else "Answer in English."
 
-    return f"""Du bist ein Analyst für temporale Muster. {lang}
+    return f"""Du bist ein Analyst fuer temporale Muster. {lang}
 
 AUFGABE: Erstelle eine chronologische Zeitlinie zum Thema: "{topic}"
 
@@ -613,25 +613,25 @@ Struktur:
 ## Zeitlinie: {topic}
 
 ### Chronologie
-Für jeden Zeitpunkt/Ereignis:
+Fuer jeden Zeitpunkt/Ereignis:
 - **[Datum/Zeitraum]** — Was passierte. *(Quelle: ...)*
   → Folge/Auswirkung
 
 ### Kausalketten
 Zeichne die Ursache-Wirkungs-Beziehungen auf:
-1. Ereignis A → führte zu B → bewirkte C
+1. Ereignis A → fuehrte zu B → bewirkte C
 
 ### Trend & Prognose
 Basierend auf der Entwicklung:
-- Erkennbarer Trend (aufwärts/abwärts/stabil/volatil)
-- Mögliche nächste Entwicklungen (mit Vorbehalt kennzeichnen)
+- Erkennbarer Trend (aufwaerts/abwaerts/stabil/volatil)
+- Moegliche naechste Entwicklungen (mit Vorbehalt kennzeichnen)
 
 INFORMATIONSQUELLEN:
 ---
 {context}
 ---
 
-Wenn kein genaues Datum erkennbar ist, nutze ungefähre Zeitangaben
+Wenn kein genaues Datum erkennbar ist, nutze ungefaehre Zeitangaben
 ("Anfang 2026", "Q4 2025", etc.). Erfinde keine Daten."""
 
 
@@ -640,15 +640,15 @@ def _build_gaps_prompt(
     context: str,
     language: str,
 ) -> str:
-    """Baut den Prompt für die Wissenslücken-Analyse."""
+    """Baut den Prompt fuer die Wissensluecken-Analyse."""
     lang = "Antworte auf Deutsch." if language == "de" else "Answer in English."
 
-    return f"""Du bist ein Analyst für Wissensmanagement. {lang}
+    return f"""Du bist ein Analyst fuer Wissensmanagement. {lang}
 
 AUFGABE: Analysiere, was zum Thema "{topic}" bekannt ist und was fehlt.
 
-Bewerte die Vollständigkeit des vorhandenen Wissens und identifiziere
-systematisch alle Lücken.
+Bewerte die Vollstaendigkeit des vorhandenen Wissens und identifiziere
+systematisch alle Luecken.
 
 Struktur:
 
@@ -658,21 +658,21 @@ Struktur:
 Was ist bereits gut dokumentiert? (kurze Auflistung)
 
 ### Identifizierte Wissensluecken
-Für jede Lücke:
-| # | Fehlende Information | Priorität | Recherche-Vorschlag |
+Fuer jede Luecke:
+| # | Fehlende Information | Prioritaet | Recherche-Vorschlag |
 |---|---------------------|-----------|---------------------|
 | 1 | ...                 | HOCH/MITTEL/NIEDRIG | Konkrete Suchbegriffe |
 
 ### Empfohlene Recherchen
-Priorisierte Liste konkreter Suchbegriffe, die die wichtigsten Lücken
-schließen würden. Format als web_search-kompatible Keywords:
+Priorisierte Liste konkreter Suchbegriffe, die die wichtigsten Luecken
+schliessen wuerden. Format als web_search-kompatible Keywords:
 1. **[HOCH]** `"Suchbegriff 1"` — Warum wichtig
 2. **[MITTEL]** `"Suchbegriff 2"` — Warum wichtig
 3. ...
 
 ### Vollstaendigkeits-Score
-Geschätzte Abdeckung: X/10 (1 = fast nichts bekannt, 10 = umfassend)
-Begründung in einem Satz.
+Geschaetzte Abdeckung: X/10 (1 = fast nichts bekannt, 10 = umfassend)
+Begruendung in einem Satz.
 
 VORHANDENES WISSEN:
 ---
@@ -680,14 +680,14 @@ VORHANDENES WISSEN:
 ---
 
 Wenn gar kein Wissen vorhanden ist, erstelle eine grundlegende Recherche-Roadmap
-mit den wichtigsten Suchbegriffen, um das Thema systematisch zu erschließen."""
+mit den wichtigsten Suchbegriffen, um das Thema systematisch zu erschliessen."""
 
 
 # ── Helper functions ──────────────────────────────────────────────────────
 
 
 def _truncate(text: str, max_chars: int) -> str:
-    """Kürzt Text auf max_chars, am letzten Satzende."""
+    """Kuerzt Text auf max_chars, am letzten Satzende."""
     if len(text) <= max_chars:
         return text
     original_len = len(text)
@@ -699,9 +699,9 @@ def _truncate(text: str, max_chars: int) -> str:
 
 
 def _extract_keywords(text: str) -> list[str]:
-    """Extrahiert die wichtigsten Schlüsselwörter aus einem Text.
+    """Extrahiert die wichtigsten Schluesselwoerter aus einem Text.
 
-    Filtert Stoppwörter und gibt die relevantesten Begriffe zurück.
+    Filtert Stoppwoerter und gibt die relevantesten Begriffe zurueck.
     """
     stop_words = frozenset(
         {
@@ -809,10 +809,10 @@ def _extract_keywords(text: str) -> list[str]:
 
 
 def _filter_relevant_text(text: str, topic: str) -> str:
-    """Filtert nur thematisch relevante Absätze aus einem Text.
+    """Filtert nur thematisch relevante Absaetze aus einem Text.
 
-    Teilt den Text in Absätze und behält nur jene,
-    die Schlüsselwörter des Themas enthalten.
+    Teilt den Text in Absaetze und behaelt nur jene,
+    die Schluesselwoerter des Themas enthalten.
     """
     keywords = _extract_keywords(topic)
     if not keywords:
@@ -845,7 +845,7 @@ def register_synthesis_tools(
         config: JarvisConfig (optional).
 
     Returns:
-        KnowledgeSynthesizer-Instanz (Abhängigkeiten werden später injiziert).
+        KnowledgeSynthesizer-Instanz (Abhaengigkeiten werden spaeter injiziert).
     """
     synth = KnowledgeSynthesizer(config=config)
 

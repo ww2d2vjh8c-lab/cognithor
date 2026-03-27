@@ -4,9 +4,9 @@ Skills sind Daten (Markdown + YAML), kein Code.  Die Sicherheitskette:
 
   1. Skill = Markdown + YAML-Frontmatter (kein import, kein eval)
   2. Planner liest den Skill und erzeugt PlannedAction-Objekte
-  3. ToolEnforcer prüft: nur in tools_required deklarierte Tools erlaubt
-  4. Gatekeeper prüft: Standard-Evaluation (Pfade, Patterns, Risk)
-  5. Executor führt nur genehmigte Actions aus
+  3. ToolEnforcer prueft: nur in tools_required deklarierte Tools erlaubt
+  4. Gatekeeper prueft: Standard-Evaluation (Pfade, Patterns, Risk)
+  5. Executor fuehrt nur genehmigte Actions aus
 
 Bible reference: §6.2 (Prozedurale Skills), §11 (Security)
 """

@@ -1,7 +1,7 @@
 """Skill marketplace: Curated marketplace for Jarvis skills.
 
-Erweitert das P2P-Ökosystem um:
-  - SkillMarketplace: Zentrale Anlaufstelle für Suche, Browse, Install
+Erweitert das P2P-Oekosystem um:
+  - SkillMarketplace: Zentrale Anlaufstelle fuer Suche, Browse, Install
   - FeaturedFeed: Kuratierte Empfehlungen und Trending-Ranking
   - CategoryBrowser: Hierarchische Kategorie-Navigation
   - SkillDetail: Detaillierte Skill-Informationen inkl. Reviews
@@ -29,7 +29,7 @@ log = get_logger(__name__)
 
 
 class SkillCategory(Enum):
-    """Haupt-Kategorien für Skills."""
+    """Haupt-Kategorien fuer Skills."""
 
     INSURANCE = "versicherung"
     FINANCE = "finanzen"

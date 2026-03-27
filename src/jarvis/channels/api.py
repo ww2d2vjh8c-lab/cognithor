@@ -1,15 +1,15 @@
-"""REST-API Channel: HTTP-Endpunkte für externe Integration.
+"""REST-API Channel: HTTP-Endpunkte fuer externe Integration.
 
-Bietet eine vollständige REST-API für programmatischen Zugriff
+Bietet eine vollstaendige REST-API fuer programmatischen Zugriff
 auf Jarvis. Bearer-Token-Authentifizierung, JSON-basiert,
-SSE-Streaming für Echtzeit-Antworten.
+SSE-Streaming fuer Echtzeit-Antworten.
 
 Endpunkte:
   POST /api/v1/message     → Nachricht senden
   GET  /api/v1/message/stream → SSE-Stream
   GET  /api/v1/sessions    → Sessions auflisten
   GET  /api/v1/health      → Health-Check
-  GET  /api/v1/tools       → Verfügbare Tools
+  GET  /api/v1/tools       → Verfuegbare Tools
 
 Bibel-Referenz: §9.3 (API Channel), §11.1 (Authentication)
 """
@@ -46,7 +46,7 @@ except ImportError:
 
 
 class MessageRequest(BaseModel):
-    """Eingehende Nachricht über die API."""
+    """Eingehende Nachricht ueber die API."""
 
     text: str = Field(..., min_length=1, max_length=100_000)
     session_id: str | None = Field(default=None)
@@ -73,7 +73,7 @@ class HealthResponse(BaseModel):
 
 
 class SessionInfo(BaseModel):
-    """Informationen über eine Session."""
+    """Informationen ueber eine Session."""
 
     session_id: str
     created_at: str
@@ -82,7 +82,7 @@ class SessionInfo(BaseModel):
 
 
 class ApprovalRequest(BaseModel):
-    """Approval-Anfrage für ORANGE-Aktionen."""
+    """Approval-Anfrage fuer ORANGE-Aktionen."""
 
     session_id: str
     action_tool: str
@@ -105,7 +105,7 @@ class ApprovalResponse(BaseModel):
 class APIChannel(Channel):
     """REST-API Channel via FastAPI. [B§9.3]
 
-    Stellt HTTP-Endpunkte bereit für programmatischen Zugriff.
+    Stellt HTTP-Endpunkte bereit fuer programmatischen Zugriff.
     Authentifizierung via Bearer-Token.
     """
 
@@ -139,7 +139,7 @@ class APIChannel(Channel):
 
     @property
     def _api_token(self) -> str | None:
-        """API-Token (entschlüsselt bei Zugriff)."""
+        """API-Token (entschluesselt bei Zugriff)."""
         if self._has_api_token:
             return self._token_store.retrieve("api_channel_token")
         return None
@@ -206,7 +206,7 @@ class APIChannel(Channel):
             self._pending_approvals.pop(request_id, None)
 
     async def send_streaming_token(self, session_id: str, token: str) -> None:
-        """Streaming-Tokens werden über SSE gesendet (in der Route)."""
+        """Streaming-Tokens werden ueber SSE gesendet (in der Route)."""
         pass
 
     def _create_app(self) -> Any:
@@ -335,7 +335,7 @@ class APIChannel(Channel):
 
     @property
     def app(self) -> Any:
-        """FastAPI-App-Instanz (für Tests und Embedding in Gateway)."""
+        """FastAPI-App-Instanz (fuer Tests und Embedding in Gateway)."""
         if self._app is None:
             self._app = self._create_app()
         return self._app

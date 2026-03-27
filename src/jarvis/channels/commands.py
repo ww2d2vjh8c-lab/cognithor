@@ -2,8 +2,8 @@
 
 Stellt bereit:
   - SlashCommand: Definition und Registry von Slash-Commands
-  - InteractionState: Zustandsverwaltung für Button/Modal-Interaktionen
-  - FallbackRenderer: Text-Fallback für Clients ohne Interaktivität
+  - InteractionState: Zustandsverwaltung fuer Button/Modal-Interaktionen
+  - FallbackRenderer: Text-Fallback fuer Clients ohne Interaktivitaet
   - CommandRegistry: Zentrale Verwaltung aller Slash-Commands
 
 Bibel-Referenz: §7 (Channels), §3 (Gateway)
@@ -30,7 +30,7 @@ log = get_logger(__name__)
 
 
 class CommandScope(Enum):
-    """Wo der Command verfügbar ist."""
+    """Wo der Command verfuegbar ist."""
 
     SLACK = "slack"
     DISCORD = "discord"
@@ -86,7 +86,7 @@ class SlashCommand:
 class CommandRegistry:
     """Zentrale Verwaltung aller Slash-Commands.
 
-    Registriert Commands, prüft Cooldowns und
+    Registriert Commands, prueft Cooldowns und
     routet Aufrufe an den richtigen Handler.
     """
 
@@ -160,7 +160,7 @@ class CommandRegistry:
         return cmds
 
     def check_cooldown(self, user_id: str, command_name: str) -> bool:
-        """Prüft ob der Cooldown abgelaufen ist."""
+        """Prueft ob der Cooldown abgelaufen ist."""
         cmd = self._commands.get(command_name)
         if not cmd or cmd.cooldown_seconds == 0:
             return True
@@ -245,7 +245,7 @@ class InteractionState:
         return not self.resolved and not self.is_expired
 
     def resolve(self, result: Any = None) -> None:
-        """Löst die Interaktion auf."""
+        """Loest die Interaktion auf."""
         self.resolved = True
         self.result = result
 
@@ -264,14 +264,14 @@ class InteractionState:
 
 
 class InteractionStore:
-    """Persistiert temporäre Interaktions-Zustände.
+    """Persistiert temporaere Interaktions-Zustaende.
 
     Jede Button-/Modal-Interaktion bekommt eine eindeutige ID.
     Der Store verwaltet den Lifecycle:
       1. create() beim Senden der interaktiven Nachricht
       2. get() beim Empfangen der Antwort
       3. resolve() beim Verarbeiten der Antwort
-      4. cleanup() für abgelaufene States
+      4. cleanup() fuer abgelaufene States
     """
 
     DEFAULT_TTL = 3600  # 1 Stunde
@@ -325,7 +325,7 @@ class InteractionStore:
         return state
 
     def get_by_message(self, message_id: str) -> list[InteractionState]:
-        """Alle Interaktionen für eine Nachricht."""
+        """Alle Interaktionen fuer eine Nachricht."""
         ids = self._by_message.get(message_id, [])
         return [
             self._states[iid]
@@ -334,7 +334,7 @@ class InteractionStore:
         ]
 
     def resolve(self, interaction_id: str, result: Any = None) -> bool:
-        """Löst eine Interaktion auf."""
+        """Loest eine Interaktion auf."""
         state = self._states.get(interaction_id)
         if not state or state.is_expired:
             return False
@@ -373,7 +373,7 @@ class InteractionStore:
 class FallbackRenderer:
     """Rendert interaktive Nachrichten als Plain-Text.
 
-    Für Clients ohne Interaktivitäts-Support (E-Mail, SMS,
+    Fuer Clients ohne Interaktivitaets-Support (E-Mail, SMS,
     einfache Chat-Bots) werden Buttons zu nummerierten Optionen,
     Formulare zu Text-Prompts und Progress-Bars zu ASCII.
     """
@@ -414,7 +414,7 @@ class FallbackRenderer:
         prompt: str,
         options: list[dict[str, str]],
     ) -> str:
-        """Rendert ein Select-Menü als nummerierte Liste."""
+        """Rendert ein Select-Menue als nummerierte Liste."""
         lines = [prompt, ""]
         for i, opt in enumerate(options, 1):
             label = opt.get("label", opt.get("text", f"Option {i}"))
@@ -468,7 +468,7 @@ class FallbackRenderer:
         """Parst eine nummerierte Antwort.
 
         Returns:
-            0-basierter Index oder None bei ungültiger Eingabe.
+            0-basierter Index oder None bei ungueltiger Eingabe.
         """
         response = response.strip()
         try:
@@ -489,7 +489,7 @@ class FallbackRenderer:
         """Parst eine Approval-Antwort.
 
         Returns:
-            True = genehmigt, False = abgelehnt, None = ungültig.
+            True = genehmigt, False = abgelehnt, None = ungueltig.
         """
         normalized = response.strip().upper()
         if normalized == approve_word.upper():

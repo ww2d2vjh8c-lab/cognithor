@@ -233,7 +233,7 @@ class VerifiedWebLookup:
     # ── URL Classification ──────────────────────────────────────────────
 
     def _needs_browser(self, url: str) -> bool:
-        """Prüft ob eine URL einen JS-Browser braucht (SPA, dynamische Inhalte)."""
+        """Prueft ob eine URL einen JS-Browser braucht (SPA, dynamische Inhalte)."""
         try:
             from urllib.parse import urlparse
 

@@ -103,12 +103,12 @@ class WhatsAppChannel(Channel):
 
     @property
     def _api_token(self) -> str:
-        """API-Token (entschlüsselt bei Zugriff)."""
+        """API-Token (entschluesselt bei Zugriff)."""
         return self._token_store.retrieve("whatsapp_api_token")
 
     @property
     def _app_secret(self) -> str:
-        """App-Secret (entschlüsselt bei Zugriff)."""
+        """App-Secret (entschluesselt bei Zugriff)."""
         if self._has_app_secret:
             return self._token_store.retrieve("whatsapp_app_secret")
         return ""

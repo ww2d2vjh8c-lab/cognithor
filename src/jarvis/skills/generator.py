@@ -1,21 +1,21 @@
 """Auto-skill generator: Jarvis designs its own modules.
 
 Wenn der Planner oder Executor ein Tool nicht findet oder ein Skill
-fehlt, erkennt der SkillGenerator die Lücke und:
+fehlt, erkennt der SkillGenerator die Luecke und:
 
   1. Analysiert was fehlt (SkillGap)
   2. Generiert Python-Code via LLM (Code-Synthese)
   3. Erstellt Unit-Tests automatisch
   4. Testet in isolierter Sandbox
   5. Registriert bei Erfolg in der SkillRegistry
-  6. Versioniert für Roll-Back bei Problemen
+  6. Versioniert fuer Roll-Back bei Problemen
   7. Optional: Wartet auf User-Approval (Gatekeeper)
 
 Sicherheit:
-  - Generierter Code läuft NUR in der Sandbox
+  - Generierter Code laeuft NUR in der Sandbox
   - Kein Zugriff auf Credentials, Netzwerk (optional), Dateisystem
-  - Gatekeeper kann Approval für kritische Skills erzwingen
-  - Versionierung ermöglicht Roll-Back
+  - Gatekeeper kann Approval fuer kritische Skills erzwingen
+  - Versionierung ermoeglicht Roll-Back
 
 Bibel-Referenz: §6.4 (Prozedurale Selbstverbesserung)
 """
@@ -76,7 +76,7 @@ __all__ = [
 
 
 class SkillGapType(Enum):
-    """Art der erkannten Skill-Lücke."""
+    """Art der erkannten Skill-Luecke."""
 
     UNKNOWN_TOOL = "unknown_tool"  # Tool call failed
     NO_SKILL_MATCH = "no_skill_match"  # Kein Skill für die Aufgabe
@@ -101,10 +101,10 @@ class GenerationStatus(Enum):
 
 @dataclass
 class SkillGap:
-    """Eine erkannte Skill-Lücke.
+    """Eine erkannte Skill-Luecke.
 
-    Wird erzeugt wenn Jarvis eine Aufgabe nicht ausführen kann
-    und ein neuer Skill benötigt wird.
+    Wird erzeugt wenn Jarvis eine Aufgabe nicht ausfuehren kann
+    und ein neuer Skill benoetigt wird.
     """
 
     id: str
@@ -122,7 +122,7 @@ class SkillGap:
 
     @property
     def priority(self) -> float:
-        """Priorität basierend auf Häufigkeit und Typ."""
+        """Prioritaet basierend auf Haeufigkeit und Typ."""
         type_weight = {
             SkillGapType.USER_REQUEST: 2.0,
             SkillGapType.REPEATED_FAILURE: 1.5,
@@ -137,7 +137,7 @@ class SkillGap:
 class GeneratedSkill:
     """Ein vom SkillGenerator erzeugter Skill.
 
-    Enthält den generierten Code, Tests, und Versionierungsinfo.
+    Enthaelt den generierten Code, Tests, und Versionierungsinfo.
     """
 
     name: str
@@ -173,7 +173,7 @@ class GeneratedSkill:
 
     @property
     def module_name(self) -> str:
-        """Python-Modulname für den Skill."""
+        """Python-Modulname fuer den Skill."""
         return f"auto_{self.name}"
 
     @property
@@ -198,10 +198,10 @@ das als Jarvis-Tool registriert werden kann.
 
 ## Regeln
 1. Das Modul MUSS eine `register(mcp_client)` Funktion haben
-2. Jedes Tool wird über `mcp_client.register_builtin_handler(name, schema, handler)` registriert
+2. Jedes Tool wird ueber `mcp_client.register_builtin_handler(name, schema, handler)` registriert
 3. Handler-Funktionen sind `async def handler(**params) -> str`
 4. Nur Python-Standardbibliothek + diese erlaubten Pakete: {allowed_packages}
-5. KEIN Netzwerkzugriff, KEIN Dateisystem außerhalb working_dir
+5. KEIN Netzwerkzugriff, KEIN Dateisystem ausserhalb working_dir
 6. Fehlerbehandlung mit try/except, nie crashen
 7. Docstrings auf Deutsch
 8. Typ-Annotationen verwenden
@@ -222,11 +222,11 @@ schema = {{
 ```
 
 ## Ausgabe
-Gib NUR den Python-Code aus, keine Erklärungen.
+Gib NUR den Python-Code aus, keine Erklaerungen.
 """)
 
 SKILL_TEST_PROMPT = textwrap.dedent("""\
-Erstelle pytest-Tests für das folgende Python-Modul.
+Erstelle pytest-Tests fuer das folgende Python-Modul.
 
 ## Modul-Code
 ```python
@@ -235,13 +235,13 @@ Erstelle pytest-Tests für das folgende Python-Modul.
 
 ## Regeln
 1. Verwende pytest und pytest-asyncio
-2. Teste alle öffentlichen Funktionen
-3. Teste Fehlerfälle (leere Eingaben, ungültige Parameter)
+2. Teste alle oeffentlichen Funktionen
+3. Teste Fehlerfaelle (leere Eingaben, ungueltige Parameter)
 4. Mocke den mcp_client mit unittest.mock.MagicMock
 5. Mindestens 3 Tests pro Tool-Funktion
 
 ## Ausgabe
-Gib NUR den Test-Code aus, keine Erklärungen.
+Gib NUR den Test-Code aus, keine Erklaerungen.
 """)
 
 
@@ -251,13 +251,13 @@ Gib NUR den Test-Code aus, keine Erklärungen.
 
 
 class GapDetector:
-    """Erkennt Skill-Lücken aus dem laufenden Betrieb.
+    """Erkennt Skill-Luecken aus dem laufenden Betrieb.
 
     Sammelt Signale aus:
     - Fehlgeschlagene Tool-Calls (Executor)
     - Kein Skill-Match (SkillRegistry)
     - Niedrige Erfolgsraten (SkillRegistry.record_usage)
-    - Explizite User-Requests ("erstelle ein Tool für ...")
+    - Explizite User-Requests ("erstelle ein Tool fuer ...")
     """
 
     MAX_GAPS = 1000  # Maximale Anzahl Gaps im Speicher
@@ -404,16 +404,16 @@ class SkillGenerator:
     """Generiert, testet und registriert neue Skills automatisch.
 
     Workflow:
-      1. GapDetector meldet Lücke
+      1. GapDetector meldet Luecke
       2. generate() erstellt Code via LLM
-      3. test() führt Tests in Sandbox aus
-      4. register() lädt Skill in Registry
-      5. Versionierung für Roll-Back
+      3. test() fuehrt Tests in Sandbox aus
+      4. register() laedt Skill in Registry
+      5. Versionierung fuer Roll-Back
 
     Args:
-        skills_dir: Verzeichnis für generierte Skills.
-        sandbox_executor: SandboxExecutor für Test-Ausführung.
-        llm_fn: Async-Funktion für LLM-Aufrufe (z.B. UnifiedLLMClient.complete).
+        skills_dir: Verzeichnis fuer generierte Skills.
+        sandbox_executor: SandboxExecutor fuer Test-Ausfuehrung.
+        llm_fn: Async-Funktion fuer LLM-Aufrufe (z.B. UnifiedLLMClient.complete).
     """
 
     def __init__(
@@ -464,10 +464,10 @@ class SkillGenerator:
     # ========================================================================
 
     async def generate(self, gap: SkillGap) -> GeneratedSkill:
-        """Generiert Code für eine Skill-Lücke.
+        """Generiert Code fuer eine Skill-Luecke.
 
         Args:
-            gap: Die zu schließende Skill-Lücke.
+            gap: Die zu schliessende Skill-Luecke.
 
         Returns:
             GeneratedSkill mit generiertem Code.
@@ -604,7 +604,7 @@ class SkillGenerator:
 
         Args:
             skill: Der zu registrierende GeneratedSkill.
-            skill_registry: Optional SkillRegistry für sofortige Registrierung.
+            skill_registry: Optional SkillRegistry fuer sofortige Registrierung.
 
         Returns:
             True wenn erfolgreich registriert.
@@ -718,7 +718,7 @@ class SkillGenerator:
     # ========================================================================
 
     def rollback(self, name: str) -> bool:
-        """Rollt einen Skill auf die vorherige Version zurück.
+        """Rollt einen Skill auf die vorherige Version zurueck.
 
         Args:
             name: Skill-Name.
@@ -766,8 +766,8 @@ class SkillGenerator:
         erneut generiert (mit Fehlern als Kontext).
 
         Args:
-            gap: Die zu schließende Skill-Lücke.
-            skill_registry: Optional für sofortige Registrierung.
+            gap: Die zu schliessende Skill-Luecke.
+            skill_registry: Optional fuer sofortige Registrierung.
             max_retries: Maximale Regenerierungsversuche (0-5).
 
         Returns:
@@ -846,7 +846,7 @@ class SkillGenerator:
         )
 
     def _generate_stub(self, gap: SkillGap) -> str:
-        """Generiert einen Code-Stub wenn kein LLM verfügbar ist."""
+        """Generiert einen Code-Stub wenn kein LLM verfuegbar ist."""
         name = self._derive_skill_name(gap)
         safe_desc = self._escape_for_string(gap.description[:200])
         return textwrap.dedent(f'''\

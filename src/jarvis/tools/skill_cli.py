@@ -1,12 +1,12 @@
 """Jarvis · Skill-Entwickler-CLI.
 
-Werkzeuge für Skill-Entwicklung, -Test und -Veröffentlichung:
+Werkzeuge fuer Skill-Entwicklung, -Test und -Veroeffentlichung:
 
-  - SkillTemplate:         Standard-Templates für neue Skills
+  - SkillTemplate:         Standard-Templates fuer neue Skills
   - SkillScaffolder:       Erstellt Skill-Projekte aus Templates
-  - SkillLinter:           Prüft Skill-Konformität (SKILL.md, Tests, Manifest)
-  - SkillTester:           Führt Skill-Tests isoliert aus
-  - SkillPublisher:        Veröffentlicht Skills im Marketplace
+  - SkillLinter:           Prueft Skill-Konformitaet (SKILL.md, Tests, Manifest)
+  - SkillTester:           Fuehrt Skill-Tests isoliert aus
+  - SkillPublisher:        Veroeffentlicht Skills im Marketplace
   - SkillCLI:              Hauptklasse (simuliert CLI-Befehle)
 
 Architektur-Bibel: §15.1 (Skill-Ecosystem), §15.4 (Developer Experience)
@@ -37,7 +37,7 @@ class TemplateType(Enum):
 
 @dataclass
 class SkillTemplate:
-    """Template für die Skill-Erstellung."""
+    """Template fuer die Skill-Erstellung."""
 
     template_id: str
     name: str
@@ -84,7 +84,7 @@ BUILT_IN_TEMPLATES: dict[TemplateType, SkillTemplate] = {
                 '"status": "ok", "result": "TODO"}\n'
             ),
             "test_skill.py": (
-                '"""Tests für {name}."""\n\n'
+                '"""Tests fuer {name}."""\n\n'
                 "import pytest\n"
                 "from .skill import {classname}\n\n\n"
                 "class Test{classname}:\n"
@@ -128,7 +128,7 @@ BUILT_IN_TEMPLATES: dict[TemplateType, SkillTemplate] = {
                 '            return {"data": resp.json()}\n'
             ),
             "test_skill.py": (
-                '"""Tests für {name}."""\n'
+                '"""Tests fuer {name}."""\n'
                 "import pytest\n"
                 "from .skill import {classname}\n\n"
                 "class Test{classname}:\n"
@@ -305,7 +305,7 @@ class LintIssue:
 
 
 class SkillLinter:
-    """Prüft Skill-Konformität mit Jarvis-Standards."""
+    """Prueft Skill-Konformitaet mit Jarvis-Standards."""
 
     REQUIRED_FILES = ["SKILL.md", "skill.py", "manifest.json"]
     REQUIRED_MANIFEST_FIELDS = ["name", "version", "permissions"]
@@ -422,7 +422,7 @@ class SkillTestResult:
 
 
 class SkillTester:
-    """Führt Skill-Tests isoliert aus."""
+    """Fuehrt Skill-Tests isoliert aus."""
 
     def __init__(self) -> None:
         self._results: list[SkillTestResult] = []
@@ -464,7 +464,7 @@ class SkillTester:
         }
 
     def test_skill(self, skill_name: str, test_code: str = "") -> SkillTestResult:
-        """Führt Tests für einen Skill aus."""
+        """Fuehrt Tests fuer einen Skill aus."""
         import re
         import subprocess
         import tempfile
@@ -569,7 +569,7 @@ class PublishStatus(Enum):
 
 @dataclass
 class PublishRequest:
-    """Eine Veröffentlichungs-Anfrage."""
+    """Eine Veroeffentlichungs-Anfrage."""
 
     request_id: str
     skill_name: str
@@ -605,7 +605,7 @@ class PublishRequest:
 
 
 class SkillPublisher:
-    """Veröffentlicht Skills im Jarvis-Marketplace."""
+    """Veroeffentlicht Skills im Jarvis-Marketplace."""
 
     def __init__(self) -> None:
         self._requests: dict[str, PublishRequest] = {}
@@ -684,7 +684,7 @@ class SkillPublisher:
 
 @dataclass
 class ContributorReward:
-    """Belohnung für Skill-Beiträge."""
+    """Belohnung fuer Skill-Beitraege."""
 
     contributor: str
     points: int = 0
@@ -713,7 +713,7 @@ class ContributorReward:
 
 
 class RewardSystem:
-    """Belohnungssystem für Skill-Entwickler."""
+    """Belohnungssystem fuer Skill-Entwickler."""
 
     POINTS = {
         "skill_published": 100,
@@ -787,7 +787,7 @@ class RewardSystem:
 
 
 class SkillCLI:
-    """Hauptklasse: Simuliert CLI-Befehle für Skill-Entwicklung.
+    """Hauptklasse: Simuliert CLI-Befehle fuer Skill-Entwicklung.
 
     Befehle:
       jarvis skill new <name> [--template=basic]
@@ -844,7 +844,7 @@ class SkillCLI:
     def full_pipeline(
         self, skill_name: str, version: str, author: str, files: dict[str, str]
     ) -> dict[str, Any]:
-        """Vollständige Pipeline: Lint → Test → Publish."""
+        """Vollstaendige Pipeline: Lint → Test → Publish."""
         lint_issues = self.cmd_lint(files)
         lint_ok = not any(i.severity == LintSeverity.ERROR for i in lint_issues)
 

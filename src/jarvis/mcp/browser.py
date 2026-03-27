@@ -1,24 +1,24 @@
 """Browser-Tool: Web-Automatisierung via Playwright.
 
-Ermöglicht Jarvis das Navigieren, Lesen, Klicken und Ausfüllen
+Ermoeglicht Jarvis das Navigieren, Lesen, Klicken und Ausfuellen
 von Webseiten -- headless und lokal, ohne Cloud-Dienste.
 
 Features:
   - Seiten laden und Text extrahieren
   - Screenshots erstellen
-  - Formulare ausfüllen und Buttons klicken
-  - JavaScript ausführen
+  - Formulare ausfuellen und Buttons klicken
+  - JavaScript ausfuehren
   - Cookie- und Session-Management
   - Konfigurierbare Timeouts und Viewport
 
-Benötigt: pip install playwright && playwright install chromium
+Benoetigt: pip install playwright && playwright install chromium
 
 MCP-Tool-Registrierung:
   - browse_url: Seite laden und Text/HTML extrahieren
   - browse_screenshot: Screenshot einer Seite erstellen
   - browse_click: Element anklicken
-  - browse_fill: Formularfeld ausfüllen
-  - browse_execute_js: JavaScript auf der Seite ausführen
+  - browse_fill: Formularfeld ausfuellen
+  - browse_execute_js: JavaScript auf der Seite ausfuehren
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ class BrowserToolError(Exception):
 
 
 class BrowserTool:
-    """Headless-Browser via Playwright für Web-Automatisierung.
+    """Headless-Browser via Playwright fuer Web-Automatisierung.
 
     Verwaltet eine einzelne Browser-Instanz mit einer aktiven Seite.
     Alle Aktionen laufen headless -- kein GUI erforderlich.
@@ -118,7 +118,7 @@ class BrowserTool:
         self._viewport: dict[str, int] = {"width": vp_width, "height": vp_height}
 
     async def initialize(self) -> bool:
-        """Startet den Browser. Gibt False zurück wenn Playwright nicht installiert."""
+        """Startet den Browser. Gibt False zurueck wenn Playwright nicht installiert."""
         if self._initialized:
             return True
 
@@ -332,7 +332,7 @@ class BrowserTool:
             return BrowserResult(success=False, error=f"Klick fehlgeschlagen: {type(exc).__name__}")
 
     async def fill(self, selector: str, value: str) -> BrowserResult:
-        """Füllt ein Formularfeld aus.
+        """Fuellt ein Formularfeld aus.
 
         Args:
             selector: CSS-Selektor des Input-Feldes.
@@ -360,13 +360,13 @@ class BrowserTool:
             )
 
     async def execute_js(self, script: str) -> BrowserResult:
-        """Führt JavaScript auf der aktuellen Seite aus.
+        """Fuehrt JavaScript auf der aktuellen Seite aus.
 
         Args:
             script: JavaScript-Code.
 
         Returns:
-            BrowserResult mit dem Rückgabewert des Scripts.
+            BrowserResult mit dem Rueckgabewert des Scripts.
         """
         if not self._initialized:
             return BrowserResult(success=False, error="Browser nicht initialisiert")
@@ -395,7 +395,7 @@ class BrowserTool:
             return BrowserResult(success=False, error=f"JS-Fehler: {type(exc).__name__}")
 
     async def get_page_info(self) -> BrowserResult:
-        """Gibt Informationen zur aktuellen Seite zurück."""
+        """Gibt Informationen zur aktuellen Seite zurueck."""
         if not self._initialized:
             return BrowserResult(success=False, error="Browser nicht initialisiert")
 

@@ -108,7 +108,7 @@ def _sanitize_broken_llm_output(text: str) -> str:
     extrahiert diese Funktion den lesbaren Textanteil.
 
     Returns:
-        Bereinigter Text oder leerer String wenn nichts Brauchbares übrig bleibt.
+        Bereinigter Text oder leerer String wenn nichts Brauchbares uebrig bleibt.
     """
     if not text:
         return ""
@@ -141,7 +141,7 @@ class Gateway:
     _CLEANUP_INTERVAL_SECONDS: float = 60 * 60  # 1h
 
     def __init__(self, config: JarvisConfig | None = None) -> None:
-        """Initialisiert das Gateway mit PGE-Trinität, MCP-Client und Memory."""
+        """Initialisiert das Gateway mit PGE-Trinitaet, MCP-Client und Memory."""
         self._config = config or load_config()
         self._channels: dict[str, Channel] = {}
         self._sessions: dict[str, SessionContext] = {}
@@ -1021,7 +1021,7 @@ class Gateway:
             log.debug("auto_update_skipped", reason=str(exc))
 
     async def shutdown(self) -> None:
-        """Fährt den Gateway sauber herunter mit Session-Persistierung."""
+        """Faehrt den Gateway sauber herunter mit Session-Persistierung."""
         log.info("gateway_shutdown_start")
         self._running = False
 
@@ -1226,7 +1226,7 @@ class Gateway:
         core_memory: bool = False,
         skills: bool = False,
     ) -> dict:
-        """Reload-Koordinator für Live-Updates vom UI."""
+        """Reload-Koordinator fuer Live-Updates vom UI."""
         reloaded = []
         if prompts and self._planner:
             self._planner.reload_prompts()
@@ -3366,7 +3366,7 @@ class Gateway:
         session: SessionContext,
         parent_wm: WorkingMemory,
     ) -> str:
-        """Führt eine echte Agent-zu-Agent-Delegation aus.
+        """Fuehrt eine echte Agent-zu-Agent-Delegation aus.
 
         Der delegierte Agent bekommt:
           - Eigenen System-Prompt
@@ -3375,7 +3375,7 @@ class Gateway:
           - Eigene Tool-Filterung
           - Die Aufgabe als User-Nachricht
 
-        Das Ergebnis fließt als Text zurück zum aufrufenden Agenten.
+        Das Ergebnis fliesst als Text zurueck zum aufrufenden Agenten.
 
         Args:
             from_agent: Name des delegierenden Agenten.
@@ -3549,7 +3549,7 @@ class Gateway:
     ) -> None:
         """Persistiert wichtige Tool-Ergebnisse als TOOL-Messages in der Chat-History.
 
-        Damit behält der Planner bei Folge-Requests den vollen Kontext,
+        Damit behaelt der Planner bei Folge-Requests den vollen Kontext,
         z.B. extrahierter Text aus Bildern, Analyse-Ergebnisse, Suchergebnisse.
         """
         for result in results:
@@ -3601,11 +3601,11 @@ class Gateway:
     # ── Prometheus Metric Recording ──────────────────────────────
 
     def _record_metric(self, name: str, value: float, **labels: str) -> None:
-        """Zeichnet eine Metrik auf (wenn MonitoringHub oder TelemetryHub verfügbar).
+        """Zeichnet eine Metrik auf (wenn MonitoringHub oder TelemetryHub verfuegbar).
 
         Schreibt in beide Subsysteme wenn vorhanden:
-          - MonitoringHub.metrics (MetricCollector) -- für Dashboard + Prometheus
-          - TelemetryHub.metrics (MetricsProvider)  -- für OTLP + Prometheus
+          - MonitoringHub.metrics (MetricCollector) -- fuer Dashboard + Prometheus
+          - TelemetryHub.metrics (MetricsProvider)  -- fuer OTLP + Prometheus
         """
         # MetricCollector (gateway/monitoring.py)
         hub = getattr(self, "_monitoring_hub", None)
@@ -3632,9 +3632,9 @@ class Gateway:
                     log.debug("metric_provider_failed", metric=name, exc_info=True)
 
     def _extract_attachments(self, results: list[ToolResult]) -> list[str]:
-        """Extrahiert Dateipfade aus Tool-Ergebnissen für den Anhang-Versand.
+        """Extrahiert Dateipfade aus Tool-Ergebnissen fuer den Anhang-Versand.
 
-        Prüft ob das Tool-Ergebnis einen gültigen Dateipfad enthält und ob
+        Prueft ob das Tool-Ergebnis einen gueltigen Dateipfad enthaelt und ob
         die Datei existiert.
         """
         from pathlib import Path
@@ -3704,7 +3704,7 @@ class Gateway:
     ]
 
     def _is_fact_question(self, text: str) -> bool:
-        """Prüft ob eine Nachricht eine Faktenfrage ist, die Web-Recherche braucht."""
+        """Prueft ob eine Nachricht eine Faktenfrage ist, die Web-Recherche braucht."""
         # Zu kurz → wahrscheinlich kein Fakten-Query
         if len(text) < 15:
             return False
@@ -3828,7 +3828,7 @@ class Gateway:
         return text
 
     async def _maybe_presearch(self, msg: IncomingMessage, wm: WorkingMemory) -> str | None:
-        """Führt automatisch eine Web-Suche durch wenn die Nachricht eine Faktenfrage ist.
+        """Fuehrt automatisch eine Web-Suche durch wenn die Nachricht eine Faktenfrage ist.
 
         Returns:
             Suchergebnis-Text wenn Ergebnisse gefunden wurden, sonst None.
@@ -3923,7 +3923,7 @@ class Gateway:
         """Generiert eine Antwort AUSSCHLIEẞLICH basierend auf Suchergebnissen.
 
         Umgeht den Planner komplett — das LLM bekommt NUR die Suchergebnisse
-        und die Frage des Users, ohne Möglichkeit auf Trainingswissen zurückzugreifen.
+        und die Frage des Users, ohne Moeglichkeit auf Trainingswissen zurueckzugreifen.
 
         Nutzt den unified LLM-Client (funktioniert mit jedem Backend).
         """
@@ -4023,7 +4023,7 @@ class Gateway:
         user_id: str,
         agent_name: str = "jarvis",
     ) -> SessionContext:
-        """Lädt oder erstellt eine Session für Channel+User+Agent.
+        """Laedt oder erstellt eine Session fuer Channel+User+Agent.
 
         Per-Agent-Isolation: Jeder Agent hat seine eigene Session.
         Das verhindert dass Working Memories vermischt werden.
@@ -4083,7 +4083,7 @@ class Gateway:
         return session
 
     def _get_or_create_working_memory(self, session: SessionContext) -> WorkingMemory:
-        """Lädt oder erstellt Working Memory für eine Session.
+        """Laedt oder erstellt Working Memory fuer eine Session.
 
         Bei existierenden Sessions wird die Chat-History aus SQLite geladen.
         """
@@ -4134,9 +4134,9 @@ class Gateway:
             return self._working_memories[session.session_id]
 
     def _check_and_compact(self, wm: WorkingMemory, session: SessionContext) -> None:
-        """Prüft Token-Budget und kompaktiert Chat-History wenn nötig.
+        """Prueft Token-Budget und kompaktiert Chat-History wenn noetig.
 
-        Nutzt den WorkingMemoryManager für sprachbewusste Token-Schätzung
+        Nutzt den WorkingMemoryManager fuer sprachbewusste Token-Schaetzung
         und FIFO-Entfernung alter Nachrichten.
         """
         from jarvis.memory.working import WorkingMemoryManager
@@ -4163,7 +4163,7 @@ class Gateway:
         session: SessionContext,
         channel_name: str,
     ) -> list[GateDecision]:
-        """Holt User-Bestätigungen für ORANGE-Aktionen ein.
+        """Holt User-Bestaetigungen fuer ORANGE-Aktionen ein.
 
         Returns:
             Aktualisierte Liste von Entscheidungen (APPROVE → ALLOW oder BLOCK).

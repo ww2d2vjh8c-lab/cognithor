@@ -1,10 +1,10 @@
 """Skill update mechanism: Automatic updates and emergency recalls.
 
 Stellt bereit:
-  - SkillUpdater: Prüft und installiert Updates für Skills
+  - SkillUpdater: Prueft und installiert Updates fuer Skills
   - UpdatePolicy: Konfigurierbare Update-Strategie
-  - SecurityRecall: Notfall-Rückzug gefährlicher Pakete
-  - UpdateCheck: Ergebnis einer Update-Prüfung
+  - SecurityRecall: Notfall-Rueckzug gefaehrlicher Pakete
+  - UpdateCheck: Ergebnis einer Update-Pruefung
 
 Bibel-Referenz: §11 (Skills & Ecosystem), §14 (Security)
 """
@@ -65,7 +65,7 @@ class UpdatePolicy:
 
 @dataclass
 class UpdateCheck:
-    """Ergebnis einer Update-Prüfung für ein Paket."""
+    """Ergebnis einer Update-Pruefung fuer ein Paket."""
 
     package_id: str
     current_version: str
@@ -108,7 +108,7 @@ class UpdateCheck:
 
 @dataclass
 class SecurityRecall:
-    """Notfall-Rückzug eines gefährlichen Pakets."""
+    """Notfall-Rueckzug eines gefaehrlichen Pakets."""
 
     package_id: str
     reason: str
@@ -144,13 +144,13 @@ class UpdateResult:
 
 
 class SkillUpdater:
-    """Prüft und installiert Updates für Skills.
+    """Prueft und installiert Updates fuer Skills.
 
     Features:
-      - Periodische Update-Prüfung (via Heartbeat)
+      - Periodische Update-Pruefung (via Heartbeat)
       - Konfigurierbare Update-Strategie
-      - Signatur-Prüfung vor Installation
-      - Notfall-Rückzüge (Security Recalls)
+      - Signatur-Pruefung vor Installation
+      - Notfall-Rueckzuege (Security Recalls)
       - Rollback bei fehlerhaften Updates
       - Update-Historie und Audit-Trail
     """
@@ -200,7 +200,7 @@ class SkillUpdater:
         changelog: str = "",
         signature_valid: bool = True,
     ) -> UpdateCheck:
-        """Prüft ob ein Update verfügbar ist."""
+        """Prueft ob ein Update verfuegbar ist."""
         current = self._installed.get(package_id, "0.0.0")
 
         check = UpdateCheck(
@@ -220,11 +220,11 @@ class SkillUpdater:
         return check
 
     def pending_updates(self) -> list[UpdateCheck]:
-        """Alle verfügbaren Updates."""
+        """Alle verfuegbaren Updates."""
         return [c for c in self._available.values() if c.has_update]
 
     def auto_installable_updates(self) -> list[UpdateCheck]:
-        """Updates die automatisch installiert werden können."""
+        """Updates die automatisch installiert werden koennen."""
         return [c for c in self.pending_updates() if c.auto_installable]
 
     def _is_auto_installable(self, check: UpdateCheck) -> bool:
@@ -259,7 +259,7 @@ class SkillUpdater:
     # ------------------------------------------------------------------
 
     def install_update(self, package_id: str) -> UpdateResult:
-        """Installiert ein verfügbares Update."""
+        """Installiert ein verfuegbares Update."""
         check = self._available.get(package_id)
         if not check or not check.has_update:
             return UpdateResult(
@@ -323,7 +323,7 @@ class SkillUpdater:
         force_uninstall: bool = False,
         replacement_id: str = "",
     ) -> SecurityRecall:
-        """Zieht ein gefährliches Paket zurück."""
+        """Zieht ein gefaehrliches Paket zurueck."""
         recall = SecurityRecall(
             package_id=package_id,
             reason=reason,

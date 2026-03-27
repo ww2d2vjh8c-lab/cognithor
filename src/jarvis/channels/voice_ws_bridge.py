@@ -4,9 +4,9 @@ Erweitert die WebUI um bidirektionales Audio-Streaming:
   - Browser → Jarvis: Sprachnachricht (WebM/Opus) → Whisper → Text → Agent
   - Jarvis → Browser: Antworttext → Piper TTS → WAV → Browser
 
-Wird vom WebChat-Widget über WebSocket-Messages mit type='voice_message'
-angesprochen. Benötigt keine zusätzlichen Dependencies -- nutzt die
-vorhandene Media-Pipeline für Transkription und TTS.
+Wird vom WebChat-Widget ueber WebSocket-Messages mit type='voice_message'
+angesprochen. Benoetigt keine zusaetzlichen Dependencies -- nutzt die
+vorhandene Media-Pipeline fuer Transkription und TTS.
 
 Bibel-Referenz: §9.3 (Voice Channel), §12.2 (Optionale Dependencies)
 """
@@ -27,8 +27,8 @@ log = get_logger(__name__)
 class VoiceMessageHandler:
     """Verarbeitet Audio-Nachrichten aus WebSocket-Verbindungen.
 
-    Wird von der WebUI als Handler für Voice-Messages eingebunden.
-    Unterstützt:
+    Wird von der WebUI als Handler fuer Voice-Messages eingebunden.
+    Unterstuetzt:
       1. Eingehend: Base64-Audio → Whisper STT → Text
       2. Ausgehend: Text → Piper TTS → Base64-Audio
 
@@ -60,7 +60,7 @@ class VoiceMessageHandler:
         Args:
             audio_base64: Base64-encodierte Audio-Daten.
             audio_type: MIME-Type (audio/webm, audio/ogg, audio/wav).
-            language: Sprache für STT.
+            language: Sprache fuer STT.
 
         Returns:
             Transkribierter Text oder None bei Fehler.
@@ -120,7 +120,7 @@ class VoiceMessageHandler:
         text: str,
         voice: str = "de_DE-thorsten-high",
     ) -> str | None:
-        """Synthetisiert Text zu Base64-Audio für den Browser.
+        """Synthetisiert Text zu Base64-Audio fuer den Browser.
 
         Args:
             text: Zu sprechender Text.

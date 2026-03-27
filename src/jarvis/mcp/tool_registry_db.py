@@ -1,4 +1,4 @@
-"""Datenbank-gestütztes Tool-Registry für dynamische Prompt-Generierung.
+"""Datenbank-gestuetztes Tool-Registry fuer dynamische Prompt-Generierung.
 
 Speichert Tool-Metadaten (lokalisierte Beschreibungen, Beispiele,
 Rollen-Zuordnungen) in SQLite und generiert kontextspezifische
