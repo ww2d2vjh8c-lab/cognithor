@@ -214,21 +214,15 @@ class _ChatScreenState extends State<ChatScreen> {
                         debugPrint('[Chat] Consumer2 rebuild: messages=${chat.messages.length} streaming=${chat.isStreaming} id=${identityHashCode(chat)}');
                         _scrollToBottom();
 
-                        // Sync tree provider when backend sends tree_update
-                        if (chat.lastTreeUpdate != null) {
+                        // Auto-load tree after messages change
+                        // The tree loads via REST, not WS — simpler and more reliable
+                        if (chat.messages.isNotEmpty) {
                           final tree = context.read<TreeProvider>();
-                          final convId = chat.lastTreeUpdate!['conversation_id'] as String?;
-                          if (convId != null && convId.isNotEmpty && tree.conversationId != convId) {
-                            // First update — load full tree
+                          if (tree.activePath.length != chat.messages.length && !chat.isStreaming) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               final conn = context.read<ConnectionProvider>();
                               tree.setApi(conn.api);
-                              tree.loadTree(convId);
-                            });
-                          } else if (convId != null && tree.conversationId == convId) {
-                            // Subsequent update — reload to get new nodes
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              tree.loadTree(convId);
+                              tree.refreshFromSession(conn.api);
                             });
                           }
                         }

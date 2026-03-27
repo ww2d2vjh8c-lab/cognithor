@@ -131,6 +131,20 @@ class TreeProvider extends ChangeNotifier {
   /// Check if a node is a fork point (has multiple children).
   bool isForkPoint(String nodeId) => (forkPoints[nodeId] ?? 0) > 1;
 
+  /// Refresh tree by loading the latest conversation from backend.
+  Future<void> refreshFromSession(ApiClient api) async {
+    _api ??= api;
+    try {
+      final data = await api.get('chat/tree/latest');
+      final convId = data['conversation_id'] as String?;
+      if (convId != null && convId.isNotEmpty) {
+        await loadTree(convId);
+      }
+    } catch (e) {
+      debugPrint('[Tree] refreshFromSession failed: $e');
+    }
+  }
+
   /// Clear tree state (on session change).
   void clear() {
     conversationId = null;

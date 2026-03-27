@@ -4914,6 +4914,20 @@ def _register_feedback_routes(
 
     # ── Chat Tree / Branching ────────────────────────────────────────
 
+    @app.get("/api/v1/chat/tree/latest", dependencies=deps)
+    async def get_latest_chat_tree() -> dict[str, Any]:
+        """Get the most recent conversation tree."""
+        tree = getattr(gateway, "_conversation_tree", None)
+        if not tree:
+            return {"nodes": [], "conversation_id": None}
+        with tree._conn() as conn:
+            row = conn.execute(
+                "SELECT id FROM conversations ORDER BY updated_at DESC LIMIT 1"
+            ).fetchone()
+        if not row:
+            return {"nodes": [], "conversation_id": None}
+        return tree.get_tree_structure(row["id"])
+
     @app.get("/api/v1/chat/tree/{conversation_id}", dependencies=deps)
     async def get_chat_tree(conversation_id: str) -> dict[str, Any]:
         """Get full conversation tree structure."""
