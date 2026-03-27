@@ -18,6 +18,7 @@ import 'package:jarvis_ui/widgets/chat/hacker_chat_view.dart';
 import 'package:jarvis_ui/widgets/jarvis_empty_state.dart';
 import 'package:jarvis_ui/widgets/message_actions.dart';
 import 'package:jarvis_ui/widgets/chat/chat_history_drawer.dart';
+import 'package:jarvis_ui/widgets/chat/pre_flight_card.dart';
 import 'package:jarvis_ui/widgets/chat/feedback_buttons.dart';
 import 'package:jarvis_ui/widgets/chat/message_actions.dart';
 import 'package:jarvis_ui/widgets/chat/version_navigator.dart';
@@ -224,8 +225,10 @@ class _ChatScreenState extends State<ChatScreen> {
                           );
                         }
 
+                        final hasPreFlight = chat.preFlightData != null;
                         final itemCount = chat.messages.length +
                             (chat.isStreaming ? 1 : 0) +
+                            (hasPreFlight ? 1 : 0) +
                             (_showTyping(chat) ? 1 : 0);
 
                         return ListView.builder(
@@ -238,6 +241,26 @@ class _ChatScreenState extends State<ChatScreen> {
                           itemBuilder: (context, index) {
                             if (_showTyping(chat) && index == itemCount - 1) {
                               return const TypingIndicator();
+                            }
+
+                            // Pre-flight card appears after messages (and streaming), before typing
+                            if (hasPreFlight) {
+                              final preFlightIndex = chat.messages.length +
+                                  (chat.isStreaming ? 1 : 0);
+                              if (index == preFlightIndex) {
+                                return PreFlightCard(
+                                  goal: chat.preFlightData!['goal'] as String? ?? '',
+                                  steps: (chat.preFlightData!['steps'] as List?)
+                                      ?.cast<Map<String, dynamic>>() ?? [],
+                                  timeoutSeconds: chat.preFlightData!['timeout'] as int? ?? 3,
+                                  onCancel: () {
+                                    chat.dismissPreFlight();
+                                    final sessions = context.read<SessionsProvider>();
+                                    final api = context.read<ConnectionProvider>().api;
+                                    api.post('system/cancel', {'session_id': sessions.activeSessionId ?? ''});
+                                  },
+                                );
+                              }
                             }
 
                             if (chat.isStreaming &&

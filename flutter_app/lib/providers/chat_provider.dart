@@ -4,6 +4,7 @@
 /// requests, pipeline state, and canvas content.
 library;
 
+import 'dart:convert';
 import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint, kDebugMode;
 import 'package:jarvis_ui/services/websocket_service.dart';
 
@@ -114,6 +115,14 @@ class ChatProvider extends ChangeNotifier {
 
   /// Pending feedback follow-up from the server (shown as dialog).
   Map<String, String>? pendingFeedbackFollowup;
+
+  /// Pre-flight plan preview data from WebSocket.
+  Map<String, dynamic>? preFlightData;
+
+  void dismissPreFlight() {
+    preFlightData = null;
+    notifyListeners();
+  }
 
   // ---------------------------------------------------------------------------
   // Actions
@@ -295,6 +304,7 @@ class ChatProvider extends ChangeNotifier {
     canvasHtml = null;
     canvasTitle = null;
     planDetail = null;
+    preFlightData = null;
     agentLog.clear();
     notifyListeners();
   }
@@ -328,6 +338,7 @@ class ChatProvider extends ChangeNotifier {
     canvasHtml = null;
     canvasTitle = null;
     planDetail = null;
+    preFlightData = null;
     agentLog.clear();
     notifyListeners();
   }
@@ -472,7 +483,20 @@ class ChatProvider extends ChangeNotifier {
   }
 
   void _onStatusUpdate(Map<String, dynamic> msg) {
-    statusText = msg['text'] as String? ?? msg['status'] as String? ?? '';
+    final type = msg['type'] as String? ?? msg['status_type'] as String? ?? '';
+    final text = msg['text'] as String? ?? msg['status'] as String? ?? '';
+
+    if (type == 'pre_flight') {
+      try {
+        preFlightData = json.decode(text) as Map<String, dynamic>;
+      } catch (_) {
+        preFlightData = {'goal': text, 'steps': <Map<String, dynamic>>[], 'timeout': 3};
+      }
+      notifyListeners();
+      return;
+    }
+
+    statusText = text;
     if (statusText.isNotEmpty) {
       _logAgent('info', null, statusText);
     }
