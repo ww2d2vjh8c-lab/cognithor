@@ -109,6 +109,7 @@ _EDITABLE_SECTIONS = frozenset(
         "recovery",
         "identity",
         "personality",
+        "evolution",
     }
 )
 
