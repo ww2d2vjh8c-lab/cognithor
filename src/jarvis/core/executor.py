@@ -534,13 +534,13 @@ class Executor:
                     error=last_error,
                     duration_ms=duration_ms,
                 )
-                # Gap melden für Auto-Skill-Generator
+                # Report gap for auto skill generator
                 if self._gap_detector:
                     self._gap_detector.report_unknown_tool(
                         tool_name,
                         context=f"{last_error_type}: {last_error[:200]}",
                     )
-                # Audit: Fehler protokollieren
+                # Audit: log error
                 if self._audit_logger:
                     self._audit_logger.log_tool_call(
                         tool_name,
@@ -583,7 +583,7 @@ class Executor:
                         log.debug("status_callback_error", error=str(exc))
                 await asyncio.sleep(delay)
 
-        # Alle Retries erschöpft
+        # All retries exhausted
         total_duration_ms = int((time.monotonic() - total_start) * 1000)
         log.error(
             "executor_retries_exhausted",
@@ -593,13 +593,13 @@ class Executor:
             error=last_error,
             total_duration_ms=total_duration_ms,
         )
-        # Gap melden für Auto-Skill-Generator
+        # Report gap for auto skill generator
         if self._gap_detector:
             self._gap_detector.report_repeated_failure(
                 tool_name,
                 f"Retries exhausted: {last_error_type}: {last_error[:200]}",
             )
-        # Audit: Retries erschöpft
+        # Audit: retries exhausted
         if self._audit_logger:
             self._audit_logger.log_tool_call(
                 tool_name,
