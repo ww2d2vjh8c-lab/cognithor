@@ -1657,6 +1657,37 @@ class AuditConfig(BaseModel):
     )
 
 
+class RecoveryConfig(BaseModel):
+    """Smart Recovery & Transparency Konfiguration."""
+
+    pre_flight_enabled: bool = Field(
+        default=True,
+        description="Plan-Vorschau vor komplexen Aktionen anzeigen",
+    )
+    pre_flight_timeout_seconds: int = Field(
+        default=3,
+        ge=1,
+        le=30,
+        description="Auto-Execute nach N Sekunden (agentic-first)",
+    )
+    pre_flight_min_steps: int = Field(
+        default=2,
+        ge=1,
+        le=10,
+        description="Pre-Flight nur bei Plaenen mit N+ Schritten",
+    )
+    correction_learning_enabled: bool = Field(
+        default=True,
+        description="Aus User-Korrekturen lernen",
+    )
+    correction_proactive_threshold: int = Field(
+        default=3,
+        ge=2,
+        le=10,
+        description="Nach N gleichen Korrekturen proaktiv fragen",
+    )
+
+
 # ============================================================================
 # Datenbank-Konfiguration
 # ============================================================================
@@ -1908,6 +1939,7 @@ class JarvisConfig(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     audit: AuditConfig = Field(default_factory=AuditConfig)
+    recovery: RecoveryConfig = Field(default_factory=RecoveryConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     queue: QueueConfig = Field(default_factory=QueueConfig)
     marketplace: MarketplaceConfig = Field(default_factory=MarketplaceConfig)
