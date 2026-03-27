@@ -71,7 +71,7 @@ class MemoryIndex:
         if self._conn is None:
             with self._write_lock:
                 # Double-check nach Lock-Erwerb (ein anderer Thread
-                # könnte die Connection inzwischen erstellt haben)
+                # koennte die Connection inzwischen erstellt haben)
                 if self._conn is None:
                     self._db_path.parent.mkdir(parents=True, exist_ok=True)
                     self._conn = sqlite3.connect(str(self._db_path), check_same_thread=False)
@@ -362,7 +362,7 @@ class MemoryIndex:
         if not query.strip():
             return []
 
-        # FTS5 Query: Wörter mit OR verbinden, Prefix-Match für deutsche Komposita
+        # FTS5 Query: Woerter mit OR verbinden, Prefix-Match fuer deutsche Komposita
         # Sanitize: strip FTS5 operators/special chars to prevent query injection
         import re
 
@@ -371,7 +371,7 @@ class MemoryIndex:
         words = [w for w in words if w and w.upper() not in ("AND", "OR", "NOT", "NEAR")]
         if not words:
             return []
-        # Jedes Wort bekommt Prefix-Match (*) für bessere Treffer bei Komposita
+        # Jedes Wort bekommt Prefix-Match (*) fuer bessere Treffer bei Komposita
         fts_query = " OR ".join(f'"{w}"*' for w in words)
 
         try:
@@ -387,7 +387,7 @@ class MemoryIndex:
                 (fts_query, top_k),
             ).fetchall()
         except sqlite3.OperationalError:
-            # Fallback bei ungültiger FTS-Query
+            # Fallback bei ungueltiger FTS-Query
             return []
 
         # FTS5 rank ist negativ (kleiner = besser), wir machen ihn positiv
@@ -676,12 +676,12 @@ class MemoryIndex:
                             next_frontier.add(neighbor)
             frontier = next_frontier
 
-        # Start-Entität entfernen
+        # Start-Entitaet entfernen
         visited.discard(entity_id)
         if not visited:
             return []
 
-        # Entitäten laden
+        # Entitaeten laden
         result_list = list(visited)
         entities: list[Entity] = []
         for i in range(0, len(result_list), 900):

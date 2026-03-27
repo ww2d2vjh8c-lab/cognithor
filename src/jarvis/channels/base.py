@@ -15,7 +15,7 @@ from typing import Any
 
 from jarvis.models import IncomingMessage, OutgoingMessage, PlannedAction
 
-# Callback-Typ: Empfängt eine IncomingMessage, gibt OutgoingMessage zurück
+# Callback-Typ: Empfaengt eine IncomingMessage, gibt OutgoingMessage zurueck
 MessageHandler = Callable[[IncomingMessage], Coroutine[Any, Any, OutgoingMessage]]
 
 

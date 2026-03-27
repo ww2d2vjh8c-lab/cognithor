@@ -134,7 +134,7 @@ class EpisodicMemory:
     # Um eine unkontrollierte Ansammlung alter Episoden zu verhindern,
     # kann die Anzahl der gespeicherten Tageslogs zeitlich begrenzt werden.
     # Der MemoryManager ruft diese Methode beim Initialisieren auf.
-    # Alte Dateien werden gelöscht, wenn sie älter als ``retention_days`` sind.
+    # Alte Dateien werden geloescht, wenn sie aelter als ``retention_days`` sind.
     def prune_old(self, retention_days: int) -> int:
         """Delete episode files older than ``retention_days``.
 

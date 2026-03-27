@@ -188,7 +188,7 @@ class SkillUpdater:
         return len(self._installed)
 
     # ------------------------------------------------------------------
-    # Update-Prüfung
+    # Update-Pruefung
     # ------------------------------------------------------------------
 
     def check_update(
@@ -270,7 +270,7 @@ class SkillUpdater:
                 error="no_update_available",
             )
 
-        # Tageslimit prüfen
+        # Tageslimit pruefen
         today = datetime.now(UTC).strftime("%Y-%m-%d")
         if today != self._auto_update_day:
             self._auto_updates_today = 0
@@ -299,7 +299,7 @@ class SkillUpdater:
         )
         self._history.append(result)
 
-        # Verfügbarkeit aufräumen
+        # Verfuegbarkeit aufraeumen
         del self._available[package_id]
 
         log.info(
@@ -333,7 +333,7 @@ class SkillUpdater:
         )
         self._recalls[package_id] = recall
 
-        # Aus verfügbaren Updates entfernen
+        # Aus verfuegbaren Updates entfernen
         self._available.pop(package_id, None)
 
         # On force_uninstall: uninstall

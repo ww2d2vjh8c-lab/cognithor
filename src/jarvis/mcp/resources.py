@@ -97,7 +97,7 @@ class JarvisResourceProvider:
         )
         count += 1
 
-        # Template für einzelne Entitäten
+        # Template fuer einzelne Entitaeten
         server.register_resource_template(
             MCPResourceTemplate(
                 uri_template="jarvis://memory/entity/{entity_id}",

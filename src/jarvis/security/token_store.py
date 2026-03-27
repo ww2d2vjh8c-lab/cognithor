@@ -19,7 +19,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Optionaler Import: cryptography für Fernet
+# Optionaler Import: cryptography fuer Fernet
 _HAS_CRYPTO = False
 try:
     from cryptography.fernet import Fernet

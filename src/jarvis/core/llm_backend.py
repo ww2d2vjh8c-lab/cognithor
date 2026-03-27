@@ -108,7 +108,7 @@ class LLMBackend(ABC):
         top_p: float = 0.9,
         format_json: bool = False,
     ) -> ChatResponse:
-        """Sendet eine Chat-Anfrage und wartet auf die vollständige Antwort."""
+        """Send a chat request and wait for the complete response."""
         ...
 
     @abstractmethod
@@ -120,7 +120,7 @@ class LLMBackend(ABC):
         temperature: float = 0.7,
         top_p: float = 0.9,
     ) -> AsyncIterator[str]:
-        """Streamt die Antwort Token für Token."""
+        """Stream the response token by token."""
         ...
 
     @abstractmethod
@@ -129,17 +129,17 @@ class LLMBackend(ABC):
         model: str,
         text: str,
     ) -> EmbedResponse:
-        """Erstellt ein Embedding für den gegebenen Text."""
+        """Create an embedding for the given text."""
         ...
 
     @abstractmethod
     async def is_available(self) -> bool:
-        """Prüft ob das Backend erreichbar ist."""
+        """Check whether the backend is reachable."""
         ...
 
     @abstractmethod
     async def list_models(self) -> list[str]:
-        """Listet alle verfügbaren Modelle."""
+        """List all available models."""
         ...
 
     @abstractmethod
@@ -328,7 +328,7 @@ class OpenAIBackend(LLMBackend):
         timeout: Request timeout in seconds.
     """
 
-    # Modelle die temperature/top_p nicht unterstützen (OpenAI Reasoning Models)
+    # Models that don't support temperature/top_p (OpenAI Reasoning Models)
     _REASONING_MODEL_PREFIXES = ("o1", "o3", "o4")
 
     def __init__(
@@ -347,7 +347,7 @@ class OpenAIBackend(LLMBackend):
         return LLMBackendType.OPENAI
 
     def _is_reasoning_model(self, model: str) -> bool:
-        """Prüft ob ein Modell ein Reasoning-Model ist (kein temperature/top_p).
+        """Check whether a model is a reasoning model (no temperature/top_p).
 
         Erkennt: o1, o3, o4, gpt-5*, gpt-5.1*, gpt-5.2* und Varianten.
         """
@@ -357,7 +357,7 @@ class OpenAIBackend(LLMBackend):
             if model_lower == prefix or model_lower.startswith(f"{prefix}-"):
                 return True
         # GPT-5+ Modelle: gpt-5, gpt-5-mini, gpt-5.1, gpt-5.2, gpt-5.2-pro, etc.
-        # Alle GPT-5+ Varianten unterstützen kein benutzerdefiniertes temperature
+        # All GPT-5+ variants don't support custom temperature
         return bool(model_lower.startswith("gpt-5"))
 
     async def _ensure_client(self) -> httpx.AsyncClient:
@@ -393,7 +393,7 @@ class OpenAIBackend(LLMBackend):
             "stream": False,
         }
 
-        # Reasoning-Models (o1, o3, o4, gpt-5.2, ...) unterstützen
+        # Reasoning models (o1, o3, o4, gpt-5.2, ...) don't support
         # temperature/top_p nicht — nur den Default (1.0)
         if not self._is_reasoning_model(model):
             payload["temperature"] = temperature

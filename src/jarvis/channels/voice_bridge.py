@@ -391,7 +391,7 @@ class VoiceWebSocketBridge:
             text = await loop.run_in_executor(None, _transcribe_sync)
             return text
         finally:
-            # Temp-Dateien aufräumen
+            # Temp-Dateien aufraeumen
             for p in (input_path, wav_path):
                 with contextlib.suppress(OSError):
                     Path(p).unlink(missing_ok=True)

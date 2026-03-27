@@ -200,7 +200,7 @@ class CommandRegistry:
 
 
 # ============================================================================
-# Interaction-State: Zustandsverwaltung für Buttons/Modals
+# Interaction-State: Zustandsverwaltung fuer Buttons/Modals
 # ============================================================================
 
 
@@ -366,7 +366,7 @@ class InteractionStore:
 
 
 # ============================================================================
-# Fallback-Renderer: Text-Fallback für Clients ohne Interaktivität
+# Fallback-Renderer: Text-Fallback fuer Clients ohne Interaktivitaet
 # ============================================================================
 
 

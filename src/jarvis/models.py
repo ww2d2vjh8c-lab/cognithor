@@ -164,7 +164,7 @@ class OutgoingMessage(BaseModel, frozen=True):
 
 
 # ============================================================================
-# PGE-Trinität: Planner → Gatekeeper → Executor [B§3]
+# PGE-Trinitaet: Planner → Gatekeeper → Executor [B§3]
 # ============================================================================
 
 

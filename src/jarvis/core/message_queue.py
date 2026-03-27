@@ -1,8 +1,8 @@
-"""Durable Message Queue · SQLite-basierte persistente Nachrichten-Queue.
+"""Durable Message Queue - SQLite-based persistent message queue.
 
-Stellt sicher, dass eingehende Nachrichten nicht verloren gehen, auch wenn
-das Gateway beschäftigt ist oder abstürzt. Unterstützt Prioritäten,
-automatische Retries und eine Dead-Letter-Queue (DLQ).
+Ensures that incoming messages are not lost, even when
+the gateway is busy or crashes. Supports priorities,
+automatic retries and a dead-letter queue (DLQ).
 
 Tabellen:
   message_queue  -- Alle eingehenden Nachrichten mit Status und Metadaten
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class MessagePriority(IntEnum):
-    """Nachrichtenpriorität. Höhere Werte = höhere Priorität."""
+    """Message priority. Higher values = higher priority."""
 
     LOW = 1
     NORMAL = 5
@@ -127,7 +127,7 @@ def _row_to_queued(row: sqlite3.Row) -> QueuedMessage:
 
 
 class DurableMessageQueue:
-    """SQLite-basierte persistente Message-Queue mit Prioritäten, Retry und DLQ.
+    """SQLite-based persistent message queue with priorities, retry and DLQ.
 
     Verwendet WAL-Modus und check_same_thread=False (gleiche Muster wie
     session_store.py). Alle öffentlichen Methoden sind async, da sie
@@ -180,11 +180,11 @@ class DurableMessageQueue:
         *,
         priority: int = MessagePriority.NORMAL,
     ) -> str:
-        """Fügt eine Nachricht in die Queue ein.
+        """Insert a message into the queue.
 
         Args:
             message: Ein IncomingMessage (Pydantic-Model) oder ein Dict.
-            priority: Nachrichtenpriorität (1-10).
+            priority: Message priority (1-10).
 
         Returns:
             Die UUID der eingereihten Nachricht.
@@ -197,7 +197,7 @@ class DurableMessageQueue:
 
     def _enqueue_sync(self, message: Any, priority: int) -> str:
         """Synchrone Enqueue-Implementierung."""
-        # Queue-Größe prüfen
+        # Check queue size
         row = self.conn.execute(
             "SELECT COUNT(*) AS cnt FROM message_queue WHERE status IN ('pending', 'processing')"
         ).fetchone()
@@ -242,9 +242,9 @@ class DurableMessageQueue:
         return msg_id
 
     async def dequeue(self) -> QueuedMessage | None:
-        """Holt die nächste ausstehende Nachricht (höchste Priorität, älteste zuerst).
+        """Get the next pending message (highest priority, oldest first).
 
-        Setzt den Status auf 'processing'. Gibt None zurück, wenn die Queue leer ist.
+        Sets the status to 'processing'. Returns None if the queue is empty.
         """
         async with self._lock:
             return await asyncio.to_thread(self._dequeue_sync)
@@ -317,7 +317,7 @@ class DurableMessageQueue:
         new_retry_count = row["retry_count"] + 1
 
         if new_retry_count < row["max_retries"]:
-            # Zurück in die Queue
+            # Back into the queue
             self.conn.execute(
                 """
                 UPDATE message_queue
@@ -354,7 +354,7 @@ class DurableMessageQueue:
         self.conn.commit()
 
     async def get_dead_letters(self, limit: int = 100) -> list[QueuedMessage]:
-        """Gibt Nachrichten aus der Dead-Letter-Queue zurück."""
+        """Return messages from the dead-letter queue."""
         async with self._lock:
             return await asyncio.to_thread(self._get_dead_letters_sync, limit)
 
@@ -388,7 +388,7 @@ class DurableMessageQueue:
         cursor = self.conn.execute("DELETE FROM message_queue WHERE status = 'completed'")
         completed_count = cursor.rowcount
 
-        # Abgelaufene Nachrichten entfernen (älter als TTL)
+        # Remove expired messages (older than TTL)
         cursor = self.conn.execute(
             "DELETE FROM message_queue WHERE created_at < ? AND status IN ('dead', 'failed')",
             (cutoff,),
@@ -449,7 +449,7 @@ class DurableMessageQueue:
     # ------------------------------------------------------------------
 
     def close(self) -> None:
-        """Schließt die DB-Verbindung."""
+        """Close the DB connection."""
         if self._conn:
             self._conn.close()
             self._conn = None

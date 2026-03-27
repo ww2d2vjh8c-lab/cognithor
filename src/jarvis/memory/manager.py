@@ -266,7 +266,7 @@ class MemoryManager:
         # Working Memory mit Core Memory initialisieren
         self._working.set_core_memory(core_text)
 
-        # Episodic Memory aufräumen (alte Episoden löschen)
+        # Episodic Memory aufraeumen (alte Episoden loeschen)
         try:
             retention_days = getattr(self._mc, "episodic_retention_days", None)
             if isinstance(retention_days, int) and retention_days > 0:
@@ -405,7 +405,7 @@ class MemoryManager:
         """
         path_str = str(file_path)
 
-        # Alte Chunks für diese Datei entfernen
+        # Alte Chunks fuer diese Datei entfernen
         self._index.delete_chunks_by_source(path_str)
 
         # Neu chunken
@@ -503,7 +503,7 @@ class MemoryManager:
         results = []
         for c in chunks:
             if c.content_hash in cached_results:
-                # Erstelle ein Pseudo-EmbeddingResult für gecachte Embeddings
+                # Erstelle ein Pseudo-EmbeddingResult fuer gecachte Embeddings
                 results.append(None)  # Signal: schon gespeichert
             else:
                 results.append(next(new_iter, None))

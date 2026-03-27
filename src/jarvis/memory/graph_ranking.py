@@ -288,7 +288,7 @@ class GraphRanking:
         return 1.0 - 0.5 ** (age_days / self._staleness_half_life)
 
     # ========================================================================
-    # Graph-Score Boost für HybridSearch
+    # Graph-Score Boost fuer HybridSearch
     # ========================================================================
 
     def boost_graph_scores(
@@ -402,7 +402,7 @@ class GraphRanking:
         pruned_relations = 0
         if not dry_run:
             for eid in to_prune:
-                # Relationen werden durch delete_entity mitgelöscht
+                # Relationen werden durch delete_entity mitgeloescht
                 relations = self._index.get_relations_for_entity(eid)
                 pruned_relations += len(relations)
                 self._index.delete_entity(eid)

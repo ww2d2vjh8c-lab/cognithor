@@ -155,7 +155,7 @@ class MemoryWatcher:
         observer.start()
         self._observer = observer
 
-        # Background-Thread für Debounce-Processing
+        # Background-Thread fuer Debounce-Processing
         def _process_loop() -> None:
             """Verarbeitet die Reindex-Queue periodisch."""
             while self._running:
@@ -201,7 +201,7 @@ class MemoryWatcher:
             except OSError:
                 continue
 
-        # Geänderte oder neue Dateien
+        # Geaenderte oder neue Dateien
         for path, mtime in current_files.items():
             old_mtime = self._file_mtimes.get(path)
             if old_mtime is None or mtime > old_mtime:

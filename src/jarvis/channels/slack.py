@@ -460,7 +460,7 @@ class SlackChannel(Channel):
         """Buffert Streaming-Tokens und sendet sie als eine Nachricht."""
         buf = self._stream_buffers.setdefault(session_id, [])
         buf.append(token)
-        # Beim ersten Token einen verzögerten Flush starten
+        # Beim ersten Token einen verzoegerten Flush starten
         if len(buf) == 1:
             await asyncio.sleep(0.5)
             text = "".join(self._stream_buffers.pop(session_id, []))

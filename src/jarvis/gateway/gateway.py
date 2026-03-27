@@ -1815,18 +1815,6 @@ class Gateway:
                     agent_name=agent_name,
                 )
                 session.active_leaf_id = asst_node_id
-                # Notify frontend about tree state
-                await _status_cb(
-                    "tree_update",
-                    _json.dumps(
-                        {
-                            "conversation_id": session.conversation_id,
-                            "user_node_id": user_node_id,
-                            "asst_node_id": asst_node_id,
-                            "active_leaf_id": asst_node_id,
-                        }
-                    ),
-                )
                 log.debug(
                     "tree_nodes_stored",
                     conv=session.conversation_id[:12],

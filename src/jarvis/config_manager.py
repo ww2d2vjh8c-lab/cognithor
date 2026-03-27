@@ -259,7 +259,7 @@ class ConfigManager:
             merged = values
         current[section] = merged
 
-        # Über Pydantic validieren
+        # Ueber Pydantic validieren
         try:
             new_config = JarvisConfig(**current)
         except ValidationError as exc:

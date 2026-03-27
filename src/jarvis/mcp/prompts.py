@@ -151,7 +151,7 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_code_review,
             ),
-            # ── Übersetzung ─────────────────────────────────────
+            # ── Uebersetzung ─────────────────────────────────────
             MCPPrompt(
                 name="translate",
                 description="Kontextsensitive Übersetzung mit Fachbegriff-Bewahrung",
@@ -197,7 +197,7 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_brainstorm,
             ),
-            # ── Konzepterklärung ────────────────────────────────
+            # ── Konzepterklaerung ────────────────────────────────
             MCPPrompt(
                 name="explain_concept",
                 description="Erklärt ein Konzept für verschiedene Zielgruppen",
@@ -220,7 +220,7 @@ class JarvisPromptProvider:
                 ],
                 handler=self._prompt_explain_concept,
             ),
-            # ── Tägliches Briefing ──────────────────────────────
+            # ── Taegliches Briefing ──────────────────────────────
             MCPPrompt(
                 name="daily_briefing",
                 description="Erstellt ein tägliches Briefing aus Memory-Daten und Kontext",

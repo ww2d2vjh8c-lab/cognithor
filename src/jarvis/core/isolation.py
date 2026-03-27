@@ -1,11 +1,11 @@
-"""Agent-Isolation: Vollständige Trennung von Workspaces, Sessions und Credentials.
+"""Agent Isolation: Complete separation of workspaces, sessions and credentials.
 
-Schließt die Lücke zur OpenClaw-Architektur:
-  - WorkspaceGuard: Filesystem-Isolation pro Agent (kein Zugriff auf fremde Verzeichnisse)
-  - AgentResourceQuota: Token-Budgets, Memory-Limits, Rate-Limits pro Agent
-  - UserAgentScope: Multi-User-Isolation (User → Agent → eigene Session/Creds/Workspace)
+Closes the gap to the OpenClaw architecture:
+  - WorkspaceGuard: Filesystem isolation per agent (no access to other directories)
+  - AgentResourceQuota: Token budgets, memory limits, rate limits per agent
+  - UserAgentScope: Multi-user isolation (User -> Agent -> own session/creds/workspace)
 
-Bibel-Referenz: §11 (Agent-Separation), §7.4 (Resource-Quotas)
+Reference: §11 (Agent Separation), §7.4 (Resource Quotas)
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ log = get_logger(__name__)
 
 @dataclass
 class WorkspacePolicy:
-    """Policy für einen Agent-Workspace."""
+    """Policy for an agent workspace."""
 
     agent_id: str
     base_dir: Path  # ~/jarvis/workspace/<agent_id>/
@@ -43,7 +43,7 @@ class WorkspaceGuard:
     """Erzwingt Filesystem-Isolation pro Agent.
 
     Jeder Agent hat ein eigenes Workspace-Verzeichnis.
-    Zugriffe außerhalb werden blockiert, es sei denn
+    Access outside is blocked unless
     explizit in der Policy erlaubt.
     """
 
@@ -83,7 +83,7 @@ class WorkspaceGuard:
         return policy
 
     def get_workspace(self, agent_id: str) -> Path | None:
-        """Gibt das Workspace-Verzeichnis eines Agents zurück."""
+        """Return the workspace directory of an agent."""
         policy = self._policies.get(agent_id)
         return policy.base_dir if policy else None
 
@@ -93,10 +93,10 @@ class WorkspaceGuard:
         target_path: Path,
         mode: str = "read",
     ) -> bool:
-        """Prüft ob ein Agent auf einen Pfad zugreifen darf.
+        """Check whether an agent is allowed to access a path.
 
         Args:
-            agent_id: Agent der zugreifen möchte.
+            agent_id: Agent that wants to access.
             target_path: Zielpfad.
             mode: "read" oder "write".
 
@@ -141,12 +141,12 @@ class WorkspaceGuard:
                 )
                 return False
 
-        # 5. Sonstiger Pfad außerhalb Root
+        # 5. Other path outside root
         self._record_violation(agent_id, target_path, mode, "outside_workspace")
         return False
 
     def resolve_path(self, agent_id: str, relative_path: str) -> Path | None:
-        """Löst einen relativen Pfad im Agent-Workspace auf.
+        """Resolve a relative path in the agent workspace.
 
         Verhindert Path-Traversal (../).
         """
@@ -154,7 +154,7 @@ class WorkspaceGuard:
         if not policy:
             return None
 
-        # Normalize und prüfe auf Traversal
+        # Normalize and check for traversal
         candidate = (policy.base_dir / relative_path).resolve()
         if not self._is_subpath(candidate, policy.base_dir.resolve()):
             self._record_violation(agent_id, candidate, "resolve", "path_traversal_attempt")
@@ -163,7 +163,7 @@ class WorkspaceGuard:
         return candidate
 
     def violations(self, agent_id: str = "") -> list[dict[str, Any]]:
-        """Gibt Violations zurück, optional gefiltert."""
+        """Return violations, optionally filtered."""
         if agent_id:
             return [v for v in self._violations if v["agent_id"] == agent_id]
         return list(self._violations)
@@ -173,7 +173,7 @@ class WorkspaceGuard:
         return list(self._policies.keys())
 
     def _is_subpath(self, child: Path, parent: Path) -> bool:
-        """Prüft ob child ein Unterpfad von parent ist."""
+        """Check whether child is a subpath of parent."""
         try:
             child.relative_to(parent)
             return True
@@ -217,8 +217,8 @@ class WorkspaceGuard:
 class AgentResourceQuota:
     """Konfigurierbare Resource-Limits pro Agent.
 
-    Ergänzt die bestehende session-basierte ResourceQuota
-    um agent-weite Budgets die über Sessions hinweg gelten.
+    Supplements the existing session-based ResourceQuota
+    with agent-wide budgets that apply across sessions.
     """
 
     agent_id: str
@@ -244,18 +244,18 @@ class AgentResourceQuota:
     max_workspace_mb: int = 500
 
     def check_token_budget(self, tokens_requested: int) -> bool:
-        """Prüft ob Token-Budget ausreicht."""
+        """Check whether token budget is sufficient."""
         return self.tokens_used_today + tokens_requested <= self.daily_token_budget
 
     def consume_tokens(self, tokens: int) -> bool:
-        """Verbraucht Tokens vom Budget. Gibt False zurück wenn erschöpft."""
+        """Consume tokens from the budget. Returns False if exhausted."""
         if not self.check_token_budget(tokens):
             return False
         self.tokens_used_today += tokens
         return True
 
     def reset_daily(self) -> None:
-        """Setzt tägliche Zähler zurück."""
+        """Reset daily counters."""
         self.tokens_used_today = 0
 
     @property
@@ -269,7 +269,7 @@ class AgentResourceQuota:
         return round(self.tokens_used_today / self.daily_token_budget * 100, 1)
 
     def is_tool_allowed(self, tool_name: str) -> bool:
-        """Prüft ob ein Tool für diesen Agent erlaubt ist."""
+        """Check whether a tool is allowed for this agent."""
         return tool_name not in self.blocked_tools
 
     def to_dict(self) -> dict[str, Any]:
@@ -298,11 +298,11 @@ class RateLimiter:
         self._windows: dict[str, list[float]] = defaultdict(list)
 
     def check_and_consume(self, agent_id: str, max_per_minute: int) -> bool:
-        """Prüft ob ein Request erlaubt ist (Sliding Window)."""
+        """Check whether a request is allowed (sliding window)."""
         now = time.time()
         window = self._windows[agent_id]
 
-        # Alte Einträge entfernen (älter als 60s)
+        # Remove old entries (older than 60s)
         cutoff = now - 60.0
         self._windows[agent_id] = [t for t in window if t > cutoff]
 
@@ -330,7 +330,7 @@ class UserAgentScope:
 
     Stellt sicher dass:
       - User A's Sessions von User B's Sessions getrennt sind
-      - Agent X's Credentials nur für Agent X sichtbar sind
+      - Agent X's credentials are only visible to Agent X
       - Jeder User+Agent eigene Working Memory hat
       - Workspace-Isolation enforced wird
     """
@@ -338,7 +338,7 @@ class UserAgentScope:
     user_id: str
     agent_id: str
 
-    # Scope-Key für eindeutige Zuordnung
+    # Scope key for unique assignment
     @property
     def scope_key(self) -> str:
         return f"{self.user_id}:{self.agent_id}"
@@ -351,17 +351,17 @@ class UserAgentScope:
 
     @property
     def effective_credential_namespace(self) -> str:
-        """Namespace für Credentials: user:agent."""
+        """Namespace for credentials: user:agent."""
         return self.credential_namespace or self.scope_key
 
 
 class MultiUserIsolation:
-    """Erzwingt vollständige Isolation zwischen Usern und Agents.
+    """Enforce complete isolation between users and agents.
 
-    Implementiert die OpenClaw-äquivalente Trennung:
+    Implements the OpenClaw-equivalent separation:
     - Jeder User hat eigene Scopes pro Agent
     - Kein Cross-User Zugriff auf Sessions/Credentials/Memory
-    - Agent-übergreifende Operationen nur mit expliziter Delegation
+    - Cross-agent operations only with explicit delegation
     """
 
     def __init__(self) -> None:
@@ -389,7 +389,7 @@ class MultiUserIsolation:
         agent_id: str,
         session_id: str,
     ) -> bool:
-        """Prüft ob ein User auf eine Session zugreifen darf."""
+        """Check whether a user is allowed to access a session."""
         scope = self._scopes.get(f"{user_id}:{agent_id}")
         if not scope:
             return False
@@ -401,7 +401,7 @@ class MultiUserIsolation:
         agent_id: str,
         session_id: str,
     ) -> UserAgentScope:
-        """Registriert eine neue Session für einen User+Agent Scope."""
+        """Register a new session for a user+agent scope."""
         scope = self.get_or_create_scope(user_id, agent_id)
         if session_id not in scope.session_ids:
             scope.session_ids.append(session_id)
@@ -425,7 +425,7 @@ class MultiUserIsolation:
         user_id: str,
         agent_id: str,
     ) -> str:
-        """Gibt den isolierten Credential-Namespace zurück."""
+        """Return the isolated credential namespace."""
         scope = self.get_or_create_scope(user_id, agent_id)
         return scope.effective_credential_namespace
 
@@ -435,7 +435,7 @@ class MultiUserIsolation:
         from_agent: str,
         to_agent: str,
     ) -> bool:
-        """Prüft ob eine Agent-zu-Agent Delegation erlaubt ist.
+        """Check whether an agent-to-agent delegation is allowed.
 
         Delegation innerhalb eines Users ist erlaubt.
         Cross-User Delegation ist blockiert.
@@ -451,20 +451,20 @@ class MultiUserIsolation:
         return [s for s in self._scopes.values() if s.user_id == user_id]
 
     def agent_scopes(self, agent_id: str) -> list[UserAgentScope]:
-        """Alle Scopes eines Agents (über alle User)."""
+        """All scopes of an agent (across all users)."""
         return [s for s in self._scopes.values() if s.agent_id == agent_id]
 
     # --- Resource-Quota Management ---
 
     def set_quota(self, agent_id: str, quota: AgentResourceQuota) -> None:
-        """Setzt ein Resource-Quota für einen Agent."""
+        """Set a resource quota for an agent."""
         self._quotas[agent_id] = quota
 
     def get_quota(self, agent_id: str) -> AgentResourceQuota | None:
         return self._quotas.get(agent_id)
 
     def check_rate_limit(self, agent_id: str) -> bool:
-        """Prüft Rate-Limit für einen Agent."""
+        """Check rate limit for an agent."""
         quota = self._quotas.get(agent_id)
         if not quota:
             return True  # Kein Quota → erlaubt

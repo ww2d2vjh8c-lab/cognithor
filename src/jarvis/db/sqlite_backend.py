@@ -91,7 +91,7 @@ class SQLiteBackend:
         """Direkter Zugriff auf die Verbindung (fuer Legacy-Code)."""
         return self._ensure_connection()
 
-    # ── Sync-Hilfsmethoden (für asyncio.to_thread) ──────────────
+    # ── Sync-Hilfsmethoden (fuer asyncio.to_thread) ──────────────
 
     def _execute_sync(self, query: str, params: Sequence[Any] = ()) -> Any:
         conn = self._ensure_connection()

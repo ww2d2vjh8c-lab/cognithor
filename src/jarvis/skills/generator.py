@@ -182,7 +182,7 @@ class GeneratedSkill:
 
 
 # ============================================================================
-# Skill-Spezifikation (Prompt-Template für Code-LLM)
+# Skill-Spezifikation (Prompt-Template fuer Code-LLM)
 # ============================================================================
 
 
@@ -537,7 +537,7 @@ class SkillGenerator:
         """
         skill.status = GenerationStatus.TESTING
 
-        # Code + Tests in temporäres Verzeichnis schreiben
+        # Code + Tests in temporaeres Verzeichnis schreiben
         test_dir = self._skills_dir / "test_staging" / skill.module_name
         test_dir.mkdir(parents=True, exist_ok=True)
 
@@ -562,7 +562,7 @@ class SkillGenerator:
                 skill.test_output = str(exc)
                 skill.status = GenerationStatus.TEST_FAILED
         else:
-            # Mit Sandbox: pytest ausführen
+            # Mit Sandbox: pytest ausfuehren
             try:
                 result = await self._sandbox.execute(
                     f"{shlex.quote(sys.executable)} -m pytest "
@@ -586,7 +586,7 @@ class SkillGenerator:
                 skill.test_errors = [str(exc)]
                 skill.status = GenerationStatus.TEST_FAILED
 
-        # Staging aufräumen
+        # Staging aufraeumen
         shutil.rmtree(test_dir, ignore_errors=True)
 
         return skill.test_passed

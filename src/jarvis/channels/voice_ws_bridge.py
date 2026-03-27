@@ -88,7 +88,7 @@ class VoiceMessageHandler:
                 type=audio_type,
             )
 
-            # Konvertierung zu WAV wenn nötig (für Whisper)
+            # Konvertierung zu WAV wenn noetig (fuer Whisper)
             wav_path = audio_path
             if ext != ".wav":
                 wav_path = await self._convert_to_wav(audio_path)
@@ -242,5 +242,5 @@ class VoiceMessageHandler:
         }
 
 
-# Rückwärtskompatibilitäts-Alias
+# Rueckwaertskompatibilitaets-Alias
 VoiceWebSocketBridge = VoiceMessageHandler

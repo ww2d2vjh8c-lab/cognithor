@@ -86,7 +86,7 @@ class MemoryTools:
                 valid = ", ".join(t.value for t in MemoryTier)
                 return f"Fehler: Unbekannter Tier '{tier}'. Gültig: {valid}"
 
-        # Synchrone BM25-Suche (immer verfügbar, kein Embedding nötig)
+        # Synchrone BM25-Suche (immer verfuegbar, kein Embedding noetig)
         results = self._memory.search_memory_sync(query, top_k=top_k)
 
         if not results:
@@ -342,7 +342,7 @@ class MemoryTools:
         Returns:
             Bestätigungsnachricht.
         """
-        # Entitäten suchen
+        # Entitaeten suchen
         sources = self._memory.index.search_entities(source_name)
         if not sources:
             return f"Fehler: Quell-Entität '{source_name}' nicht gefunden."
@@ -441,7 +441,7 @@ class MemoryTools:
                 f"**{meta.name}** · Erfolgsrate: {meta.success_rate:.0%} · "
                 f"Nutzungen: {meta.total_uses} · Relevanz: {score:.1f}"
             )
-            # Body kürzen auf 500 Zeichen
+            # Body kuerzen auf 500 Zeichen
             body_short = body[:500] + "…" if len(body) > 500 else body
             lines.append(body_short)
             lines.append("")

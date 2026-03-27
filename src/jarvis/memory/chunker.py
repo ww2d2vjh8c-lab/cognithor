@@ -18,7 +18,7 @@ from jarvis.models import Chunk, MemoryTier
 
 #
 # Language-dependent heuristic: German texts have longer words
-# and compound nouns (e.g. "Berufsunfähigkeitsversicherung") that
+# and compound nouns (e.g. "Berufsunfaehigkeitsversicherung") that
 # BPE tokenizers split into more tokens than a simple
 # chars/4 approach would suggest.
 #

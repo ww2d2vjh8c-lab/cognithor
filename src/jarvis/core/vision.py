@@ -1,14 +1,14 @@
-"""Core Vision Messages -- Backend-agnostische multimodale Message-Konstruktion.
+"""Core Vision Messages -- Backend-agnostic multimodal message construction.
 
-Stellt Typen und Funktionen bereit, um Bilder (Screenshots) zusammen
-mit Text an beliebige LLM-Backends zu senden.  Jedes Backend hat ein
-eigenes Format:
+Provides types and functions to send images (screenshots) together
+with text to any LLM backend.  Each backend has its
+own format:
 
-  - Anthropic: content-Array mit type=image / type=text Blöcken
-  - OpenAI:    content-Array mit type=image_url Blöcken
+  - Anthropic: content array with type=image / type=text blocks
+  - OpenAI:    content array with type=image_url blocks
   - Ollama:    content=text + images=[base64, ...]
 
-Die Funktionen hier abstrahieren diese Unterschiede.
+The functions here abstract these differences.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from typing import Any
 
 
 class ImageMediaType(StrEnum):
-    """Unterstützte Bild-Formate."""
+    """Supported image formats."""
 
     PNG = "image/png"
     JPEG = "image/jpeg"
@@ -40,7 +40,7 @@ class ImageContent:
 
 @dataclass
 class MultimodalMessage:
-    """Eine Nachricht die Text und optional Bilder enthält."""
+    """A message that contains text and optionally images."""
 
     role: str = "user"
     text: str = ""
@@ -68,7 +68,7 @@ def build_vision_message(
         images_b64: Liste von Base64-kodierten Bilddaten.
         media_type: Bildformat (Standard: PNG).
         role: Rolle der Nachricht (Standard: user).
-        alt_text: Alt-Text für die Bilder.
+        alt_text: Alt text for the images.
 
     Returns:
         MultimodalMessage mit Text und Bildern.
@@ -84,7 +84,7 @@ def build_vision_message(
 # ── Backend-spezifische Formatierung ─────────────────────────────────
 
 
-# Alle OpenAI-kompatiblen Backends die das image_url Format unterstützen
+# All OpenAI-compatible backends that support the image_url format
 _OPENAI_VISION_BACKENDS = frozenset(
     {
         "openai",
@@ -128,7 +128,7 @@ def format_for_backend(message: MultimodalMessage, backend_type: str) -> dict[st
 
 
 def _format_anthropic(message: MultimodalMessage) -> dict[str, Any]:
-    """Anthropic-Format: content-Array mit image/text Blöcken."""
+    """Anthropic format: content array with image/text blocks."""
     content: list[dict[str, Any]] = []
     for img in message.images:
         content.append(
@@ -147,7 +147,7 @@ def _format_anthropic(message: MultimodalMessage) -> dict[str, Any]:
 
 
 def _format_openai(message: MultimodalMessage) -> dict[str, Any]:
-    """OpenAI-Format: content-Array mit image_url Blöcken."""
+    """OpenAI format: content array with image_url blocks."""
     content: list[dict[str, Any]] = []
     for img in message.images:
         data_url = f"data:{img.media_type.value};base64,{img.data_b64}"
@@ -172,7 +172,7 @@ def _format_ollama(message: MultimodalMessage) -> dict[str, Any]:
 
 
 def _format_text_fallback(message: MultimodalMessage) -> dict[str, Any]:
-    """Text-Fallback für unbekannte Backends: Bilder als Alt-Text."""
+    """Text fallback for unknown backends: images as alt text."""
     parts = []
     for img in message.images:
         alt = img.alt_text or "Bild"
@@ -188,15 +188,15 @@ def _format_text_fallback(message: MultimodalMessage) -> dict[str, Any]:
 def is_multimodal_message(msg: dict[str, Any]) -> bool:
     """Erkennt ob eine Message multimodalen Inhalt hat.
 
-    Prüft alle 3 Backend-Formate:
-      - Anthropic/OpenAI: content ist eine Liste mit image/image_url Blöcken
+    Checks all 3 backend formats:
+      - Anthropic/OpenAI: content is a list with image/image_url blocks
       - Ollama: images-Feld vorhanden
 
     Args:
         msg: Eine Message als Dict.
 
     Returns:
-        True wenn die Message Bilder enthält.
+        True if the message contains images.
     """
     if not isinstance(msg, dict):
         return False

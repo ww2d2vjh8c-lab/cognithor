@@ -2,12 +2,12 @@
 
 Enterprise-Ready Features:
 
-  - Tenant:                Mandant mit eigener Konfiguration
-  - TenantManager:         Multi-Tenant-Verwaltung (isolierte Daten)
-  - TrustPolicy:           Vertrauensregeln für Federation-Links
-  - TrustNegotiator:       Automatische Trust-Aushandlung zwischen Agenten
-  - EmergencyController:   Notfall-Updates, Kill-Switches, Quarantäne
-  - MultiTenantGovernor:   Hauptklasse
+  - Tenant:                Tenant with own configuration
+  - TenantManager:         Multi-tenant management (isolated data)
+  - TrustPolicy:           Trust rules for federation links
+  - TrustNegotiator:       Automatic trust negotiation between agents
+  - EmergencyController:   Emergency updates, kill switches, quarantine
+  - MultiTenantGovernor:   Main class
 
 Architektur-Bibel: §17.1 (Multi-Tenancy), §12.4 (Trust), §14.8 (Emergency)
 """
@@ -155,7 +155,7 @@ class Tenant:
 
 
 class TenantManager:
-    """Multi-Tenant-Verwaltung mit vollständiger Isolation."""
+    """Multi-tenant management with complete isolation."""
 
     def __init__(self) -> None:
         self._tenants: dict[str, Tenant] = {}
@@ -270,7 +270,7 @@ class TrustLevel(Enum):
 
 @dataclass
 class TrustPolicy:
-    """Vertrauensregeln für Federation-Links."""
+    """Trust rules for federation links."""
 
     policy_id: str
     min_trust_for_delegation: TrustLevel = TrustLevel.VERIFIED
@@ -344,7 +344,7 @@ class TrustNegotiator:
         return relation
 
     def verify(self, local_id: str, remote_id: str) -> TrustRelation | None:
-        """Verifiziert und erhöht das Trust-Level."""
+        """Verify and increase the trust level."""
         key = self._key(local_id, remote_id)
         relation = self._relations.get(key)
         if not relation:
@@ -371,7 +371,7 @@ class TrustNegotiator:
         if not relation:
             return None
         relation.violations += 1
-        # Bei 3+ Violations: auf Untrusted zurücksetzen
+        # At 3+ violations: reset to untrusted
         if relation.violations >= 3:
             relation.trust_level = TrustLevel.UNTRUSTED
         elif relation.trust_level != TrustLevel.UNTRUSTED:
@@ -388,7 +388,7 @@ class TrustNegotiator:
         return relation
 
     def can_delegate(self, local_id: str, remote_id: str) -> bool:
-        """Prüft ob Delegation erlaubt ist."""
+        """Check whether delegation is allowed."""
         key = self._key(local_id, remote_id)
         relation = self._relations.get(key)
         if not relation:
@@ -484,7 +484,7 @@ class EmergencyEvent:
 
 
 class EmergencyController:
-    """Notfall-Steuerung: Kill-Switches, Quarantäne, Emergency-Updates."""
+    """Emergency control: kill switches, quarantine, emergency updates."""
 
     def __init__(self) -> None:
         self._events: list[EmergencyEvent] = []
@@ -501,7 +501,7 @@ class EmergencyController:
         target: str = "",
         executed_by: str = "system",
     ) -> EmergencyEvent:
-        """Führt eine Notfall-Aktion aus."""
+        """Execute an emergency action."""
         self._counter += 1
         event = EmergencyEvent(
             event_id=f"EMG-{self._counter:04d}",
@@ -513,7 +513,7 @@ class EmergencyController:
         )
         self._events.append(event)
 
-        # Aktion durchführen
+        # Execute action
         if action == EmergencyAction.KILL_SWITCH or action == EmergencyAction.LOCKDOWN:
             self._lockdown_active = True
         elif action == EmergencyAction.QUARANTINE_AGENT:
@@ -528,7 +528,7 @@ class EmergencyController:
         return event
 
     def revert(self, event_id: str) -> bool:
-        """Macht eine Notfall-Aktion rückgängig."""
+        """Undo an emergency action."""
         for event in self._events:
             if event.event_id == event_id and not event.reverted:
                 event.reverted = True

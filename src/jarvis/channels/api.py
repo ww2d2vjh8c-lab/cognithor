@@ -32,7 +32,7 @@ from jarvis.utils.ttl_dict import TTLDict
 log = get_logger(__name__)
 
 # ============================================================================
-# API-Datenmodelle (Pydantic für FastAPI)
+# API-Datenmodelle (Pydantic fuer FastAPI)
 # ============================================================================
 
 
@@ -154,7 +154,7 @@ class APIChannel(Channel):
         self._start_time = time.monotonic()
         self._app = self._create_app()
 
-        # TLS-Warning für externe Hosts
+        # TLS-Warning fuer externe Hosts
         if self._host not in ("127.0.0.1", "localhost", "::1") and not self._ssl_certfile:
             log.warning(
                 "api_no_tls", host=self._host, message="WARNUNG: API auf externem Host ohne TLS!"
@@ -216,8 +216,8 @@ class APIChannel(Channel):
             from fastapi.middleware.cors import CORSMiddleware
             from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-            # Request muss im Modul-Namespace verfügbar sein, damit FastAPI
-            # die String-Annotation (PEP 563) via get_type_hints() auflösen kann
+            # Request muss im Modul-Namespace verfuegbar sein, damit FastAPI
+            # die String-Annotation (PEP 563) via get_type_hints() aufloesen kann
             globals()["Request"] = Request
         except ImportError as exc:
             log.error("fastapi_not_installed", error=str(exc))

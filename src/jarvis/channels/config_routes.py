@@ -1217,7 +1217,7 @@ def _register_session_routes(
             return {"total_violations": 0}
         return vm.firewall.stats()
 
-    # -- Chat-History API (für WebUI Sidebar) ------------------------------
+    # -- Chat-History API (fuer WebUI Sidebar) ------------------------------
 
     def _get_session_store() -> Any:
         """Zugriff auf den SessionStore des Gateways."""
@@ -1412,7 +1412,7 @@ def _register_memory_routes(
             return {"quarantined": []}
         return {"quarantined": engine.quarantine()}
 
-    # -- Memory-Integrität (Phase 26) ------------------------------------
+    # -- Memory-Integritaet (Phase 26) ------------------------------------
 
     @app.get("/api/v1/memory/integrity", dependencies=deps)
     async def memory_integrity() -> dict[str, Any]:

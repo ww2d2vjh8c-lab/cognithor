@@ -111,7 +111,7 @@ class MattermostChannel(Channel):
         except Exception as exc:
             logger.warning("Mattermost Auth-Test fehlgeschlagen: %s", exc)
 
-        # WebSocket für Events starten
+        # WebSocket fuer Events starten
         self._ws_task = asyncio.get_running_loop().create_task(self._websocket_loop())
         self._running = True
         logger.info("MattermostChannel gestartet")

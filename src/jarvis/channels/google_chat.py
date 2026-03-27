@@ -353,7 +353,7 @@ class GoogleChatChannel(Channel):
             ],
         }
 
-        # Card wird über Webhook-Antwort gesendet, hier nur Future warten
+        # Card wird ueber Webhook-Antwort gesendet, hier nur Future warten
         try:
             return await asyncio.wait_for(future, timeout=300.0)
         except TimeoutError:

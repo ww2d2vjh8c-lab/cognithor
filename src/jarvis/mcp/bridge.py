@@ -47,7 +47,7 @@ log = get_logger(__name__)
 # Tool Annotation Mappings
 # ============================================================================
 
-# Welche Tools sind read-only (ändern nichts am System)?
+# Welche Tools sind read-only (aendern nichts am System)?
 READ_ONLY_TOOLS = frozenset(
     {
         "read_file",
@@ -69,7 +69,7 @@ READ_ONLY_TOOLS = frozenset(
     }
 )
 
-# Welche Tools sind destruktiv (können Daten löschen/überschreiben)?
+# Welche Tools sind destruktiv (koennen Daten loeschen/ueberschreiben)?
 DESTRUCTIVE_TOOLS = frozenset(
     {
         "write_file",

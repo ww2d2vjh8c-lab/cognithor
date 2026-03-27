@@ -1,18 +1,18 @@
-"""Prozess-Sandbox: Echte Isolation für Shell-Befehle.
+"""Process Sandbox: Real isolation for shell commands.
 
-Drei Sandbox-Level (automatisches Fallback):
-  1. bubblewrap (bwrap) -- Linux-Namespaces, kein Root nötig
-  2. firejail -- Application Sandboxing
-  3. bare -- Kein Sandbox (nur Timeout + Output-Limit)
+Three sandbox levels (automatic fallback):
+  1. bubblewrap (bwrap) -- Linux namespaces, no root required
+  2. firejail -- Application sandboxing
+  3. bare -- No sandbox (only timeout + output limit)
 
-bubblewrap isoliert:
-  - Dateisystem: Nur Workspace + /usr + /bin + /lib sichtbar
-  - Netzwerk: Optional deaktivierbar
-  - PID-Namespace: Prozesse sehen nur sich selbst
-  - /tmp: Eigenes tmpfs pro Befehl
-  - /home: Nur Workspace-Verzeichnis gemountet
+bubblewrap isolates:
+  - Filesystem: Only workspace + /usr + /bin + /lib visible
+  - Network: Optionally disableable
+  - PID namespace: Processes only see themselves
+  - /tmp: Own tmpfs per command
+  - /home: Only workspace directory mounted
 
-Bibel-Referenz: §4.3 (Sandbox-Ausführung)
+Reference: §4.3 (Sandbox Execution)
 """
 
 from __future__ import annotations
@@ -84,16 +84,16 @@ def _build_sandbox_env(*, working_dir: str = "") -> dict[str, str]:
 
 
 class SandboxLevel(StrEnum):
-    """Verfügbare Sandbox-Level."""
+    """Available sandbox levels."""
 
-    BWRAP = "bwrap"  # bubblewrap -- stärkste Isolation
+    BWRAP = "bwrap"  # bubblewrap -- strongest isolation
     FIREJAIL = "firejail"  # Firejail -- gute Isolation
     JOBOBJECT = "jobobject"  # Windows Job Objects -- Windows-Isolation
     BARE = "bare"  # Kein Sandbox -- nur Timeout
 
 
 class NetworkPolicy(StrEnum):
-    """Netzwerk-Richtlinien für die Sandbox."""
+    """Network policies for the sandbox."""
 
     ALLOW = "allow"  # Netzwerk erlaubt
     BLOCK = "block"  # Kein Netzwerk in der Sandbox
@@ -160,7 +160,7 @@ class SandboxConfig:
 
 @dataclass
 class SandboxResult:
-    """Ergebnis einer Sandbox-Ausführung."""
+    """Result of a sandbox execution."""
 
     stdout: str = ""
     stderr: str = ""
@@ -176,7 +176,7 @@ class SandboxResult:
 
     @property
     def output(self) -> str:
-        """Kombinierter Output für den Agent."""
+        """Combined output for the agent."""
         parts: list[str] = []
 
         if self.stdout:
@@ -188,7 +188,7 @@ class SandboxResult:
         if self.timed_out:
             parts.append("[TIMEOUT]")
         if self.truncated:
-            parts.append("[... Output gekürzt]")
+            parts.append("[... output truncated]")
         if self.error:
             parts.append(f"[FEHLER: {self.error}]")
 
@@ -201,9 +201,9 @@ class SandboxResult:
 
 
 class BwrapSandbox:
-    """bubblewrap (bwrap) Sandbox -- stärkste Isolation.
+    """bubblewrap (bwrap) Sandbox -- strongest isolation.
 
-    Nutzt Linux-Namespaces für:
+    Uses Linux namespaces for:
     - Mount-Namespace: Isoliertes Dateisystem
     - PID-Namespace: Eigener Prozessbaum
     - Network-Namespace: Optional kein Netzwerk
@@ -215,14 +215,14 @@ class BwrapSandbox:
 
     @staticmethod
     def is_available() -> bool:
-        """Prüft ob bwrap installiert ist."""
+        """Check whether bwrap is installed."""
         return shutil.which("bwrap") is not None
 
     def build_command(self, command: str, working_dir: str) -> list[str]:
         """Baut den bwrap-Befehl mit allen Mounts und Flags.
 
         Args:
-            command: Auszuführender Shell-Befehl.
+            command: Shell command to execute.
             working_dir: Arbeitsverzeichnis innerhalb der Sandbox.
         """
         cfg = self._config

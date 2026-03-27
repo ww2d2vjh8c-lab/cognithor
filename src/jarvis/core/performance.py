@@ -1,12 +1,12 @@
-"""Jarvis · Performance & Skalierbarkeit.
+"""Jarvis - Performance & Scalability.
 
-Optimierte Infrastruktur für niedrige Latenz und hohen Durchsatz:
+Optimized infrastructure for low latency and high throughput:
 
-  - VectorStore:           Abstraktionsschicht für Vektor-Datenbanken
-  - QueryDecomposer:       Zerlegt komplexe Anfragen für schnelleres RAG
-  - LoadBalancer:          Verteilt Anfragen auf mehrere Backends
-  - CloudFallback:         Automatischer Fallback auf Cloud-LLMs bei Überlast
-  - ResourceOptimizer:     Überwacht und optimiert Ressourcenverbrauch
+  - VectorStore:           Abstraction layer for vector databases
+  - QueryDecomposer:       Decomposes complex queries for faster RAG
+  - LoadBalancer:          Distributes queries across multiple backends
+  - CloudFallback:         Automatic fallback to cloud LLMs on overload
+  - ResourceOptimizer:     Monitors and optimizes resource consumption
   - LatencyTracker:        Misst und analysiert Antwortzeiten
   - PerformanceManager:    Hauptklasse
 
@@ -75,7 +75,7 @@ class VectorStore:
     def add(
         self, text: str, embedding: list[float], metadata: dict[str, Any] | None = None
     ) -> VectorEntry:
-        """Fügt einen Eintrag hinzu."""
+        """Add an entry."""
         self._counter += 1
         entry = VectorEntry(
             entry_id=f"VEC-{self._counter:06d}",
@@ -88,7 +88,7 @@ class VectorStore:
         return entry
 
     def search(self, query_embedding: list[float], top_k: int = 5) -> list[SearchResult]:
-        """Sucht die ähnlichsten Einträge."""
+        """Search for the most similar entries."""
         query = query_embedding[: self._dimension]
         results = []
         for entry in self._entries.values():
@@ -154,7 +154,7 @@ class SubQuery:
 
 
 class QueryDecomposer:
-    """Zerlegt komplexe Anfragen in Sub-Queries für paralleles RAG."""
+    """Decompose complex queries into sub-queries for parallel RAG."""
 
     SPLIT_MARKERS = [
         " und ",
@@ -275,7 +275,7 @@ class LoadBalancer:
         return len(self._backends) < before
 
     def select_backend(self) -> Backend | None:
-        """Wählt das beste Backend basierend auf Strategie."""
+        """Select the best backend based on strategy."""
         healthy = [b for b in self._backends if b.healthy and b.current_load < b.max_concurrent]
         if not healthy:
             return None
@@ -323,7 +323,7 @@ class LoadBalancer:
                 break
 
     def health_check(self) -> list[Backend]:
-        """Gibt unhealthy Backends zurück."""
+        """Return unhealthy backends."""
         return [b for b in self._backends if not b.healthy]
 
     @property
@@ -357,7 +357,7 @@ class CloudProvider(Enum):
 
 @dataclass
 class FallbackConfig:
-    """Konfiguration für Cloud-Fallback."""
+    """Configuration for cloud fallback."""
 
     enabled: bool = False
     provider: CloudProvider = CloudProvider.NONE
@@ -378,7 +378,7 @@ class FallbackConfig:
 
 
 class CloudFallback:
-    """Automatischer Fallback auf Cloud-LLMs bei lokaler Überlast."""
+    """Automatic fallback to cloud LLMs on local overload."""
 
     def __init__(self, config: FallbackConfig | None = None) -> None:
         self._config = config or FallbackConfig()
@@ -392,7 +392,7 @@ class CloudFallback:
         return self._config
 
     def should_fallback(self, local_latency_ms: float, local_load_percent: float) -> bool:
-        """Entscheidet ob Cloud-Fallback nötig ist."""
+        """Decide whether cloud fallback is needed."""
         if not self._config.enabled:
             return False
         self._reset_daily_if_needed()
@@ -468,7 +468,7 @@ class ResourceSnapshot:
 
 
 class ResourceOptimizer:
-    """Überwacht und optimiert Ressourcenverbrauch."""
+    """Monitor and optimize resource consumption."""
 
     def __init__(self, max_history: int = 100) -> None:
         self._history: deque[ResourceSnapshot] = deque(maxlen=max_history)
@@ -503,7 +503,7 @@ class ResourceOptimizer:
         return snap
 
     def alerts(self) -> list[str]:
-        """Gibt aktive Warnungen zurück."""
+        """Return active warnings."""
         if not self._history:
             return []
         latest = self._history[-1]
@@ -525,15 +525,15 @@ class ResourceOptimizer:
         if latest.ram_percent > 90:
             recs.append("RAM kritisch: Modell-Quantisierung verringern oder Agenten reduzieren")
         if latest.cpu_percent > 90 and latest.gpu_percent < 50:
-            recs.append("CPU überlastet, GPU unterfordert: GPU-Offloading aktivieren")
+            recs.append("CPU overloaded, GPU underutilized: enable GPU offloading")
         if latest.pending_requests > 10:
-            recs.append("Request-Queue wächst: Cloud-Fallback oder mehr Backends aktivieren")
+            recs.append("Request queue growing: enable cloud fallback or more backends")
         if not recs:
             recs.append("✅ System läuft optimal")
         return recs
 
     def avg_over(self, minutes: int = 5) -> dict[str, float]:
-        """Durchschnittswerte über die letzten N Minuten."""
+        """Average values over the last N minutes."""
         if not self._history:
             return {"cpu": 0, "ram": 0, "gpu": 0}
         recent = list(self._history)[-minutes * 12 :]  # ~5s Intervall
@@ -671,7 +671,7 @@ class PerformanceManager:
         if query_embedding:
             rag_results = self._vector_store.search(query_embedding, top_k=3)
 
-        # 3. Backend auswählen
+        # 3. Select backend
         backend = self._balancer.select_backend()
 
         elapsed_ms = round((time.time() - start) * 1000, 1)

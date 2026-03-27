@@ -168,11 +168,11 @@ def setup_logging(
     # wird die Datei erstellt. BackupCount begrenzt alte Dateien.
     if log_dir is not None:
         log_dir.mkdir(parents=True, exist_ok=True)
-        # Wir verwenden RotatingFileHandler mit 5 MB Größe und 3 Backups
+        # Wir verwenden RotatingFileHandler mit 5 MB Groesse und 3 Backups
         try:
             from logging.handlers import RotatingFileHandler  # type: ignore
         except Exception:
-            # Fallback auf normalen FileHandler, wenn Handler nicht verfügbar
+            # Fallback auf normalen FileHandler, wenn Handler nicht verfuegbar
             file_handler = logging.FileHandler(
                 log_dir / "jarvis.jsonl",
                 encoding="utf-8",
@@ -254,7 +254,7 @@ def setup_logging(
         cache_logger_on_first_use=True,
     )
 
-    # Formatter für alle Handler setzen
+    # Formatter fuer alle Handler setzen
     formatter = structlog.stdlib.ProcessorFormatter(
         processors=[
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,

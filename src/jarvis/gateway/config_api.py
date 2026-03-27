@@ -25,7 +25,7 @@ log = get_logger(__name__)
 
 
 # ============================================================================
-# API-Models (Pydantic -- für Request/Response-Validierung)
+# API-Models (Pydantic -- fuer Request/Response-Validierung)
 # ============================================================================
 
 
@@ -254,7 +254,7 @@ class ConfigManager:
         }
 
     # ------------------------------------------------------------------
-    # Übersicht
+    # Uebersicht
     # ------------------------------------------------------------------
 
     def get_overview(self) -> ConfigOverview:
@@ -364,7 +364,7 @@ class ConfigManager:
     def upsert_binding(self, dto: BindingRuleDTO) -> dict[str, Any]:
         """Erstellt oder aktualisiert eine Binding-Regel."""
         data = dto.model_dump()
-        # Ersetze existierendes Binding oder füge neues hinzu
+        # Ersetze existierendes Binding oder fuege neues hinzu
         for i, b in enumerate(self._bindings):
             if b.get("name") == dto.name:
                 self._bindings[i] = data

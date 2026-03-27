@@ -201,7 +201,7 @@ class Sandbox:
         merged_env = self._build_env(env)
 
         if sys.platform == "win32":
-            # Windows: Job Objects für Resource-Limits nutzen
+            # Windows: Job Objects fuer Resource-Limits nutzen
             return await self._exec_process_with_jobobject(
                 command,
                 working_dir=working_dir,

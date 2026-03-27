@@ -161,7 +161,7 @@ class JarvisMCPClient:
         Raises:
             MCPClientError: Wenn Tool nicht gefunden oder Server nicht erreichbar.
         """
-        # Zuerst eingebaute Handler prüfen
+        # Zuerst eingebaute Handler pruefen
         if name in self._builtin_handlers:
             return await self._call_builtin(name, params)
 
@@ -183,7 +183,7 @@ class JarvisMCPClient:
 
         try:
             result = await server.session.call_tool(name, arguments=params)
-            # MCP SDK gibt Ergebnis als Liste von Content-Blöcken zurück
+            # MCP SDK gibt Ergebnis als Liste von Content-Bloecken zurueck
             content_parts = []
             total_len = 0
             max_content_len = MAX_CONTENT_LENGTH

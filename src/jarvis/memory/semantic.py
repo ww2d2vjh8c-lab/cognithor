@@ -141,7 +141,7 @@ class SemanticMemory:
         Returns:
             Die erstellte Relation oder None wenn Entitäten nicht existieren.
         """
-        # Prüfe ob beide Entitäten existieren
+        # Pruefe ob beide Entitaeten existieren
         if self._index.get_entity_by_id(source_id) is None:
             logger.warning("Source-Entity %s nicht gefunden", source_id)
             return None

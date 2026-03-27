@@ -96,7 +96,7 @@ class TwitchChannel(Channel):
         await self._send_raw(f"PASS {token}")
         await self._send_raw(f"NICK {self._nick}")
 
-        # Capabilities anfordern (für Tags, Commands, etc.)
+        # Capabilities anfordern (fuer Tags, Commands, etc.)
         await self._send_raw("CAP REQ :twitch.tv/tags twitch.tv/commands")
 
         # Channel joinen
@@ -177,7 +177,7 @@ class TwitchChannel(Channel):
         if nick.lower() == self._nick:
             return
 
-        # User-Whitelist prüfen
+        # User-Whitelist pruefen
         if self._allowed_users and nick.lower() not in self._allowed_users:
             return
 
@@ -195,7 +195,7 @@ class TwitchChannel(Channel):
         is_sub = tags.get("subscriber") == "1"
         is_broadcaster = tags.get("badges", "").startswith("broadcaster")
 
-        # Approval-Antworten abfangen (nur vom ursprünglichen User)
+        # Approval-Antworten abfangen (nur vom urspruenglichen User)
         if text.lower() in ("ja", "yes", "j", "y"):
             for sid, fut in list(self._approval_futures.items()):
                 if not fut.done() and self._approval_users.get(sid) == nick.lower():

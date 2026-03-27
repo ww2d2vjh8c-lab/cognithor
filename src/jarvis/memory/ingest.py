@@ -56,7 +56,7 @@ SUPPORTED_EXTENSIONS = {
     ".docx",
 }
 
-# Maximale Dateigröße für Ingest (10 MB)
+# Maximale Dateigroesse fuer Ingest (10 MB)
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 
 
@@ -241,7 +241,7 @@ class IngestPipeline:
         # Verzeichnis scannen und alles verarbeiten:
         results = await pipeline.scan_and_ingest()
 
-        # Kontinuierlich überwachen (blocking):
+        # Kontinuierlich ueberwachen (blocking):
         await pipeline.watch()
     """
 
@@ -276,7 +276,7 @@ class IngestPipeline:
         hasher = hashlib.sha256()
         hasher.update(file_path.name.encode())
         hasher.update(str(file_path.stat().st_size).encode())
-        # Erste 4096 Bytes für schnelle Erkennung
+        # Erste 4096 Bytes fuer schnelle Erkennung
         with open(file_path, "rb") as f:
             hasher.update(f.read(4096))
         return hasher.hexdigest()[:16]
@@ -365,7 +365,7 @@ class IngestPipeline:
                     log.warning("memory_manager_missing_index_method")
             else:
                 # Ohne MemoryManager: nur extrahieren, nicht speichern
-                # Chunks schätzen (1 Chunk pro ~512 Tokens ≈ ~2000 Zeichen)
+                # Chunks schaetzen (1 Chunk pro ~512 Tokens ≈ ~2000 Zeichen)
                 chunks_created = max(1, len(text) // 2000)
 
             # Erfolgreich → nach processed/ verschieben

@@ -1,14 +1,14 @@
-"""Orchestrator: Multi-Agent-Management.
+"""Orchestrator: Multi-Agent Management.
 
-Ermöglicht dem Planner, spezialisierte Sub-Agents zu spawnen,
-die parallel Aufgaben abarbeiten. Der Orchestrator verwaltet
-den Lebenszyklus, überwacht Limits und sammelt Ergebnisse.
+Enables the planner to spawn specialized sub-agents that
+process tasks in parallel. The orchestrator manages
+the lifecycle, monitors limits and collects results.
 
-Architektur-Prinzipien [B§7]:
-  - Max Depth: 3 (konfigurierbar via ResourceQuota.max_depth)
-  - Supervisor-Pattern: Planner steuert, Orchestrator überwacht
-  - Jeder Sub-Agent hat eigene Tool-Permissions
-  - Parallele Ausführung mit asyncio.gather
+Architecture principles [B§7]:
+  - Max Depth: 3 (configurable via ResourceQuota.max_depth)
+  - Supervisor pattern: Planner controls, orchestrator monitors
+  - Each sub-agent has its own tool permissions
+  - Parallel execution with asyncio.gather
   - Timeout pro Agent + Global-Timeout
   - Depth-Tracking: Jeder Sub-Agent kennt seine Tiefe
 
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 log = get_logger(__name__)
 
-# Type alias für Agent-Runner-Funktion
+# Type alias fuer Agent-Runner-Funktion
 AgentRunner = Callable[
     [SubAgentConfig, str],
     Coroutine[Any, Any, AgentResult],
@@ -371,12 +371,12 @@ class Orchestrator:
                 handles.append(handle_or_violation)
                 results.append(None)  # type: ignore[arg-type]
 
-        # Erfolgreiche parallel ausführen
+        # Erfolgreiche parallel ausfuehren
         if handles:
             agent_ids = [h.agent_id for h in handles]
             parallel_results = await self.run_parallel(agent_ids, session_id)
 
-            # Ergebnisse zusammenführen
+            # Ergebnisse zusammenfuehren
             handle_idx = 0
             for i, r in enumerate(results):
                 if r is None:

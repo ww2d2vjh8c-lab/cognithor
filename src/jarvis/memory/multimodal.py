@@ -62,11 +62,11 @@ class MediaAsset:
     file_path: str
     file_hash: str  # SHA-256 der Originaldatei
 
-    # Textuelle Repräsentation
+    # Textuelle Repraesentation
     text_representation: str = ""  # Beschreibung, Transkript oder extrahierter Text
     extraction_method: str = ""  # "llava", "whisper", "pymupdf" etc.
 
-    # Verknüpfung zu Memory-Chunks
+    # Verknuepfung zu Memory-Chunks
     chunk_ids: list[str] = field(default_factory=list)
 
     # Metadata
@@ -323,7 +323,7 @@ class MultimodalMemory:
             # Score: Overlap-Ratio + Keyword-Dichte
             score = overlap / max(len(query_words), 1)
 
-            # Bonus wenn Query-Wörter im Dateinamen
+            # Bonus wenn Query-Woerter im Dateinamen
             if any(w in asset.filename.lower() for w in query_words):
                 score += 0.2
 
@@ -402,7 +402,7 @@ class MultimodalMemory:
         source_path = f"media:{asset.media_type.value}:{asset.filename}"
 
         try:
-            # index_text gibt Anzahl zurück, wir brauchen IDs
+            # index_text gibt Anzahl zurueck, wir brauchen IDs
             _count = self._manager.index_text(
                 text,
                 source_path,
@@ -439,7 +439,7 @@ class MultimodalMemory:
             source_path = f"media:{asset.media_type.value}:{asset.filename}"
             self._manager.index.delete_chunks_by_source(source_path)
 
-        # File-Hash Map aufräumen
+        # File-Hash Map aufraeumen
         self._file_hash_map.pop(asset.file_hash, None)
 
         logger.info("media_asset_removed: asset=%s file=%s", asset_id, asset.filename)

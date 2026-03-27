@@ -218,7 +218,7 @@ class SlackMessageBuilder:
         if url:
             btn["url"] = url
 
-        # In letzten Actions-Block einfügen oder neuen erstellen
+        # In letzten Actions-Block einfuegen oder neuen erstellen
         if self._blocks and self._blocks[-1].get("type") == "actions":
             self._blocks[-1]["elements"].append(btn)
         else:
@@ -680,7 +680,7 @@ class ProgressTracker:
 
 
 # ============================================================================
-# AdaptiveCard: Plattform-übergreifend
+# AdaptiveCard: Plattform-uebergreifend
 # ============================================================================
 
 
@@ -1074,7 +1074,7 @@ class InteractionStateStore:
 
 
 # ============================================================================
-# Fallback-Renderer: Für Clients ohne Interaktivität
+# Fallback-Renderer: Fuer Clients ohne Interaktivitaet
 # ============================================================================
 
 

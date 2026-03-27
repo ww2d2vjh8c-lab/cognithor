@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 log = get_logger(__name__)
 
-# Maximale Code-Groesse (Default: 1 MB, überschreibbar via config.code.max_code_size)
+# Maximale Code-Groesse (Default: 1 MB, ueberschreibbar via config.code.max_code_size)
 _DEFAULT_MAX_CODE_SIZE = 1_048_576
 _DEFAULT_TIMEOUT = 60
 
@@ -190,7 +190,7 @@ class CodeTools:
                 timeout=timeout,
             )
 
-            # Via Sandbox ausführen
+            # Via Sandbox ausfuehren
             command = f"{sys.executable} {temp_name}"
             result = await self._sandbox.execute(
                 command,
@@ -252,7 +252,7 @@ class CodeTools:
         if not code and not file_path:
             return "Fehler: Entweder 'code' oder 'file_path' muss angegeben werden."
 
-        # Code aus Datei laden wenn nötig
+        # Code aus Datei laden wenn noetig
         source = code
         source_name = "<inline>"
         if file_path and not code:
@@ -282,7 +282,7 @@ class CodeTools:
         smell_detector = CodeSmellDetector()
         smells = []
 
-        # Für Datei-Analyse nutze analyze_file, sonst parse den Code direkt
+        # Fuer Datei-Analyse nutze analyze_file, sonst parse den Code direkt
         if file_path and not code:
             smells = smell_detector.analyze_file(file_path)
         else:

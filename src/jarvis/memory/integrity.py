@@ -489,7 +489,7 @@ class PlausibilityChecker:
         reasons: list[str] = []
         score = 100.0
 
-        # Länge
+        # Laenge
         if len(entry.content) < 3:
             reasons.append("Inhalt zu kurz")
             score -= 30

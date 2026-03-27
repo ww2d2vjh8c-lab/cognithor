@@ -1,9 +1,9 @@
-"""Unified LLM Client: Adapter zwischen OllamaClient-Interface und LLMBackend.
+"""Unified LLM Client: Adapter between OllamaClient interface and LLMBackend.
 
-Löst das Verdrahtungsproblem: Planner, Reflector und Gateway nutzen
-alle `self._ollama.chat()` mit Ollama-spezifischem Response-Format.
-Dieser Adapter stellt dasselbe Interface bereit, leitet aber an
-das konfigurierte LLMBackend weiter.
+Solves the wiring problem: Planner, Reflector and Gateway all use
+`self._ollama.chat()` with Ollama-specific response format.
+This adapter provides the same interface but delegates to
+the configured LLMBackend.
 
 Usage:
     # Gateway erstellt den Client basierend auf Config:
@@ -33,10 +33,10 @@ log = get_logger(__name__)
 class UnifiedLLMClient:
     """Adapter der das OllamaClient-Interface auf beliebige LLM-Backends mappt.
 
-    Gibt Responses immer im Ollama-Dict-Format zurück, damit
-    Planner/Reflector/etc. nicht geändert werden müssen.
+    Always returns responses in Ollama dict format so that
+    Planner/Reflector/etc. don't need to be changed.
 
-    Unterstützt: Ollama (direkt), OpenAI, Anthropic (via LLMBackend).
+    Supports: Ollama (direct), OpenAI, Anthropic (via LLMBackend).
     """
 
     def __init__(
@@ -51,7 +51,7 @@ class UnifiedLLMClient:
             ollama_client: Optionaler OllamaClient (nur bei Ollama-Modus oder Fallback).
             backend: Optionales LLMBackend aus llm_backend.py.
                      Wenn None und ollama_client vorhanden, wird direkt OllamaClient genutzt.
-            config: JarvisConfig für on-demand per-task backend creation.
+            config: JarvisConfig for on-demand per-task backend creation.
         """
         self._ollama = ollama_client
         self._backend = backend
@@ -240,11 +240,11 @@ class UnifiedLLMClient:
                 "done": True,
             }
 
-            # Tool-Calls übernehmen
+            # Transfer tool calls
             if response.tool_calls:
                 result["message"]["tool_calls"] = response.tool_calls
 
-            # Usage-Info übernehmen
+            # Transfer usage info
             if response.usage:
                 result["prompt_eval_count"] = response.usage.get("prompt_tokens", 0)
                 result["eval_count"] = response.usage.get("completion_tokens", 0)
@@ -253,7 +253,7 @@ class UnifiedLLMClient:
 
         except Exception as exc:
             # Alle Backend-Fehler als OllamaError wrappen
-            # damit Planner/Reflector catch-Blöcke weiter funktionieren
+            # so Planner/Reflector catch blocks keep working
             bt = backend_override or self._backend_type
             raise OllamaError(
                 f"LLM-Backend-Fehler ({bt}): {exc}",
@@ -329,7 +329,7 @@ class UnifiedLLMClient:
             response = await self._backend.embed(model, text)
             return {"embedding": response.embedding}
         except (NotImplementedError, LLMBackendError):
-            # Backend hat kein Embedding → Ollama-Fallback nur wenn verfügbar
+            # Backend has no embedding -> Ollama fallback only if available
             if self._ollama is not None:
                 log.info("embedding_fallback_to_ollama", backend=self._backend_type)
                 vec = await self._ollama.embed(model, text)
@@ -339,7 +339,7 @@ class UnifiedLLMClient:
             raise OllamaError(f"Embedding-Fehler: {exc}") from exc
 
     async def batch_embed(self, model: str, texts: list[str]) -> list[dict[str, Any]]:
-        """Batch-Embedding. Nutzt Backend wenn möglich, sonst OllamaClient."""
+        """Batch embedding. Uses backend if possible, otherwise OllamaClient."""
         if self._backend is None:
             if self._ollama is None:
                 raise OllamaError("Kein LLM-Backend verfügbar für Embeddings")
@@ -354,11 +354,11 @@ class UnifiedLLMClient:
         return results
 
     # ========================================================================
-    # Meta-Methoden (von Gateway/ModelRouter benötigt)
+    # Meta methods (needed by Gateway/ModelRouter)
     # ========================================================================
 
     async def is_available(self) -> bool:
-        """Prüft ob das LLM-Backend erreichbar ist."""
+        """Check whether the LLM backend is reachable."""
         if self._backend is not None:
             try:
                 return await self._backend.is_available()
@@ -369,7 +369,7 @@ class UnifiedLLMClient:
         return False
 
     async def list_models(self) -> list[str]:
-        """Listet verfügbare Modelle."""
+        """List available models."""
         if self._backend is not None:
             try:
                 return await self._backend.list_models()
@@ -380,7 +380,7 @@ class UnifiedLLMClient:
         return []
 
     async def close(self) -> None:
-        """Schließt alle Verbindungen."""
+        """Close all connections."""
         if self._backend is not None:
             try:
                 await self._backend.close()
@@ -393,12 +393,12 @@ class UnifiedLLMClient:
 
     @property
     def backend_type(self) -> str:
-        """Gibt den aktiven Backend-Typ zurück."""
+        """Return the active backend type."""
         return self._backend_type
 
     @property
     def has_embedding_support(self) -> bool:
-        """Prüft ob das aktive Backend Embeddings unterstützt.
+        """Check whether the active backend supports embeddings.
 
         Anthropic hat keine Embeddings -- dann wird der Ollama-Fallback genutzt.
         """

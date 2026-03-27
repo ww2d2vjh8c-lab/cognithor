@@ -85,7 +85,7 @@ class ConsentManager:
                  None = In-Memory (für Tests / Abwärtskompatibilität).
     """
 
-    # Pflicht-Einwilligungen für Versicherungsberatung
+    # Pflicht-Einwilligungen fuer Versicherungsberatung
     REQUIRED_FOR_INSURANCE = [
         ConsentPurpose.AI_PROCESSING,
         ConsentPurpose.INSURANCE_ADVICE,
@@ -285,7 +285,7 @@ class ConsentManager:
 
 
 # ============================================================================
-# Decision View (Verständliche Darstellung)
+# Decision View (Verstaendliche Darstellung)
 # ============================================================================
 
 

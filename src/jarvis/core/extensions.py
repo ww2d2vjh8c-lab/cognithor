@@ -1,13 +1,13 @@
-"""Jarvis · Model-Extension-Registry & Multi-Language-UI.
+"""Jarvis - Model Extension Registry & Multi-Language UI.
 
-Punkt 4: Erweiterte ML-Modelle und Sprachunterstützung
+Point 4: Extended ML models and language support
 
-  - ModelExtensionRegistry: Einbindung kundeneignener Modelle
-  - ModelCapability:        Klassifikation, Extraktion, Übersetzung, Embeddings
-  - I18nManager:            Multi-Sprachen-Oberfläche
-  - TranslationBundle:      Sprachpakete (DE, EN, FR, ES, etc.)
+  - ModelExtensionRegistry: Integration of custom models
+  - ModelCapability:        Classification, extraction, translation, embeddings
+  - I18nManager:            Multi-language UI
+  - TranslationBundle:      Language packs (DE, EN, FR, ES, etc.)
 
-Architektur-Bibel: §5.3 (Model-Router), §9.5 (Lokalisierung)
+Architecture reference: §5.3 (Model Router), §9.5 (Localization)
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from typing import Any
 
 
 class ModelCapability(Enum):
-    """Fähigkeiten eines ML-Modells."""
+    """Capabilities of an ML model."""
 
     CHAT = "chat"
     COMPLETION = "completion"
@@ -38,25 +38,25 @@ class ModelCapability(Enum):
 
 
 class ModelProvider(Enum):
-    """Herkunft des Modells."""
+    """Origin of the model."""
 
-    LOCAL = "local"  # Lokal gehostet (Ollama, llama.cpp)
+    LOCAL = "local"  # Locally hosted (Ollama, llama.cpp)
     ANTHROPIC = "anthropic"  # Claude API
     OPENAI = "openai"  # OpenAI API
-    CUSTOM_API = "custom_api"  # Eigener API-Endpoint
+    CUSTOM_API = "custom_api"  # Custom API endpoint
     HUGGINGFACE = "huggingface"
 
 
 @dataclass
 class ModelDefinition:
-    """Definition eines ML-Modells."""
+    """Definition of an ML model."""
 
     model_id: str
     display_name: str
     provider: ModelProvider
     capabilities: set[ModelCapability] = field(default_factory=set)
     endpoint: str = ""
-    api_key_ref: str = ""  # Verweis auf Vault-Eintrag
+    api_key_ref: str = ""  # Reference to vault entry
     max_context: int = 4096
     languages: list[str] = field(default_factory=lambda: ["en"])
     cost_per_1k_tokens: float = 0.0
@@ -83,10 +83,10 @@ class ModelDefinition:
 
 
 class ModelExtensionRegistry:
-    """Registry für eingebundene ML-Modelle.
+    """Registry for integrated ML models.
 
-    Ermöglicht es, kundeneignene Modelle einzubinden und
-    automatisch das beste Modell pro Aufgabe zu wählen.
+    Enables integration of custom models and
+    automatic selection of the best model per task.
     """
 
     def __init__(self) -> None:
@@ -94,7 +94,7 @@ class ModelExtensionRegistry:
         self._defaults: dict[ModelCapability, str] = {}
 
     def register(self, model: ModelDefinition) -> None:
-        """Registriert ein neues Modell."""
+        """Register a new model."""
         self._models[model.model_id] = model
         if model.is_default:
             for cap in model.capabilities:
@@ -130,7 +130,7 @@ class ModelExtensionRegistry:
         provider: ModelProvider | None = None,
         language: str = "",
     ) -> list[ModelDefinition]:
-        """Sucht Modelle nach Kriterien."""
+        """Search models by criteria."""
         results = list(self._models.values())
         if capability:
             results = [m for m in results if m.supports(capability)]
@@ -147,7 +147,7 @@ class ModelExtensionRegistry:
         language: str = "en",
         prefer_local: bool = True,
     ) -> ModelDefinition | None:
-        """Wählt das beste Modell für eine Aufgabe."""
+        """Select the best model for a task."""
         # 1. Expliziter Default
         default = self.get_default(capability)
         if default and default.supports_language(language):
@@ -161,7 +161,7 @@ class ModelExtensionRegistry:
         if not candidates:
             return None
 
-        # Bevorzuge lokale Modelle wenn gewünscht
+        # Prefer local models if desired
         if prefer_local:
             local = [m for m in candidates if m.provider == ModelProvider.LOCAL]
             if local:
@@ -194,14 +194,14 @@ class ModelExtensionRegistry:
 
 @dataclass
 class TranslationBundle:
-    """Sprachpaket für eine Sprache."""
+    """Language pack for a language."""
 
-    locale: str  # z.B. "de", "en", "fr"
-    name: str  # z.B. "Deutsch", "English"
+    locale: str  # e.g. "de", "en", "fr"
+    name: str  # e.g. "Deutsch", "English"
     strings: dict[str, str] = field(default_factory=dict)
 
     def get(self, key: str, **kwargs: Any) -> str:
-        """Holt eine Übersetzung mit optionaler String-Interpolation."""
+        """Get a translation with optional string interpolation."""
         template = self.strings.get(key, key)
         if kwargs:
             try:
@@ -352,10 +352,10 @@ _BUNDLE_ES = TranslationBundle(
 
 
 class I18nManager:
-    """Multi-Sprachen-Manager für die Jarvis-UI.
+    """Multi-language manager for the Jarvis UI.
 
-    Verwaltet Sprachpakete und liefert Übersetzungen
-    basierend auf der gewählten Locale.
+    Manages language packs and provides translations
+    based on the selected locale.
     """
 
     def __init__(self, default_locale: str = "de") -> None:
@@ -363,7 +363,7 @@ class I18nManager:
         self._default_locale = default_locale
         self._fallback_locale = "en"
 
-        # Built-in Bundles laden
+        # Load built-in bundles
         for bundle in [_BUNDLE_DE, _BUNDLE_EN, _BUNDLE_FR, _BUNDLE_ES]:
             self._bundles[bundle.locale] = bundle
 
@@ -379,9 +379,9 @@ class I18nManager:
         self._bundles[bundle.locale] = bundle
 
     def t(self, key: str, *, locale: str = "", **kwargs: Any) -> str:
-        """Übersetzt einen Key in die gewählte Sprache.
+        """Translate a key into the selected language.
 
-        Falls keine Übersetzung vorhanden: Fallback → Default → Key selbst.
+        If no translation available: fallback -> default -> key itself.
         """
         loc = locale or self._default_locale
         bundle = self._bundles.get(loc)

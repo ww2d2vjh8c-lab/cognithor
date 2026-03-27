@@ -168,7 +168,7 @@ class OpenAICompatibleEmbeddingProvider(EmbeddingProvider):
         )
         resp.raise_for_status()
         data = resp.json()
-        # OpenAI gibt data[] als Liste zurück, sortiert nach index
+        # OpenAI gibt data[] als Liste zurueck, sortiert nach index
         items = sorted(data.get("data", []), key=lambda x: x.get("index", 0))
         return [item.get("embedding", []) for item in items]
 
@@ -252,7 +252,7 @@ class NullEmbeddingProvider(EmbeddingProvider):
 # Factory
 # ============================================================================
 
-# Backends die den OpenAI-kompatiblen /embeddings-Endpoint unterstützen
+# Backends die den OpenAI-kompatiblen /embeddings-Endpoint unterstuetzen
 _OPENAI_COMPAT_EMBEDDING_BACKENDS = {"openai", "mistral", "github", "bedrock"}
 
 # Backends ohne eigene Embedding-API
@@ -388,7 +388,7 @@ class EmbeddingClient:
         self._dimensions = dimensions
         self._cache: OrderedDict[str, list[float]] = OrderedDict()
         self._stats = EmbeddingStats()
-        # Provider: explizit gesetzt oder Ollama-Default (Rückwärtskompatibilität)
+        # Provider: explizit gesetzt oder Ollama-Default (Rueckwaertskompatibilitaet)
         self._provider = provider or OllamaEmbeddingProvider(
             base_url=base_url.rstrip("/"),
             timeout=timeout,

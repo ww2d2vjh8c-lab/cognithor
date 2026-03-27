@@ -1,19 +1,19 @@
-"""Jarvis · Explainability-Layer.
+"""Jarvis - Explainability Layer.
 
-Transparenter Entscheidungsweg für geschäftskritische Aufgaben:
+Transparent decision path for business-critical tasks:
 
-  - DecisionTrail:       Schritt-für-Schritt-Protokoll des Entscheidungswegs
-  - SourceAttribution:   Quellennachweis für jede Behauptung
-  - TrustScoreCalculator: Berechnet Vertrauenswürdigkeit einer Antwort
-  - ExplainabilityEngine: Orchestriert Tracking und Reporting
+  - DecisionTrail:       Step-by-step protocol of the decision path
+  - SourceAttribution:   Source attribution for each claim
+  - TrustScoreCalculator: Calculates trustworthiness of a response
+  - ExplainabilityEngine: Orchestrates tracking and reporting
 
-Architektur-Bibel: §16 (Explainability), §13 (Transparenz)
+Architecture reference: §16 (Explainability), §13 (Transparency)
 
-Explainability fördert:
-  - Vertrauen bei geschäftskritischen Entscheidungen
-  - Fehleranalyse und Debugging
-  - Compliance mit EU-AI-Act Art. 13 (Transparenz)
-  - Qualitätskontrolle der Agent-Ausgaben
+Explainability promotes:
+  - Trust in business-critical decisions
+  - Error analysis and debugging
+  - Compliance with EU AI Act Art. 13 (Transparency)
+  - Quality control of agent outputs
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from typing import Any
 
 
 class StepType(Enum):
-    """Art eines Entscheidungsschritts."""
+    """Type of a decision step."""
 
     INPUT_RECEIVED = "input_received"
     AGENT_SELECTED = "agent_selected"
@@ -48,7 +48,7 @@ class StepType(Enum):
 
 
 class SourceType(Enum):
-    """Art einer Informationsquelle."""
+    """Type of an information source."""
 
     MEMORY_SEMANTIC = "memory_semantic"
     MEMORY_EPISODIC = "memory_episodic"
@@ -62,13 +62,13 @@ class SourceType(Enum):
 
 
 class TrustLevel(Enum):
-    """Vertrauensstufe einer Antwort."""
+    """Trust level of a response."""
 
-    VERY_HIGH = "very_high"  # 90-100%: Verifiziert, multi-source
-    HIGH = "high"  # 70-89%: Zuverlässige Quellen
-    MODERATE = "moderate"  # 50-69%: Einzelquelle oder ungeprüft
-    LOW = "low"  # 30-49%: Nur Modell-Wissen
-    VERY_LOW = "very_low"  # 0-29%: Spekulativ
+    VERY_HIGH = "very_high"  # 90-100%: Verified, multi-source
+    HIGH = "high"  # 70-89%: Reliable sources
+    MODERATE = "moderate"  # 50-69%: Single source or unverified
+    LOW = "low"  # 30-49%: Model knowledge only
+    VERY_LOW = "very_low"  # 0-29%: Speculative
 
 
 # ============================================================================
@@ -78,7 +78,7 @@ class TrustLevel(Enum):
 
 @dataclass
 class TrailStep:
-    """Ein einzelner Schritt im Entscheidungsweg."""
+    """A single step in the decision path."""
 
     step_id: str
     step_type: StepType
@@ -105,10 +105,10 @@ class TrailStep:
 
 @dataclass
 class DecisionTrail:
-    """Vollständiger Entscheidungsweg einer Agent-Interaktion.
+    """Complete decision path of an agent interaction.
 
-    Protokolliert jeden Schritt vom Input bis zum Output
-    mit Zeitstempeln, beteiligten Agenten und Dauer.
+    Records every step from input to output
+    with timestamps, involved agents and duration.
     """
 
     trail_id: str
@@ -132,7 +132,7 @@ class DecisionTrail:
         outputs: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> TrailStep:
-        """Fügt einen Schritt zum Trail hinzu."""
+        """Add a step to the trail."""
         step = TrailStep(
             step_id=f"{self.trail_id}-{len(self.steps):03d}",
             step_type=step_type,
@@ -149,7 +149,7 @@ class DecisionTrail:
         return step
 
     def complete(self) -> None:
-        """Markiert den Trail als abgeschlossen."""
+        """Mark the trail as completed."""
         self.completed_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         self.total_duration_ms = sum(s.duration_ms for s in self.steps)
         if self.steps:
@@ -196,7 +196,7 @@ class DecisionTrail:
         }
 
     def to_human_readable(self) -> str:
-        """Erzeugt eine menschenlesbare Zusammenfassung."""
+        """Generate a human-readable summary."""
         lines = [
             f"Entscheidungsweg {self.trail_id}",
             f"Agent: {self.agent_id}",
@@ -217,7 +217,7 @@ class DecisionTrail:
 
 @dataclass
 class SourceReference:
-    """Referenz auf eine Informationsquelle."""
+    """Reference to an information source."""
 
     source_id: str
     source_type: SourceType
@@ -238,10 +238,10 @@ class SourceReference:
 
 
 class SourceAttribution:
-    """Quellennachweis für Agent-Ausgaben.
+    """Source attribution for agent outputs.
 
-    Verknüpft jede Behauptung in der Ausgabe mit den
-    Quellen, die sie belegen. Erfüllt EU-AI-Act Art. 13.
+    Links each claim in the output with the
+    sources that support it. Fulfills EU AI Act Art. 13.
     """
 
     def __init__(self) -> None:
@@ -252,7 +252,7 @@ class SourceAttribution:
         claim_id: str,
         source: SourceReference,
     ) -> None:
-        """Verknüpft eine Quelle mit einer Behauptung."""
+        """Link a source with a claim."""
         if claim_id not in self._sources:
             self._sources[claim_id] = []
         self._sources[claim_id].append(source)
@@ -272,7 +272,7 @@ class SourceAttribution:
         return sum(len(v) for v in self._sources.values())
 
     def source_diversity(self) -> dict[str, int]:
-        """Zählt wie viele Quellen pro Typ verwendet wurden."""
+        """Count how many sources were used per type."""
         counts: dict[str, int] = {}
         for sources in self._sources.values():
             for s in sources:
@@ -295,17 +295,17 @@ class SourceAttribution:
 
 
 class TrustScoreCalculator:
-    """Berechnet Vertrauenswürdigkeit einer Antwort.
+    """Calculate trustworthiness of a response.
 
-    Faktoren:
-    - Quellenvielfalt (Multi-Source-Bestätigung)
-    - Quellentyp-Zuverlässigkeit
-    - Aktualität der Quellen
-    - Menschliche Genehmigung
-    - Widerspruchsfreiheit
+    Factors:
+    - Source diversity (multi-source confirmation)
+    - Source type reliability
+    - Recency of sources
+    - Human approval
+    - Consistency (no contradictions)
     """
 
-    # Zuverlässigkeitsgewichte pro Quellentyp
+    # Reliability weights per source type
     SOURCE_WEIGHTS: dict[SourceType, float] = {
         SourceType.USER_INPUT: 0.95,
         SourceType.MEMORY_PROCEDURAL: 0.85,
@@ -329,7 +329,7 @@ class TrustScoreCalculator:
         contradictions_found: int = 0,
         trail: DecisionTrail | None = None,
     ) -> tuple[float, TrustLevel, dict[str, Any]]:
-        """Berechnet den Trust-Score.
+        """Calculate the trust score.
 
         Returns:
             Tupel aus (score 0.0-1.0, TrustLevel, Breakdown-Dict)
@@ -347,20 +347,20 @@ class TrustScoreCalculator:
         else:
             components["sources"] = 0.1
 
-        # 2. Multi-Source-Bestätigung (0-0.2)
+        # 2. Multi-source confirmation (0-0.2)
         source_count = len(sources) if sources else 0
         components["multi_source"] = min(source_count * 0.05, 0.2)
 
-        # 3. Menschliche Genehmigung (0-0.2)
+        # 3. Human approval (0-0.2)
         components["human_approval"] = 0.2 if human_approved else 0.0
 
-        # 4. Widerspruchsfreiheit (0-0.1)
+        # 4. Consistency (0-0.1)
         if contradictions_found == 0:
             components["consistency"] = 0.1
         else:
             components["consistency"] = max(0, 0.1 - contradictions_found * 0.03)
 
-        # 5. Trail-Qualität (0-0.1)
+        # 5. Trail quality (0-0.1)
         if trail:
             has_tools = bool(trail.tools_used)
             has_memory = any(s.step_type == StepType.MEMORY_RETRIEVED for s in trail.steps)
@@ -379,7 +379,7 @@ class TrustScoreCalculator:
         total = sum(components.values())
         total = min(max(total, 0.0), 1.0)
 
-        # Trust-Level bestimmen
+        # Determine trust level
         if total >= 0.9:
             level = TrustLevel.VERY_HIGH
         elif total >= 0.7:
@@ -400,15 +400,15 @@ class TrustScoreCalculator:
 
 
 # ============================================================================
-# Explainability-Engine: Orchestriert alles
+# Explainability Engine: Orchestrates everything
 # ============================================================================
 
 
 class ExplainabilityEngine:
-    """Zentrale Engine für Transparenz und Nachvollziehbarkeit.
+    """Central engine for transparency and traceability.
 
-    Erstellt und verwaltet Decision-Trails, Source-Attributions
-    und Trust-Scores für alle Agent-Interaktionen.
+    Creates and manages decision trails, source attributions
+    and trust scores for all agent interactions.
     """
 
     def __init__(self, max_trails: int = 1_000) -> None:
@@ -422,7 +422,7 @@ class ExplainabilityEngine:
         request_id: str,
         agent_id: str = "",
     ) -> DecisionTrail:
-        """Startet einen neuen Decision-Trail."""
+        """Start a new decision trail."""
         trail_id = hashlib.sha256(f"{request_id}-{time.time()}".encode()).hexdigest()[:16]
 
         trail = DecisionTrail(
@@ -435,7 +435,7 @@ class ExplainabilityEngine:
         self._trails[trail_id] = trail
         self._total_requests += 1
 
-        # Cleanup bei Overflow
+        # Cleanup on overflow
         if len(self._trails) > self._max_trails:
             oldest_key = next(iter(self._trails))
             del self._trails[oldest_key]
@@ -453,7 +453,7 @@ class ExplainabilityEngine:
         human_approved: bool = False,
         contradictions: int = 0,
     ) -> tuple[DecisionTrail | None, dict[str, Any]]:
-        """Schließt einen Trail ab und berechnet Trust-Score."""
+        """Complete a trail and calculate trust score."""
         trail = self._trails.get(trail_id)
         if not trail:
             return None, {}

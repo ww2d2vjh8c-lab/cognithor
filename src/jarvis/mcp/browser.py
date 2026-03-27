@@ -32,7 +32,7 @@ from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
 
-# Maximale Textlänge die ans LLM zurückgegeben wird
+# Maximale Textlaenge die ans LLM zurueckgegeben wird
 _DEFAULT_MAX_TEXT_LENGTH = 8000
 
 # Maximale JS-Script-Laenge (Zeichen)
@@ -461,7 +461,7 @@ class BrowserTool:
 # MCP-Tool-Registrierung
 # ============================================================================
 
-# Tool-Schemas für die MCP-Registrierung
+# Tool-Schemas fuer die MCP-Registrierung
 BROWSER_TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
     "browse_url": {
         "description": (

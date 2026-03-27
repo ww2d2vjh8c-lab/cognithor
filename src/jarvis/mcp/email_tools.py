@@ -245,7 +245,7 @@ class EmailTools:
         """Gibt eine gecachte oder neue IMAP-Verbindung zurück."""
         async with self._imap_lock:
             now = time.monotonic()
-            # Verbindung wiederverwenden, wenn sie nicht älter als 5 Minuten ist
+            # Verbindung wiederverwenden, wenn sie nicht aelter als 5 Minuten ist
             if self._imap_conn is not None and (now - self._imap_last_used) < 300:
                 try:
                     self._imap_conn.noop()
@@ -452,10 +452,10 @@ class EmailTools:
         Returns:
             Bestätigungsnachricht.
         """
-        # Rate-Limit prüfen
+        # Rate-Limit pruefen
         self._check_send_rate_limit()
 
-        # Empfänger normalisieren
+        # Empfaenger normalisieren
         if isinstance(to, str):
             to_list = [addr.strip() for addr in to.split(",") if addr.strip()]
         else:
@@ -604,7 +604,7 @@ class EmailTools:
         by_thread: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for em in emails:
             subj = em["subject"]
-            # Re:/Fwd: entfernen für Thread-Gruppierung
+            # Re:/Fwd: entfernen fuer Thread-Gruppierung
             clean_subj = re.sub(r"^(Re|Fwd|AW|WG):\s*", "", subj, flags=re.IGNORECASE).strip()
             if not clean_subj:
                 clean_subj = "(kein Betreff)"
@@ -629,7 +629,7 @@ class EmailTools:
             "-" * 20,
         ]
 
-        # Top-Absender (nach Häufigkeit)
+        # Top-Absender (nach Haeufigkeit)
         sorted_senders = sorted(by_sender.items(), key=lambda x: len(x[1]), reverse=True)
         for sender, sender_emails in sorted_senders[:5]:
             lines.append(f"  {sender}: {len(sender_emails)} E-Mail(s)")
@@ -693,7 +693,7 @@ def register_email_tools(
         log.debug("email_tools_disabled")
         return None
 
-    # Prüfe ob Passwort-Umgebungsvariable gesetzt ist
+    # Pruefe ob Passwort-Umgebungsvariable gesetzt ist
     password_env = email_cfg.password_env
     if not os.environ.get(password_env, ""):
         log.warning(

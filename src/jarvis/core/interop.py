@@ -1,14 +1,14 @@
-"""Jarvis · Cross-Agent Interoperability Protocol (JAIP).
+"""Jarvis - Cross-Agent Interoperability Protocol (JAIP).
 
-Standardisiertes Kommunikationsprotokoll für mehrere Jarvis-Instanzen:
+Standardized communication protocol for multiple Jarvis instances:
 
-  - AgentIdentity:         Eindeutige Identität einer Jarvis-Instanz
-  - AgentCapability:       Gemeldete Fähigkeiten einer Instanz
-  - InteropMessage:        Strukturierte Nachricht zwischen Agenten
-  - MessageRouter:         Routing von Nachrichten an registrierte Agenten
-  - CapabilityRegistry:    Discovery: Welcher Agent kann was?
-  - FederationManager:     Verwaltung von Agent-Verbünden
-  - InteropProtocol:       Hauptklasse, orchestriert alles
+  - AgentIdentity:         Unique identity of a Jarvis instance
+  - AgentCapability:       Reported capabilities of an instance
+  - InteropMessage:        Structured message between agents
+  - MessageRouter:         Routing of messages to registered agents
+  - CapabilityRegistry:    Discovery: which agent can do what?
+  - FederationManager:     Management of agent federations
+  - InteropProtocol:       Main class, orchestrates everything
 
 Architektur-Bibel: §12.1 (Multi-Agent), §15.3 (Federation)
 """
@@ -31,13 +31,13 @@ if TYPE_CHECKING:
 
 @dataclass
 class AgentIdentity:
-    """Eindeutige Identität einer Jarvis-Instanz."""
+    """Unique identity of a Jarvis instance."""
 
     agent_id: str
     instance_name: str
     version: str = "1.0.0"
     endpoint: str = ""  # URL oder lokale Adresse
-    public_key: str = ""  # Für signierte Nachrichten
+    public_key: str = ""  # For signed messages
     owner: str = ""
     registered_at: str = ""
     last_seen: str = ""
@@ -71,7 +71,7 @@ class CapabilityType(Enum):
 
 @dataclass
 class AgentCapability:
-    """Eine gemeldete Fähigkeit einer Instanz."""
+    """A reported capability of an instance."""
 
     capability_type: CapabilityType
     description: str = ""
@@ -124,7 +124,7 @@ class InteropMessage:
     payload: dict[str, Any] = field(default_factory=dict)
     priority: MessagePriority = MessagePriority.NORMAL
     timestamp: str = ""
-    correlation_id: str = ""  # Für Request/Response-Paare
+    correlation_id: str = ""  # For request/response pairs
     ttl_seconds: int = 300  # Time-to-Live
     signature: str = ""  # Optionale Signatur
 
@@ -162,7 +162,7 @@ class CapabilityRegistry:
         return False
 
     def find_agents(self, capability_type: CapabilityType) -> list[str]:
-        """Findet alle Agenten mit einer bestimmten Fähigkeit."""
+        """Find all agents with a specific capability."""
         return [
             agent_id
             for agent_id, caps in self._capabilities.items()
@@ -179,7 +179,7 @@ class CapabilityRegistry:
     def best_agent_for(
         self, capability_type: CapabilityType, *, prefer_fast: bool = True
     ) -> str | None:
-        """Findet den besten Agenten für eine Aufgabe."""
+        """Find the best agent for a task."""
         candidates: list[tuple[str, AgentCapability]] = []
         for agent_id, caps in self._capabilities.items():
             for cap in caps:
@@ -355,7 +355,7 @@ class FederationLink:
 
 
 class FederationManager:
-    """Verwaltung von Agent-Verbünden (Federation)."""
+    """Management of agent federations."""
 
     def __init__(self) -> None:
         self._links: dict[str, FederationLink] = {}
@@ -416,7 +416,7 @@ class FederationManager:
         ]
 
     def can_delegate(self, link_id: str, capability: CapabilityType) -> bool:
-        """Prüft ob eine Capability über einen Federation-Link delegiert werden darf."""
+        """Check whether a capability may be delegated via a federation link."""
         link = self._links.get(link_id)
         if not link or link.status != FederationStatus.ACTIVE:
             return False
@@ -515,10 +515,10 @@ class InteropProtocol:
         *,
         prefer_fast: bool = True,
     ) -> dict[str, Any]:
-        """Delegiert eine Aufgabe an den besten verfügbaren Agenten."""
+        """Delegate a task to the best available agent."""
         agent_id = self._capabilities.best_agent_for(capability_type, prefer_fast=prefer_fast)
         if not agent_id:
-            return {"success": False, "error": f"Kein Agent für {capability_type.value} verfügbar"}
+            return {"success": False, "error": f"No agent available for {capability_type.value}"}
 
         msg = self._router.create_message(
             msg_type=MessageType.TASK_DELEGATE,

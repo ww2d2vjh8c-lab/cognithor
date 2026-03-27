@@ -22,7 +22,7 @@ from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
 
-# Ollama-Default-Modelle (Fallback wenn kein Config verfügbar)
+# Ollama-Default-Modelle (Fallback wenn kein Config verfuegbar)
 _OLLAMA_MODEL_OPTIONS = [
     {"value": "", "label": "Standard (vom ModelRouter)"},
     {"value": "qwen3:8b", "label": "Qwen 3 8B (schnell)"},

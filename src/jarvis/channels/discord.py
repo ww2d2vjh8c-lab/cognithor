@@ -198,7 +198,7 @@ class DiscordChannel(Channel):
                 "author_name": str(message.author),
             },
         )
-        # Session → Discord User-ID Mapping für Approval-Validierung
+        # Session → Discord User-ID Mapping fuer Approval-Validierung
         self._session_users[session_id] = message.author.id
         if self._session_store:
             self._session_store.save_channel_mapping(
@@ -242,7 +242,7 @@ class DiscordChannel(Channel):
                 # Stale entry — clean up
                 del self._approval_messages[msg_id]
                 return
-            # Nur der ursprüngliche Anfragesteller darf genehmigen/ablehnen
+            # Nur der urspruengliche Anfragesteller darf genehmigen/ablehnen
             if requester_id and user.id != requester_id:
                 logger.warning(
                     "Discord Approval von fremdem User ignoriert: %s (erwartet: %s)",

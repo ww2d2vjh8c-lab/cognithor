@@ -1,12 +1,12 @@
-"""Jarvis · Installations-Assistent & Ersteinrichtung.
+"""Jarvis - Installation Assistant & Initial Setup.
 
-Grafischer Einrichtungs-Assistent für neue Installationen:
+Graphical setup assistant for new installations:
 
-  - HardwareDetector:      Erkennt CPU, GPU, RAM, Speicherplatz
-  - ModelRecommender:       Empfiehlt LLM-Modelle basierend auf Hardware
-  - PresetConfig:           Vorkonfigurierte Setups (Minimal, Standard, Power, Enterprise)
-  - ChannelConfigurator:    Konfiguriert Kommunikationskanäle
-  - SetupWizard:            Hauptklasse -- schrittweiser Einrichtungsprozess
+  - HardwareDetector:      Detects CPU, GPU, RAM, disk space
+  - ModelRecommender:       Recommends LLM models based on hardware
+  - PresetConfig:           Preconfigured setups (Minimal, Standard, Power, Enterprise)
+  - ChannelConfigurator:    Configures communication channels
+  - SetupWizard:            Main class -- step-by-step setup process
 
 Architektur-Bibel: §2.1 (Installation), §2.2 (First-Run-Experience)
 """
@@ -86,7 +86,7 @@ class HardwareProfile:
 
 
 class HardwareDetector:
-    """Erkennt System-Hardware für optimale Konfiguration."""
+    """Detect system hardware for optimal configuration."""
 
     def detect(self) -> HardwareProfile:
         """Erkennt aktuelle Hardware."""
@@ -139,7 +139,7 @@ class HardwareDetector:
             logger.debug("ram_detection_skipped, using fallback", exc_info=True)
             profile.ram_gb = 8.0  # Fallback
 
-        # GPU erkennen (simuliert für Portabilität)
+        # Detect GPU (simulated for portability)
         profile.gpu = self._detect_gpu()
 
         return profile
@@ -239,14 +239,14 @@ class ModelRecommender:
             "deepseek-coder:6.7b", "6.7B", "Q4_K_M", 4.0, 8.0, 8, 7, "Code-Spezialist"
         ),
         ModelRecommendation("command-r:7b", "7B", "Q4_K_M", 5.0, 8.0, 7, 7, "Tool-Use, RAG"),
-        # Große Modelle (8-16GB VRAM)
-        ModelRecommendation("llama3.1:8b", "8B", "Q8_0", 8.0, 12.0, 8, 6, "Höchste 8B-Qualität"),
+        # Large models (8-16GB VRAM)
+        ModelRecommendation("llama3.1:8b", "8B", "Q8_0", 8.0, 12.0, 8, 6, "Highest 8B quality"),
         ModelRecommendation("mixtral:8x7b", "47B", "Q4_K_M", 14.0, 24.0, 8, 5, "MoE, vielseitig"),
         ModelRecommendation(
             "qwen2.5:14b", "14B", "Q4_K_M", 9.0, 14.0, 8, 6, "Mehrsprachig, Deutsch"
         ),
         # Power-Modelle (16-24GB+ VRAM)
-        ModelRecommendation("llama3.1:70b", "70B", "Q4_K_M", 20.0, 48.0, 9, 4, "Frontier-Qualität"),
+        ModelRecommendation("llama3.1:70b", "70B", "Q4_K_M", 20.0, 48.0, 9, 4, "Frontier quality"),
         ModelRecommendation("qwen2.5:32b", "32B", "Q4_K_M", 18.0, 32.0, 9, 5, "Deutsch exzellent"),
         ModelRecommendation(
             "deepseek-r1:32b", "32B", "Q4_K_M", 18.0, 32.0, 9, 4, "Reasoning-Champion"
@@ -261,7 +261,7 @@ class ModelRecommender:
     ]
 
     def recommend(self, hardware: HardwareProfile, top_n: int = 3) -> list[ModelRecommendation]:
-        """Empfiehlt Modelle basierend auf verfügbarer Hardware."""
+        """Recommend models based on available hardware."""
         vram = hardware.gpu.vram_gb
         ram = hardware.ram_gb
 
@@ -272,7 +272,7 @@ class ModelRecommender:
             ):
                 candidates.append(model)
 
-        # Sortiere nach Qualität (absteigend), dann Speed
+        # Sort by quality (descending), then speed
         candidates.sort(key=lambda m: (m.quality_score, m.speed_score), reverse=True)
 
         # Dedupliziere nach Modellname
@@ -288,7 +288,7 @@ class ModelRecommender:
     def recommend_for_use_case(
         self, hardware: HardwareProfile, use_case: str
     ) -> ModelRecommendation | None:
-        """Empfiehlt das beste Modell für einen bestimmten Anwendungsfall."""
+        """Recommend the best model for a specific use case."""
         recs = self.recommend(hardware, top_n=20)
         uc_lower = use_case.lower()
         for r in recs:
@@ -344,7 +344,7 @@ PRESETS = {
         "PRESET-MIN",
         PresetLevel.MINIMAL,
         "Minimal",
-        "Für ältere Hardware (4-8 GB RAM, keine GPU)",
+        "For older hardware (4-8 GB RAM, no GPU)",
         "gemma2:2b",
         max_agents=1,
         max_concurrent=1,
@@ -359,7 +359,7 @@ PRESETS = {
         "PRESET-STD",
         PresetLevel.STANDARD,
         "Standard",
-        "Für Gaming-PCs (16 GB RAM, 8 GB VRAM)",
+        "For gaming PCs (16 GB RAM, 8 GB VRAM)",
         "llama3.1:8b",
         max_agents=3,
         max_concurrent=2,
@@ -374,7 +374,7 @@ PRESETS = {
         "PRESET-PWR",
         PresetLevel.POWER,
         "Power",
-        "Für Workstations (32+ GB RAM, 16+ GB VRAM)",
+        "For workstations (32+ GB RAM, 16+ GB VRAM)",
         "qwen2.5:32b",
         max_agents=10,
         max_concurrent=4,
@@ -389,7 +389,7 @@ PRESETS = {
         "PRESET-ENT",
         PresetLevel.ENTERPRISE,
         "Enterprise",
-        "Für Server (64+ GB RAM, Multi-GPU)",
+        "For servers (64+ GB RAM, multi-GPU)",
         "llama3.1:70b",
         max_agents=50,
         max_concurrent=10,
@@ -439,7 +439,7 @@ class ChannelConfig:
 
 
 class ChannelConfigurator:
-    """Konfiguriert Kommunikationskanäle."""
+    """Configure communication channels."""
 
     REQUIRED_CONFIG: dict[ChannelType, list[str]] = {
         ChannelType.TELEGRAM: ["bot_token"],
@@ -577,7 +577,7 @@ class SetupWizard:
         return self._state.hardware
 
     def step_model(self, override: str = "") -> list[ModelRecommendation]:
-        """Schritt 2: Modell empfehlen/auswählen."""
+        """Step 2: Recommend/select model."""
         if not self._state.hardware:
             self.step_hardware()
         recs = self._recommender.recommend(self._state.hardware)
@@ -586,7 +586,7 @@ class SetupWizard:
         return recs
 
     def step_preset(self, level: PresetLevel | None = None) -> PresetConfig:
-        """Schritt 3: Preset auswählen."""
+        """Step 3: Select preset."""
         if level is None and self._state.hardware:
             level = PresetLevel(self._state.hardware.tier)
         level = level or PresetLevel.STANDARD
@@ -595,7 +595,7 @@ class SetupWizard:
         return PRESETS[level]
 
     def step_channels(self, channel_types: list[ChannelType] | None = None) -> list[ChannelConfig]:
-        """Schritt 4: Kanäle konfigurieren."""
+        """Step 4: Configure channels."""
         if channel_types is None and self._state.selected_preset:
             preset = PRESETS[self._state.selected_preset]
             channel_types = [

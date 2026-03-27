@@ -24,7 +24,7 @@ from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
 
-# Maximale Textlänge für LLM-Kontext
+# Maximale Textlaenge fuer LLM-Kontext
 _DEFAULT_MAX_EXTRACT_LENGTH = 15_000
 
 # Maximale Bilddateigroesse fuer Base64-Encoding (10 MB)
@@ -45,7 +45,7 @@ MAX_IMAGE_FILE_SIZE = _DEFAULT_MAX_IMAGE_FILE_SIZE
 MAX_EXTRACT_FILE_SIZE = _DEFAULT_MAX_EXTRACT_FILE_SIZE
 MAX_AUDIO_FILE_SIZE = _DEFAULT_MAX_AUDIO_FILE_SIZE
 
-# Standard-Modelle und -Stimmen (Fallbacks, wenn kein Config verfügbar)
+# Standard-Modelle und -Stimmen (Fallbacks, wenn kein Config verfuegbar)
 _DEFAULT_VISION_MODEL = "openbmb/minicpm-v4.5"
 _DEFAULT_VISION_MODEL_DETAIL = "qwen3-vl:32b"
 DEFAULT_IMAGE_PROMPT = "Beschreibe dieses Bild detailliert auf Deutsch."
@@ -892,7 +892,7 @@ class MediaPipeline:
         return MediaResult(success=True, text=full_text, metadata=metadata)
 
     # ========================================================================
-    # Dokument-Analyse (LLM-gestützt)
+    # Dokument-Analyse (LLM-gestuetzt)
     # ========================================================================
 
     async def analyze_document(
@@ -1054,7 +1054,7 @@ class MediaPipeline:
             )
 
     # ========================================================================
-    # Bildgröße ändern (Pillow)
+    # Bildgroesse aendern (Pillow)
     # ========================================================================
 
     async def resize_image(
@@ -1198,11 +1198,11 @@ class MediaPipeline:
         pdf.set_auto_page_break(auto=True, margin=25)
         pdf.add_page()
 
-        # Unicode-Font einbetten (für Umlaute etc.), sonst Helvetica
+        # Unicode-Font einbetten (fuer Umlaute etc.), sonst Helvetica
         font_name = "Helvetica"
         has_bold = True  # Built-in Fonts haben immer Bold
         try:
-            # Suche einen Unicode-fähigen TrueType-Font
+            # Suche einen Unicode-faehigen TrueType-Font
             font_candidates = [
                 # DejaVu Sans (Regular + Bold)
                 (

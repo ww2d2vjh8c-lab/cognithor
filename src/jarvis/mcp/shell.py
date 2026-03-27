@@ -172,7 +172,7 @@ class ShellTools:
             log.warning("shell_path_traversal_blocked", command_prefix=command[:80])
             return "Befehl blockiert: Path-Traversal erkannt."
 
-        # 3. File-Path-Escape: Prüfe ob File-Commands Pfade ausserhalb Workspace nutzen
+        # 3. File-Path-Escape: Pruefe ob File-Commands Pfade ausserhalb Workspace nutzen
         try:
             parts = shlex.split(command)
         except ValueError:
@@ -272,7 +272,7 @@ class ShellTools:
             processes_override=_sandbox_max_processes,
         )
 
-        # In Sandbox ausführen (mit per-Agent Overrides)
+        # In Sandbox ausfuehren (mit per-Agent Overrides)
         result = await self._sandbox.execute(
             command,
             working_dir=str(cwd_path),

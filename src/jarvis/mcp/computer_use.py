@@ -158,7 +158,7 @@ class ComputerUseTools:
                 # Fast path for ASCII text
                 await loop.run_in_executor(None, lambda: gui.typewrite(text, interval=interval))
             else:
-                # Unicode (ä, ö, ü, etc.) — use clipboard + paste
+                # Unicode (ae, oe, ue, etc.) — use clipboard + paste
                 import pyperclip
 
                 await loop.run_in_executor(None, lambda: pyperclip.copy(text))

@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Typ für den Message-Handler (Gateway.handle_message)
+# Typ fuer den Message-Handler (Gateway.handle_message)
 CronHandler = Callable[[IncomingMessage], Coroutine[Any, Any, Any]]
 
 
@@ -115,7 +115,7 @@ class CronEngine:
         else:
             self.job_store = None  # type: ignore[assignment]
 
-        # Konfiguration für Heartbeat-Mechanismus
+        # Konfiguration fuer Heartbeat-Mechanismus
         self._heartbeat_config = heartbeat_config
         # Basisverzeichnis bestimmen
         base_dir: Path | None = None
@@ -126,12 +126,12 @@ class CronEngine:
             p = Path(jobs_path)
             if p.parent.parent.exists():
                 base_dir = p.parent.parent
-        # Pfad zur Checkliste auflösen
+        # Pfad zur Checkliste aufloesen
         self._heartbeat_file: Path | None = None
         if heartbeat_config is not None and getattr(heartbeat_config, "checklist_file", None):
             checklist = Path(heartbeat_config.checklist_file)
             if not checklist.is_absolute():
-                # relativer Pfad → an jarvis_home anhängen
+                # relativer Pfad → an jarvis_home anhaengen
                 if base_dir is not None:
                     self._heartbeat_file = base_dir / checklist
                 else:
@@ -281,7 +281,7 @@ class CronEngine:
                     name="heartbeat",
                     replace_existing=True,
                 )
-                # Dummy scheduler gibt evtl. kein id zurück
+                # Dummy scheduler gibt evtl. kein id zurueck
                 self._heartbeat_job_id = getattr(scheduled, "id", job_id)
                 self._active_jobs["heartbeat"] = self._heartbeat_job_id
                 logger.info(
@@ -440,7 +440,7 @@ class CronEngine:
         if self._handler is None:
             logger.warning("Heartbeat ohne Handler übersprungen")
             return
-        # Heartbeat deaktiviert? (Prüfung bei Laufzeit falls Config geändert)
+        # Heartbeat deaktiviert? (Pruefung bei Laufzeit falls Config geaendert)
         if not (self._heartbeat_config and getattr(self._heartbeat_config, "enabled", False)):
             return
         # Lese die Checkliste
@@ -467,7 +467,7 @@ class CronEngine:
         except Exception:
             logger.exception("Heartbeat fehlgeschlagen")
 
-    # === Öffentliche API für Runtime-Management ===
+    # === Oeffentliche API fuer Runtime-Management ===
 
     def add_runtime_job(self, job: CronJob) -> bool:
         """Fügt einen Job zur Laufzeit hinzu (und persistiert ihn).

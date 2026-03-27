@@ -80,7 +80,7 @@ class ApprovalManager:
             checkpoint_id=checkpoint_id,
         )
 
-        # Gate-Check: Auto-Approve wenn Bedingung erfüllt
+        # Gate-Check: Auto-Approve wenn Bedingung erfuellt
         if config.node_kind == HITLNodeKind.GATE and config.auto_approve_fn:
             try:
                 if config.auto_approve_fn(request.context):
@@ -101,7 +101,7 @@ class ApprovalManager:
             self._by_execution[execution_id] = []
         self._by_execution[execution_id].append(request.request_id)
 
-        # Event für await
+        # Event fuer await
         self._resolved_callbacks[request.request_id] = asyncio.Event()
 
         self._total_created += 1

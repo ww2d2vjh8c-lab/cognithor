@@ -31,7 +31,7 @@ def health_status(
     models_loaded: list[str] | None = None,
     errors: list[str] | None = None,
     queue_stats: dict[str, Any] | None = None,
-    # Rückwärtskompatibilität
+    # Rueckwaertskompatibilitaet
     ollama_available: bool | None = None,
 ) -> dict[str, Any]:
     """Creates a health status report.

@@ -91,7 +91,7 @@ class VoiceConfig:
 
 
 # ============================================================================
-# Audio-Puffer für VAD
+# Audio-Puffer fuer VAD
 # ============================================================================
 
 
@@ -204,12 +204,12 @@ class STTEngine:
         if self._model is None:
             raise RuntimeError("STT-Modell nicht geladen. Zuerst load() aufrufen.")
 
-        # In temporäre Datei schreiben (faster-whisper braucht Dateipfad)
+        # In temporaere Datei schreiben (faster-whisper braucht Dateipfad)
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
             tmp.write(audio_data)
             tmp.flush()
 
-            # In Thread ausführen (CPU-bound)
+            # In Thread ausfuehren (CPU-bound)
             loop = asyncio.get_running_loop()
             text = await loop.run_in_executor(None, self._transcribe_sync, tmp.name)
             return text
@@ -537,7 +537,7 @@ class VoiceChannel(Channel):
         if audio:
             await self._play_audio(audio)
 
-        # Aufnahme starten für Antwort
+        # Aufnahme starten fuer Antwort
         response = await self.listen_once(timeout=10.0)
         if response:
             normalized = response.lower().strip()
@@ -591,7 +591,7 @@ class VoiceChannel(Channel):
             self._audio_buffer._is_speaking = True
             self._audio_buffer._silence_start = 0.0
         elif self._audio_buffer._is_speaking:
-            # Sprache hat aufgehört
+            # Sprache hat aufgehoert
             if self._audio_buffer._silence_start == 0.0:
                 self._audio_buffer._silence_start = time.monotonic()
             else:
@@ -668,7 +668,7 @@ class VoiceChannel(Channel):
             )
             await proc.communicate(input=wav_data)
         except FileNotFoundError:
-            # aplay nicht verfügbar → Daten einfach loggen
+            # aplay nicht verfuegbar → Daten einfach loggen
             log.warning("audio_playback_not_available", data_size=len(wav_data))
 
     @property

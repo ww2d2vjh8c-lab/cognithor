@@ -156,7 +156,7 @@ class TTLDict[KT, VT]:
         }
 
     # ------------------------------------------------------------------
-    # Dunder-Methoden (dict-Kompatibilität)
+    # Dunder-Methoden (dict-Kompatibilitaet)
     # ------------------------------------------------------------------
 
     def __setitem__(self, key: KT, value: VT) -> None:

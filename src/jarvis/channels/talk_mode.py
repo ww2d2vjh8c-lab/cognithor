@@ -80,11 +80,11 @@ class TalkMode:
                 if not detected or not self._active:
                     continue
 
-                # Phase 2: Bestätigung
+                # Phase 2: Bestaetigung
                 if self._confirmation_beep:
                     await self._play_confirmation()
 
-                # Phase 3: Zuhören + Transkribieren
+                # Phase 3: Zuhoeren + Transkribieren
                 text = await self._voice.listen_once(timeout=15.0)
                 if not text or not self._active:
                     log.debug("talk_mode_no_speech_detected")
@@ -117,7 +117,7 @@ class TalkMode:
                             )
                         )
 
-                # Auto-Listen: Direkt weiter zuhören ohne Wake Word
+                # Auto-Listen: Direkt weiter zuhoeren ohne Wake Word
                 if self._auto_listen and self._active:
                     continue
 

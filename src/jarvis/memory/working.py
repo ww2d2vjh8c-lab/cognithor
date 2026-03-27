@@ -23,7 +23,7 @@ from jarvis.models import (
 logger = logging.getLogger("jarvis.memory.working")
 
 # Default Token-Budget Verteilung [B§4.6]
-# Diese Werte werden von MemoryConfig.budget_* überschrieben wenn konfiguriert.
+# Diese Werte werden von MemoryConfig.budget_* ueberschrieben wenn konfiguriert.
 _DEFAULT_BUDGET_CORE_MEMORY = 500
 _DEFAULT_BUDGET_SYSTEM_PROMPT = 800
 _DEFAULT_BUDGET_PROCEDURES = 600

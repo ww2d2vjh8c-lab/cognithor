@@ -430,7 +430,7 @@ class SkillRegistry:
             if not skill.enabled:
                 continue
 
-            # Tool-Verfügbarkeit prüfen
+            # Tool-Verfuegbarkeit pruefen
             if (
                 available_tools is not None
                 and skill.tools_required
@@ -462,7 +462,7 @@ class SkillRegistry:
                             matched_kws.append(kw)
                             match_type = "fuzzy"
 
-            # 2. Wort-Überlappung mit Name und Description
+            # 2. Wort-Ueberlappung mit Name und Description
             name_words = set(re.findall(r"\w+", skill.name.lower()))
             desc_words = (
                 set(re.findall(r"\w+", skill.description.lower())) if skill.description else set()
@@ -476,7 +476,7 @@ class SkillRegistry:
                 if match_type == "none":
                     match_type = "overlap"
 
-            # 3. Bonus für bewährte Skills
+            # 3. Bonus fuer bewaehrte Skills
             if skill.success_rate > HIGH_SUCCESS_RATE_THRESHOLD and skill.total_uses > 0:
                 score += SUCCESS_RATE_BONUS
 

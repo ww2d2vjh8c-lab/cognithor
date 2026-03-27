@@ -515,7 +515,7 @@ Jede Erkenntnis mit Konfidenz-Indikator:
 Wo stimmen die Quellen überein? Wo gibt es Abweichungen?
 Nenne konkret, welche Quelle was sagt.
 
-### Widersprüche & Diskrepanzen
+### Widersprueche & Diskrepanzen
 Falls Widersprüche zwischen gespeichertem Wissen und neuen Informationen bestehen:
 - Was war bekannt vs. was ist neu?
 - Welche Information ist wahrscheinlich korrekt und warum?
@@ -524,7 +524,7 @@ Falls Widersprüche zwischen gespeichertem Wissen und neuen Informationen besteh
 Falls zeitliche Aspekte erkennbar: Was hat sich verändert?
 Kausalkette aufzeigen: X führte zu Y, daraus folgt Z.
 
-### Wissenslücken
+### Wissensluecken
 Was fehlt noch? Welche Fragen sind offen?
 Konkrete Vorschläge für Nachrecherche (als Suchbegriffe).
 
@@ -563,10 +563,10 @@ Struktur deiner Analyse:
 
 ## Widerspruchsanalyse: {topic}
 
-### Bestätigte Fakten
+### Bestaetigte Fakten
 Informationen die sowohl gespeichert als auch aktuell bestätigt sind.
 
-### Widersprüche
+### Widersprueche
 Für jeden Widerspruch:
 | Aspekt | Gespeichert | Aktuell (Web) | Bewertung |
 |--------|-------------|---------------|-----------|
@@ -657,7 +657,7 @@ Struktur:
 ### Abgedeckte Bereiche
 Was ist bereits gut dokumentiert? (kurze Auflistung)
 
-### Identifizierte Wissenslücken
+### Identifizierte Wissensluecken
 Für jede Lücke:
 | # | Fehlende Information | Priorität | Recherche-Vorschlag |
 |---|---------------------|-----------|---------------------|
@@ -670,7 +670,7 @@ schließen würden. Format als web_search-kompatible Keywords:
 2. **[MITTEL]** `"Suchbegriff 2"` — Warum wichtig
 3. ...
 
-### Vollständigkeits-Score
+### Vollstaendigkeits-Score
 Geschätzte Abdeckung: X/10 (1 = fast nichts bekannt, 10 = umfassend)
 Begründung in einem Satz.
 

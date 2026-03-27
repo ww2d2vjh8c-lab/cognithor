@@ -233,12 +233,12 @@ class RuntimeMonitor:
     Usage:
         monitor = RuntimeMonitor()
 
-        # Vor jeder Tool-Ausführung:
+        # Vor jeder Tool-Ausfuehrung:
         event = monitor.check_tool_call("file_write", {"path": "/etc/passwd"}, agent="coder")
         if event.is_blocked:
             raise SecurityError(event.description)
 
-        # Nach Ausführung:
+        # Nach Ausfuehrung:
         monitor.record_execution("file_write", agent="coder", success=True)
     """
 

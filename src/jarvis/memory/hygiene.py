@@ -113,7 +113,7 @@ class HygieneReport:
 # Injection-Scanner
 # ============================================================================
 
-# Patterns die auf Prompt-Injection in Memory-Einträgen hindeuten
+# Patterns die auf Prompt-Injection in Memory-Eintraegen hindeuten
 _INJECTION_PATTERNS: list[tuple[str, ThreatSeverity, str]] = [
     # System-Override-Versuche
     (r"(?i)ignore\s+(all\s+)?previous\s+instructions", ThreatSeverity.CRITICAL, "System-Override"),
@@ -140,7 +140,7 @@ _INJECTION_PATTERNS: list[tuple[str, ThreatSeverity, str]] = [
     ),
     (r"(?i)never\s+(mention|reveal|block|filter)", ThreatSeverity.MEDIUM, "Suppression-Attempt"),
     (r"(?i)pretend\s+(you|to\s+be)\s+", ThreatSeverity.HIGH, "Impersonation"),
-    # Deutsche Injection-Patterns (Jarvis ist primär deutsch)
+    # Deutsche Injection-Patterns (Jarvis ist primaer deutsch)
     (
         r"(?i)ignoriere?\s+(alle\s+)?(vorherigen?\s+)?anweisungen",
         ThreatSeverity.CRITICAL,
@@ -845,7 +845,7 @@ class PoisoningPreventor:
 
 
 # ============================================================================
-# Source Integrity Checker (Quellenintegrität)
+# Source Integrity Checker (Quellenintegritaet)
 # ============================================================================
 
 

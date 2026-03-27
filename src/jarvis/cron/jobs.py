@@ -18,7 +18,7 @@ from jarvis.models import CronJob
 
 logger = logging.getLogger(__name__)
 
-# Default-Jobs gemäß Architektur-Bibel §10.1
+# Default-Jobs gemaess Architektur-Bibel §10.1
 DEFAULT_JOBS: list[dict[str, Any]] = [
     {
         "name": "morning_briefing",

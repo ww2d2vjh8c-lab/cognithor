@@ -162,10 +162,10 @@ class ProceduralMemory:
                     score += 1.0  # Body-Match
 
             if score > 0:
-                # Bonus für Zuverlässigkeit
+                # Bonus fuer Zuverlaessigkeit
                 if meta.is_reliable:
                     score *= 1.2
-                # Malus für Review-Bedarf
+                # Malus fuer Review-Bedarf
                 if meta.needs_review:
                     score *= 0.5
 
@@ -189,9 +189,9 @@ class ProceduralMemory:
         Returns:
             Beste Matches als (metadata, body, score).
         """
-        # Einfache Tokenisierung: Stoppwörter rausfiltern, Rest als Keywords
+        # Einfache Tokenisierung: Stoppwoerter rausfiltern, Rest als Keywords
         words = query.lower().split()
-        # Deutsche Stoppwörter (kompakt)
+        # Deutsche Stoppwoerter (kompakt)
         stopwords = {
             "ich",
             "du",

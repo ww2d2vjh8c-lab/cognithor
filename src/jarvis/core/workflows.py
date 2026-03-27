@@ -536,7 +536,7 @@ class EcosystemPolicy:
         met = [rid for rid, passed in checks.items() if passed]
         failed = [rid for rid, passed in checks.items() if not passed]
 
-        # Höchste erreichbare Stufe bestimmen
+        # Hoechste erreichbare Stufe bestimmen
         tier_order = [
             SecurityTier.UNVERIFIED,
             SecurityTier.COMMUNITY,

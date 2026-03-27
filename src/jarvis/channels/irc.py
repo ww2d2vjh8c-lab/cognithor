@@ -212,7 +212,7 @@ class IRCChannel(Channel):
 
         clean_text = text.strip()
 
-        # Approval-Antworten abfangen (nur vom ursprünglichen User)
+        # Approval-Antworten abfangen (nur vom urspruenglichen User)
         if clean_text.lower() in ("ja", "yes", "j", "y"):
             for sid, fut in list(self._approval_futures.items()):
                 if not fut.done() and self._approval_users.get(sid) == nick:

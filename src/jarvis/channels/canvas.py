@@ -19,7 +19,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Callback-Typ für Canvas-Broadcasts
+# Callback-Typ fuer Canvas-Broadcasts
 CanvasBroadcaster = Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
 
 
@@ -74,7 +74,7 @@ class CanvasManager:
         async with self._lock:
             state = self._get_state(session_id)
 
-            # Aktuellen Zustand in History sichern (für Undo)
+            # Aktuellen Zustand in History sichern (fuer Undo)
             if state.current_html:
                 state.history.append(
                     CanvasSnapshot(

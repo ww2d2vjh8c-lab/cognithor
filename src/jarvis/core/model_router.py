@@ -88,13 +88,13 @@ class OllamaClient:
         return self._client
 
     async def close(self) -> None:
-        """Schließt den HTTP-Client."""
+        """Close the HTTP client."""
         if self._client and not self._client.is_closed:
             await self._client.aclose()
             self._client = None
 
     async def is_available(self) -> bool:
-        """Prüft ob Ollama erreichbar ist."""
+        """Check whether Ollama is reachable."""
         try:
             client = await self._ensure_client()
             resp = await client.get("/api/tags", timeout=5.0)
@@ -103,7 +103,7 @@ class OllamaClient:
             return False
 
     async def list_models(self) -> list[str]:
-        """Listet alle lokal verfügbaren Modelle."""
+        """List all locally available models."""
         try:
             client = await self._ensure_client()
             resp = await client.get("/api/tags")
@@ -131,10 +131,10 @@ class OllamaClient:
         Args:
             model: Modellname (z.B. "qwen3:32b")
             messages: Chat-History als Liste von Dicts
-            tools: MCP-Tool-Schemas für Function-Calling
-            temperature: Kreativitäts-Parameter
+            tools: MCP tool schemas for function calling
+            temperature: Creativity parameter
             top_p: Nucleus-Sampling-Parameter
-            stream: Ob Token-für-Token gestreamt werden soll
+            stream: Whether to stream token by token
             format_json: Ob die Antwort als JSON erzwungen werden soll
 
         Returns:
@@ -148,7 +148,7 @@ class OllamaClient:
         payload: dict[str, Any] = {
             "model": model,
             "messages": messages,
-            "stream": False,  # Non-streaming für diese Methode
+            "stream": False,  # Non-streaming for this method
             "options": {
                 "temperature": temperature,
                 "top_p": top_p,
@@ -214,7 +214,7 @@ class OllamaClient:
         temperature: float = 0.7,
         top_p: float = 0.9,
     ) -> AsyncIterator[str]:
-        """Streaming Chat-Completion -- Token für Token.
+        """Streaming chat completion -- token by token.
 
         Yields:
             Einzelne Text-Tokens als Strings.
@@ -267,14 +267,14 @@ class OllamaClient:
         model: str,
         text: str,
     ) -> list[float]:
-        """Erzeugt einen Embedding-Vektor für einen Text.
+        """Generate an embedding vector for a text.
 
         Args:
             model: Embedding-Modellname (z.B. "nomic-embed-text")
             text: Zu embeddender Text
 
         Returns:
-            Embedding-Vektor als Liste von Floats (768d für nomic).
+            Embedding vector as list of floats (768d for nomic).
         """
         client = await self._ensure_client()
 
@@ -306,7 +306,7 @@ class OllamaClient:
         model: str,
         texts: list[str],
     ) -> list[list[float]]:
-        """Erzeugt Embeddings für mehrere Texte.
+        """Generate embeddings for multiple texts.
 
         Args:
             model: Embedding-Modellname
@@ -373,7 +373,7 @@ class ModelRouter:
 
     @property
     def backend(self) -> Any | None:
-        """Gibt das konfigurierte LLMBackend zurück (None wenn legacy-Modus)."""
+        """Return the configured LLMBackend (None in legacy mode)."""
         return self._backend
 
     def set_coding_override(self, model_name: str) -> None:
@@ -401,7 +401,7 @@ class ModelRouter:
         self._coding_override = None
 
     async def initialize(self) -> None:
-        """Prüft welche Modelle verfügbar sind.
+        """Check which models are available.
 
         Nutzt das LLMBackend wenn vorhanden, sonst den OllamaClient.
         """
@@ -420,12 +420,12 @@ class ModelRouter:
         task_type: str = "general",
         complexity: str = "medium",
     ) -> str:
-        """Wählt das beste verfügbare Modell. [B§8.2]
+        """Select the best available model. [B§8.2]
 
         Args:
             task_type: Art der Aufgabe (planning, reflection, code, simple_tool_call,
                        summarization, embedding, general)
-            complexity: Komplexität (low, medium, high)
+            complexity: Complexity (low, medium, high)
 
         Returns:
             Ollama-Modellname (z.B. "qwen3:32b")
@@ -444,10 +444,10 @@ class ModelRouter:
         if _effective_override and task_type != "embedding":
             return _effective_override
 
-        # Prüfe zunächst, ob ein Override für den gegebenen task_type existiert.
-        # Der Schlüssel in model_overrides.skill_models kann den task_type
-        # (z. B. "planning", "reflection", "code") überschreiben. So können
-        # Anwender in der Konfiguration alternative Modelle für bestimmte
+        # Pruefe zunaechst, ob ein Override fuer den gegebenen task_type existiert.
+        # Der Schluessel in model_overrides.skill_models kann den task_type
+        # (z. B. "planning", "reflection", "code") ueberschreiben. So koennen
+        # Anwender in der Konfiguration alternative Modelle fuer bestimmte
         # Aufgabentypen definieren.
         override = None
         try:
@@ -472,7 +472,7 @@ class ModelRouter:
                 case "embedding":
                     model_name = self._config.models.embedding.name
                 case _:
-                    # Komplexität entscheidet
+                    # Complexity decides
                     if complexity == "high":
                         model_name = self._config.models.planner.name
                     elif complexity == "low":
@@ -480,7 +480,7 @@ class ModelRouter:
                     else:
                         model_name = self._config.models.planner.name
 
-        # Fallback wenn Modell nicht verfügbar
+        # Fallback if model not available
         if self._available_models and model_name not in self._available_models:
             fallback = self._find_fallback(model_name)
             if fallback:
@@ -494,7 +494,7 @@ class ModelRouter:
         return model_name
 
     def _find_fallback(self, requested: str) -> str | None:
-        """Findet ein Fallback-Modell wenn das gewünschte nicht verfügbar ist."""
+        """Find a fallback model when the desired one is not available."""
         # Fallback-Kette: 32B → 8B → was auch immer da ist
         fallback_chain = [
             self._config.models.planner.name,
@@ -545,7 +545,7 @@ class ModelRouter:
         return getattr(cfg, "backend", "") or ""
 
     def get_model_config(self, model_name: str) -> dict[str, Any]:
-        """Gibt die Konfigurations-Parameter für ein Modell zurück."""
+        """Return the configuration parameters for a model."""
         configs = {
             self._config.models.planner.name: self._config.models.planner,
             self._config.models.executor.name: self._config.models.executor,
@@ -560,7 +560,7 @@ class ModelRouter:
                 "top_p": config.top_p,
                 "context_window": config.context_window,
             }
-        # Default-Werte für unbekannte Modelle
+        # Default values for unknown models
         return {"temperature": 0.7, "top_p": 0.9, "context_window": 32768}
 
 

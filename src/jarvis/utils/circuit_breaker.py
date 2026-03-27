@@ -164,7 +164,7 @@ class CircuitBreaker:
         log.info("circuit_breaker_reset", extra={"cb_name": self._name})
 
     # ------------------------------------------------------------------
-    # Interne State-Transitions (müssen unter Lock aufgerufen werden)
+    # Interne State-Transitions (muessen unter Lock aufgerufen werden)
     # ------------------------------------------------------------------
 
     def _record_failure(self) -> None:

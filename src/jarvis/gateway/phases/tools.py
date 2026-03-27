@@ -248,7 +248,7 @@ async def init_tools(
         log.warning("vault_tools_not_registered")
     result["vault_tools"] = vault_tools
 
-    # LLM + Vault in MediaPipeline injizieren (für analyze_document)
+    # LLM + Vault in MediaPipeline injizieren (fuer analyze_document)
     if media_pipeline is not None and hasattr(media_pipeline, "_set_llm_fn"):
         try:
             from jarvis.core.unified_llm import UnifiedLLMClient

@@ -358,7 +358,7 @@ class JarvisMCPServer:
                     timeout=self.HANDLER_TIMEOUT,
                 )
             else:
-                # Sync-Handler in Thread-Pool ausführen (blockiert nicht den Event Loop)
+                # Sync-Handler in Thread-Pool ausfuehren (blockiert nicht den Event Loop)
                 loop = asyncio.get_running_loop()
                 result = await asyncio.wait_for(
                     loop.run_in_executor(None, lambda: handler(**(arguments or {}))),
@@ -795,7 +795,7 @@ class JarvisMCPServer:
         Returns:
             JSON-RPC-Response oder Array von Responses
         """
-        # Auth prüfen
+        # Auth pruefen
         if self._config.require_auth:
             import hmac
 
