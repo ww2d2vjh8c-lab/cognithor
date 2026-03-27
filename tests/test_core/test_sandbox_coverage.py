@@ -94,7 +94,7 @@ class TestSandboxResult:
 
     def test_truncated_output(self) -> None:
         r = SandboxResult(stdout="data", truncated=True)
-        assert "gekürzt" in r.output
+        assert "truncated" in r.output
 
 
 # ============================================================================

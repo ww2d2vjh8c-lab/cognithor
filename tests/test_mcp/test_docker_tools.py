@@ -461,4 +461,4 @@ class TestOutputTruncation:
         with patch("jarvis.mcp.docker_tools._run_docker", return_value=(0, long_output, "")):
             result = await docker.docker_ps()
             assert len(result) <= 50_100  # 50000 + truncation message
-            assert "truncated" in result.lower()
+            assert "gekürzt" in result.lower()

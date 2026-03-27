@@ -79,7 +79,7 @@ class TestSandboxResult:
         assert "[STDERR]" in r.output
         assert "err" in r.output
         assert "[EXIT CODE: 1]" in r.output
-        assert "gekürzt" in r.output
+        assert "truncated" in r.output
 
     def test_empty_output(self) -> None:
         r = SandboxResult()
