@@ -38,7 +38,7 @@ __all__ = [
     "register_synthesis_tools",
 ]
 
-# ── Konstanten (Defaults, überschreibbar via config.synthesis.*) ──────────
+# ── Constants (defaults, overridable via config.synthesis.*) ──────────
 
 _DEFAULT_MAX_SOURCE_CHARS = 4000
 _DEFAULT_MAX_CONTEXT_CHARS = 25000
@@ -61,7 +61,7 @@ class KnowledgeSynthesizer:
         self._vault_tools: Any = None
         self._web_tools: Any = None
 
-        # Limits aus Config lesen (mit sicheren Defaults)
+        # Read limits from config (with safe defaults)
         _synth = getattr(config, "synthesis", None)
         self._max_source_chars: int = getattr(_synth, "max_source_chars", _DEFAULT_MAX_SOURCE_CHARS)
         self._max_context_chars: int = getattr(
@@ -104,7 +104,7 @@ class KnowledgeSynthesizer:
             return "Wissenssynthese nicht verfügbar: Memory-System nicht verbunden."
         return None
 
-    # ── Quellen-Sammlung ─────────────────────────────────────────────
+    # ── Source gathering ─────────────────────────────────────────────
 
     async def _gather_sources(
         self,
@@ -130,7 +130,7 @@ class KnowledgeSynthesizer:
         """
         sources: dict[str, str] = {}
 
-        # 1. Semantic Memory durchsuchen (synchron)
+        # 1. Search semantic memory (synchronous)
         if include_memory and self._memory_tools:
             try:
                 memory_result = self._memory_tools.search_memory(topic, top_k=8)
@@ -140,10 +140,10 @@ class KnowledgeSynthesizer:
             except Exception as exc:
                 log.debug("synthesis_memory_error", error=str(exc))
 
-        # 2. Entitäten aus Knowledge-Graph laden (synchron)
+        # 2. Load entities from knowledge graph (synchronous)
         if include_memory and self._memory_tools:
             try:
-                # Hauptbegriffe aus dem Thema extrahieren für Entity-Suche
+                # Extract main terms from topic for entity search
                 keywords = _extract_keywords(topic)
                 entity_parts: list[str] = []
                 for kw in keywords[:3]:
@@ -158,12 +158,12 @@ class KnowledgeSynthesizer:
             except Exception as exc:
                 log.debug("synthesis_entity_error", error=str(exc))
 
-        # 3. Episodisches Gedächtnis — letzte 7 Tage (synchron)
+        # 3. Episodic memory — last 7 days (synchronous)
         if include_episodes and self._memory_tools:
             try:
                 episodes = self._memory_tools.get_recent_episodes(days=7)
                 if episodes and "Keine Episodic" not in episodes:
-                    # Nur Einträge behalten die zum Thema passen
+                    # Keep only entries relevant to the topic
                     relevant = _filter_relevant_text(episodes, topic)
                     if relevant:
                         sources["episodes"] = _truncate(relevant, self._max_source_chars)
@@ -171,7 +171,7 @@ class KnowledgeSynthesizer:
             except Exception as exc:
                 log.debug("synthesis_episodes_error", error=str(exc))
 
-        # 4. Vault durchsuchen (async)
+        # 4. Search vault (async)
         if include_vault and self._vault_tools:
             try:
                 vault_result = await self._vault_tools.vault_search(topic, limit=5)
@@ -181,7 +181,7 @@ class KnowledgeSynthesizer:
             except Exception as exc:
                 log.debug("synthesis_vault_error", error=str(exc))
 
-        # 5. Frisches Web-Wissen holen (async)
+        # 5. Fetch fresh web knowledge (async)
         if include_web and self._web_tools:
             try:
                 web_result = await self._web_tools.search_and_read(
@@ -215,7 +215,7 @@ class KnowledgeSynthesizer:
 
         combined = "\n\n---\n\n".join(parts)
 
-        # Gesamtgröße begrenzen
+        # Limit total size
         if len(combined) > self._max_context_chars:
             combined = combined[: self._max_context_chars] + "\n\n[... Kontext gekürzt]"
 
@@ -257,7 +257,7 @@ class KnowledgeSynthesizer:
         web_results = {"quick": 0, "standard": 3, "deep": 5}.get(depth, 3)
         do_web = include_web and depth != "quick"
 
-        # 1. Quellen sammeln
+        # 1. Gather sources
         sources = await self._gather_sources(
             topic,
             include_web=do_web,
@@ -269,28 +269,28 @@ class KnowledgeSynthesizer:
                 f"Keine Informationen zu '{topic}' gefunden — weder in Memory, Vault noch im Web."
             )
 
-        # 2. Kontext formatieren
+        # 2. Format context
         context = self._format_source_context(sources)
         source_summary = ", ".join(f"{k} ({len(v)} Zeichen)" for k, v in sources.items())
 
-        # 3. Synthese-Prompt bauen
+        # 3. Build synthesis prompt
         prompt = _build_synthesis_prompt(topic, context, depth, language, list(sources.keys()))
 
-        # 4. LLM aufrufen
+        # 4. Call LLM
         try:
             synthesis = await self._llm_fn(prompt, self._llm_model)
         except Exception as exc:
             log.error("synthesis_llm_failed", topic=topic[:50], error=str(exc))
             return f"Fehler bei der Wissenssynthese: {exc}"
 
-        # 5. Metadaten anhängen
+        # 5. Append metadata
         now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
         footer = (
             f"\n\n---\n*Synthese erstellt: {now}*\n*Quellen: {source_summary}*\n*Tiefe: {depth}*"
         )
         result = synthesis + footer
 
-        # 6. Optional im Vault speichern
+        # 6. Optionally save to vault
         if save_to_vault and self._vault_tools:
             try:
                 vault_title = f"Synthese: {topic[:60]}"
@@ -336,7 +336,7 @@ class KnowledgeSynthesizer:
         if not topic.strip():
             return "Fehler: Kein Thema angegeben."
 
-        # Gespeichertes Wissen sammeln (ohne Web)
+        # Gather stored knowledge (without web)
         stored_sources = await self._gather_sources(
             topic,
             include_web=False,
@@ -349,7 +349,7 @@ class KnowledgeSynthesizer:
                 f"gefunden. Widerspruchsanalyse nicht möglich."
             )
 
-        # Aktuelles Web-Wissen sammeln
+        # Gather current web knowledge
         web_sources = await self._gather_sources(
             topic,
             include_memory=False,
@@ -450,7 +450,7 @@ class KnowledgeSynthesizer:
         if not topic.strip():
             return "Fehler: Kein Thema angegeben."
 
-        # Nur gespeichertes Wissen — kein Web, um Lücken zu finden
+        # Only stored knowledge — no web, to identify gaps
         sources = await self._gather_sources(
             topic,
             include_web=False,
@@ -472,7 +472,7 @@ class KnowledgeSynthesizer:
         return gaps
 
 
-# ── Prompt-Builder ────────────────────────────────────────────────────────
+# ── Prompt builders ────────────────────────────────────────────────────────
 
 
 def _build_synthesis_prompt(
@@ -683,7 +683,7 @@ Wenn gar kein Wissen vorhanden ist, erstelle eine grundlegende Recherche-Roadmap
 mit den wichtigsten Suchbegriffen, um das Thema systematisch zu erschließen."""
 
 
-# ── Hilfsfunktionen ──────────────────────────────────────────────────────
+# ── Helper functions ──────────────────────────────────────────────────────
 
 
 def _truncate(text: str, max_chars: int) -> str:
@@ -795,9 +795,9 @@ def _extract_keywords(text: str) -> list[str]:
         }
     )
 
-    # Wörter extrahieren, Satzzeichen entfernen
+    # Extract words, remove punctuation
     words = re.findall(r"\b[a-zA-ZäöüÄÖÜß]{3,}\b", text)
-    # Stoppwörter filtern, Duplikate entfernen, Reihenfolge beibehalten
+    # Filter stop words, remove duplicates, preserve order
     seen: set[str] = set()
     keywords: list[str] = []
     for w in words:
@@ -824,14 +824,14 @@ def _filter_relevant_text(text: str, topic: str) -> str:
 
     for para in paragraphs:
         para_lower = para.lower()
-        # Mindestens ein Keyword muss vorkommen
+        # At least one keyword must appear
         if any(kw in para_lower for kw in keyword_set):
             relevant.append(para)
 
     return "\n\n".join(relevant) if relevant else ""
 
 
-# ── MCP-Client-Registrierung ─────────────────────────────────────────────
+# ── MCP client registration ─────────────────────────────────────────────
 
 
 def register_synthesis_tools(

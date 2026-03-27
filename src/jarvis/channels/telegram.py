@@ -38,20 +38,20 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Maximale Telegram-Nachrichtenlänge
+# Maximum Telegram message length
 MAX_MESSAGE_LENGTH = 4096
 
-# Vision-Postprocessing: System-Prompt für Textkorrektur
+# Vision postprocessing: system prompt for text correction
 _VISION_POLISH_PROMPT = (
     "Überarbeite den folgenden Text. Korrigiere Rechtschreibung, Grammatik, "
     "Satzbau und Satzzeichen. Behalte den Inhalt und die Sprache exakt bei. "
     "Gib NUR den korrigierten Text aus, ohne Erklärungen."
 )
 
-# Timeout für Approval-Anfragen (Sekunden)
+# Timeout for approval requests (seconds)
 APPROVAL_TIMEOUT = 300  # 5 Minuten
 
-# Maximale Dokumentgrösse (50 MB)
+# Maximum document size (50 MB)
 MAX_DOCUMENT_SIZE = 52_428_800
 
 
@@ -118,7 +118,7 @@ class TelegramChannel(Channel):
         )
         self._whisper_model: Any | None = None
 
-        # Webhook-Konfiguration
+        # Webhook configuration
         self._use_webhook = use_webhook
         self._webhook_url = webhook_url
         self._webhook_port = webhook_port
@@ -126,7 +126,7 @@ class TelegramChannel(Channel):
         self._ssl_certfile = ssl_certfile
         self._ssl_keyfile = ssl_keyfile
         self._webhook_runner: Any | None = None  # aiohttp.web.AppRunner
-        # Secret-Token fuer Webhook-Verifizierung (Art. Telegram Bot API)
+        # Secret token for webhook verification (per Telegram Bot API)
         import secrets as _secrets
 
         self._webhook_secret_token: str = _secrets.token_hex(32)
@@ -165,7 +165,7 @@ class TelegramChannel(Channel):
             )
             return
 
-        # Persistierte Mappings laden (wenn Store vorhanden)
+        # Load persisted mappings (if store available)
         if self._session_store:
             for key, val in self._session_store.load_all_channel_mappings(
                 "telegram_session"
@@ -182,28 +182,28 @@ class TelegramChannel(Channel):
 
         self._app = Application.builder().token(self.token).concurrent_updates(True).build()
 
-        # Handler registrieren
+        # Register handlers
         self._app.add_handler(
             TGMessageHandler(
                 filters.TEXT & ~filters.COMMAND,
                 self._on_telegram_message,
             )
         )
-        # Voice-Messages (Sprachnachrichten)
+        # Voice messages
         self._app.add_handler(
             TGMessageHandler(
                 filters.VOICE | filters.AUDIO,
                 self._on_voice_message,
             )
         )
-        # Fotos
+        # Photos
         self._app.add_handler(
             TGMessageHandler(
                 filters.PHOTO,
                 self._on_photo_message,
             )
         )
-        # Dokumente (PDFs, etc.)
+        # Documents (PDFs, etc.)
         self._app.add_handler(
             TGMessageHandler(
                 filters.Document.ALL,
@@ -235,7 +235,7 @@ class TelegramChannel(Channel):
 
         self._running = True
 
-        # Periodischer TTLDict-Cleanup (#47 Optimierung)
+        # Periodic TTLDict cleanup (#47 optimization)
         self._cleanup_task = asyncio.create_task(self._periodic_ttl_cleanup())
 
     async def _periodic_ttl_cleanup(self) -> None:
@@ -259,7 +259,7 @@ class TelegramChannel(Channel):
         if not self._running or self._app is None:
             return
 
-        # Cleanup-Task stoppen
+        # Stop cleanup task
         if hasattr(self, "_cleanup_task") and self._cleanup_task is not None:
             self._cleanup_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -268,7 +268,7 @@ class TelegramChannel(Channel):
 
         try:
             if self._use_webhook:
-                # Webhook bei Telegram abmelden und lokalen Server stoppen
+                # Unregister webhook at Telegram and stop local server
                 with contextlib.suppress(Exception):
                     await self._app.bot.delete_webhook(drop_pending_updates=False)
                 if self._webhook_runner:
@@ -286,7 +286,7 @@ class TelegramChannel(Channel):
         self._app = None
         logger.info("Telegram-Bot gestoppt")
 
-    # === Webhook-Methoden ===
+    # === Webhook methods ===
 
     async def _start_webhook(self) -> None:
         """Startet Webhook-Server und registriert bei Telegram."""
@@ -314,7 +314,7 @@ class TelegramChannel(Channel):
         )
         await site.start()
 
-        # Webhook bei Telegram registrieren
+        # Register webhook at Telegram
         await self._app.bot.set_webhook(
             url=self._webhook_url,
             drop_pending_updates=True,
@@ -335,7 +335,7 @@ class TelegramChannel(Channel):
         from aiohttp import web
         from telegram import Update
 
-        # Secret-Token-Verifizierung (Telegram sendet den Header automatisch)
+        # Secret token verification (Telegram sends the header automatically)
         received_token = request.headers.get(
             "X-Telegram-Bot-Api-Secret-Token",
             "",
@@ -402,7 +402,7 @@ class TelegramChannel(Channel):
                 logger.debug(
                     "Markdown-Parsing fehlgeschlagen, Fallback auf Plain-Text", exc_info=True
                 )
-                # Fallback ohne Markdown falls Parsing fehlschlägt
+                # Fallback without Markdown if parsing fails
                 try:
                     await self._circuit_breaker.call(
                         self._app.bot.send_message(
@@ -416,7 +416,7 @@ class TelegramChannel(Channel):
                 except Exception:
                     logger.exception("Fehler beim Senden an chat_id=%s", chat_id)
 
-        # Attachments senden (z.B. generierte PDF/DOCX-Dokumente)
+        # Send attachments (e.g. generated PDF/DOCX documents)
         for att_path in message.attachments:
             try:
                 await self.send_file(int(chat_id), Path(att_path))
@@ -495,7 +495,7 @@ class TelegramChannel(Channel):
                 self._approval_results.pop(approval_id, None)
             return False
 
-        # Warte auf User-Antwort (mit Timeout)
+        # Wait for user response (with timeout)
         try:
             await asyncio.wait_for(event.wait(), timeout=APPROVAL_TIMEOUT)
             async with self._approval_lock:
@@ -518,8 +518,8 @@ class TelegramChannel(Channel):
             session_id: Aktive Session-ID.
             token: Einzelnes Token (wird ignoriert).
         """
-        # Telegram unterstützt kein echtes Streaming.
-        # Nachrichten werden als Ganzes über send() gesendet.
+        # Telegram does not support real streaming.
+        # Messages are sent as a whole via send().
         pass
 
     async def send_status(self, session_id: str, status: StatusType, text: str) -> None:
@@ -535,7 +535,7 @@ class TelegramChannel(Channel):
         except Exception:
             pass  # Cleanup — typing indicator failure is non-critical
 
-    # === Interne Handler ===
+    # === Internal handlers ===
 
     async def _on_telegram_message(self, update: Any, context: Any) -> None:
         """Verarbeitet eingehende Telegram-Textnachrichten.
@@ -549,7 +549,7 @@ class TelegramChannel(Channel):
         chat_id = update.effective_chat.id
         text = update.effective_message.text or ""
 
-        # Whitelist-Prüfung
+        # Whitelist check
         if self.allowed_users and user_id not in self.allowed_users:
             logger.warning("Unerlaubter Zugriff von User %d (Chat %d)", user_id, chat_id)
             await update.effective_message.reply_text(
@@ -578,22 +578,22 @@ class TelegramChannel(Channel):
         if voice is None:
             return
 
-        # Typing-Indicator starten
+        # Start typing indicator
         typing_task = self._start_typing(chat_id)
 
         try:
-            # Audio herunterladen
+            # Download audio
             self._workspace_dir.mkdir(parents=True, exist_ok=True)
             file = await voice.get_file()
             audio_path = self._workspace_dir / f"voice-{voice.file_unique_id}.ogg"
             await file.download_to_drive(str(audio_path))
             logger.info("Voice heruntergeladen: %s (%d bytes)", audio_path, voice.file_size or 0)
 
-            # Transkription versuchen
+            # Attempt transcription
             text = await self._transcribe_audio(audio_path)
 
             if text:
-                # Transkription dem User zeigen
+                # Show transcription to user
                 await update.effective_message.reply_text(f"🎤 _{text}_", parse_mode="Markdown")
                 await self._process_incoming(chat_id, user_id, text, update)
             else:
@@ -629,7 +629,7 @@ class TelegramChannel(Channel):
         if not photos:
             return
 
-        # Größtes Foto wählen
+        # Choose largest photo
         photo = photos[-1]
         caption = update.effective_message.caption or ""
 
@@ -645,12 +645,12 @@ class TelegramChannel(Channel):
 
         user_question = caption if caption else "Beschreibe dieses Bild detailliert auf Deutsch."
 
-        # Direkte Vision-Analyse (kein Planner nötig)
+        # Direct vision analysis (no planner needed)
         typing_task = self._start_typing(chat_id)
         try:
             from jarvis.mcp.media import MediaPipeline
 
-            # Vision-Modell aus Config (auto-adaptiert je nach Backend)
+            # Vision model from config (auto-adapts based on backend)
             try:
                 from jarvis.config import load_config
 
@@ -680,11 +680,11 @@ class TelegramChannel(Channel):
             else:
                 response_text = f"❌ Bildanalyse fehlgeschlagen: {result.error}"
 
-            # Antwort senden (Telegram-Limit beachten)
+            # Send response (respect Telegram limit)
             if len(response_text) <= MAX_MESSAGE_LENGTH:
                 await update.effective_message.reply_text(response_text)
             else:
-                # Lange Antworten aufteilen
+                # Split long responses
                 for i in range(0, len(response_text), MAX_MESSAGE_LENGTH):
                     chunk = response_text[i : i + MAX_MESSAGE_LENGTH]
                     await update.effective_message.reply_text(chunk)
@@ -718,7 +718,7 @@ class TelegramChannel(Channel):
         if doc is None:
             return
 
-        # Dokument-Grössenlimit prüfen
+        # Check document size limit
         if doc.file_size and doc.file_size > MAX_DOCUMENT_SIZE:
             await update.effective_message.reply_text(
                 f"Dokument zu gross "
@@ -758,7 +758,7 @@ class TelegramChannel(Channel):
             logger.exception("Fehler beim Dokument-Download")
             await update.effective_message.reply_text("❌ Fehler beim Empfangen des Dokuments.")
 
-    # === Hilfsmethoden ===
+    # === Helper methods ===
 
     async def _polish_vision_text(
         self,
@@ -813,13 +813,13 @@ class TelegramChannel(Channel):
             await update.effective_message.reply_text("⚠️ Jarvis ist noch nicht bereit.")
             return
 
-        # user_id → chat_id Mapping VOR Handler-Call speichern
-        # (damit Approval-Anfragen die chat_id finden, auch beim ersten Request)
+        # Save user_id → chat_id mapping BEFORE handler call
+        # (so approval requests can find the chat_id, even on the first request)
         self._user_chat_map[str(user_id)] = chat_id
         if self._session_store:
             self._session_store.save_channel_mapping("telegram_user", str(user_id), str(chat_id))
 
-        # Typing-Indicator starten
+        # Start typing indicator
         typing_task = self._start_typing(chat_id)
 
         msg = IncomingMessage(
@@ -831,7 +831,7 @@ class TelegramChannel(Channel):
         try:
             response = await self._handler(msg)
 
-            # Session → chat_id Mapping speichern (für zukünftige Lookups)
+            # Save session → chat_id mapping (for future lookups)
             if response.session_id:
                 self._session_chat_map[response.session_id] = chat_id
                 if self._session_store:
@@ -872,7 +872,7 @@ class TelegramChannel(Channel):
         try:
             import os
 
-            # CUDA deaktivieren falls cuDNN nicht verfügbar (verhindert DLL-Crash)
+            # Disable CUDA if cuDNN is unavailable (prevents DLL crash)
             if not os.environ.get("CUDA_VISIBLE_DEVICES"):
                 os.environ["CUDA_VISIBLE_DEVICES"] = ""
             from faster_whisper import WhisperModel
@@ -1005,16 +1005,16 @@ class TelegramChannel(Channel):
         Returns:
             Chat-ID oder None.
         """
-        # Primär: direkte Session→Chat-ID Zuordnung
+        # Primary: direct session → chat ID mapping
         chat_id = self._session_chat_map.get(session_id)
         if chat_id is not None:
             return chat_id
 
-        # Fallback: Wenn nur ein User aktiv ist (typischer 1:1-Bot-Chat),
-        # verwende dessen chat_id. Bei mehreren aktiven Usern: kein Fallback.
+        # Fallback: if only one user is active (typical 1:1 bot chat),
+        # use their chat_id. With multiple active users: no fallback.
         if len(self._user_chat_map) == 1:
             chat_id = next(iter(self._user_chat_map.values()))
-            # Mapping für zukünftige Lookups nachtragen
+            # Backfill mapping for future lookups
             self._session_chat_map[session_id] = chat_id
             logger.debug("chat_id via user_chat_map Fallback gefunden: %d", chat_id)
             return chat_id
@@ -1044,13 +1044,13 @@ def _split_message(text: str) -> list[str]:
             chunks.append(remaining)
             break
 
-        # Versuche an einem Zeilenumbruch zu splitten
+        # Try to split at a line break
         split_pos = remaining.rfind("\n", 0, MAX_MESSAGE_LENGTH)
         if split_pos == -1 or split_pos < MAX_MESSAGE_LENGTH // 2:
-            # Kein guter Zeilenumbruch → an Leerzeichen splitten
+            # No good line break → split at space
             split_pos = remaining.rfind(" ", 0, MAX_MESSAGE_LENGTH)
         if split_pos == -1:
-            # Kein Leerzeichen → harter Split
+            # No space → hard split
             split_pos = MAX_MESSAGE_LENGTH
 
         chunks.append(remaining[:split_pos])

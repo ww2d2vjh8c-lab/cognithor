@@ -126,7 +126,7 @@ class VaultTools:
             self._write_index({})
         log.info("vault_structure_ensured", path=str(self._vault_root))
 
-    # ── Index-Verwaltung ─────────────────────────────────────────────────
+    # ── Index management ─────────────────────────────────────────────────
 
     def _read_index(self) -> dict[str, Any]:
         """Liest den _index.json."""
@@ -161,7 +161,7 @@ class VaultTools:
         }
         self._write_index(index)
 
-    # ── Frontmatter-Generierung ──────────────────────────────────────────
+    # ── Frontmatter generation ──────────────────────────────────────────
 
     def _build_frontmatter(
         self,
@@ -190,10 +190,10 @@ class VaultTools:
 
     def _resolve_folder(self, folder: str) -> str:
         """Löst einen logischen Ordnernamen zu einem Pfad auf."""
-        # Direkt-Mapping: logischer Name → Verzeichnisname
+        # Direct mapping: logical name → directory name
         if folder in self._default_folders:
             return self._default_folders[folder]
-        # Prüfe ob es ein direkter Verzeichnisname ist
+        # Check if it is a direct directory name
         if folder in self._default_folders.values():
             return folder
         # Fallback: wissen
@@ -237,24 +237,24 @@ class VaultTools:
         target_dir.mkdir(parents=True, exist_ok=True)
         file_path = target_dir / f"{slug}.md"
 
-        # Duplikat-Vermeidung
+        # Duplicate avoidance
         if file_path.exists():
             counter = 1
             while file_path.exists():
                 file_path = target_dir / f"{slug}-{counter}.md"
                 counter += 1
 
-        # Frontmatter + Inhalt zusammenbauen
+        # Assemble frontmatter + content
         frontmatter = self._build_frontmatter(title, tag_list, source_list, link_list)
         body_parts = [frontmatter, "", f"# {title}", "", content]
 
-        # Quellen-Abschnitt
+        # Sources section
         if source_list:
             body_parts.extend(["", "## Quellen"])
             for src in source_list:
                 body_parts.append(f"- [{src}]({src})")
 
-        # Verknüpfte Notizen
+        # Linked notes
         if link_list:
             body_parts.extend(["", "## Verknüpfte Notizen"])
             for link in link_list:
@@ -262,7 +262,7 @@ class VaultTools:
 
         file_path.write_text("\n".join(body_parts) + "\n", encoding="utf-8")
 
-        # Index aktualisieren
+        # Update index
         rel_path = str(file_path.relative_to(self._vault_root))
         self._update_index(title, rel_path, tag_list, folder_name)
 
@@ -299,7 +299,7 @@ class VaultTools:
             if md_file.name.startswith("_"):
                 continue
 
-            # Ordner-Filter
+            # Folder filter
             if folder_filter:
                 try:
                     rel = md_file.relative_to(self._vault_root)
@@ -313,17 +313,17 @@ class VaultTools:
             except Exception:
                 continue
 
-            # Tag-Filter (aus Frontmatter)
+            # Tag filter (from frontmatter)
             if tag_filter:
                 fm_tags = self._extract_frontmatter_tags(content)
                 if not any(t in fm_tags for t in tag_filter):
                     continue
 
-            # Volltextsuche
+            # Full-text search
             if query_lower in content.lower():
                 fm_title = self._extract_frontmatter_field(content, "title") or md_file.stem
                 rel_path = str(md_file.relative_to(self._vault_root))
-                # Kontext-Snippet extrahieren
+                # Extract context snippet
                 snippet = self._extract_snippet(content, query_lower)
                 results.append(
                     {
@@ -377,7 +377,7 @@ class VaultTools:
                 continue
             entries.append({"title": title, **meta})
 
-        # Sortierung
+        # Sorting
         if sort_by == "title":
             entries.sort(key=lambda e: e.get("title", "").lower())
         elif sort_by == "created":
@@ -412,12 +412,12 @@ class VaultTools:
         if not identifier.strip():
             return "Fehler: Kein Identifier angegeben."
 
-        # 1. Direkt als Pfad versuchen (mit Path-Traversal-Schutz)
+        # 1. Try as direct path (with path-traversal protection)
         direct_path = self._validate_vault_path(self._vault_root / identifier)
         if direct_path and direct_path.exists() and direct_path.is_file():
             return direct_path.read_text(encoding="utf-8")
 
-        # 2. Im Index nach Titel suchen
+        # 2. Search index by title
         index = self._read_index()
         for title, meta in index.items():
             if title.lower() == identifier.lower():
@@ -425,7 +425,7 @@ class VaultTools:
                 if note_path and note_path.exists():
                     return note_path.read_text(encoding="utf-8")
 
-        # 3. Nach Slug suchen
+        # 3. Search by slug
         slug = _slugify(identifier)
         for md_file in self._vault_root.rglob("*.md"):
             if md_file.stem == slug:
@@ -454,14 +454,14 @@ class VaultTools:
         if not append_content.strip() and not add_tags.strip():
             return "Fehler: Weder Inhalt noch Tags zum Aktualisieren angegeben."
 
-        # Notiz finden
+        # Find note
         note_path = self._find_note(identifier)
         if note_path is None:
             return f"Notiz nicht gefunden: {identifier}"
 
         content = note_path.read_text(encoding="utf-8")
 
-        # Tags ergänzen
+        # Add tags
         if add_tags.strip():
             new_tags = _parse_tags(add_tags)
             existing_tags = self._extract_frontmatter_tags(content)
@@ -470,7 +470,7 @@ class VaultTools:
             )  # dedupliziert, Reihenfolge erhalten
             content = self._replace_frontmatter_field(content, "tags", f"[{', '.join(all_tags)}]")
 
-            # Index aktualisieren
+            # Update index
             title = self._extract_frontmatter_field(content, "title") or note_path.stem
             rel_path = str(note_path.relative_to(self._vault_root))
             folder = (
@@ -480,10 +480,10 @@ class VaultTools:
             )
             self._update_index(title, rel_path, all_tags, folder)
 
-        # Updated-Timestamp aktualisieren
+        # Update the updated-timestamp
         content = self._replace_frontmatter_field(content, "updated", _now_iso())
 
-        # Inhalt anhängen
+        # Append content
         if append_content.strip():
             content = content.rstrip("\n") + "\n\n" + append_content.strip() + "\n"
 
@@ -528,16 +528,16 @@ class VaultTools:
             or target_path.stem
         )
 
-        # [[Backlink]] in Quell-Notiz einfügen
+        # Insert [[backlink]] in source note
         source_content = source_path.read_text(encoding="utf-8")
         backlink_marker = f"[[{target_title}]]"
         if backlink_marker not in source_content:
-            # linked_notes im Frontmatter aktualisieren
+            # Update linked_notes in frontmatter
             source_content = self._add_linked_note(source_content, target_title)
             source_content = self._replace_frontmatter_field(source_content, "updated", _now_iso())
             source_path.write_text(source_content, encoding="utf-8")
 
-        # [[Backlink]] in Ziel-Notiz einfügen
+        # Insert [[backlink]] in target note
         target_content = target_path.read_text(encoding="utf-8")
         backlink_marker = f"[[{source_title}]]"
         if backlink_marker not in target_content:
@@ -548,16 +548,16 @@ class VaultTools:
         log.info("vault_notes_linked", source=source_title, target=target_title)
         return f"Verknüpfung erstellt: [[{source_title}]] ↔ [[{target_title}]]"
 
-    # ── Hilfsmethoden ────────────────────────────────────────────────────
+    # ── Helper methods ────────────────────────────────────────────────────
 
     def _find_note(self, identifier: str) -> Path | None:
         """Findet eine Notiz per Titel, Pfad oder Slug."""
-        # 1. Direkt als relativer Pfad (mit Path-Traversal-Schutz)
+        # 1. Try as relative path (with path-traversal protection)
         direct = self._validate_vault_path(self._vault_root / identifier)
         if direct and direct.exists() and direct.is_file():
             return direct
 
-        # 2. Index-Lookup per Titel
+        # 2. Index lookup by title
         index = self._read_index()
         for title, meta in index.items():
             if title.lower() == identifier.lower():
@@ -565,7 +565,7 @@ class VaultTools:
                 if path and path.exists():
                     return path
 
-        # 3. Slug-Suche
+        # 3. Slug search
         slug = _slugify(identifier)
         for md_file in self._vault_root.rglob("*.md"):
             if md_file.stem == slug:
@@ -586,7 +586,7 @@ class VaultTools:
         """
         if not content.startswith("---"):
             return {}, -1, -1
-        # Finde das schließende --- (nach dem öffnenden)
+        # Find the closing --- (after the opening one)
         close = content.find("\n---", 3)
         if close < 0:
             return {}, -1, -1
@@ -606,7 +606,7 @@ class VaultTools:
         lines = ["---"]
         for key, value in data.items():
             if isinstance(value, list):
-                # Inline-Array: [a, b, c] — Obsidian-kompatibel
+                # Inline array: [a, b, c] — Obsidian-compatible
                 items = []
                 for item in value:
                     s = str(item)
@@ -644,10 +644,10 @@ class VaultTools:
         """Ersetzt oder fügt ein Feld im YAML-Frontmatter hinzu."""
         data, start, end = self._parse_frontmatter(content)
         if start < 0:
-            # Kein Frontmatter vorhanden — nichts zu ersetzen
+            # No frontmatter present — nothing to replace
             return content
 
-        # Wert parsen wenn es ein YAML-String ist (z.B. "[a, b]")
+        # Parse value if it is a YAML string (e.g. "[a, b]")
         if isinstance(value, str):
             try:
                 parsed = yaml.safe_load(value)
@@ -671,7 +671,7 @@ class VaultTools:
         if not isinstance(existing, list):
             existing = []
 
-        # Bereinigung: Strings ohne Quotes
+        # Cleanup: strings without quotes
         existing = [str(n).strip().strip('"') for n in existing if str(n).strip()]
         if note_title not in existing:
             existing.append(note_title)
@@ -682,7 +682,7 @@ class VaultTools:
 
     def _extract_snippet(self, content: str, query: str, context_chars: int = 100) -> str:
         """Extrahiert einen kurzen Kontext-Snippet um den Suchbegriff."""
-        # Frontmatter überspringen via Parser
+        # Skip frontmatter via parser
         _, _, fm_end = self._parse_frontmatter(content)
         body = content[fm_end:] if fm_end > 0 else content
 
@@ -693,12 +693,12 @@ class VaultTools:
         start = max(0, idx - context_chars)
         end = min(len(body), idx + len(query) + context_chars)
         snippet = body[start:end].strip()
-        # Zeilenumbrüche entfernen
+        # Remove line breaks
         snippet = re.sub(r"\s+", " ", snippet)
         return snippet[:250]
 
 
-# ── MCP-Client-Registrierung ─────────────────────────────────────────────
+# ── MCP client registration ─────────────────────────────────────────────
 
 
 def register_vault_tools(

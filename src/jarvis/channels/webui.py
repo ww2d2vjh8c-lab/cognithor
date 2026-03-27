@@ -39,12 +39,12 @@ if TYPE_CHECKING:
 
 log = get_logger(__name__)
 
-# Maximale Upload-Groesse (50 MB)
+# Maximum upload size (50 MB)
 MAX_UPLOAD_SIZE = 52_428_800
 
 
 # ============================================================================
-# WebSocket-Nachrichtentypen
+# WebSocket message types
 # ============================================================================
 
 
@@ -137,7 +137,7 @@ class WebUIChannel(Channel):
         self._app: Any = None
         self._start_time = 0.0
 
-        # WebSocket-Verbindungen: session_id → WebSocket
+        # WebSocket connections: session_id → WebSocket
         self._connections: TTLDict[str, Any] = TTLDict(max_size=1000, ttl_seconds=86400)
         # Pending Approvals: request_id → Future (finally-Cleanup in request_approval)
         self._pending_approvals: dict[str, asyncio.Future[bool]] = {}
@@ -162,7 +162,7 @@ class WebUIChannel(Channel):
         self._start_time = time.monotonic()
         self._app = self._create_app()
 
-        # TLS-Warning für externe Hosts
+        # TLS warning for external hosts
         if self._host not in ("127.0.0.1", "localhost", "::1") and not self._ssl_certfile:
             log.warning(
                 "webui_no_tls",
@@ -174,13 +174,13 @@ class WebUIChannel(Channel):
 
     async def stop(self) -> None:
         """Stoppt den WebUI-Server und schließt WebSocket-Verbindungen."""
-        # Alle WebSocket-Verbindungen schließen
+        # Close all WebSocket connections
         for ws in list(self._connections.values()):
             with contextlib.suppress(Exception):
                 await ws.close()
         self._connections.clear()
 
-        # Pending Approvals abbrechen
+        # Cancel pending approvals
         for future in self._pending_approvals.values():
             if not future.done():
                 future.set_result(False)
@@ -421,8 +421,8 @@ class WebUIChannel(Channel):
                 websocket: WebSocket,
                 session_id: str,
             ) -> None:
-                # Token-Check via erster WS-Nachricht (nicht Query-Param,
-                # um Log-Exposure zu vermeiden).
+                # Token check via first WS message (not query param,
+                # to avoid log exposure).
                 await websocket.accept()
 
                 if self._api_token:
@@ -592,7 +592,7 @@ class WebUIChannel(Channel):
             text = msg.get("text", "").strip()
             metadata = msg.get("metadata", {})
 
-            # --- Voice-Bridge: Audio transkribieren ---
+            # --- Voice bridge: transcribe audio ---
             if metadata.get("audio_base64"):
                 transcribed = await self._transcribe_audio(metadata, ws, session_id)
                 if transcribed:
@@ -600,7 +600,7 @@ class WebUIChannel(Channel):
                 else:
                     return  # Fehler wurde bereits gesendet
 
-            # --- File-Upload: Datei speichern und Text extrahieren ---
+            # --- File upload: save file and extract text ---
             if metadata.get("file_base64") and text.startswith("[file_upload]"):
                 file_text = await self._process_file_upload(metadata, ws, session_id)
                 if file_text:
@@ -694,7 +694,7 @@ class WebUIChannel(Channel):
                 )
             return
 
-        # Unbekannter Typ
+        # Unknown type
         await self._ws_send(
             ws,
             {
@@ -727,7 +727,7 @@ class WebUIChannel(Channel):
         if not audio_b64:
             return None
 
-        # Geschätzte Dateigrösse prüfen
+        # Check estimated file size
         estimated_size = len(audio_b64) * 3 // 4
         if estimated_size > MAX_UPLOAD_SIZE:
             await self._ws_send(
@@ -743,7 +743,7 @@ class WebUIChannel(Channel):
             )
             return None
 
-        # Benachrichtigung: Transkription läuft
+        # Notification: transcription in progress
         await self._ws_send(
             ws,
             {
@@ -757,7 +757,7 @@ class WebUIChannel(Channel):
         tmp_path: str | None = None
         wav_path: str | None = None
         try:
-            # Base64 → Datei
+            # Base64 → file
             audio_bytes = base64.b64decode(audio_b64)
             suffix = ".webm" if "webm" in audio_type else ".ogg"
 
@@ -765,7 +765,7 @@ class WebUIChannel(Channel):
                 tmp.write(audio_bytes)
                 tmp_path = tmp.name
 
-            # Konvertierung zu WAV via ffmpeg (falls nötig)
+            # Convert to WAV via ffmpeg (if needed)
             wav_path = tmp_path + ".wav"
             try:
                 proc = await asyncio.create_subprocess_exec(
@@ -787,7 +787,7 @@ class WebUIChannel(Channel):
             except FileNotFoundError:
                 wav_path = tmp_path  # ffmpeg nicht verfügbar
 
-            # Transkription via MediaPipeline oder faster-whisper direkt
+            # Transcription via MediaPipeline or faster-whisper directly
             try:
                 from jarvis.mcp.media import MediaPipeline
 
@@ -799,7 +799,7 @@ class WebUIChannel(Channel):
                         "voice_bridge_transcribed", text=result.text[:100], session_id=session_id
                     )
 
-                    # Transkription dem User anzeigen
+                    # Show transcription to user
                     await self._ws_send(
                         ws,
                         {
@@ -844,7 +844,7 @@ class WebUIChannel(Channel):
             )
             return None
         finally:
-            # Temporäre Dateien aufräumen
+            # Clean up temporary files
             for p in [tmp_path, wav_path]:
                 if p is None:
                     continue
@@ -874,7 +874,7 @@ class WebUIChannel(Channel):
         if not file_b64:
             return None
 
-        # Geschätzte Dateigrösse prüfen (Base64 → ~75% Originalgrösse)
+        # Check estimated file size (Base64 → ~75% of original size)
         estimated_size = len(file_b64) * 3 // 4
         if estimated_size > MAX_UPLOAD_SIZE:
             await self._ws_send(
@@ -907,7 +907,7 @@ class WebUIChannel(Channel):
 
             log.info("file_uploaded", name=file_name, size=len(file_bytes), session_id=session_id)
 
-            # Text-Extraktion versuchen
+            # Attempt text extraction
             try:
                 from jarvis.mcp.media import MediaPipeline
 
@@ -923,7 +923,7 @@ class WebUIChannel(Channel):
             except Exception:
                 pass  # Cleanup — file content extraction failure is non-critical
 
-            # Fallback: Nur Dateiinfo
+            # Fallback: file info only
             return (
                 f"[Datei hochgeladen: {file_name}, "
                 f"{len(file_bytes)} Bytes, Typ: {file_type}]\n"
@@ -962,7 +962,7 @@ class WebUIChannel(Channel):
 
 
 # ============================================================================
-# ASGI Factory — für uvicorn --factory / docker-compose / systemd
+# ASGI Factory — for uvicorn --factory / docker-compose / systemd
 # ============================================================================
 
 

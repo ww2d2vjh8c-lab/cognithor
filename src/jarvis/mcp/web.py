@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 
 log = get_logger(__name__)
 
-# ── Konstanten ─────────────────────────────────────────────────────────────
+# ── Constants ─────────────────────────────────────────────────────────────
 
 _DEFAULT_MAX_FETCH_BYTES = 500_000  # 500 KB maximaler Fetch
 _DEFAULT_MAX_TEXT_CHARS = 20_000  # 20K Zeichen extrahierter Text
@@ -51,18 +51,18 @@ DEFAULT_USER_AGENT = (
     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 )
 
-# DuckDuckGo-Optimierung: Backends in Fallback-Reihenfolge
+# DuckDuckGo optimization: backends in fallback order
 DDG_BACKENDS = ("duckduckgo", "bing", "google", "brave")
-# Mindestabstand zwischen DuckDuckGo-Suchen (Sekunden)
+# Minimum delay between DuckDuckGo searches (seconds)
 _DEFAULT_DDG_MIN_DELAY = 2.0
-# Wartezeit bei Rate-Limiting (Sekunden)
+# Wait time on rate-limiting (seconds)
 _DEFAULT_DDG_RATELIMIT_WAIT = 30
-# Cache-TTL (Sekunden) — Standard: 1 Stunde
+# Cache TTL (seconds) — default: 1 hour
 _DEFAULT_DDG_CACHE_TTL = 3600
-# search_and_read: maximale Zeichen pro Seite
+# search_and_read: maximum characters per page
 _DEFAULT_SEARCH_AND_READ_MAX_CHARS = 5000
 
-# Blocked Domains (Sicherheit)
+# Blocked domains (security)
 BLOCKED_DOMAINS = frozenset(
     {
         "localhost",
@@ -124,22 +124,22 @@ class WebTools:
         self._brave_api_key = brave_api_key
         self._duckduckgo_enabled = True
 
-        # Google CSE
+        # Google CSE credentials
         self._google_cse_api_key = ""
         self._google_cse_cx = ""
 
-        # Jina AI Reader
+        # Jina AI Reader API key
         self._jina_api_key = ""
 
-        # Domain-Filtering
+        # Domain filtering
         self._domain_blocklist: list[str] = []
         self._domain_allowlist: list[str] = []
 
-        # DuckDuckGo-Optimierung: State
+        # DuckDuckGo optimization: state
         self._ddg_last_search: float = 0.0
         self._ddg_cache_dir: Path | None = None
 
-        # Konfigurierbare Konstanten (Defaults aus Modul-Konstanten)
+        # Configurable constants (defaults from module-level constants)
         self._max_fetch_bytes: int = _DEFAULT_MAX_FETCH_BYTES
         self._max_text_chars: int = _DEFAULT_MAX_TEXT_CHARS
         self._fetch_timeout: int = _DEFAULT_FETCH_TIMEOUT
@@ -150,13 +150,13 @@ class WebTools:
         self._ddg_cache_ttl: int = _DEFAULT_DDG_CACHE_TTL
         self._search_and_read_max_chars: int = _DEFAULT_SEARCH_AND_READ_MAX_CHARS
 
-        # HTTP Request Tool
+        # HTTP request tool
         self._http_request_max_body: int = 1_048_576  # 1 MB
         self._http_request_timeout: int = 30
         self._http_request_rate_limit: float = 1.0
         self._http_request_last_call: float = 0.0
 
-        # Aus Config laden falls vorhanden
+        # Load from config if available
         if config is not None:
             web_cfg = getattr(config, "web", None)
             if web_cfg is not None:
@@ -171,7 +171,7 @@ class WebTools:
                 self._domain_blocklist = list(getattr(web_cfg, "domain_blocklist", []))
                 self._domain_allowlist = list(getattr(web_cfg, "domain_allowlist", []))
 
-                # Konfigurierbare Konstanten aus web-Config übernehmen
+                # Apply configurable constants from web config
                 self._max_fetch_bytes = getattr(web_cfg, "max_fetch_bytes", self._max_fetch_bytes)
                 self._max_text_chars = getattr(web_cfg, "max_text_chars", self._max_text_chars)
                 self._fetch_timeout = getattr(web_cfg, "fetch_timeout_seconds", self._fetch_timeout)
@@ -190,7 +190,7 @@ class WebTools:
                     web_cfg, "search_and_read_max_chars", self._search_and_read_max_chars
                 )
 
-                # HTTP Request Tool
+                # HTTP request tool
                 self._http_request_max_body = getattr(
                     web_cfg, "http_request_max_body_bytes", self._http_request_max_body
                 )
@@ -201,7 +201,7 @@ class WebTools:
                     web_cfg, "http_request_rate_limit_seconds", self._http_request_rate_limit
                 )
 
-            # Cache-Verzeichnis: ~/.jarvis/cache/web_search/
+            # Cache directory: ~/.jarvis/cache/web_search/
             jarvis_home = getattr(config, "jarvis_home", None)
             if jarvis_home:
                 self._ddg_cache_dir = Path(jarvis_home) / "cache" / "web_search"
@@ -209,10 +209,10 @@ class WebTools:
         if self._ddg_cache_dir is None:
             self._ddg_cache_dir = Path.home() / ".jarvis" / "cache" / "web_search"
 
-        # Referenz auf Config fuer Live-Reload
+        # Reference to config for live-reload
         self._config = config
 
-        # DNS-Cache: vermeidet wiederholte DNS-Auflösung pro Request
+        # DNS cache: avoids repeated DNS resolution per request
         self._dns_cache: TTLDict[str, list[str]] = TTLDict(
             max_size=1000,
             ttl_seconds=300,
@@ -292,11 +292,11 @@ class WebTools:
         if hostname in BLOCKED_DOMAINS:
             raise WebError(f"Zugriff auf {hostname} blockiert (Sicherheit)")
 
-        # Private IP-Bereiche blockieren
+        # Block private IP ranges
         if _is_private_host(hostname):
             raise WebError(f"Zugriff auf private Adressen blockiert: {hostname}")
 
-        # DNS-Resolution prüfen um DNS-Rebinding/Bypass zu verhindern
+        # Check DNS resolution to prevent DNS-rebinding/bypass
         import socket
 
         cached_ips = self._dns_cache.get(hostname)
@@ -304,7 +304,7 @@ class WebTools:
             # Cache-Hit: IPs erneut validieren (Paranoia-Check)
             for ip in cached_ips:
                 if ip in BLOCKED_DOMAINS or _is_private_host(ip):
-                    # Invalide IP im Cache → löschen und neu auflösen
+                    # Invalid IP in cache → delete and re-resolve
                     del self._dns_cache[hostname]
                     cached_ips = None
                     break
@@ -343,7 +343,7 @@ class WebTools:
         if not hostname:
             return
 
-        # Allowlist-Modus: Wenn gesetzt, NUR diese Domains erlauben
+        # Allowlist mode: if set, ONLY allow these domains
         if self._domain_allowlist:
             allowed = any(
                 hostname == d.lower() or hostname.endswith("." + d.lower())
@@ -356,7 +356,7 @@ class WebTools:
                 )
             return
 
-        # Blocklist: Diese Domains blockieren
+        # Blocklist: block these domains
         if self._domain_blocklist:
             blocked = any(
                 hostname == d.lower() or hostname.endswith("." + d.lower())
@@ -393,7 +393,7 @@ class WebTools:
         num_results = min(max(num_results, 1), self._max_search_results)
         provider_errors: list[str] = []
 
-        # SearXNG versuchen
+        # Try SearXNG
         if self._searxng_url:
             try:
                 return await self._search_searxng(query, num_results, language)
@@ -401,7 +401,7 @@ class WebTools:
                 provider_errors.append(f"SearXNG: {exc}")
                 log.warning("SearXNG-Suche fehlgeschlagen: %s", exc)
 
-        # Brave Search versuchen
+        # Try Brave Search
         if self._brave_api_key:
             try:
                 return await self._search_brave(query, num_results, language)
@@ -409,7 +409,7 @@ class WebTools:
                 provider_errors.append(f"Brave: {exc}")
                 log.warning("Brave-Suche fehlgeschlagen: %s", exc)
 
-        # Google Custom Search Engine versuchen
+        # Try Google Custom Search Engine
         if self._google_cse_api_key and self._google_cse_cx:
             try:
                 return await self._search_google_cse(query, num_results, language)
@@ -417,7 +417,7 @@ class WebTools:
                 provider_errors.append(f"Google CSE: {exc}")
                 log.warning("Google-CSE-Suche fehlgeschlagen: %s", exc)
 
-        # DuckDuckGo mit Multi-Backend-Fallback, Cache und Rate-Limiting
+        # DuckDuckGo with multi-backend fallback, cache, and rate-limiting
         if self._duckduckgo_enabled:
             try:
                 return await self._search_duckduckgo(query, num_results, language, timelimit)
@@ -425,7 +425,7 @@ class WebTools:
                 provider_errors.append(f"DuckDuckGo: {exc}")
                 log.warning("DuckDuckGo-Suche fehlgeschlagen: %s", exc)
 
-        # Alle Provider fehlgeschlagen → detaillierte Fehlermeldung
+        # All providers failed → detailed error message
         if provider_errors:
             error_details = "\n".join(f"  • {e}" for e in provider_errors)
             return (
@@ -474,7 +474,7 @@ class WebTools:
     ) -> str:
         """Suche über Brave Search API."""
         url = "https://api.search.brave.com/res/v1/web/search"
-        # API-Key direkt als Header setzen, nie loggen
+        # Set API key directly as header, never log it
         _token = self._brave_api_key or ""
         headers = {
             "Accept": "application/json",
@@ -497,7 +497,7 @@ class WebTools:
         if not web_results:
             return f"Keine Ergebnisse für: {query}"
 
-        # Brave-Format → einheitliches Format konvertieren
+        # Convert Brave format → unified format
         results = [
             {
                 "title": r.get("title", ""),
@@ -533,7 +533,7 @@ class WebTools:
         if not items:
             return f"Keine Ergebnisse für: {query}"
 
-        # Google-CSE-Format → einheitliches Format konvertieren
+        # Convert Google CSE format → unified format
         results = [
             {
                 "title": r.get("title", ""),
@@ -567,7 +567,7 @@ class WebTools:
         """
         import anyio
 
-        # Region-Mapping
+        # Region mapping
         region_map = {
             "de": "de-de",
             "en": "us-en",
@@ -585,13 +585,13 @@ class WebTools:
         region = region_map.get(language, "wt-wt")
         tl = timelimit if timelimit in ("d", "w", "m", "y") else None
 
-        # 1. Cache prüfen
+        # 1. Check cache
         cached = self._ddg_cache_get(query, region, tl, num_results)
         if cached is not None:
             log.info("ddg_cache_hit", query=query[:60])
             return _format_search_results(cached, query)
 
-        # 2. Rate-Limiting: Mindestabstand einhalten
+        # 2. Rate-limiting: enforce minimum delay
         now = time.monotonic()
         elapsed = now - self._ddg_last_search
         if elapsed < self._ddg_min_delay:
@@ -599,7 +599,7 @@ class WebTools:
             log.debug("ddg_rate_limit_wait", wait_s=round(wait, 1))
             await anyio.sleep(wait)
 
-        # 3. Multi-Backend-Suche mit Fallback
+        # 3. Multi-backend search with fallback
         results = await anyio.to_thread.run_sync(
             lambda: self._ddg_search_with_fallback(query, region, tl, num_results)
         )
@@ -608,7 +608,7 @@ class WebTools:
         if not results:
             return f"Keine Ergebnisse für: {query}"
 
-        # 4. Cache speichern
+        # 4. Save to cache
         self._ddg_cache_put(query, region, tl, num_results, results)
 
         return _format_search_results(results, query)
@@ -665,7 +665,7 @@ class WebTools:
                         }
                         for r in raw
                     ]
-                # Leere Ergebnisse → nächstes Backend probieren
+                # Empty results → try next backend
                 log.debug("ddg_backend_empty", backend=backend)
 
             except Exception as exc:
@@ -678,7 +678,7 @@ class WebTools:
                         backend=backend,
                         query=query[:60],
                     )
-                    # Bei Rate-Limit kurz warten bevor nächstes Backend versucht wird
+                    # Wait briefly on rate-limit before trying next backend
                     time.sleep(min(self._ddg_ratelimit_wait, 5))
                 else:
                     log.warning(
@@ -687,7 +687,7 @@ class WebTools:
                         error=str(exc)[:200],
                     )
 
-        # Alle Backends gescheitert
+        # All backends failed
         if last_error:
             raise WebError(
                 f"DuckDuckGo-Suche fehlgeschlagen (alle Backends): {last_error}"
@@ -814,7 +814,7 @@ class WebTools:
                 return None
             data = json.loads(cache_file.read_text(encoding="utf-8"))
             if time.time() - data.get("ts", 0) >= self._ddg_cache_ttl:
-                # Abgelaufen → löschen
+                # Expired → delete
                 cache_file.unlink(missing_ok=True)
                 return None
             return data.get("results")
@@ -873,17 +873,17 @@ class WebTools:
         validated = await self._validate_url(url)
         max_chars = max_chars or self._max_text_chars
 
-        # Domain-Filter prüfen
+        # Check domain filter
         parsed = urlparse(validated)
         hostname = (parsed.hostname or "").lower()
         self._check_domain_allowed(hostname)
 
-        # Jina-only Modus
+        # Jina-only mode
         if reader_mode == "jina":
             text = await self._fetch_via_jina(validated)
             return _truncate_text(text, max_chars, url)
 
-        # Standard-Fetch
+        # Standard fetch
         fetch_failed = False
         try:
             async with httpx.AsyncClient(
@@ -897,7 +897,7 @@ class WebTools:
         except (httpx.HTTPStatusError, httpx.RequestError) as exc:
             if reader_mode == "trafilatura":
                 raise WebError(f"Fetch fehlgeschlagen für {url}: {exc}") from exc
-            # auto-Modus: Bei Fehler Jina als Fallback versuchen
+            # auto mode: try Jina as fallback on error
             log.warning("web_fetch_failed_trying_jina", url=url, error=str(exc))
             fetch_failed = True
 
@@ -911,7 +911,7 @@ class WebTools:
         if len(raw) > self._max_fetch_bytes:
             raw = raw[: self._max_fetch_bytes]
 
-        # Nicht-HTML → als Plaintext zurückgeben
+        # Non-HTML → return as plaintext
         if "text/html" not in content_type and extract_text:
             text = raw.decode("utf-8", errors="replace")
             return _truncate_text(text, max_chars, url)
@@ -921,10 +921,10 @@ class WebTools:
         if not extract_text:
             return _truncate_text(html, max_chars, url)
 
-        # Text-Extraktion mit trafilatura
+        # Text extraction with trafilatura
         text = _extract_text_from_html(html, url)
 
-        # Auto-Modus: Bei wenig Inhalt (<200 Zeichen) Jina-Fallback
+        # Auto mode: Jina fallback when content is short (<200 chars)
         if reader_mode == "auto" and len(text.strip()) < 200:
             log.info("trafilatura_short_trying_jina", url=url, chars=len(text.strip()))
             try:
@@ -967,16 +967,16 @@ class WebTools:
 
         validated = await self._validate_url(url)
 
-        # Domain-Filter prüfen
+        # Check domain filter
         parsed = urlparse(validated)
         hostname = (parsed.hostname or "").lower()
         self._check_domain_allowed(hostname)
 
-        # SSRF-Schutz
+        # SSRF protection
         if _is_private_host(hostname):
             raise WebError(f"Zugriff auf private Adresse blockiert: {hostname}")
 
-        # Body-Größe limitieren
+        # Limit body size
         max_body = self._http_request_max_body
         if body and len(body) > max_body:
             raise WebError(f"Request-Body zu groß: {len(body)} Bytes (max {max_body} Bytes)")
@@ -1056,7 +1056,7 @@ class WebTools:
             except httpx.RequestError as exc:
                 raise WebError(f"Jina Reader Verbindungsfehler für {url}: {exc}") from exc
 
-    # ── Kombination: Suche + Fetch ─────────────────────────────────────────
+    # ── Combination: Search + Fetch ─────────────────────────────────────────
 
     async def search_and_read(
         self,
@@ -1096,7 +1096,7 @@ class WebTools:
             except WebError as exc:
                 parts.append(f"\n### [{i}] {url}\nFehler: {exc}\n")
 
-        # Quellenvergleich anhängen
+        # Append source comparison
         if cross_check and len(fetched_contents) >= 2:
             parts.append("\n---\n## Quellenvergleich\n")
             parts.append(
@@ -1116,7 +1116,7 @@ class WebTools:
         return "\n".join(parts)
 
 
-# ── Hilfsfunktionen ────────────────────────────────────────────────────────
+# ── Helper functions ────────────────────────────────────────────────────────
 
 
 def _extract_text_from_html(html: str, url: str = "") -> str:
@@ -1148,7 +1148,7 @@ def _extract_text_from_html(html: str, url: str = "") -> str:
     except Exception:
         log.debug("trafilatura-Extraktion fehlgeschlagen, nutze Fallback")
 
-    # Fallback: einfache Regex-Extraktion
+    # Fallback: simple regex extraction
     return _simple_html_to_text(html)
 
 
@@ -1172,7 +1172,7 @@ class _TextExtractor(HTMLParser):
             self._in_script_or_style = True
             return
         if tag_lower in self._BLOCK_TAGS:
-            # Block-Elemente als Zeilenumbruch behandeln
+            # Treat block elements as line breaks
             self._texts.append("\n")
 
     def handle_endtag(self, tag: str) -> None:  # type: ignore[override]
@@ -1200,10 +1200,10 @@ def _simple_html_to_text(html: str) -> str:
     parser.feed(html)
     parser.close()
     text = parser.get_text()
-    # HTML-Entities (zusätzlich zu convert_charrefs)
+    # HTML entities (in addition to convert_charrefs)
     text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
     text = text.replace("&nbsp;", " ").replace("&quot;", '"')
-    # Whitespace normalisieren
+    # Normalize whitespace
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
@@ -1277,7 +1277,7 @@ def _truncate_text(text: str, max_chars: int, url: str = "") -> str:
         return text
 
     truncated = text[:max_chars]
-    # Am letzten Satzende kürzen
+    # Truncate at last sentence boundary
     last_period = truncated.rfind(".")
     if last_period > max_chars * 0.5:
         truncated = truncated[: last_period + 1]
@@ -1318,7 +1318,7 @@ def _is_private_host(hostname: str) -> bool:
                 return _is_private_host(ipv4_part)
         return False
 
-    # Direkte IPv4-Prüfung
+    # Direct IPv4 check
     parts = h.split(".")
     if len(parts) == 4:
         try:
@@ -1342,7 +1342,7 @@ def _is_private_host(hostname: str) -> bool:
     return False
 
 
-# ── MCP-Client-Registrierung ──────────────────────────────────────────────
+# ── MCP client registration ──────────────────────────────────────────────
 
 
 def register_web_tools(

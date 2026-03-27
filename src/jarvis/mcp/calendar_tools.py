@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 log = get_logger(__name__)
 
-# ── Konstanten ─────────────────────────────────────────────────────────────
+# ── Constants ─────────────────────────────────────────────────────────────
 
 _DEFAULT_EVENT_DURATION = timedelta(hours=1)
 _MAX_UPCOMING_DAYS = 90
@@ -66,7 +66,7 @@ def _get_local_timezone() -> timezone:
     try:
         import time as _time
 
-        # Auf Windows kann tzname seltsam sein; Fallback auf UTC-Offset
+        # On Windows tzname can be weird; fall back to UTC offset
         local_offset = timedelta(seconds=-_time.timezone)
         if _time.daylight and _time.altzone:
             local_offset = timedelta(seconds=-_time.altzone)
@@ -80,18 +80,18 @@ def _get_configured_timezone(tz_str: str) -> timezone:
     if not tz_str:
         return _get_local_timezone()
 
-    # Versuche zoneinfo (Python 3.9+)
+    # Try zoneinfo (Python 3.9+)
     try:
         from zoneinfo import ZoneInfo
 
         zi = ZoneInfo(tz_str)
-        # Konvertiere zu fixem Offset für Vergleiche
+        # Convert to fixed offset for comparisons
         now = datetime.now(zi)
         return timezone(now.utcoffset() or timedelta(0))
     except Exception:
         pass
 
-    # Versuche UTC+N Format
+    # Try UTC+N format
     match = re.match(r"UTC([+-])(\d{1,2})(?::(\d{2}))?", tz_str)
     if match:
         sign = 1 if match.group(1) == "+" else -1
@@ -111,13 +111,13 @@ def _parse_ics_datetime(value: str) -> datetime:
       - 20240115 (ganztägig)
       - Mit TZID-Prefix
     """
-    # TZID entfernen wenn vorhanden
+    # Remove TZID prefix if present
     if ":" in value:
         value = value.split(":")[-1]
     value = value.strip()
 
     if len(value) == 8:
-        # Nur Datum (ganztägig)
+        # Date only (all-day event)
         return datetime.strptime(value, "%Y%m%d").replace(tzinfo=_get_local_timezone())
 
     if value.endswith("Z"):
@@ -232,7 +232,7 @@ def _parse_rrule_instances(
 
     rrule = event.rrule.upper()
 
-    # FREQ extrahieren
+    # Extract FREQ
     freq_match = re.search(r"FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)", rrule)
     if not freq_match:
         if event.dtstart and range_start <= event.dtstart <= range_end:
@@ -241,15 +241,15 @@ def _parse_rrule_instances(
 
     freq = freq_match.group(1)
 
-    # INTERVAL extrahieren
+    # Extract INTERVAL
     interval_match = re.search(r"INTERVAL=(\d+)", rrule)
     interval = int(interval_match.group(1)) if interval_match else 1
 
-    # COUNT extrahieren
+    # Extract COUNT
     count_match = re.search(r"COUNT=(\d+)", rrule)
     max_count = int(count_match.group(1)) if count_match else _MAX_RECURRENCE_INSTANCES
 
-    # UNTIL extrahieren
+    # Extract UNTIL
     until_match = re.search(r"UNTIL=(\d{8}(?:T\d{6}Z?)?)", rrule)
     until = _parse_ics_datetime(until_match.group(1)) if until_match else range_end
 
@@ -276,14 +276,14 @@ def _parse_rrule_instances(
         elif freq == "WEEKLY":
             current = current + timedelta(weeks=interval)
         elif freq == "MONTHLY":
-            # Nächster Monat, gleicher Tag
+            # Next month, same day
             month = current.month + interval
             year = current.year + (month - 1) // 12
             month = ((month - 1) % 12) + 1
             try:
                 current = current.replace(year=year, month=month)
             except ValueError:
-                # Tag existiert nicht (z.B. 31. Feb)
+                # Day does not exist (e.g. Feb 31)
                 break
         elif freq == "YEARLY":
             try:
@@ -312,7 +312,7 @@ def _parse_ics_manual(content: str) -> list[_VEvent]:
             if event:
                 events.append(event)
         elif in_event:
-            # Unfold: Zeilen die mit Leerzeichen/Tab beginnen gehören zur vorherigen
+            # Unfold: lines starting with space/tab belong to the previous line
             if line.startswith((" ", "\t")) and event_lines:
                 event_lines[-1] += line[1:]
             else:
@@ -328,7 +328,7 @@ def _parse_vevent_block(lines: list[str]) -> _VEvent | None:
         if ":" not in line:
             continue
         key, _, value = line.partition(":")
-        # Property-Name ohne Parameter (z.B. DTSTART;TZID=Europe/Berlin → DTSTART)
+        # Property name without parameters (e.g. DTSTART;TZID=Europe/Berlin → DTSTART)
         prop_name = key.split(";")[0].upper()
         props[prop_name] = value.strip()
 
@@ -351,9 +351,9 @@ def _parse_vevent_block(lines: list[str]) -> _VEvent | None:
         with contextlib.suppress(CalendarError, ValueError):
             dtend = _parse_ics_datetime(props["DTEND"])
 
-    # Ganztägig-Erkennung: kein T in DTSTART oder VALUE=DATE
+    # All-day detection: no T in DTSTART or VALUE=DATE
     all_day = "T" not in props.get("DTSTART", "T")
-    # Auch in der Key-Zeile nach VALUE=DATE suchen
+    # Also check the key line for VALUE=DATE
     for line in lines:
         if line.upper().startswith("DTSTART") and "VALUE=DATE" in line.upper():
             all_day = True
@@ -465,13 +465,13 @@ class CalendarTools:
 
         self._tz = _get_configured_timezone(cal_cfg.timezone)
 
-        # CalDAV-Client (optional)
+        # CalDAV client (optional)
         self._caldav_client: Any = None
         self._caldav_url = cal_cfg.caldav_url
         self._caldav_username = cal_cfg.username
         self._caldav_password_env = cal_cfg.password_env
 
-        # ICS-Datei erstellen wenn nicht vorhanden
+        # Create ICS file if not present
         self._ensure_ics_file()
 
     def _ensure_ics_file(self) -> None:
@@ -490,7 +490,7 @@ class CalendarTools:
         if not content.strip():
             return []
 
-        # Versuche icalendar-Bibliothek, Fallback auf manuellen Parser
+        # Try icalendar library, fall back to manual parser
         return _parse_ics_with_library(content)
 
     def _get_events_in_range(
@@ -514,7 +514,7 @@ class CalendarTools:
                 and event.dtstart <= range_end
                 and event.dtend >= range_start
             ):
-                # Event überspannt den Zeitraum
+                # Event spans the time range
                 result.append(event)
 
         result.sort(key=lambda e: e.dtstart or datetime.min.replace(tzinfo=UTC))
@@ -529,7 +529,7 @@ class CalendarTools:
         if not content.strip():
             content = _ICS_HEADER + _ICS_FOOTER
 
-        # Event vor END:VCALENDAR einfügen
+        # Insert event before END:VCALENDAR
         vevent_block = event.to_ics_block()
         content = content.replace(
             "END:VCALENDAR",
@@ -695,7 +695,7 @@ class CalendarTools:
         else:
             target = self._now()
 
-        # Arbeitszeit parsen
+        # Parse work hours
         try:
             wh_start = time.fromisoformat(work_hours_start)
             wh_end = time.fromisoformat(work_hours_end)
@@ -713,11 +713,11 @@ class CalendarTools:
         loop = asyncio.get_running_loop()
         events = await loop.run_in_executor(None, self._get_events_in_range, day_start, day_end)
 
-        # Belegte Zeiträume sammeln (sortiert)
+        # Collect busy time slots (sorted)
         busy: list[tuple[datetime, datetime]] = []
         for event in events:
             if event.all_day:
-                # Ganztägige Termine blockieren den ganzen Tag
+                # All-day events block the entire day
                 busy.append((day_start, day_end))
             elif event.dtstart and event.dtend:
                 ev_start = max(event.dtstart, day_start)
@@ -725,7 +725,7 @@ class CalendarTools:
                 if ev_start < ev_end:
                     busy.append((ev_start, ev_end))
 
-        # Belegte Zeiträume zusammenführen (Merge Overlaps)
+        # Merge overlapping busy time slots
         busy.sort(key=lambda x: x[0])
         merged: list[tuple[datetime, datetime]] = []
         for start_t, end_t in busy:
@@ -734,7 +734,7 @@ class CalendarTools:
             else:
                 merged.append((start_t, end_t))
 
-        # Freie Zeitfenster berechnen
+        # Calculate free time slots
         desired_duration = timedelta(minutes=duration_minutes)
         free_slots: list[tuple[datetime, datetime]] = []
         current = day_start
@@ -746,13 +746,13 @@ class CalendarTools:
                     free_slots.append((current, busy_start))
             current = max(current, busy_end)
 
-        # Letzter Slot bis Arbeitsende
+        # Last slot until end of work hours
         if day_end > current:
             gap = day_end - current
             if gap >= desired_duration:
                 free_slots.append((current, day_end))
 
-        # Formatieren
+        # Format output
         date_str = target.strftime("%d.%m.%Y")
         header = (
             f"Verfügbarkeit am {date_str} "

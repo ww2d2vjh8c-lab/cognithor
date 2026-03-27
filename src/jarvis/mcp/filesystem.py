@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 log = get_logger(__name__)
 
-# Ausgeschlossene Verzeichnisse beim Baum-Listing
+# Excluded directories for tree listing
 EXCLUDED_DIRECTORIES = frozenset(
     {
         "node_modules",
@@ -38,7 +38,7 @@ EXCLUDED_DIRECTORIES = frozenset(
     }
 )
 
-# Maximale Eintraege im Verzeichnisbaum (Default)
+# Maximum entries in directory tree (default)
 _DEFAULT_MAX_TREE_ENTRIES = 200
 
 __all__ = [
@@ -101,7 +101,7 @@ class FileSystemTools:
         except (ValueError, OSError) as exc:
             raise FileSystemError(f"Ungültiger Pfad: {path_str}") from exc
 
-        # Prüfe ob Pfad in einem erlaubten Verzeichnis liegt
+        # Check if path is within an allowed directory
         for root in self._allowed_roots:
             try:
                 path.relative_to(root)
@@ -146,7 +146,7 @@ class FileSystemTools:
             except Exception:
                 log.debug("hashline_cache_prefill_failed", path=path, exc_info=True)
 
-        # Größenbeschränkung (maximal 1MB lesen)
+        # Size limit (max 1MB read)
         size = validated.stat().st_size
         if size > 1_048_576:
             raise FileSystemError(
@@ -157,18 +157,18 @@ class FileSystemTools:
         try:
             content = validated.read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            # Fallback für nicht-UTF-8 Dateien
+            # Fallback for non-UTF-8 files
             try:
                 content = validated.read_text(encoding="latin-1")
             except Exception as exc:
                 raise FileSystemError(f"Datei nicht lesbar: {exc}") from exc
 
-        # Zeilenbereich filtern
+        # Filter line range
         if line_start > 0 or line_end >= 0:
             lines = content.split("\n")
             end = line_end + 1 if line_end >= 0 else len(lines)
             selected = lines[line_start:end]
-            # Zeilennummern hinzufügen für Kontext
+            # Add line numbers for context
             numbered = [f"{line_start + i + 1:4d} │ {line}" for i, line in enumerate(selected)]
             return "\n".join(numbered)
 
@@ -189,10 +189,10 @@ class FileSystemTools:
         """
         validated = self._validate_path(path)
 
-        # Elternverzeichnis erstellen wenn nötig
+        # Create parent directory if needed
         validated.parent.mkdir(parents=True, exist_ok=True)
 
-        # Atomares Schreiben via temporäre Datei
+        # Atomic write via temporary file
         try:
             fd, tmp_path = tempfile.mkstemp(
                 dir=str(validated.parent),
@@ -204,10 +204,10 @@ class FileSystemTools:
                     f.write(content)
                     f.flush()
                     os.fsync(f.fileno())
-                # Atomares Rename
+                # Atomic rename
                 os.replace(tmp_path, str(validated))
             except Exception:
-                # Temporäre Datei aufräumen bei Fehler
+                # Clean up temporary file on error
                 with contextlib.suppress(OSError):
                     os.unlink(tmp_path)
                 raise
@@ -218,7 +218,7 @@ class FileSystemTools:
         log.info("file_written", path=str(validated), size=size)
         return f"Datei geschrieben: {path} ({size:,} Bytes)"
 
-    # Maximale Groesse fuer edit-Parameter (500 KB)
+    # Maximum size for edit parameters (500 KB)
     MAX_EDIT_SIZE = 512_000
 
     def edit_file(self, path: str, old_text: str, new_text: str) -> str:
@@ -255,7 +255,7 @@ class FileSystemTools:
 
         content = validated.read_text(encoding="utf-8")
 
-        # Eindeutigkeits-Prüfung
+        # Uniqueness check
         count = content.count(old_text)
         if count == 0:
             raise FileSystemError(f"Text nicht gefunden in {path}. Gesucht: '{old_text[:100]}...'")
@@ -265,13 +265,13 @@ class FileSystemTools:
                 f"Verwende einen längeren Ausschnitt als old_text."
             )
 
-        # Ersetzen
+        # Replace
         new_content = content.replace(old_text, new_text, 1)
 
         # Atomar schreiben (validated path to avoid double-validation)
         self.write_file(str(validated), new_content)
 
-        # Zeilenänderungen berechnen
+        # Calculate line changes
         old_lines = old_text.count("\n")
         new_lines = new_text.count("\n")
         diff = new_lines - old_lines
@@ -331,7 +331,7 @@ class FileSystemTools:
             lines.append(f"{prefix}└── [Zugriff verweigert]")
             return
 
-        # Versteckte Dateien und bekannte Build-Verzeichnisse ausfiltern
+        # Filter out hidden files and known build directories
         entries = [
             e for e in entries if not e.name.startswith(".") and e.name not in EXCLUDED_DIRECTORIES
         ]
