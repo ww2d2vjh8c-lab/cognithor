@@ -2090,11 +2090,25 @@ class Gateway:
                 )
 
         # ── Live Correction Detection ─────────────────────────────
-        _CORRECTION_TRIGGERS = frozenset({
-            "nein", "stopp", "stop", "halt", "falsch", "nicht so",
-            "stattdessen", "anders", "korrigier", "abbrech", "cancel",
-            "wrong", "lass das", "vergiss das", "mach anders",
-        })
+        _CORRECTION_TRIGGERS = frozenset(
+            {
+                "nein",
+                "stopp",
+                "stop",
+                "halt",
+                "falsch",
+                "nicht so",
+                "stattdessen",
+                "anders",
+                "korrigier",
+                "abbrech",
+                "cancel",
+                "wrong",
+                "lass das",
+                "vergiss das",
+                "mach anders",
+            }
+        )
         _lower_msg = msg.text.lower().strip()
         _is_correction = any(t in _lower_msg for t in _CORRECTION_TRIGGERS)
 
@@ -2105,15 +2119,17 @@ class Gateway:
                     user_message=getattr(session, "last_user_message", "") or "",
                     correction_text=msg.text,
                 )
-            wm.add_message(Message(
-                role=MessageRole.SYSTEM,
-                content=(
-                    f"[KORREKTUR] Der User hat korrigiert: "
-                    f"\"{msg.text}\". Passe deinen Plan an. "
-                    f"Fuehre NICHT die vorherige Aktion erneut aus."
-                ),
-                channel=msg.channel,
-            ))
+            wm.add_message(
+                Message(
+                    role=MessageRole.SYSTEM,
+                    content=(
+                        f"[KORREKTUR] Der User hat korrigiert: "
+                        f'"{msg.text}". Passe deinen Plan an. '
+                        f"Fuehre NICHT die vorherige Aktion erneut aus."
+                    ),
+                    channel=msg.channel,
+                )
+            )
 
         while not session.iterations_exhausted and self._running:
             # Cancel-Check: User hat /stop oder cancel gesendet
