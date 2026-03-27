@@ -5,6 +5,43 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.60.0] -- 2026-03-27
+
+### Added
+
+#### Evolution Engine Phase 3 — Per-Agent Budget + Resource Monitor
+- **ResourceMonitor** (`src/jarvis/system/resource_monitor.py`) — Async real-time CPU/RAM/GPU sampling via psutil + nvidia-smi subprocess. Configurable thresholds (CPU 80%, RAM 90%, GPU 80%), result caching (5s), `should_yield()` for cooperative scheduling.
+- **Per-Agent Cost Tracking** — `CostTracker` extended with `agent_name` column (auto-migration), `get_agent_costs(days)` for breakdown, `check_agent_budget(agent, limit)` with 80% warning threshold. German budget messages.
+- **AgentBudgetStatus** model — Per-agent daily cost, limit, ok/warning status.
+- **Cooperative Scheduling** — `EvolutionLoop` checks `ResourceMonitor` before each step (scout/research/build). Pauses when system busy (CPU/RAM/GPU over thresholds). Respects per-agent budget limits from `EvolutionConfig.agent_budgets`.
+- **REST API** — `GET /api/v1/budget/agents` (per-agent costs today/week/month + budget status), `GET /api/v1/system/resources` (live CPU/RAM/GPU snapshot).
+- **Flutter Budget Dashboard** — New config page showing per-agent cost table, resource usage bars (color-coded), evolution status. Auto-refresh every 10s.
+- **36 new tests** (17 ResourceMonitor, 8 per-agent CostTracker, 6 cooperative scheduling, 5 existing enriched).
+
+#### Evolution Engine Phase 4 — Checkpoint/Resume Engine
+- **EvolutionCheckpoint** (`src/jarvis/evolution/checkpoint.py`) — Step-level state persistence with delta snapshots. Tracks cycle_id, step_name, step_index, accumulated data (gaps, research, skills). JSON serialization with `to_dict()`/`from_dict()`.
+- **EvolutionResumer** (`src/jarvis/evolution/resume.py`) — Loads last checkpoint, determines resume point (`ResumeState`), lists/clears cycles. Supports resume after any interrupted step (scout/research/build/reflect).
+- **Step-Level Checkpointing** — `EvolutionLoop` saves checkpoint after each completed step via `CheckpointStore`. Stores as `PersistentCheckpoint` under `evolution-{cycle_id}` session.
+- **REST API** — `GET /api/v1/evolution/stats` enriched with checkpoint + resume state, `POST /api/v1/evolution/resume` triggers manual resume of interrupted cycles.
+- **Flutter Evolution Dashboard** — New config page with 4-step stepper (Scout→Research→Build→Reflect), resume button for interrupted cycles, resource status bars, recent activity table. Auto-refresh every 15s.
+- **12 new tests** for EvolutionResumer (resume after each step, completion detection, cycle listing/clearing).
+
+#### Gateway Wiring
+- **ResourceMonitor** initialized at startup (lightweight psutil-based, always available).
+- **CheckpointStore** initialized with `~/.jarvis/checkpoints/` path.
+- **EvolutionLoop** now receives `resource_monitor`, `cost_tracker`, and `checkpoint_store` via constructor.
+
+#### Flutter i18n
+- `configPageBudget` and `configPageEvolution` added to all 4 language packs (en/de/ar/zh).
+- Generated localization files regenerated via `flutter gen-l10n`.
+
+### Changed
+- **EvolutionConfig** — Added `agent_budgets: dict[str, float]` field for per-agent daily limits.
+- **CostReport** — Added `cost_by_agent` field to aggregated cost reports.
+- **CostRecord** — Added `agent_name` field (backward-compatible, defaults to empty string).
+- **11,712+ tests** (was 11,649).
+- **Flutter app** — Version bumped to 0.51.0.
+
 ## [0.59.0] -- 2026-03-27
 
 ### Added
