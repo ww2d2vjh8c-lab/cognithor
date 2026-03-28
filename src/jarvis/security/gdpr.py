@@ -683,9 +683,15 @@ class ErasureManager:
     ) -> dict[str, int]:
         """Delete ALL personal data for user_id across every tier.
 
-        Returns dict with deletion counts per tier.
+        Covers: processing logs, model usage, consent, and registered
+        external handlers (memory, vault, sessions etc. registered via
+        register_handler during gateway init).
+
+        Returns dict with deletion counts per tier. Errors are logged,
+        not silently swallowed.
         """
         counts: dict[str, int] = {}
+        errors: list[str] = []
         _plog = processing_log or self._processing_log
         _ulog = usage_log or self._usage_log
 
@@ -693,7 +699,9 @@ class ErasureManager:
         if _plog:
             try:
                 counts["processing_logs"] = _plog.delete_user_records(user_id)
-            except Exception:
+            except Exception as e:
+                _log.error("erasure_processing_logs_failed", user=user_id[:8], error=str(e))
+                errors.append(f"processing_logs: {e}")
                 counts["processing_logs"] = 0
         else:
             counts["processing_logs"] = 0
@@ -702,7 +710,9 @@ class ErasureManager:
         if _ulog:
             try:
                 counts["model_usage"] = _ulog.delete_user_records(user_id)
-            except Exception:
+            except Exception as e:
+                _log.error("erasure_model_usage_failed", user=user_id[:8], error=str(e))
+                errors.append(f"model_usage: {e}")
                 counts["model_usage"] = 0
         else:
             counts["model_usage"] = 0
@@ -711,17 +721,25 @@ class ErasureManager:
         if consent_manager:
             try:
                 counts["consents"] = consent_manager.delete_user(user_id)
-            except Exception:
+            except Exception as e:
+                _log.error("erasure_consents_failed", user=user_id[:8], error=str(e))
+                errors.append(f"consents: {e}")
                 counts["consents"] = 0
 
-        # 4. Registered external handlers
+        # 4. Registered external handlers (memory, vault, sessions, etc.)
+        # Handlers are registered during gateway init via register_handler()
         handler_total = 0
-        for handler in self._erasure_handlers:
+        for i, handler in enumerate(self._erasure_handlers):
             try:
                 handler_total += handler(user_id)
-            except Exception:
-                pass
+            except Exception as e:
+                _log.error("erasure_handler_failed", handler=i, user=user_id[:8], error=str(e))
+                errors.append(f"handler_{i}: {e}")
         counts["external_handlers"] = handler_total
+
+        if errors:
+            counts["_errors"] = len(errors)
+            _log.warning("erasure_partially_completed", user=user_id[:8], errors=len(errors))
 
         return counts
 

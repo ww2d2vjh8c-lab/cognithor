@@ -413,6 +413,10 @@ class Gateway:
                 getattr(self._config, "compliance", None), "privacy_mode", False
             ):
                 self._compliance_engine.set_privacy_mode(True)
+            # Wire GDPRComplianceManager for retention enforcement + erasure API
+            from jarvis.security.gdpr import GDPRComplianceManager
+            self._gdpr_manager = GDPRComplianceManager()
+            self._gdpr_compliance_manager = self._gdpr_manager  # alias for cron
             log.info("gdpr_compliance_engine_initialized")
         except Exception:
             log.error("gdpr_compliance_engine_init_failed", exc_info=True)
@@ -421,6 +425,8 @@ class Gateway:
             self._compliance_engine = ComplianceEngine(
                 consent_manager=None, enabled=True, consent_required=True,
             )
+            self._gdpr_manager = None
+            self._gdpr_compliance_manager = None
 
         # Governance-Cron-Job registrieren (taeglich um 02:00)
         if self._cron_engine and hasattr(self, "_governance_agent") and self._governance_agent:

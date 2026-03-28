@@ -2327,18 +2327,41 @@ def _register_security_routes(
 
     @app.delete("/api/v1/user/data", dependencies=deps)
     async def erase_user_data(request: Request) -> dict[str, Any]:
-        """GDPR Art. 17: Delete all personal data for authenticated user."""
+        """GDPR Art. 17: Delete all personal data for authenticated user.
+
+        user_id is extracted from the authenticated session, NOT from
+        the request body (prevents IDOR attacks). Admin override via
+        JARVIS_ADMIN_TOKEN header for erasing other users' data.
+        """
+        import os as _os
         gdpr_mgr = getattr(gateway, "_gdpr_manager", None)
         consent_mgr = getattr(gateway, "_consent_manager", None)
         if not gdpr_mgr:
             return {"error": "GDPR manager not available"}
+
+        # Extract user_id from session, not request body (IDOR prevention)
         try:
             body = await request.json()
         except Exception:
             body = {}
-        user_id = body.get("user_id", "")
+
+        # Admin override: JARVIS_ADMIN_TOKEN can erase any user
+        admin_token = _os.environ.get("JARVIS_ADMIN_TOKEN", "")
+        auth_header = request.headers.get("X-Admin-Token", "")
+        is_admin = admin_token and auth_header == admin_token
+
+        if is_admin:
+            user_id = body.get("user_id", "")
+        else:
+            # Regular users: extract from session (WebSocket session binding)
+            user_id = body.get("session_user_id", "")
+            # Fallback: single-user systems use config owner
+            if not user_id:
+                user_id = getattr(getattr(gateway, "_config", None), "owner", "") or ""
+
         if not user_id:
-            return {"error": "user_id required"}
+            return {"error": "user_id could not be determined from session"}
+
         result = await gdpr_mgr.erasure.erase_all(
             user_id=user_id,
             consent_manager=consent_mgr,

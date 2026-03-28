@@ -1886,7 +1886,9 @@ class RetentionConfig(BaseModel):
 
     episodic_days: int = Field(default=90, ge=1, le=3650)
     processing_log_days: int = Field(default=90, ge=1, le=3650)
+    model_usage_log_days: int = Field(default=180, ge=1, le=3650)
     him_report_days: int = Field(default=30, ge=1, le=365)
+    vault_osint_days: int = Field(default=30, ge=1, le=365)
     session_days: int = Field(default=180, ge=1, le=3650)
 
 
