@@ -34,6 +34,63 @@ class BuildResult:
     errors: List[str] = field(default_factory=list)
 
 
+# Patterns that indicate garbage entities extracted from PDF metadata,
+# dictionary/navigation pages, or generic web boilerplate.
+_GARBAGE_PATTERNS = re.compile(
+    r"^("
+    r"PDF-[\d.]+"           # PDF version strings
+    r"|Linearized.*"        # PDF linearization marker
+    r"|\d+ 0 obj"          # PDF object references
+    r"|trailer"            # PDF trailer
+    r"|MediaBox"           # PDF page dimensions
+    r"|XObject|Font|Page|Root"  # PDF internal types
+    r"|Rechtschreibung"    # Duden dictionary metadata
+    r"|Grammatik"          # Duden dictionary metadata
+    r"|Synonyme"           # Duden dictionary metadata
+    r"|Worttrennung"       # Duden dictionary metadata
+    r"|Aussprache"         # Duden dictionary metadata
+    r"|Betonung"           # Duden dictionary metadata
+    r"|Cookie"             # Cookie consent noise
+    r"|Datenschutz"        # Privacy policy noise
+    r"|Impressum"          # Imprint noise
+    r"|Newsletter"         # Newsletter signup noise
+    r"|Inhaltsverzeichnis" # Table of contents
+    r"|Breadcrumb"         # Navigation noise
+    r"|Login|Logout"       # Auth elements
+    r"|Warenkorb|Cart"     # Shopping cart noise
+    r")$",
+    re.IGNORECASE,
+)
+
+# Entity names that are too generic to be useful
+_TOO_GENERIC = {
+    "grundlage", "methode", "anwendung", "beispiel", "definition",
+    "ergebnis", "information", "inhalt", "thema", "uebersicht",
+    "seite", "kapitel", "abschnitt", "tabelle", "abbildung",
+    "quelle", "link", "download", "suche", "startseite",
+}
+
+
+def _is_valid_entity(entity: dict) -> bool:
+    """Reject garbage entities from PDF metadata, dictionaries, navigation."""
+    name = entity.get("name", "").strip()
+    if not name or len(name) < 2:
+        return False
+    # Reject PDF/web boilerplate patterns
+    if _GARBAGE_PATTERNS.match(name):
+        return False
+    # Reject too-generic single words
+    if name.lower() in _TOO_GENERIC:
+        return False
+    # Reject pure version numbers or object IDs
+    if re.match(r"^[\d.]+$", name):
+        return False
+    # Reject names that are just section markers (§1, §2, etc.)
+    if re.match(r"^§\d+$", name):
+        return False
+    return True
+
+
 _ENTITY_EXTRACTION_PROMPT = """\
 Analysiere den folgenden Text und extrahiere Entitaeten und Beziehungen.
 
@@ -281,6 +338,16 @@ class KnowledgeBuilder:
             and "source" in r
             and "relation" in r
             and "target" in r
+        ]
+
+        # Content filter: reject garbage entities from PDF metadata,
+        # dictionary pages, navigation elements, etc.
+        valid_entities = [e for e in valid_entities if _is_valid_entity(e)]
+        # Filter relations whose source or target was rejected
+        entity_names = {e["name"] for e in valid_entities}
+        valid_relations = [
+            r for r in valid_relations
+            if r["source"] in entity_names and r["target"] in entity_names
         ]
 
         return valid_entities[:10], valid_relations[:10]
