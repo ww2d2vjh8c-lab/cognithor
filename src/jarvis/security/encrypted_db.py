@@ -101,6 +101,60 @@ def _get_db_key() -> str:
     return ""
 
 
+def _migrate_to_encrypted(
+    db_path: str, hex_key: str, check_same_thread: bool = False
+) -> sqlite3.Connection | None:
+    """Migrate an existing unencrypted DB to SQLCipher encrypted.
+
+    Strategy: open plain DB, create encrypted copy, replace original.
+    """
+    import shutil
+    import tempfile
+
+    backup_path = db_path + ".unencrypted.bak"
+    tmp_path = db_path + ".encrypting"
+
+    try:
+        # 1. Open the unencrypted DB with plain sqlite3
+        plain_conn = sqlite3.connect(db_path, check_same_thread=check_same_thread)
+        plain_conn.execute("SELECT count(*) FROM sqlite_master")  # Verify it's readable
+
+        # 2. Use sqlcipher_export to create encrypted copy
+        enc_conn = sqlcipher.connect(tmp_path, check_same_thread=check_same_thread)
+        enc_conn.execute(f"PRAGMA key = \"x'{hex_key}'\"")  # noqa: S608
+        enc_conn.execute("PRAGMA journal_mode=WAL")
+
+        # 3. Copy all data: dump from plain, execute in encrypted
+        for line in plain_conn.iterdump():
+            try:
+                enc_conn.execute(line)
+            except sqlite3.OperationalError:
+                pass  # Skip duplicate CREATE statements etc.
+        enc_conn.commit()
+
+        # 4. Verify encrypted DB
+        enc_conn.execute("SELECT count(*) FROM sqlite_master")
+
+        plain_conn.close()
+        enc_conn.close()
+
+        # 5. Backup original, replace with encrypted
+        shutil.copy2(db_path, backup_path)
+        shutil.move(tmp_path, db_path)
+
+        # 6. Open the now-encrypted DB
+        conn = sqlcipher.connect(db_path, check_same_thread=check_same_thread)
+        conn.execute(f"PRAGMA key = \"x'{hex_key}'\"")  # noqa: S608
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("SELECT count(*) FROM sqlite_master")
+        return conn
+    except Exception:
+        # Cleanup on failure
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+
+
 def encrypted_connect(
     db_path: str,
     key: str | None = None,
@@ -120,18 +174,35 @@ def encrypted_connect(
         key = _get_db_key()
 
     if _sqlcipher_available and key:
+        hex_key = key.encode().hex()
         try:
             conn = sqlcipher.connect(db_path, check_same_thread=check_same_thread)
-            # Use hex key format to prevent SQL injection from user-supplied keys
-            hex_key = key.encode().hex()
             conn.execute(f"PRAGMA key = \"x'{hex_key}'\"")  # noqa: S608
             conn.execute("PRAGMA journal_mode=WAL")
             # Test that the key works
             conn.execute("SELECT count(*) FROM sqlite_master")
             log.debug("encrypted_db_opened", path=db_path[-30:])
             return conn
-        except Exception as e:
-            log.warning("sqlcipher_open_failed_falling_back", path=db_path[-30:], error=str(e)[:50])
+        except Exception:
+            # DB exists but is unencrypted — migrate it to encrypted
+            if os.path.exists(db_path) and os.path.getsize(db_path) > 0:
+                try:
+                    conn = _migrate_to_encrypted(db_path, hex_key, check_same_thread)
+                    if conn:
+                        log.info("encrypted_db_migrated", path=db_path[-30:])
+                        return conn
+                except Exception as e2:
+                    log.warning("encrypted_db_migration_failed", path=db_path[-30:], error=str(e2)[:50])
+            # New empty DB — create encrypted from scratch
+            elif not os.path.exists(db_path) or os.path.getsize(db_path) == 0:
+                try:
+                    conn = sqlcipher.connect(db_path, check_same_thread=check_same_thread)
+                    conn.execute(f"PRAGMA key = \"x'{hex_key}'\"")  # noqa: S608
+                    conn.execute("PRAGMA journal_mode=WAL")
+                    log.debug("encrypted_db_created", path=db_path[-30:])
+                    return conn
+                except Exception:
+                    pass
 
     if _sqlcipher_available and not key:
         log.warning(
