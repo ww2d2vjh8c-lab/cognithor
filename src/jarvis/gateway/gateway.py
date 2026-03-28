@@ -540,6 +540,32 @@ class Gateway:
             except Exception:
                 log.debug("evolution_engine_init_failed", exc_info=True)
 
+            # DeepLearner (deep autonomous learning)
+            self._deep_learner = None
+            if self._evolution_loop:
+                try:
+                    from jarvis.evolution.deep_learner import DeepLearner
+
+                    self._deep_learner = DeepLearner(
+                        llm_fn=getattr(self, "_llm_call", None),
+                        plans_dir=self._config.jarvis_home / "evolution" / "plans",
+                        mcp_client=getattr(self, "_mcp_client", None),
+                        memory_manager=getattr(self, "_memory_manager", None),
+                        skill_registry=getattr(self, "_skill_registry", None),
+                        skill_generator=getattr(self, "_skill_generator", None),
+                        cron_engine=getattr(self, "_cron_engine", None),
+                        cost_tracker=self._cost_tracker,
+                        resource_monitor=self._resource_monitor,
+                        checkpoint_store=self._checkpoint_store,
+                        config=self._config.evolution,
+                        idle_detector=self._idle_detector,
+                        operation_mode=op_mode,
+                    )
+                    self._evolution_loop._deep_learner = self._deep_learner
+                    log.info("deep_learner_initialized")
+                except Exception:
+                    log.debug("deep_learner_init_failed", exc_info=True)
+
         log.info(
             "gateway_init_complete",
             llm_available=llm_ok,
