@@ -89,7 +89,9 @@ def encrypted_connect(
     if _sqlcipher_available and key:
         try:
             conn = sqlcipher.connect(db_path, check_same_thread=check_same_thread)
-            conn.execute(f"PRAGMA key = '{key}'")
+            # Use hex key format to prevent SQL injection from user-supplied keys
+            hex_key = key.encode().hex()
+            conn.execute(f"PRAGMA key = \"x'{hex_key}'\"")  # noqa: S608
             conn.execute("PRAGMA journal_mode=WAL")
             # Test that the key works
             conn.execute("SELECT count(*) FROM sqlite_master")

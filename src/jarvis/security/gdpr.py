@@ -741,6 +741,15 @@ class ErasureManager:
             counts["_errors"] = len(errors)
             _log.warning("erasure_partially_completed", user=user_id[:8], errors=len(errors))
 
+        # Compliance audit log
+        try:
+            from jarvis.security.compliance_audit import ComplianceAuditLog
+            audit = ComplianceAuditLog()
+            audit.record("erasure_executed", user_id=user_id, counts=counts,
+                         partial=bool(errors))
+        except Exception:
+            pass
+
         return counts
 
 

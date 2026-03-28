@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -23,13 +24,17 @@ __all__ = ["ComplianceAuditLog"]
 
 
 class ComplianceAuditLog:
-    """Append-only audit log with SHA-256 hash chain."""
+    """Append-only audit log with SHA-256 hash chain.
+
+    Thread-safe: all writes are protected by a lock.
+    """
 
     def __init__(self, log_path: str | None = None) -> None:
         if log_path is None:
             log_path = str(Path.home() / ".jarvis" / "data" / "audit" / "compliance.jsonl")
         self._path = Path(log_path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
         self._last_hash = self._read_last_hash()
 
     def _read_last_hash(self) -> str:
@@ -56,18 +61,19 @@ class ComplianceAuditLog:
         return hashlib.sha256(f"{self._last_hash}:{content}".encode()).hexdigest()
 
     def record(self, event: str, **kwargs: Any) -> dict:
-        """Append a compliance event to the audit log."""
-        entry = {
-            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "event": event,
-            **kwargs,
-        }
-        entry["prev_hash"] = self._last_hash
-        entry["hash"] = self._compute_hash(entry)
-        self._last_hash = entry["hash"]
+        """Append a compliance event to the audit log (thread-safe)."""
+        with self._lock:
+            entry = {
+                "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "event": event,
+                **kwargs,
+            }
+            entry["prev_hash"] = self._last_hash
+            entry["hash"] = self._compute_hash(entry)
+            self._last_hash = entry["hash"]
 
-        with open(self._path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            with open(self._path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
         log.debug("compliance_audit_recorded", audit_event=event)
         return entry
