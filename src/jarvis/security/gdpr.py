@@ -68,6 +68,17 @@ class RetentionAction(StrEnum):
     ARCHIVE = "archive"
 
 
+class DataPurpose(StrEnum):
+    """Purpose tag for every stored data item (Art. 5(1)(b))."""
+
+    CONVERSATION = "conversation"
+    MEMORY = "memory"
+    SECURITY = "security"
+    ANALYTICS = "analytics"
+    OSINT = "osint"
+    EVOLUTION = "evolution"
+
+
 # ── Data Processing Log ──────────────────────────────────────────────────
 
 

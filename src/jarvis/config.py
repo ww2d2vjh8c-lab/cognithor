@@ -1881,6 +1881,16 @@ class HashlineGuardConfig(BaseModel):
     protected_paths: list[str] = Field(default_factory=list)
 
 
+class ComplianceConfig(BaseModel):
+    """GDPR compliance configuration."""
+
+    consent_required: bool = True
+    compliance_engine_enabled: bool = True
+    privacy_mode: bool = False
+    privacy_notice_version: str = "1.0"
+    cloud_consent_required: bool = True
+
+
 class SessionConfig(BaseModel):
     """Session lifecycle settings."""
 
@@ -2022,6 +2032,7 @@ class JarvisConfig(BaseModel):
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
+    compliance: ComplianceConfig = Field(default_factory=ComplianceConfig)
     audit: AuditConfig = Field(default_factory=AuditConfig)
     recovery: RecoveryConfig = Field(default_factory=RecoveryConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
