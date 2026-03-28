@@ -91,23 +91,51 @@ class QualityAssessor:
     # ------------------------------------------------------------------
 
     async def answer_question(self, q: QualityQuestion) -> QualityQuestion:
-        """Search vault + memory for an answer; fill *actual_answer*."""
+        """Search vault + memory for an answer; fill *actual_answer*.
+
+        Truncates and cleans the raw search output so the grader sees
+        actual content, not metadata/scores/source paths.
+        """
         parts: list[str] = []
 
         vault_result = await self._mcp.call_tool(
-            "vault_search", {"query": q.question}
+            "vault_search", {"query": q.question, "limit": 3}
         )
         if vault_result.content:
-            parts.append(vault_result.content)
+            parts.append(self._clean_search_output(vault_result.content))
 
         memory_result = await self._mcp.call_tool(
-            "search_memory", {"query": q.question}
+            "search_memory", {"query": q.question, "top_k": 3}
         )
         if memory_result.content:
-            parts.append(memory_result.content)
+            parts.append(self._clean_search_output(memory_result.content))
 
-        q.actual_answer = "\n".join(parts) if parts else ""
+        combined = "\n".join(parts) if parts else ""
+        # Cap at 1500 chars — enough for grading, not a wall of text
+        q.actual_answer = combined[:1500] if combined else ""
         return q
+
+    @staticmethod
+    def _clean_search_output(raw: str) -> str:
+        """Strip metadata lines (Score:, Tier:, Quelle:) from search output."""
+        import re
+        lines = raw.split("\n")
+        cleaned: list[str] = []
+        for line in lines:
+            # Skip metadata lines
+            if re.match(r"\s*\*\*\[\d+\]\*\*\s+Score:", line):
+                continue
+            if line.strip().startswith("Score:") or line.strip().startswith("Tier:"):
+                continue
+            if "· Tier:" in line or "· Quelle:" in line:
+                continue
+            if line.strip().startswith("###") and "Ergebnis" in line:
+                continue
+            # Keep actual content
+            stripped = line.strip()
+            if stripped:
+                cleaned.append(stripped)
+        return " ".join(cleaned)[:800]
 
     # ------------------------------------------------------------------
     # Grading
@@ -121,12 +149,19 @@ class QualityAssessor:
             q.passed = False
             return q
         prompt = (
-            "Bewerte die folgende Antwort.\n"
+            "Bewerte ob die gegebene Antwort die erwartete Antwort INHALTLICH abdeckt.\n"
+            "Die Antwort muss NICHT woertlich identisch sein — sie stammt aus einer Wissensdatenbank.\n"
+            "Wenn die Kernaussage der erwarteten Antwort in der gegebenen Antwort enthalten ist, "
+            "gilt sie als korrekt.\n\n"
             f"Frage: {q.question}\n"
-            f"Erwartete Antwort: {q.expected_answer}\n"
-            f"Gegebene Antwort: {q.actual_answer[:500]}\n\n"
+            f"Erwartete Kernaussage: {q.expected_answer}\n"
+            f"Gegebene Antwort: {q.actual_answer[:800]}\n\n"
+            "Bewertung:\n"
+            "- score 0.8-1.0: Kernaussage ist klar enthalten\n"
+            "- score 0.5-0.7: Teilweise enthalten oder umschrieben\n"
+            "- score 0.1-0.4: Nur entfernt verwandt\n"
+            "- score 0.0: Komplett falsch oder keine relevante Information\n\n"
             'Antworte NUR mit JSON: {"score": 0.0-1.0, "correct": true/false}\n'
-            "Kein anderer Text."
         )
         try:
             raw = await self._llm(prompt)
