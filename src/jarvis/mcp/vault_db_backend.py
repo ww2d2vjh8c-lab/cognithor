@@ -66,8 +66,8 @@ class VaultDBBackend(VaultBackend):
         self._conn.executescript(_SCHEMA)
         try:
             self._conn.executescript(_FTS_SCHEMA)
-        except sqlite3.OperationalError:
-            log.debug("fts5_setup_partial", exc_info=True)
+        except Exception:
+            log.debug("fts5_setup_partial", exc_info=True)  # catches both sqlite3 and sqlcipher3
         self._conn.commit()
 
     def _row_to_note(self, row: tuple, columns: list[str]) -> NoteData:

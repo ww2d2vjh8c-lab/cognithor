@@ -74,8 +74,8 @@ class CostTracker:
                 "ALTER TABLE llm_costs ADD COLUMN agent_name TEXT DEFAULT ''"
             )
             self._conn.commit()
-        except sqlite3.OperationalError:
-            pass  # Column already exists
+        except Exception:
+            pass  # Column already exists (catches both sqlite3 and sqlcipher3)
         self._conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_costs_agent ON llm_costs(agent_name)
         """)

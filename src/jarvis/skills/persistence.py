@@ -645,13 +645,13 @@ class MarketplaceStore:
             try:
                 c.executescript(_MIGRATION_COMMUNITY)
                 log.info("community_migration_applied")
-            except sqlite3.OperationalError as exc:
-                # Tabellen existieren bereits — ignorieren
+            except Exception as exc:
+                # Tabellen existieren bereits — ignorieren (catches both sqlite3 and sqlcipher3)
                 if "already exists" not in str(exc) and "duplicate column" not in str(exc):
                     log.warning("community_migration_warning", error=str(exc))
         else:
             # Ensure publishers + recalls_remote exist
-            with contextlib.suppress(sqlite3.OperationalError):
+            with contextlib.suppress(Exception):  # catches both sqlite3 and sqlcipher3
                 c.executescript(
                     _MIGRATION_COMMUNITY.split("ALTER TABLE")[0]
                     + """

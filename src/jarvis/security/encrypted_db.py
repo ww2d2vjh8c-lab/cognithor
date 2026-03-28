@@ -128,8 +128,8 @@ def _migrate_to_encrypted(
         for line in plain_conn.iterdump():
             try:
                 enc_conn.execute(line)
-            except sqlite3.OperationalError:
-                pass  # Skip duplicate CREATE statements etc.
+            except Exception:
+                pass  # Skip duplicate CREATE statements etc. (catches both sqlite3 and sqlcipher3)
         enc_conn.commit()
 
         # 4. Verify encrypted DB

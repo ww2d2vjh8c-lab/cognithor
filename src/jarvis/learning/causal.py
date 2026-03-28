@@ -60,8 +60,8 @@ class CausalAnalyzer:
         try:
             conn.execute("ALTER TABLE causal_sequences ADD COLUMN model_used TEXT DEFAULT ''")
             conn.commit()
-        except sqlite3.OperationalError:
-            # Spalte existiert bereits -- ignorieren
+        except Exception:
+            # Spalte existiert bereits -- ignorieren (catches both sqlite3 and sqlcipher3)
             pass
 
     def record_sequence(

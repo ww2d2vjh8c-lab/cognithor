@@ -123,8 +123,8 @@ class SessionStore:
                 try:
                     self._conn.execute(migration)
                     self._conn.commit()
-                except sqlite3.OperationalError:
-                    pass  # Spalte/Index existiert bereits
+                except Exception:
+                    pass  # Spalte/Index existiert bereits (sqlite3 or sqlcipher3)
         return self._conn
 
     def save_session(self, session: SessionContext) -> None:
