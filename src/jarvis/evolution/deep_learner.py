@@ -179,11 +179,27 @@ class DeepLearner:
         plan.save(str(self._plans_dir))
         log.info("deep_learner_subgoal_start", plan=plan.goal[:40], subgoal=subgoal.title[:40])
 
-        # Find sources for this subgoal
-        # Use plan sources that are still pending, or discover new ones
-        sources = [s for s in plan.sources if s.status == "pending"]
+        # Find sources SPECIFIC to this subgoal's topic
+        # Each subgoal discovers its own sources via web search
+        sources = await self._discover_sources(
+            f"{subgoal.title} {subgoal.description}"[:200]
+        )
         if not sources:
-            sources = await self._discover_sources(subgoal.title)
+            # Fallback: use unfetched plan-level sources
+            already_fetched = set()
+            for sg in plan.sub_goals:
+                if hasattr(sg, "_fetched_urls"):
+                    already_fetched.update(sg._fetched_urls)
+            sources = [
+                s for s in plan.sources
+                if s.url not in already_fetched and s.status != "error"
+            ][:3]
+
+        log.info(
+            "deep_learner_sources_for_subgoal",
+            subgoal=subgoal.title[:40],
+            sources=[s.url[:50] for s in sources[:5]],
+        )
 
         builder = KnowledgeBuilder(
             mcp_client=self._mcp_client,
@@ -191,6 +207,7 @@ class DeepLearner:
             goal_slug=plan.goal_slug,
         )
 
+        fetched_urls: set[str] = set()
         for source in sources:
             # Idle check
             if self._idle_detector and not self._idle_detector.is_idle:
@@ -198,9 +215,13 @@ class DeepLearner:
                 plan.save(str(self._plans_dir))
                 return False
 
+            # Skip if already fetched by this or another subgoal
+            if source.url in fetched_urls:
+                continue
+            fetched_urls.add(source.url)
+
             log.info("deep_learner_fetching", source=source.url[:60])
             fetch_results = await self._research_agent.fetch_source(source)
-            source.status = "done" if fetch_results else "error"
             source.pages_fetched = len(fetch_results)
 
             # Build phase
@@ -315,34 +336,57 @@ class DeepLearner:
     # ------------------------------------------------------------------
 
     async def _discover_sources(self, topic: str) -> list[SourceSpec]:
-        """Use web_search to find sources for a topic when none are specified."""
+        """Use web_search to find topic-specific sources.
+
+        Filters out generic homepages (< 3 path segments) and
+        deduplicates against already-known plan sources.
+        """
         if not self._mcp_client:
             return []
         try:
             result = await self._mcp_client.call_tool(
                 "web_search",
-                {"query": topic, "num_results": 5, "language": "de"},
+                {"query": topic[:150], "num_results": 5, "language": "de"},
             )
             if result.is_error:
                 return []
             import re
+            from urllib.parse import urlparse
+
             urls = re.findall(r'https?://[^\s<>"\')\]]+', result.content)
-            # Deduplicate
+
+            # Filter: skip bare homepages (e.g. https://www.drv.de) — want deep pages
+            filtered: list[str] = []
             seen: set[str] = set()
-            unique_urls: list[str] = []
             for url in urls:
-                if url not in seen:
-                    seen.add(url)
-                    unique_urls.append(url)
+                url = url.rstrip("/.,;:")
+                if url in seen:
+                    continue
+                seen.add(url)
+                parsed = urlparse(url)
+                path = parsed.path.strip("/")
+                # Accept URLs with actual content paths, skip bare domains
+                if path and len(path) > 3:
+                    filtered.append(url)
+                elif not filtered:
+                    # Accept homepage only if we have nothing else
+                    filtered.append(url)
+
+            log.info(
+                "deep_learner_discovered_sources",
+                topic=topic[:50],
+                urls=[u[:60] for u in filtered[:5]],
+            )
+
             return [
                 SourceSpec(
                     url=url,
                     source_type="reference",
-                    title=topic,
+                    title=topic[:80],
                     fetch_strategy="full_page",
                     update_frequency="once",
                 )
-                for url in unique_urls[:5]
+                for url in filtered[:5]
             ]
         except Exception:
             log.debug("deep_learner_discover_sources_failed", exc_info=True)
