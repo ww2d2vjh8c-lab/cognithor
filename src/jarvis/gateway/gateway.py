@@ -22,6 +22,8 @@ import threading
 import time
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from pathlib import Path
+
 from jarvis.config import JarvisConfig, load_config
 from jarvis.core.agent_router import RouteDecision
 from jarvis.gateway.phases import (
@@ -60,6 +62,8 @@ from jarvis.models import (
     WorkingMemory,
 )
 from jarvis.core.autonomous_orchestrator import AutonomousOrchestrator
+from jarvis.security.consent import ConsentManager
+from jarvis.security.compliance_engine import ComplianceEngine, ComplianceViolation
 from jarvis.utils.logging import get_logger, setup_logging
 
 if TYPE_CHECKING:
@@ -165,6 +169,11 @@ class Gateway:
         apply_phase(self, declare_agents_attrs(self._config))
         apply_phase(self, declare_compliance_attrs(self._config))
         apply_phase(self, declare_advanced_attrs(self._config))
+
+    @property
+    def consent_manager(self) -> ConsentManager | None:
+        """Expose ConsentManager for channel-level consent flows."""
+        return getattr(self, "_consent_manager", None)
 
     async def initialize(self) -> None:
         """Initialisiert alle Subsysteme in der richtigen Reihenfolge.
@@ -386,6 +395,29 @@ class Gateway:
             )
         }
         await init_compliance(self._config, **compliance_attrs)
+
+        # GDPR: ConsentManager + ComplianceEngine
+        try:
+            self._consent_manager = ConsentManager(
+                db_path=str(Path(self._config.jarvis_home) / "index" / "consent.db")
+            )
+            self._compliance_engine = ComplianceEngine(
+                consent_manager=self._consent_manager,
+                enabled=getattr(
+                    getattr(self._config, "compliance", None),
+                    "compliance_engine_enabled",
+                    True,
+                ),
+            )
+            if getattr(
+                getattr(self._config, "compliance", None), "privacy_mode", False
+            ):
+                self._compliance_engine.set_privacy_mode(True)
+            log.info("gdpr_compliance_engine_initialized")
+        except Exception:
+            self._consent_manager = None
+            self._compliance_engine = None
+            log.debug("gdpr_compliance_engine_init_skipped", exc_info=True)
 
         # Governance-Cron-Job registrieren (taeglich um 02:00)
         if self._cron_engine and hasattr(self, "_governance_agent") and self._governance_agent:
@@ -1558,6 +1590,26 @@ class Gateway:
                 ),
                 is_final=True,
             )
+
+        # GDPR compliance gate — check consent before processing
+        if hasattr(self, "_compliance_engine") and self._compliance_engine:
+            try:
+                from jarvis.security.gdpr import ProcessingBasis, DataPurpose
+
+                self._compliance_engine.check(
+                    user_id=msg.user_id or msg.session_id or "unknown",
+                    channel=msg.channel or "unknown",
+                    legal_basis=ProcessingBasis.CONSENT,
+                    purpose=DataPurpose.CONVERSATION,
+                )
+            except ComplianceViolation as e:
+                log.info("compliance_blocked", reason=str(e)[:100])
+                return OutgoingMessage(
+                    channel=msg.channel,
+                    text=str(e),
+                    session_id=msg.session_id,
+                    is_final=True,
+                )
 
         # Prometheus: count incoming requests
         self._record_metric("requests_total", 1, channel=msg.channel)

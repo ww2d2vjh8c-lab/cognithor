@@ -819,6 +819,37 @@ class TelegramChannel(Channel):
         if self._session_store:
             self._session_store.save_channel_mapping("telegram_user", str(user_id), str(chat_id))
 
+        # GDPR consent check
+        consent_mgr = None
+        if hasattr(self, "_handler") and self._handler and hasattr(self._handler, "__self__"):
+            consent_mgr = getattr(self._handler.__self__, "consent_manager", None)
+
+        if consent_mgr and consent_mgr.requires_consent(str(user_id), "telegram"):
+            text_lower = (text or "").strip().lower()
+            if text_lower in ("akzeptieren", "accept", "ja", "yes"):
+                consent_mgr.grant_consent(
+                    str(user_id), "telegram", "data_processing",
+                    context=str(chat_id),
+                )
+                await update.effective_message.reply_text(
+                    "Datenschutz-Einwilligung erteilt. Ich bin jetzt bereit!"
+                )
+                return
+            elif text_lower in ("ablehnen", "decline", "nein", "no"):
+                await update.effective_message.reply_text(
+                    "Ich kann deine Nachrichten ohne Datenschutz-Einwilligung "
+                    "nicht verarbeiten. Sende 'akzeptieren' wenn du es dir "
+                    "anders ueberlegst."
+                )
+                return
+            else:
+                await update.effective_message.reply_text(
+                    "Datenschutzhinweis: Ich speichere Nachrichten, Erinnerungen "
+                    "und Verarbeitungsprotokolle. Details: cognithor.dev/privacy\n\n"
+                    "Antworte mit 'akzeptieren' oder 'ablehnen'."
+                )
+                return
+
         # Start typing indicator
         typing_task = self._start_typing(chat_id)
 
