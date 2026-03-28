@@ -362,8 +362,10 @@ class DeepLearner:
                 coverage=self._quality_assessor.check_coverage(subgoal),
             )
 
-        # Quality test
+        # Quality test — with timeout protection
         subgoal.status = "testing"
+        import asyncio as _asyncio
+        import time as _time
         log.info(
             "deep_learner_pre_quality",
             subgoal=subgoal.title[:40],
@@ -372,10 +374,22 @@ class DeepLearner:
             vault=subgoal.vault_entries,
             sources=subgoal.sources_fetched,
         )
-        quality = await self._quality_assessor.run_quality_test(subgoal, plan.goal_slug)
+        try:
+            quality = await _asyncio.wait_for(
+                self._quality_assessor.run_quality_test(subgoal, plan.goal_slug),
+                timeout=180,  # 3 minutes max for quality test
+            )
+        except (_asyncio.TimeoutError, Exception) as e:
+            log.warning("deep_learner_quality_test_timeout", subgoal=subgoal.title[:40], error=str(e)[:100])
+            quality = {
+                "coverage_score": self._quality_assessor.check_coverage(subgoal),
+                "quality_score": 0.0,
+                "passed": False,
+                "questions": [],
+                "failed_questions": [],
+            }
         subgoal.coverage_score = quality["coverage_score"]
         subgoal.quality_score = quality["quality_score"]
-        import time as _time
         subgoal.last_tested = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
         subgoal.test_count += 1
 
@@ -400,6 +414,10 @@ class DeepLearner:
                 test_count=subgoal.test_count,
                 failed_count=len(quality.get("failed_questions", [])),
             )
+
+        # CRITICAL: Save status NOW before any further processing
+        # This prevents the "stuck in testing/researching" bug
+        plan.save(str(self._plans_dir))
 
         # Challenge weak claims — cross-reference low-confidence facts
         if self._knowledge_validator:
