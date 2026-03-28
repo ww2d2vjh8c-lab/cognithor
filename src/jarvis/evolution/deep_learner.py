@@ -111,6 +111,15 @@ class DeepLearner:
         plan.status = "active"
         plan.save(str(self._plans_dir))
         log.info("Created plan %s for goal: %s", plan.id, goal)
+
+        # Create cron schedules immediately (don't wait for all SubGoals)
+        if plan.schedules:
+            try:
+                created = await self._schedule_manager.create_schedules(plan)
+                log.info("deep_learner_schedules_created", plan=goal[:40], jobs=created)
+            except Exception:
+                log.debug("deep_learner_schedule_creation_failed", exc_info=True)
+
         return plan
 
     def list_plans(self) -> List[LearningPlan]:
