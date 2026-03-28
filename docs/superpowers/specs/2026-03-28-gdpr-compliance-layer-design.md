@@ -294,6 +294,173 @@ Data Protection Impact Assessment template for:
 
 ---
 
+## 9. Legal Basis Tracking (Art. 6 — ChatGPT Review Gap A)
+
+Not all processing can rely on consent. Each data processing activity must declare its legal basis.
+
+### ProcessingContext
+```python
+class LegalBasis(str, Enum):
+    CONSENT = "consent"                    # User explicitly agreed
+    CONTRACT = "contract"                  # Necessary for service delivery
+    LEGITIMATE_INTEREST = "legitimate_interest"  # Security, fraud detection
+    LEGAL_OBLIGATION = "legal_obligation"  # Required by law
+```
+
+### Integration
+- Every `DataProcessingLog.record()` call must include `legal_basis`
+- Security monitoring / audit logs use `LEGITIMATE_INTEREST` (no consent needed)
+- Chat processing uses `CONSENT`
+- Erasure requests: only delete data based on CONSENT, preserve LEGITIMATE_INTEREST data (audit trail)
+
+---
+
+## 10. Purpose Limitation (Art. 5(1)(b) — ChatGPT Review Gap B)
+
+Every stored data item must be tagged with its purpose.
+
+### Purpose Tags
+```python
+class DataPurpose(str, Enum):
+    CONVERSATION = "conversation"
+    MEMORY = "memory"
+    SECURITY = "security"
+    ANALYTICS = "analytics"
+    OSINT = "osint"
+    EVOLUTION = "evolution"
+```
+
+### Implementation
+- Memory entries: `purpose` field in metadata (default: "conversation")
+- Vault notes: `purpose` tag in YAML frontmatter
+- Entities: `purpose` in attributes dict
+- Processing logs: already have `purpose` field — enforce non-empty
+
+### Erasure Impact
+- `erase_all()` only deletes data with purpose=conversation/memory/osint
+- Data with purpose=security is anonymized (user_id replaced with hash), not deleted
+- This prevents over-deletion of audit trails
+
+---
+
+## 11. Immutable Compliance Audit Log (Art. 5(2) — ChatGPT Review Gap C)
+
+Append-only log for all compliance events. Cannot be deleted or modified.
+
+**File:** `src/jarvis/security/compliance_audit.py`
+**Storage:** `~/.jarvis/data/audit/compliance.jsonl` (append-only, no delete/truncate)
+
+### Events logged:
+- Consent granted/withdrawn (user_id, channel, timestamp)
+- Erasure requested/executed (user_id, tiers affected, items deleted)
+- Data export requested/delivered (user_id, format, size)
+- Cloud data sent (provider, data types, legal basis)
+- OSINT investigation started (target, justification, scope)
+
+### Format
+```json
+{"ts": "2026-03-28T18:00:00Z", "event": "consent_granted", "user_id": "u123", "channel": "telegram", "consent_type": "data_processing", "policy_version": "1.0"}
+{"ts": "2026-03-28T18:05:00Z", "event": "erasure_executed", "user_id": "u123", "tiers": ["memory", "vault"], "items_deleted": 15}
+```
+
+### Properties
+- Append-only (open with mode="a")
+- Never deleted by RetentionEnforcer
+- Signed with SHA-256 chain (each line includes hash of previous line)
+- Backed up to `~/.jarvis/data/audit/compliance.jsonl.bak` weekly
+
+---
+
+## 12. Erasure Authentication (ChatGPT Review Gap D)
+
+The `DELETE /api/v1/user/data` endpoint must verify identity.
+
+### Implementation
+- Requires existing `_verify_cc_token` auth (same as all config routes)
+- Additionally: `user_id` is extracted from the authenticated session, not from request body
+- A user can only erase their OWN data
+- Admin override: `JARVIS_ADMIN_TOKEN` env var can erase any user's data
+- Re-authentication: for WebUI, require password/token re-entry before erasure
+
+---
+
+## 13. Data Processing Register (Art. 30 — ChatGPT Review Gap F)
+
+Structured register of all processing activities.
+
+**File:** `data/legal/processing_register.yaml`
+
+```yaml
+processing_activities:
+  - name: chat_processing
+    purpose: Respond to user queries
+    legal_basis: consent
+    data_categories: [user_queries, chat_history]
+    recipients: [ollama_local]
+    retention: 180 days
+    erasure: full_delete
+
+  - name: cloud_llm_inference
+    purpose: Process complex queries via cloud AI
+    legal_basis: consent
+    data_categories: [user_queries, memory_context]
+    recipients: [anthropic, openai, groq]
+    retention: 90 days
+    erasure: full_delete
+
+  - name: osint_investigation
+    purpose: Background research on persons/orgs
+    legal_basis: consent + legitimate_interest
+    data_categories: [public_profiles, claims, evidence]
+    recipients: [github_api, arxiv_api, web_search]
+    retention: 30 days
+    erasure: full_delete
+
+  - name: security_monitoring
+    purpose: Detect abuse, credential leaks, injection
+    legal_basis: legitimate_interest
+    data_categories: [tool_calls, risk_assessments]
+    recipients: [none]
+    retention: 365 days
+    erasure: anonymize
+
+  - name: evolution_learning
+    purpose: Autonomous knowledge building
+    legal_basis: consent
+    data_categories: [web_content, entities, claims]
+    recipients: [searxng_local, brave_api, ddg]
+    retention: none (permanent, domain knowledge)
+    erasure: full_delete
+```
+
+---
+
+## 14. Privacy Mode (ChatGPT "Next Level" Suggestion)
+
+Runtime toggle that disables all persistent storage.
+
+### Config
+```python
+class PrivacyConfig(BaseModel):
+    privacy_mode: bool = False  # or JARVIS_PRIVACY_MODE env var
+```
+
+### When enabled:
+- No memory storage (episodic, semantic, procedural all disabled)
+- No vault writes
+- No entity/relation creation
+- No processing logs
+- No session persistence
+- Chat responses are stateless (no context from previous messages)
+- Cloud LLM calls still require consent
+
+### Implementation
+- Check `config.privacy.privacy_mode` in gateway before each storage operation
+- Existing tools still callable but storage calls become no-ops
+- MCP tool handlers check privacy mode and skip persistence
+
+---
+
 ## Non-Breaking Guarantees
 
 1. **Graceful degradation**: If `pysqlcipher3` not installed, falls back to unencrypted SQLite with WARNING
