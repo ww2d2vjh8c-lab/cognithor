@@ -2099,11 +2099,13 @@ class JarvisConfig(BaseModel):
         """
         # Backend-Typ bestimmen: explizit gesetzt oder aus API-Key ableiten
         backend = self.llm_backend_type
-        if backend == "ollama" and self.operation_mode != "offline":
+        if backend == "ollama" and self.operation_mode not in ("offline", "hybrid"):
             # Auto-Detection: Wenn ein API-Key vorhanden ist aber der
             # Backend-Typ noch auf "ollama" steht, Backend automatisch setzen
             # Priority: anthropic > openai > gemini > groq > deepseek > mistral > together
             # NICHT wenn operation_mode="offline" — dann bleibt Ollama.
+            # NICHT wenn operation_mode="hybrid" — Hybrid nutzt Ollama als
+            # Standard-Backend. Cloud-APIs nur fuer Frontier Agent / komplexe Tasks.
             if self.anthropic_api_key:
                 backend = "anthropic"
                 object.__setattr__(self, "llm_backend_type", "anthropic")
