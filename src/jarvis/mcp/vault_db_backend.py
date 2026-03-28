@@ -92,8 +92,8 @@ class VaultDBBackend(VaultBackend):
                 (note_id, path, title, content, tag_str, folder, sources, bl_json, now, now),
             )
             self._conn.commit()
-        except sqlite3.IntegrityError:
-            # Path exists — update instead
+        except Exception:
+            # Path exists — update instead (catches both sqlite3 and sqlcipher3)
             self._conn.execute(
                 "UPDATE notes SET title=?, content=?, tags=?, folder=?, sources=?, backlinks=?, updated_at=? WHERE path=?",
                 (title, content, tag_str, folder, sources, bl_json, now, path),
