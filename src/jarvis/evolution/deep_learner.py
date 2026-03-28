@@ -355,12 +355,17 @@ class DeepLearner:
         quality = await self._quality_assessor.run_quality_test(subgoal, plan.goal_slug)
         subgoal.coverage_score = quality["coverage_score"]
         subgoal.quality_score = quality["quality_score"]
+        import time as _time
+        subgoal.last_tested = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
+        subgoal.test_count += 1
+
         if quality["passed"]:
             subgoal.status = "passed"
             log.info("deep_learner_subgoal_passed", subgoal=subgoal.title[:40],
-                     quality=quality["quality_score"])
+                     quality=quality["quality_score"], test_count=subgoal.test_count)
             # Auto-generate a query skill for this knowledge area
-            await self._generate_skill_for_subgoal(subgoal, plan)
+            if subgoal.test_count == 1:  # Only on first pass, not on re-tests
+                await self._generate_skill_for_subgoal(subgoal, plan)
         else:
             subgoal.status = "failed"
             log.info("deep_learner_subgoal_quality_failed", subgoal=subgoal.title[:40],
@@ -474,6 +479,57 @@ class DeepLearner:
 
     # ------------------------------------------------------------------
     # Internal helpers
+    async def retest_stale_subgoals(self, plan_id: str, max_age_days: int = 7) -> int:
+        """Re-test passed SubGoals that haven't been tested in max_age_days.
+
+        If a re-test fails, the SubGoal goes back to "researching" for
+        more depth. Returns count of SubGoals re-tested.
+        """
+        import time as _time
+        from datetime import datetime, timedelta, timezone
+
+        plan = self.get_plan(plan_id)
+        if not plan:
+            return 0
+
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=max_age_days)).isoformat()
+        retested = 0
+
+        for sg in plan.sub_goals:
+            if sg.status != "passed":
+                continue
+            if not sg.last_tested or sg.last_tested < cutoff:
+                log.info(
+                    "deep_learner_retest",
+                    subgoal=sg.title[:40],
+                    last_tested=sg.last_tested,
+                    test_count=sg.test_count,
+                )
+                result = await self._quality_assessor.run_quality_test(sg, plan.goal_slug)
+                sg.last_tested = _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
+                sg.test_count += 1
+                sg.quality_score = result["quality_score"]
+
+                if not result["passed"]:
+                    sg.status = "researching"  # Back to research!
+                    log.warning(
+                        "deep_learner_retest_failed",
+                        subgoal=sg.title[:40],
+                        quality=result["quality_score"],
+                        failed_questions=[q.question[:50] for q in result.get("failed_questions", [])],
+                    )
+                else:
+                    log.info(
+                        "deep_learner_retest_passed",
+                        subgoal=sg.title[:40],
+                        quality=result["quality_score"],
+                    )
+                retested += 1
+
+        if retested:
+            plan.save(str(self._plans_dir))
+        return retested
+
     async def _generate_skill_for_subgoal(self, subgoal: SubGoal, plan: "LearningPlan") -> None:
         """Auto-generate a Markdown skill that makes this knowledge queryable.
 

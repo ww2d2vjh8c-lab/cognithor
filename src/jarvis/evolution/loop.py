@@ -310,6 +310,22 @@ class EvolutionLoop:
                         source="deep_plan",
                         target_skill=sg.id,
                     )]
+                # No pending SubGoals — check for stale passed SubGoals to re-test
+                else:
+                    try:
+                        retested = await self._deep_learner.retest_stale_subgoals(plan.id)
+                        if retested:
+                            log.info("evolution_retested_stale", plan=plan.goal[:40], count=retested)
+                            # After retest, some may have gone back to researching
+                            sg2 = self._deep_learner.get_next_subgoal(plan.id)
+                            if sg2:
+                                return [_LearningGoal(
+                                    query=f"[deep:{plan.id}:{sg2.id}] {sg2.title}: {sg2.description}",
+                                    source="deep_plan",
+                                    target_skill=sg2.id,
+                                )]
+                    except Exception:
+                        log.debug("evolution_retest_failed", exc_info=True)
 
         # --- Tier 2: User learning goals ---
         goals: list[str] = []

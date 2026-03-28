@@ -181,6 +181,8 @@ class SubGoal:
     coverage_score: Optional[float] = None
     quality_score: Optional[float] = None
     quality_questions: List[QualityQuestion] = field(default_factory=list)
+    last_tested: Optional[str] = None  # ISO timestamp of last quality test
+    test_count: int = 0  # How many times this SubGoal has been tested
 
     def to_dict(self) -> dict:
         return {
@@ -199,6 +201,8 @@ class SubGoal:
             "coverage_score": self.coverage_score,
             "quality_score": self.quality_score,
             "quality_questions": [qq.to_dict() for qq in self.quality_questions],
+            "last_tested": self.last_tested,
+            "test_count": self.test_count,
         }
 
     @classmethod
@@ -222,6 +226,8 @@ class SubGoal:
                 QualityQuestion.from_dict(q)
                 for q in d.get("quality_questions", [])
             ],
+            last_tested=d.get("last_tested"),
+            test_count=d.get("test_count", 0),
         )
 
 
