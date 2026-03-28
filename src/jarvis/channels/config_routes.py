@@ -3176,6 +3176,72 @@ def _register_ui_routes(
         except Exception as exc:
             return {"error": str(exc)}
 
+    @app.get("/api/v1/evolution/plans", dependencies=deps)
+    async def list_evolution_plans() -> dict[str, Any]:
+        """List all learning plans."""
+        dl = getattr(gateway, "_deep_learner", None)
+        if not dl:
+            return {"plans": [], "message": "DeepLearner not available"}
+        plans = dl.list_plans()
+        return {"plans": [p.to_summary_dict() for p in plans]}
+
+    @app.get("/api/v1/evolution/plans/{plan_id}", dependencies=deps)
+    async def get_evolution_plan(plan_id: str) -> dict[str, Any]:
+        """Get detailed plan with SubGoals."""
+        dl = getattr(gateway, "_deep_learner", None)
+        if not dl:
+            return {"error": "DeepLearner not available"}
+        plan = dl.get_plan(plan_id)
+        if not plan:
+            return {"error": "Plan not found"}
+        return plan.to_dict()
+
+    @app.post("/api/v1/evolution/plans", dependencies=deps)
+    async def create_evolution_plan(request: Request) -> dict[str, Any]:
+        """Create a new learning plan from a goal."""
+        dl = getattr(gateway, "_deep_learner", None)
+        if not dl:
+            return {"error": "DeepLearner not available"}
+        try:
+            body = await request.json()
+            goal = body.get("goal", "")
+            if not goal:
+                return {"error": "goal is required"}
+            seeds_raw = body.get("seed_sources", [])
+            seeds = []
+            for s in seeds_raw:
+                from jarvis.evolution.models import SeedSource
+
+                seeds.append(SeedSource(
+                    content_type=s.get("content_type", "hint"),
+                    value=s.get("value", ""),
+                    title=s.get("title", ""),
+                ))
+            plan = await dl.create_plan(goal, seed_sources=seeds if seeds else None)
+            return plan.to_summary_dict()
+        except Exception as exc:
+            return {"error": str(exc)}
+
+    @app.patch("/api/v1/evolution/plans/{plan_id}", dependencies=deps)
+    async def update_evolution_plan(plan_id: str, request: Request) -> dict[str, Any]:
+        """Update plan status (pause/resume/delete)."""
+        dl = getattr(gateway, "_deep_learner", None)
+        if not dl:
+            return {"error": "DeepLearner not available"}
+        try:
+            body = await request.json()
+            action = body.get("action", "")
+            if action == "delete":
+                dl.delete_plan(plan_id)
+                return {"deleted": True}
+            elif action in ("pause", "resume", "complete"):
+                status_map = {"pause": "paused", "resume": "active", "complete": "completed"}
+                ok = dl.update_plan_status(plan_id, status_map[action])
+                return {"updated": ok, "status": status_map[action]}
+            return {"error": f"Unknown action: {action}"}
+        except Exception as exc:
+            return {"error": str(exc)}
+
     # -- 3.4: POST /agents/{name} ----------------------------------------
 
     @app.post("/api/v1/agents/{name}", dependencies=deps)
