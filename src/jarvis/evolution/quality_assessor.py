@@ -11,13 +11,14 @@ __all__ = ["QualityAssessor"]
 
 logger = logging.getLogger(__name__)
 
-# Coverage thresholds per metric — realistic for per-SubGoal scope
-# (one SubGoal typically fetches 3-5 pages, producing 5-15 chunks)
+# Coverage thresholds per metric — a SubGoal must reach ALL of these
+# before the LLM self-exam triggers. These represent meaningful depth
+# for a single sub-topic (e.g. "VVG Grundlagen", not the entire plan).
 _COVERAGE_THRESHOLDS = {
-    "vault_entries": 2,
-    "chunks_created": 3,
-    "entities_created": 2,
-    "sources_fetched": 2,
+    "vault_entries": 8,
+    "chunks_created": 25,
+    "entities_created": 8,
+    "sources_fetched": 8,
 }
 
 

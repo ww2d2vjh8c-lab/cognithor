@@ -212,28 +212,6 @@ class DeepLearner:
         plan.save(str(self._plans_dir))
         log.info("deep_learner_subgoal_start", plan=plan.goal[:40], subgoal=subgoal.title[:40])
 
-        # Find sources SPECIFIC to this subgoal's topic
-        # Each subgoal discovers its own sources via web search
-        sources = await self._discover_sources(
-            f"{subgoal.title} {subgoal.description}"[:200]
-        )
-        if not sources:
-            # Fallback: use unfetched plan-level sources
-            already_fetched = set()
-            for sg in plan.sub_goals:
-                if hasattr(sg, "_fetched_urls"):
-                    already_fetched.update(sg._fetched_urls)
-            sources = [
-                s for s in plan.sources
-                if s.url not in already_fetched and s.status != "error"
-            ][:3]
-
-        log.info(
-            "deep_learner_sources_for_subgoal",
-            subgoal=subgoal.title[:40],
-            sources=[s.url[:50] for s in sources[:5]],
-        )
-
         # Create goal-scoped index for isolated per-plan storage
         goal_index = None
         try:
@@ -252,35 +230,117 @@ class DeepLearner:
             goal_index=goal_index,
         )
 
+        # ── Iterative deep research loop ──────────────────────────────
+        # Keep researching until 90% coverage. NO max rounds — the system
+        # researches until the topic is actually covered, period.
+        # Each round: new search query → new sources → fetch → build.
+        required_coverage = 0.9
+        max_pages = getattr(self._config, "max_pages_per_crawl", 50)
         fetched_urls: set[str] = set()
-        for source in sources:
+        research_round = 0
+
+        while True:
+            # Check if coverage is sufficient (90%)
+            coverage = self._quality_assessor.check_coverage(subgoal)
+            if coverage >= required_coverage:
+                log.info(
+                    "deep_learner_coverage_reached",
+                    subgoal=subgoal.title[:40],
+                    round=research_round,
+                    coverage=coverage,
+                    chunks=subgoal.chunks_created,
+                )
+                break
+
             # Idle check
             if self._idle_detector and not self._idle_detector.is_idle:
-                log.info("deep_learner_interrupted", subgoal=subgoal.title[:40])
+                log.info("deep_learner_interrupted", subgoal=subgoal.title[:40], round=research_round)
                 plan.save(str(self._plans_dir))
                 return False
 
-            # Skip if already fetched by this or another subgoal
-            if source.url in fetched_urls:
+            # Vary search queries per round to get diverse sources
+            query_variants = [
+                f"{subgoal.title} {subgoal.description}",
+                f"{subgoal.title} Gesetz Paragraph Details",
+                f"{subgoal.title} Beispiele Praxis Anwendung",
+                f"{subgoal.title} aktuelle Rechtsprechung Urteile",
+                f"{subgoal.title} Fachliteratur Kommentar Erlaeuterung",
+                f"{subgoal.title} Definitionen Begriffe Grundlagen",
+                f"{subgoal.title} Statistiken Zahlen Fakten",
+                f"{subgoal.title} Kritik Probleme Reformbedarf",
+                f"{subgoal.title} Vergleich international EU",
+                f"{subgoal.title} FAQ haeufige Fragen Antworten",
+            ]
+            query = query_variants[research_round % len(query_variants)][:200]
+
+            sources = await self._discover_sources(query)
+            if not sources and research_round == 0:
+                # Fallback: plan-level sources
+                sources = [
+                    s for s in plan.sources
+                    if s.url not in fetched_urls and s.status != "error"
+                ][:5]
+
+            if not sources:
+                log.info("deep_learner_no_more_sources", round=research_round, coverage=coverage)
+                # Wait and retry with next query variant — don't give up
+                if research_round > 20:
+                    log.warning("deep_learner_exhausted_search_variants", subgoal=subgoal.title[:40])
+                    break
+                research_round += 1
                 continue
-            fetched_urls.add(source.url)
 
-            log.info("deep_learner_fetching", source=source.url[:60])
-            fetch_results = await self._research_agent.fetch_source(source)
-            source.pages_fetched = len(fetch_results)
+            log.info(
+                "deep_learner_research_round",
+                round=research_round + 1,
+                query=query[:50],
+                sources=len(sources),
+                current_chunks=subgoal.chunks_created,
+                current_coverage=coverage,
+            )
 
-            # Build phase
-            subgoal.status = "building"
-            for fr in fetch_results:
+            for source in sources:
                 if self._idle_detector and not self._idle_detector.is_idle:
                     plan.save(str(self._plans_dir))
                     return False
-                build_result = await builder.build(fr)
-                subgoal.chunks_created += build_result.chunks_created
-                subgoal.entities_created += build_result.entities_created
-                if build_result.vault_path:
-                    subgoal.vault_entries += 1
-                subgoal.sources_fetched += 1
+
+                if source.url in fetched_urls:
+                    continue
+                fetched_urls.add(source.url)
+
+                if len(fetched_urls) > max_pages:
+                    log.info("deep_learner_max_pages_reached", pages=len(fetched_urls))
+                    break
+
+                log.info("deep_learner_fetching", source=source.url[:60])
+                fetch_results = await self._research_agent.fetch_source(source)
+                source.pages_fetched = len(fetch_results)
+
+                # Build phase
+                subgoal.status = "building"
+                for fr in fetch_results:
+                    if self._idle_detector and not self._idle_detector.is_idle:
+                        plan.save(str(self._plans_dir))
+                        return False
+                    build_result = await builder.build(fr)
+                    subgoal.chunks_created += build_result.chunks_created
+                    subgoal.entities_created += build_result.entities_created
+                    if build_result.vault_path:
+                        subgoal.vault_entries += 1
+                    subgoal.sources_fetched += 1
+
+            # Save progress after each round
+            research_round += 1
+            plan.save(str(self._plans_dir))
+            log.info(
+                "deep_learner_round_complete",
+                round=research_round,
+                chunks=subgoal.chunks_created,
+                entities=subgoal.entities_created,
+                vault=subgoal.vault_entries,
+                sources=subgoal.sources_fetched,
+                coverage=self._quality_assessor.check_coverage(subgoal),
+            )
 
         # Quality test
         subgoal.status = "testing"

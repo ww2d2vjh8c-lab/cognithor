@@ -61,14 +61,14 @@ class TestCoverageCheck:
         sg = SubGoal(
             title="VVG Grundlagen",
             description="Grundlagen des VVG",
-            chunks_created=25,
-            entities_created=8,
-            vault_entries=6,
-            sources_fetched=4,
+            chunks_created=30,
+            entities_created=10,
+            vault_entries=10,
+            sources_fetched=10,
         )
         assessor = QualityAssessor(mcp_client=AsyncMock(), llm_fn=AsyncMock())
         score = assessor.check_coverage(sg)
-        assert score >= 0.7
+        assert score >= 0.9
 
     def test_coverage_check_fails(self):
         from jarvis.evolution.quality_assessor import QualityAssessor
@@ -156,10 +156,10 @@ class TestFullQualityTest:
         sg = SubGoal(
             title="VVG Grundlagen",
             description="Grundlagen des VVG",
-            chunks_created=25,
-            entities_created=8,
-            vault_entries=6,
-            sources_fetched=4,
+            chunks_created=30,
+            entities_created=10,
+            vault_entries=10,
+            sources_fetched=10,
         )
         result = await assessor.run_quality_test(sg, "vvg-grundlagen")
 
@@ -167,7 +167,7 @@ class TestFullQualityTest:
         assert "quality_score" in result
         assert "questions" in result
         assert "passed" in result
-        assert result["coverage_score"] >= 0.7
+        assert result["coverage_score"] >= 0.9
         assert result["quality_score"] > 0
         assert len(result["questions"]) == 2
 
