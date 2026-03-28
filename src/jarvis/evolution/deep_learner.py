@@ -359,6 +359,8 @@ class DeepLearner:
             subgoal.status = "passed"
             log.info("deep_learner_subgoal_passed", subgoal=subgoal.title[:40],
                      quality=quality["quality_score"])
+            # Auto-generate a query skill for this knowledge area
+            await self._generate_skill_for_subgoal(subgoal, plan)
         else:
             subgoal.status = "failed"
             log.info("deep_learner_subgoal_quality_failed", subgoal=subgoal.title[:40],
@@ -472,6 +474,59 @@ class DeepLearner:
 
     # ------------------------------------------------------------------
     # Internal helpers
+    async def _generate_skill_for_subgoal(self, subgoal: SubGoal, plan: "LearningPlan") -> None:
+        """Auto-generate a Markdown skill that makes this knowledge queryable.
+
+        Creates a skill file that matches on the subgoal topic keywords
+        and instructs the Planner to search vault + memory for answers.
+        """
+        try:
+            if not self._mcp_client:
+                return
+
+            # Generate trigger keywords from the subgoal title
+            keywords = [w for w in subgoal.title.split() if len(w) > 3][:5]
+            slug = plan.goal_slug[:20] + "-" + subgoal.id[:8]
+            skill_name = f"evolution-{slug}"
+
+            skill_body = (
+                f"---\n"
+                f"name: {skill_name}\n"
+                f"description: Automatisch generiertes Wissen zu '{subgoal.title}'\n"
+                f"trigger_keywords: {keywords}\n"
+                f"category: research\n"
+                f"priority: 3\n"
+                f"enabled: true\n"
+                f"---\n\n"
+                f"# {subgoal.title}\n\n"
+                f"Du hast umfangreiches Wissen zu diesem Thema aufgebaut.\n"
+                f"Durchsuche dein Vault und Memory nach relevanten Informationen:\n\n"
+                f"1. Nutze `vault_search` mit Stichworten aus der Frage\n"
+                f"2. Nutze `search_memory` fuer semantische Suche\n"
+                f"3. Kombiniere die Ergebnisse zu einer fundierten Antwort\n"
+                f"4. Zitiere Quellen wenn moeglich\n\n"
+                f"Vault-Ordner: wissen/{plan.goal_slug}/\n"
+                f"Domain: {plan.goal_slug}\n"
+            )
+
+            # Save skill via MCP
+            result = await self._mcp_client.call_tool(
+                "create_skill",
+                {"name": skill_name, "content": skill_body},
+            )
+            if result and not result.is_error:
+                subgoal.skills_generated += 1
+                log.info(
+                    "deep_learner_skill_generated",
+                    skill=skill_name,
+                    subgoal=subgoal.title[:40],
+                    keywords=keywords,
+                )
+            else:
+                log.debug("deep_learner_skill_generation_failed", result=str(result)[:100])
+        except Exception:
+            log.debug("deep_learner_skill_generation_error", exc_info=True)
+
     # ------------------------------------------------------------------
 
     async def _discover_sources(self, topic: str) -> list[SourceSpec]:
