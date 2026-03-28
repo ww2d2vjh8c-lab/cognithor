@@ -219,11 +219,22 @@ class DeepLearner:
             sources=[s.url[:50] for s in sources[:5]],
         )
 
+        # Create goal-scoped index for isolated per-plan storage
+        goal_index = None
+        try:
+            from jarvis.evolution.goal_index import GoalScopedIndex
+
+            index_base = self._plans_dir.parent / "indexes"
+            goal_index = GoalScopedIndex(goal_slug=plan.goal_slug, base_dir=index_base)
+        except Exception:
+            log.debug("goal_index_creation_failed", exc_info=True)
+
         builder = KnowledgeBuilder(
             mcp_client=self._mcp_client,
             llm_fn=self._llm_fn,
             goal_slug=plan.goal_slug,
             knowledge_validator=self._knowledge_validator,
+            goal_index=goal_index,
         )
 
         fetched_urls: set[str] = set()
@@ -287,6 +298,14 @@ class DeepLearner:
                     )
             except Exception:
                 log.debug("deep_learner_claims_challenge_failed", exc_info=True)
+
+        # Close goal-scoped index and log stats
+        if goal_index:
+            try:
+                log.info("goal_index_stats", **goal_index.stats())
+            except Exception:
+                log.debug("goal_index_stats_failed", exc_info=True)
+            goal_index.close()
 
         # Update plan totals
         plan.total_chunks_indexed += subgoal.chunks_created

@@ -3242,6 +3242,26 @@ def _register_ui_routes(
         except Exception as exc:
             return {"error": str(exc)}
 
+    @app.get("/api/v1/evolution/plans/{plan_id}/index", dependencies=deps)
+    async def get_plan_index_stats(plan_id: str) -> dict[str, Any]:
+        """Get per-goal index statistics."""
+        dl = getattr(gateway, "_deep_learner", None)
+        if not dl:
+            return {"error": "DeepLearner not available"}
+        plan = dl.get_plan(plan_id)
+        if not plan:
+            return {"error": "Plan not found"}
+        try:
+            from jarvis.evolution.goal_index import GoalScopedIndex
+
+            index_base = dl._plans_dir.parent / "indexes"
+            idx = GoalScopedIndex(goal_slug=plan.goal_slug, base_dir=index_base)
+            stats = idx.stats()
+            idx.close()
+            return stats
+        except Exception as exc:
+            return {"error": str(exc)}
+
     @app.get("/api/v1/evolution/claims", dependencies=deps)
     async def get_evolution_claims() -> dict[str, Any]:
         """Get knowledge claims table with confidence scores."""

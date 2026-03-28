@@ -1,6 +1,7 @@
 """Autonomous Evolution Engine — self-improving idle-time learning."""
 
 from jarvis.evolution.deep_learner import DeepLearner
+from jarvis.evolution.goal_index import GoalScopedIndex
 from jarvis.evolution.idle_detector import IdleDetector
 from jarvis.evolution.loop import EvolutionLoop
 from jarvis.evolution.models import LearningPlan, SubGoal
@@ -11,6 +12,7 @@ __all__ = [
     "DeepLearner",
     "EvolutionLoop",
     "EvolutionResumer",
+    "GoalScopedIndex",
     "IdleDetector",
     "LearningPlan",
     "ResumeState",

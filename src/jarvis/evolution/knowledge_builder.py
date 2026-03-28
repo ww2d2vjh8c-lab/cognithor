@@ -72,11 +72,13 @@ class KnowledgeBuilder:
         llm_fn: Optional[Callable] = None,
         goal_slug: str = "",
         knowledge_validator: Any = None,
+        goal_index: Any = None,
     ) -> None:
         self._mcp = mcp_client
         self._llm_fn = llm_fn
         self._goal_slug = goal_slug
         self._validator = knowledge_validator
+        self._goal_index = goal_index
 
     # ------------------------------------------------------------------
     # Public API
@@ -121,6 +123,12 @@ class KnowledgeBuilder:
                     },
                 )
                 result.chunks_created += 1
+                # Also write to goal-scoped index
+                if self._goal_index:
+                    try:
+                        self._goal_index.add_chunk(chunk, source_url=fetch_result.url)
+                    except Exception:
+                        log.debug("goal_index_add_chunk_failed", exc_info=True)
             except Exception as exc:
                 result.errors.append(f"save_to_memory chunk {i} failed: {exc}")
 
@@ -141,6 +149,14 @@ class KnowledgeBuilder:
                         },
                     )
                     result.entities_created += 1
+                    # Also write to goal-scoped index
+                    if self._goal_index:
+                        try:
+                            self._goal_index.add_entity(
+                                entity["name"], entity["type"], attrs, fetch_result.url
+                            )
+                        except Exception:
+                            log.debug("goal_index_add_entity_failed", exc_info=True)
                 except Exception as exc:
                     result.errors.append(f"add_entity failed: {exc}")
 
@@ -156,6 +172,14 @@ class KnowledgeBuilder:
                         },
                     )
                     result.relations_created += 1
+                    # Also write to goal-scoped index
+                    if self._goal_index:
+                        try:
+                            self._goal_index.add_relation(
+                                rel["source"], rel["relation"], rel["target"]
+                            )
+                        except Exception:
+                            log.debug("goal_index_add_relation_failed", exc_info=True)
                 except Exception as exc:
                     result.errors.append(f"add_relation failed: {exc}")
 
