@@ -9,6 +9,8 @@ Tools:
   - get_entity: Laedt eine Entitaet mit Relationen aus dem Wissens-Graphen
   - add_entity: Erstellt eine neue Entitaet im Wissens-Graphen
   - add_relation: Erstellt eine Relation zwischen zwei Entitaeten
+  - delete_entity: Loescht eine Entitaet mit allen Relationen (GDPR erasure)
+  - delete_relation: Loescht eine Relation zwischen zwei Entitaeten (GDPR erasure)
   - get_core_memory: Gibt die aktuelle Core Memory (CORE.md) zurueck
   - get_recent_episodes: Laedt die letzten Tageslog-Eintraege
   - search_procedures: Sucht nach gelernten Prozeduren/Skills
@@ -371,6 +373,84 @@ class MemoryTools:
             target=target_name,
         )
         return f"Relation erstellt: {source_name} --[{relation_type}]→ {target_name}"
+
+    # ── Delete Entity/Relation (GDPR erasure) ──────────────────
+
+    def delete_entity(self, name: str) -> str:
+        """Loescht eine Entitaet und alle zugehoerigen Relationen (GDPR erasure).
+
+        Args:
+            name: Exakter Name der Entitaet.
+
+        Returns:
+            Bestaetigungsnachricht oder Fehlermeldung.
+        """
+        if not name.strip():
+            return "Fehler: Leerer Name."
+
+        entities = self._memory.index.search_entities(name)
+        # Filter to exact match (case-insensitive)
+        exact = [e for e in entities if e.name.lower() == name.strip().lower()]
+        if not exact:
+            return f"Entität nicht gefunden: '{name}'"
+
+        deleted_count = 0
+        for entity in exact:
+            if self._memory.index.delete_entity(entity.id):
+                deleted_count += 1
+
+        log.info("entity_deleted_gdpr", name=name, count=deleted_count)
+        return f"GDPR-Löschung: {deleted_count} Entität(en) '{name}' mit allen Relationen gelöscht."
+
+    def delete_relation(
+        self,
+        source_name: str,
+        relation_type: str,
+        target_name: str,
+    ) -> str:
+        """Loescht eine Relation zwischen zwei Entitaeten (GDPR erasure).
+
+        Args:
+            source_name: Name der Quell-Entitaet.
+            relation_type: Art der Beziehung.
+            target_name: Name der Ziel-Entitaet.
+
+        Returns:
+            Bestaetigungsnachricht oder Fehlermeldung.
+        """
+        sources = self._memory.index.search_entities(source_name)
+        if not sources:
+            return f"Fehler: Quell-Entität '{source_name}' nicht gefunden."
+
+        targets = self._memory.index.search_entities(target_name)
+        if not targets:
+            return f"Fehler: Ziel-Entität '{target_name}' nicht gefunden."
+
+        source_id = sources[0].id
+        target_id = targets[0].id
+
+        # Delete matching relations from the database
+        try:
+            conn = self._memory.index.conn
+            cursor = conn.execute(
+                "DELETE FROM relations WHERE source_entity = ? AND relation_type = ? AND target_entity = ?",
+                (source_id, relation_type, target_id),
+            )
+            conn.commit()
+            count = cursor.rowcount
+        except Exception as e:
+            return f"Löschung fehlgeschlagen: {e}"
+
+        if count == 0:
+            return f"Keine Relation '{relation_type}' zwischen '{source_name}' und '{target_name}' gefunden."
+
+        log.info(
+            "relation_deleted_gdpr",
+            source=source_name,
+            relation=relation_type,
+            target=target_name,
+        )
+        return f"GDPR-Löschung: Relation '{source_name}' --[{relation_type}]→ '{target_name}' gelöscht."
 
     # ── Core Memory ──────────────────────────────────────────────
 
@@ -786,12 +866,62 @@ def register_memory_tools(
         },
     )
 
+    # ── delete_entity ───────────────────────────────────────────
+    mcp_client.register_builtin_handler(
+        "delete_entity",
+        mt.delete_entity,
+        description=(
+            "Löscht eine Entität und alle zugehörigen Relationen aus dem "
+            "Wissens-Graphen (GDPR erasure). Exakter Name-Match."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Exakter Name der zu löschenden Entität",
+                },
+            },
+            "required": ["name"],
+        },
+    )
+
+    # ── delete_relation ─────────────────────────────────────────
+    mcp_client.register_builtin_handler(
+        "delete_relation",
+        mt.delete_relation,
+        description=(
+            "Löscht eine Relation zwischen zwei Entitäten aus dem "
+            "Wissens-Graphen (GDPR erasure)."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "source_name": {
+                    "type": "string",
+                    "description": "Name der Quell-Entität",
+                },
+                "relation_type": {
+                    "type": "string",
+                    "description": "Art der Beziehung",
+                },
+                "target_name": {
+                    "type": "string",
+                    "description": "Name der Ziel-Entität",
+                },
+            },
+            "required": ["source_name", "relation_type", "target_name"],
+        },
+    )
+
     _tool_names = [
         "search_memory",
         "save_to_memory",
         "get_entity",
         "add_entity",
         "add_relation",
+        "delete_entity",
+        "delete_relation",
         "get_core_memory",
         "get_recent_episodes",
         "search_procedures",

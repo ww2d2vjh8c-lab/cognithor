@@ -454,6 +454,19 @@ class Gateway:
             except Exception:
                 log.debug("prompt_evolution_cron_registration_skipped", exc_info=True)
 
+        # GDPR retention enforcement (daily at 03:00)
+        if self._cron_engine and hasattr(self, "_compliance_engine") and self._compliance_engine:
+            try:
+                self._cron_engine.add_system_job(
+                    name="retention_enforcer",
+                    schedule="0 3 * * *",
+                    callback=self._run_retention_enforcement,
+                    args=[],
+                )
+                log.info("gdpr_retention_cron_registered")
+            except Exception:
+                log.debug("gdpr_retention_cron_failed", exc_info=True)
+
         # --- Autonomous Orchestrator (connects PGE + SkillGenerator + Reflector) ---
         self._autonomous_orchestrator = AutonomousOrchestrator(
             gateway=self,
@@ -4236,6 +4249,21 @@ class Gateway:
                     self._session_store.cleanup_channel_mappings(max_age_days=30)
                 except Exception as exc:
                     log.warning("gdpr_retention_cleanup_failed", error=str(exc))
+
+    async def _run_retention_enforcement(self) -> None:
+        """GDPR: enforce retention policies via cron."""
+        try:
+            from jarvis.security.gdpr import GDPRComplianceManager
+
+            if hasattr(self, "_compliance_engine") and self._compliance_engine:
+                mgr = getattr(self, "_gdpr_compliance_manager", None)
+                if mgr and isinstance(mgr, GDPRComplianceManager):
+                    result = mgr.enforce_retention()
+                    log.info("gdpr_retention_enforced", result=result)
+                else:
+                    log.debug("gdpr_retention_enforcement_skipped_no_manager")
+        except Exception:
+            log.debug("gdpr_retention_enforcement_failed", exc_info=True)
 
     def _get_or_create_session(
         self,

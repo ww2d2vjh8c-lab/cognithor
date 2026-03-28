@@ -10,6 +10,7 @@ Tools:
   - vault_read: Einzelne Notiz lesen (per Titel, Pfad oder Slug)
   - vault_update: An Notiz anhaengen, Tags ergaenzen, Timestamp aktualisieren
   - vault_link: Verknuepfung zwischen Notizen erstellen
+  - vault_delete: Notiz loeschen (GDPR erasure)
 
 Format: Obsidian-kompatibles Markdown mit YAML-Frontmatter.
 """
@@ -548,6 +549,47 @@ class VaultTools:
         log.info("vault_notes_linked", source=source_title, target=target_title)
         return f"Verknüpfung erstellt: [[{source_title}]] ↔ [[{target_title}]]"
 
+    # ── Tool: vault_delete ──────────────────────────────────────────────
+
+    async def vault_delete(self, path: str) -> str:
+        """Loescht eine Notiz aus dem Vault (GDPR erasure).
+
+        Args:
+            path: Pfad der Notiz relativ zum Vault-Root.
+
+        Returns:
+            Bestaetigungsnachricht oder Fehlermeldung.
+        """
+        if not path.strip():
+            return "Fehler: Kein Pfad angegeben."
+
+        full = self._validate_vault_path(self._vault_root / path)
+        if full is None:
+            return f"Ungültiger Pfad (Path-Traversal blockiert): {path}"
+        if not full.exists():
+            return f"Notiz nicht gefunden: {path}"
+        if not full.is_file():
+            return f"Pfad ist keine Datei: {path}"
+
+        # Remove from index
+        title = self._extract_frontmatter_field(
+            full.read_text(encoding="utf-8"), "title"
+        ) or full.stem
+        index = self._read_index()
+        # Remove by title match or path match
+        keys_to_remove = [
+            k for k, v in index.items()
+            if k == title or v.get("path") == path
+        ]
+        for k in keys_to_remove:
+            del index[k]
+        if keys_to_remove:
+            self._write_index(index)
+
+        full.unlink()
+        log.info("vault_note_deleted", path=path, title=title)
+        return f"Notiz gelöscht: {path}"
+
     # ── Helper methods ────────────────────────────────────────────────────
 
     def _find_note(self, identifier: str) -> Path | None:
@@ -900,6 +942,22 @@ def register_vault_tools(
         },
     )
 
+    mcp_client.register_builtin_handler(
+        "vault_delete",
+        vault.vault_delete,
+        description="Delete a vault note by path (GDPR erasure)",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Path of the note to delete (relative to vault root)",
+                },
+            },
+            "required": ["path"],
+        },
+    )
+
     log.info(
         "vault_tools_registered",
         tools=[
@@ -909,6 +967,7 @@ def register_vault_tools(
             "vault_read",
             "vault_update",
             "vault_link",
+            "vault_delete",
         ],
     )
     return vault

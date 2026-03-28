@@ -1881,6 +1881,15 @@ class HashlineGuardConfig(BaseModel):
     protected_paths: list[str] = Field(default_factory=list)
 
 
+class RetentionConfig(BaseModel):
+    """Data retention periods (days)."""
+
+    episodic_days: int = Field(default=90, ge=1, le=3650)
+    processing_log_days: int = Field(default=90, ge=1, le=3650)
+    him_report_days: int = Field(default=30, ge=1, le=365)
+    session_days: int = Field(default=180, ge=1, le=3650)
+
+
 class ComplianceConfig(BaseModel):
     """GDPR compliance configuration."""
 
@@ -2033,6 +2042,7 @@ class JarvisConfig(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     compliance: ComplianceConfig = Field(default_factory=ComplianceConfig)
+    retention: RetentionConfig = Field(default_factory=RetentionConfig)
     audit: AuditConfig = Field(default_factory=AuditConfig)
     recovery: RecoveryConfig = Field(default_factory=RecoveryConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)

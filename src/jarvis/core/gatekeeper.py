@@ -644,13 +644,21 @@ class Gatekeeper:
             "browse_click",
             "browse_fill",
             "browse_execute_js",
-            # Vault (destructive)
-            "vault_delete",
             # OSINT (privacy-sensitive investigations)
             "investigate_person", "investigate_project", "investigate_org",
         }
         if tool in orange_tools:
             return RiskLevel.ORANGE
+
+        # RED: GDPR erasure tools — destructive, irreversible data deletion
+        red_tools = {
+            "vault_delete",
+            "delete_entity",
+            "delete_relation",
+            "erase_user_data",
+        }
+        if tool in red_tools:
+            return RiskLevel.RED
 
         # Genesis Anchor check (Identity Layer)
         if hasattr(self, "_identity_layer") and self._identity_layer is not None:

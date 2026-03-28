@@ -603,10 +603,16 @@ class ErasureRequest:
 class ErasureManager:
     """Handles right-to-erasure requests across all data stores."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        processing_log: DataProcessingLog | None = None,
+        usage_log: ModelUsageLog | None = None,
+    ) -> None:
         self._requests: list[ErasureRequest] = []
         self._counter = 0
         self._erasure_handlers: list[Callable[[str], int]] = []
+        self._processing_log = processing_log
+        self._usage_log = usage_log
 
     @property
     def requests(self) -> list[ErasureRequest]:
@@ -667,6 +673,57 @@ class ErasureManager:
             total_deleted=req.records_deleted + req.model_records_deleted,
         )
         return req
+
+    async def erase_all(
+        self,
+        user_id: str,
+        processing_log: DataProcessingLog | None = None,
+        usage_log: ModelUsageLog | None = None,
+        consent_manager: Any = None,
+    ) -> dict[str, int]:
+        """Delete ALL personal data for user_id across every tier.
+
+        Returns dict with deletion counts per tier.
+        """
+        counts: dict[str, int] = {}
+        _plog = processing_log or self._processing_log
+        _ulog = usage_log or self._usage_log
+
+        # 1. Processing logs
+        if _plog:
+            try:
+                counts["processing_logs"] = _plog.delete_user_records(user_id)
+            except Exception:
+                counts["processing_logs"] = 0
+        else:
+            counts["processing_logs"] = 0
+
+        # 2. Model usage logs
+        if _ulog:
+            try:
+                counts["model_usage"] = _ulog.delete_user_records(user_id)
+            except Exception:
+                counts["model_usage"] = 0
+        else:
+            counts["model_usage"] = 0
+
+        # 3. Consent records
+        if consent_manager:
+            try:
+                counts["consents"] = consent_manager.delete_user(user_id)
+            except Exception:
+                counts["consents"] = 0
+
+        # 4. Registered external handlers
+        handler_total = 0
+        for handler in self._erasure_handlers:
+            try:
+                handler_total += handler(user_id)
+            except Exception:
+                pass
+        counts["external_handlers"] = handler_total
+
+        return counts
 
 
 # ── Audit Export ─────────────────────────────────────────────────────────
@@ -826,7 +883,10 @@ class GDPRComplianceManager:
         self.processing_log = DataProcessingLog()
         self.usage_log = ModelUsageLog()
         self.retention = RetentionEnforcer(retention_policies)
-        self.erasure = ErasureManager()
+        self.erasure = ErasureManager(
+            processing_log=self.processing_log,
+            usage_log=self.usage_log,
+        )
         self.exporter = AuditExporter(
             self.processing_log,
             self.usage_log,

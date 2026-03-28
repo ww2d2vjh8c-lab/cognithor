@@ -2323,6 +2323,60 @@ def _register_security_routes(
             "gdpr_article": "Art. 15 DSGVO — Auskunftsrecht",
         }
 
+    # -- GDPR Art. 17: User Data Erasure ---------------------------------
+
+    @app.delete("/api/v1/user/data", dependencies=deps)
+    async def erase_user_data(request: Request) -> dict[str, Any]:
+        """GDPR Art. 17: Delete all personal data for authenticated user."""
+        gdpr_mgr = getattr(gateway, "_gdpr_manager", None)
+        consent_mgr = getattr(gateway, "_consent_manager", None)
+        if not gdpr_mgr:
+            return {"error": "GDPR manager not available"}
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        user_id = body.get("user_id", "")
+        if not user_id:
+            return {"error": "user_id required"}
+        result = await gdpr_mgr.erasure.erase_all(
+            user_id=user_id,
+            consent_manager=consent_mgr,
+        )
+        return {
+            "status": "erased",
+            "user_id": user_id,
+            "counts": result,
+            "gdpr_article": "Art. 17 DSGVO — Recht auf Loeschung",
+        }
+
+    # -- GDPR Art. 20: User Data Export (full) ----------------------------
+
+    @app.get("/api/v1/user/data", dependencies=deps)
+    async def export_user_data(user_id: str = "") -> dict[str, Any]:
+        """GDPR Art. 15/20: Export all personal data for a user."""
+        if not user_id:
+            return {"error": "user_id query parameter required"}
+        gdpr_mgr = getattr(gateway, "_gdpr_manager", None)
+        consent_mgr = getattr(gateway, "_consent_manager", None)
+        export: dict[str, Any] = {
+            "user_id": user_id,
+            "gdpr_article": "Art. 15/20 DSGVO — Auskunftsrecht / Datenportabilitaet",
+        }
+        # Processing logs
+        if gdpr_mgr:
+            try:
+                export["processing_log"] = gdpr_mgr.user_report(user_id)
+            except Exception:
+                export["processing_log"] = []
+        # Consent records
+        if consent_mgr:
+            try:
+                export["consents"] = consent_mgr.get_user_consents(user_id)
+            except Exception:
+                export["consents"] = []
+        return export
+
     # -- Security Pipeline (Phase 19) ------------------------------------
 
     @app.get("/api/v1/security/pipeline/stats", dependencies=deps)
