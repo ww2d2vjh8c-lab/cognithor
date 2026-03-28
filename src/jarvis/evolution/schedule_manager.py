@@ -36,6 +36,8 @@ def _normalize_cron(expr: str) -> str:
     if len(parts) == 5:
         for name, num in day_map.items():
             parts[4] = re.sub(rf"\b{name}\b", num, parts[4], flags=re.IGNORECASE)
+        # Fix day_of_week=7 → 0 (LLMs sometimes use 7 for Sunday)
+        parts[4] = re.sub(r"\b7\b", "0", parts[4])
 
     return " ".join(parts)
 

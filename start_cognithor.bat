@@ -299,16 +299,27 @@ if errorlevel 1 (
 )
 :searxng_done
 
-:: Check GDPR encryption dependencies (pysqlcipher3 + keyring)
+:: Check GDPR encryption dependencies (SQLCipher + keyring)
 python -c "import pysqlcipher3" >nul 2>&1
 if errorlevel 1 (
-    echo   [INFO] Installing pysqlcipher3 for GDPR encryption...
-    pip install pysqlcipher3 >nul 2>&1
+    python -c "import sqlcipher3" >nul 2>&1
     if errorlevel 1 (
-        echo   [WARN] pysqlcipher3 installation failed. Database encryption unavailable.
-        echo          Install manually: pip install pysqlcipher3
+        echo   [INFO] Installing sqlcipher3 for GDPR encryption...
+        pip install sqlcipher3 >nul 2>&1
+        if errorlevel 1 (
+            echo   [INFO] sqlcipher3 failed, trying pysqlcipher3...
+            pip install pysqlcipher3 >nul 2>&1
+            if errorlevel 1 (
+                echo   [WARN] SQLCipher installation failed. Database encryption unavailable.
+                echo          Try manually: pip install sqlcipher3
+            ) else (
+                echo   [OK] pysqlcipher3 installed.
+            )
+        ) else (
+            echo   [OK] sqlcipher3 installed -- database encryption active.
+        )
     ) else (
-        echo   [OK] pysqlcipher3 installed.
+        echo   [OK] sqlcipher3 available.
     )
 ) else (
     echo   [OK] pysqlcipher3 available.
