@@ -892,6 +892,90 @@ class MediaPipeline:
         return MediaResult(success=True, text=full_text, metadata=metadata)
 
     # ========================================================================
+    # Excel-Lesen (.xlsx)
+    # ========================================================================
+
+    async def read_xlsx(
+        self,
+        file_path: str,
+        *,
+        sheet_name: str = "",
+        max_rows: int = 500,
+    ) -> MediaResult:
+        """Reads an Excel file (.xlsx) and returns data as Markdown tables.
+
+        Args:
+            file_path: Path to the .xlsx file.
+            sheet_name: Specific sheet to read (empty = all sheets).
+            max_rows: Maximum rows per sheet (default 500).
+        """
+        path = Path(file_path).expanduser().resolve()
+        if not path.exists():
+            return MediaResult(success=False, error=f"File not found: {path}")
+        if path.suffix.lower() not in (".xlsx", ".xls"):
+            return MediaResult(success=False, error=f"Not an Excel file: {path.suffix}")
+
+        loop = asyncio.get_running_loop()
+        try:
+            return await loop.run_in_executor(
+                None, self._read_xlsx_structured, path, sheet_name, max_rows
+            )
+        except Exception as exc:
+            log.error("read_xlsx_failed", path=file_path, error=str(exc))
+            return MediaResult(success=False, error=str(exc))
+
+    def _read_xlsx_structured(self, path: Path, sheet_name: str, max_rows: int) -> MediaResult:
+        """Sync worker for read_xlsx."""
+        try:
+            from openpyxl import load_workbook
+        except ImportError:
+            return MediaResult(
+                success=False,
+                error="openpyxl not installed. Run: pip install openpyxl",
+            )
+
+        wb = load_workbook(path, read_only=True, data_only=True)
+        sheets = [sheet_name] if sheet_name and sheet_name in wb.sheetnames else wb.sheetnames
+
+        parts = []
+        total_rows = 0
+        for sname in sheets:
+            ws = wb[sname]
+            parts.append(f"## Sheet: {sname}")
+
+            rows = []
+            for i, row in enumerate(ws.iter_rows(values_only=True)):
+                if i >= max_rows:
+                    parts.append(f"... ({ws.max_row - max_rows} more rows truncated)")
+                    break
+                cells = [str(c) if c is not None else "" for c in row]
+                rows.append(cells)
+                total_rows += 1
+
+            if rows:
+                # Markdown table
+                header = rows[0]
+                parts.append("| " + " | ".join(header) + " |")
+                parts.append("| " + " | ".join(["---"] * len(header)) + " |")
+                for row in rows[1:]:
+                    # Pad/trim to header length
+                    padded = row + [""] * (len(header) - len(row))
+                    parts.append("| " + " | ".join(padded[: len(header)]) + " |")
+            else:
+                parts.append("(empty sheet)")
+            parts.append("")
+
+        wb.close()
+
+        text = "\n".join(parts)
+        log.info("read_xlsx_done", path=str(path)[-40:], sheets=len(sheets), rows=total_rows)
+        return MediaResult(
+            success=True,
+            text=text,
+            metadata={"sheets": len(sheets), "total_rows": total_rows, "format": "xlsx"},
+        )
+
+    # ========================================================================
     # Dokument-Analyse (LLM-gestuetzt)
     # ========================================================================
 
@@ -1136,19 +1220,21 @@ class MediaPipeline:
         author: str = "",
         filename: str = "dokument",
     ) -> MediaResult:
-        """Exportiert Text als PDF- oder DOCX-Dokument.
+        """Exportiert Text als PDF-, DOCX- oder XLSX-Dokument.
 
         Args:
-            content: Text-Inhalt (Absaetze durch \\n\\n getrennt).
-            fmt: Ausgabeformat ('pdf' oder 'docx').
+            content: Text-Inhalt (Absaetze durch \\n\\n getrennt; fuer xlsx: Zeilen durch \\n,
+                Zellen durch | oder Tab getrennt).
+            fmt: Ausgabeformat ('pdf', 'docx' oder 'xlsx').
             title: Optionaler Titel/Betreff.
             author: Optionaler Absender/Autor.
             filename: Dateiname ohne Endung.
         """
         fmt = fmt.lower().strip()
-        if fmt not in ("pdf", "docx"):
+        if fmt not in ("pdf", "docx", "xlsx"):
             return MediaResult(
-                success=False, error=f"Nicht unterstütztes Format: {fmt}. Erlaubt: pdf, docx"
+                success=False,
+                error=f"Nicht unterstütztes Format: {fmt}. Erlaubt: pdf, docx, xlsx",
             )
 
         if not content.strip():
@@ -1169,6 +1255,8 @@ class MediaPipeline:
                 await loop.run_in_executor(
                     None, self._generate_pdf, output_path, content, title, author
                 )
+            elif fmt == "xlsx":
+                await loop.run_in_executor(None, self._generate_xlsx, output_path, content, title)
             else:
                 await loop.run_in_executor(
                     None, self._generate_docx, output_path, content, title, author
@@ -1300,6 +1388,49 @@ class MediaPipeline:
                 doc.add_paragraph(para)
 
         doc.save(str(output_path))
+
+    def _generate_xlsx(self, output_path: Path, content: str, title: str) -> None:
+        """Generate an Excel file from structured text content.
+
+        Content format: rows separated by newlines, cells separated by | or tabs.
+        First row is treated as header.
+        """
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font
+        except ImportError as exc:
+            raise ImportError("openpyxl not installed. Run: pip install openpyxl") from exc
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = title or "Sheet1"
+
+        for row_idx, line in enumerate(content.strip().split("\n"), 1):
+            if not line.strip():
+                continue
+            # Support | or tab as delimiter
+            if "|" in line:
+                cells = [c.strip() for c in line.split("|") if c.strip()]
+            elif "\t" in line:
+                cells = [c.strip() for c in line.split("\t")]
+            else:
+                cells = [line.strip()]
+
+            for col_idx, value in enumerate(cells, 1):
+                cell = ws.cell(row=row_idx, column=col_idx, value=value)
+                if row_idx == 1:
+                    cell.font = Font(bold=True)
+
+        # Auto-width columns
+        for col in ws.columns:
+            max_len = 0
+            col_letter = col[0].column_letter
+            for cell in col:
+                if cell.value:
+                    max_len = max(max_len, len(str(cell.value)))
+            ws.column_dimensions[col_letter].width = min(max_len + 2, 50)
+
+        wb.save(output_path)
 
     async def text_to_speech(
         self,
@@ -1618,9 +1749,9 @@ MEDIA_TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
     },
     "document_export": {
         "description": (
-            "Exportiert Text als PDF- oder DOCX-Dokument (Briefform, Schreiben, etc.). "
-            "Der Inhalt wird als Fließtext übergeben, "
-            "Absätze durch doppelte Zeilenumbrüche getrennt."
+            "Exportiert Text als PDF-, DOCX- oder XLSX-Dokument (Briefform, Schreiben, Tabellen). "
+            "Fuer PDF/DOCX: Fließtext, Absätze durch doppelte Zeilenumbrüche getrennt. "
+            "Fuer XLSX: Zeilen durch \\n, Zellen durch | oder Tab getrennt."
         ),
         "inputSchema": {
             "type": "object",
@@ -1628,7 +1759,7 @@ MEDIA_TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
                 "content": {"type": "string", "description": "Text-Inhalt des Dokuments"},
                 "format": {
                     "type": "string",
-                    "enum": ["pdf", "docx"],
+                    "enum": ["pdf", "docx", "xlsx"],
                     "description": "Ausgabeformat",
                     "default": "pdf",
                 },
@@ -1707,6 +1838,29 @@ MEDIA_TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
                     "type": "boolean",
                     "description": "Tabellen als Markdown extrahieren",
                     "default": True,
+                },
+            },
+            "required": ["file_path"],
+        },
+    },
+    "read_xlsx": {
+        "description": (
+            "Liest eine Excel-Datei (.xlsx) strukturiert: Sheets als Markdown-Tabellen, "
+            "mit konfigurierbarer Sheet-Auswahl und Zeilenlimit. Lokal via openpyxl."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "file_path": {"type": "string", "description": "Pfad zur .xlsx Datei"},
+                "sheet_name": {
+                    "type": "string",
+                    "description": "Spezifisches Sheet (leer = alle Sheets)",
+                    "default": "",
+                },
+                "max_rows": {
+                    "type": "integer",
+                    "description": "Maximale Zeilen pro Sheet",
+                    "default": 500,
                 },
             },
             "required": ["file_path"],
@@ -1863,6 +2017,19 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         )
         return result.text if result.success else f"Fehler: {result.error}"
 
+    async def _read_xlsx(
+        file_path: str,
+        sheet_name: str = "",
+        max_rows: int = 500,
+        **_: Any,
+    ) -> str:
+        result = await pipeline.read_xlsx(
+            file_path,
+            sheet_name=sheet_name,
+            max_rows=max_rows,
+        )
+        return result.text if result.success else f"Fehler: {result.error}"
+
     handlers = {
         "media_transcribe_audio": _transcribe,
         "media_analyze_image": _analyze_image,
@@ -1875,6 +2042,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         "read_pdf": _read_pdf,
         "read_ppt": _read_ppt,
         "read_docx": _read_docx,
+        "read_xlsx": _read_xlsx,
     }
 
     for name, schema in MEDIA_TOOL_SCHEMAS.items():
