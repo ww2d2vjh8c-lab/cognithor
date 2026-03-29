@@ -18,6 +18,7 @@
 - [Evolution Engine](#evolution-engine)
 - [OSINT / HIM Module](#osint--him-module)
 - [GDPR Compliance Layer](#gdpr-compliance-layer)
+- [Encryption at Rest](#encryption-at-rest)
 - [Bible Reference Index](#bible-reference-index)
 
 ---
@@ -457,7 +458,7 @@ Located at `src/jarvis/osint/`. Exposed as 3 MCP tools: `investigate_person`, `i
 
 ---
 
-## GDPR Compliance Layer
+## GDPR Compliance Layer — 100% User Rights
 
 ```
 Request -> ComplianceEngine -> Gatekeeper -> Executor
@@ -467,14 +468,47 @@ Request -> ComplianceEngine -> Gatekeeper -> Executor
               |
               v
          ComplianceAuditLog (JSONL, SHA-256 chain)
+
+User Rights (all implemented):
+  Art. 15 (Access)      — 11-tier export (JSON + CSV)
+  Art. 16 (Rectification) — PATCH entities, preferences, vault notes
+  Art. 17 (Erasure)     — 7 erasure handlers across all data tiers
+  Art. 18/21 (Restrict) — Per-purpose restriction via REST API
+  Art. 20 (Portability) — cognithor_portable v2.0 format + import
 ```
 
 Key components:
 - `security/consent.py` — Per-channel consent tracking
-- `security/compliance_engine.py` — Runtime policy enforcement
+- `security/compliance_engine.py` — Runtime policy enforcement with per-purpose restriction
 - `security/compliance_audit.py` — Immutable audit log
 - `security/encrypted_db.py` — SQLCipher wrapper
-- `security/gdpr.py` — DataPurpose, DPIARiskLevel, ErasureManager
+- `security/gdpr.py` — DataPurpose, DPIARiskLevel, ErasureManager (7 handlers)
+
+---
+
+## Encryption at Rest
+
+```
+Data at rest:
+  SQLite DBs (33) → SQLCipher (AES-256)
+  Memory files (.md) → Fernet (AES-256)
+  Vault notes → Configurable (plaintext or Fernet)
+  Credentials → Fernet (PBKDF2)
+
+Key chain:
+  JARVIS_DB_KEY env → OS Keyring → CredentialStore → none
+
+Vault backends:
+  encrypt_files=false → VaultFileBackend (.md, Obsidian-compatible)
+  encrypt_files=true  → VaultDBBackend (SQLCipher + FTS5)
+```
+
+Key components:
+- `security/encrypted_db.py` — SQLCipher wrapper with auto-migration from plain SQLite
+- `security/encrypted_file_io.py` — Fernet-based transparent file encryption
+- `security/keyring_manager.py` — OS Keyring integration (Windows Credential Locker / macOS Keychain / Linux SecretService)
+- `mcp/vault.py` — VaultBackend ABC with FileBackend and DBBackend implementations
+- `utils/compatible_row_factory.py` — Cross-compatible row factory for sqlite3 and sqlcipher3
 
 ---
 
