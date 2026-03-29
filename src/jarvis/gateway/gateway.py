@@ -450,7 +450,7 @@ class Gateway:
                             mm.episodic.prune_old(retention_days=0)
                             count += 1
                     except Exception:
-                        pass
+                        log.debug("erasure_memory_failed", exc_info=True)
                     return count
 
                 erasure.register_handler(_erase_memory)
@@ -498,7 +498,7 @@ class Gateway:
                                 vt._backend.delete(note.path)
                                 count += 1
                             except Exception:
-                                pass
+                                log.debug("erasure_vault_note_failed", exc_info=True)
                         return count
                     except Exception:
                         return 0
