@@ -515,6 +515,18 @@ class ContextPipelineConfig(BaseModel):
     """Patterns die als Smalltalk erkannt werden (keine Kontext-Suche)."""
 
 
+class SkillLifecycleConfig(BaseModel):
+    """Skill Lifecycle Manager -- periodic audit, repair, and suggestion of skills."""
+
+    enabled: bool = Field(default=True, description="Enable skill lifecycle audits")
+    audit_interval_hours: int = Field(default=24, ge=1, le=168, description="Hours between audits")
+    auto_repair: bool = Field(default=True, description="Automatically repair broken skills")
+    suggest_new: bool = Field(default=True, description="Suggest new skills based on usage gaps")
+    prune_unused_days: int = Field(
+        default=30, ge=7, le=365, description="Disable unused skills after N days"
+    )
+
+
 class TacticalMemoryConfig(BaseModel):
     """Tactical Memory (Tier 6) -- tool outcome tracking and avoidance rules."""
 
@@ -2155,6 +2167,7 @@ class JarvisConfig(BaseModel):
     planner: PlannerConfig = Field(default_factory=PlannerConfig)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     tactical_memory: TacticalMemoryConfig = Field(default_factory=TacticalMemoryConfig)
+    skill_lifecycle: SkillLifecycleConfig = Field(default_factory=SkillLifecycleConfig)
     channels: ChannelConfig = Field(default_factory=ChannelConfig)
     web: WebConfig = Field(default_factory=WebConfig)
     browser: BrowserConfig = Field(default_factory=BrowserConfig)
