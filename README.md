@@ -626,7 +626,7 @@ The installer offers five modes: `--minimal` (core only), `--full` (all features
 ```bash
 ollama pull qwen3:32b           # Planner (20 GB VRAM)
 ollama pull qwen3:8b            # Executor (6 GB VRAM)
-ollama pull nomic-embed-text    # Embeddings (300 MB VRAM)
+ollama pull qwen3-embedding:0.6b    # Embeddings (500 MB VRAM)
 # Optional:
 ollama pull qwen3-coder:30b     # Code tasks (20 GB VRAM)
 ```
