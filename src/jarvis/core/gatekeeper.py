@@ -598,6 +598,7 @@ class Gatekeeper:
             "schedule_job",
             "document_export",
             "document_create",
+            "typst_render",
             "media_tts",
             "media_convert_audio",
             "create_skill",

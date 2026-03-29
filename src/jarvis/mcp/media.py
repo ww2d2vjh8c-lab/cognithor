@@ -1872,6 +1872,77 @@ class MediaPipeline:
 
         wb.save(str(path))
 
+    # ========================================================================
+    # Typst → PDF
+    # ========================================================================
+
+    async def typst_render(
+        self,
+        source: str,
+        *,
+        filename: str = "dokument",
+    ) -> MediaResult:
+        """Renders Typst markup to PDF.
+
+        The LLM generates Typst code, this tool compiles it to a high-quality PDF.
+        Typst is faster than LaTeX, has cleaner syntax, and produces excellent output.
+
+        Args:
+            source: Typst markup code (the content of a .typ file).
+            filename: Output filename without extension.
+
+        Returns:
+            MediaResult with path to the generated PDF.
+        """
+        if not source.strip():
+            return MediaResult(success=False, error="Leerer Typst-Quellcode")
+
+        doc_dir = Path.home() / ".jarvis" / "workspace" / "documents"
+        doc_dir.mkdir(parents=True, exist_ok=True)
+
+        safe_name = "".join(c for c in filename if c.isalnum() or c in "-_ ").strip() or "dokument"
+        output_path = doc_dir / f"{safe_name}.pdf"
+
+        loop = asyncio.get_running_loop()
+
+        try:
+            await loop.run_in_executor(None, self._typst_compile, source, output_path)
+            log.info("typst_rendered", path=str(output_path))
+            return MediaResult(
+                success=True,
+                text=f"Typst-PDF erstellt: {output_path}",
+                output_path=str(output_path),
+                metadata={"filename": safe_name},
+            )
+        except ImportError as exc:
+            return MediaResult(success=False, error=str(exc))
+        except Exception as exc:
+            log.error("typst_render_failed", error=str(exc))
+            return MediaResult(success=False, error=f"Typst-Kompilierung fehlgeschlagen: {exc}")
+
+    def _typst_compile(self, source: str, output_path: Path) -> None:
+        """Sync worker: write .typ temp file, compile, save PDF."""
+        import tempfile
+
+        try:
+            import typst as typst_lib
+        except ImportError as exc:
+            raise ImportError("typst not installed. Run: pip install typst") from exc
+
+        tmp = None
+        try:
+            tmp = tempfile.NamedTemporaryFile(
+                suffix=".typ", delete=False, mode="w", encoding="utf-8"
+            )
+            tmp.write(source)
+            tmp.close()  # Must close before typst reads it
+
+            pdf_bytes = typst_lib.compile(tmp.name)
+            output_path.write_bytes(pdf_bytes)
+        finally:
+            if tmp and Path(tmp.name).exists():
+                Path(tmp.name).unlink()
+
     async def text_to_speech(
         self,
         text: str,
@@ -2340,6 +2411,33 @@ MEDIA_TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
             "required": ["file_path"],
         },
     },
+    "typst_render": {
+        "description": (
+            "Kompiliert Typst-Markup zu einem hochwertigen PDF. Typst ist eine moderne "
+            "Alternative zu LaTeX mit sauberer Syntax. Der Agent generiert Typst-Code, "
+            "dieses Tool kompiliert ihn. Ideal fuer Berichte, Briefe, Rechnungen, "
+            "wissenschaftliche Dokumente."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "source": {
+                    "type": "string",
+                    "description": (
+                        "Typst-Markup-Code. Beispiel: "
+                        "'= Titel\\n== Abschnitt\\nText...\\n"
+                        "#table(columns: 2, [A], [B], [1], [2])'"
+                    ),
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "Dateiname ohne .pdf Endung",
+                    "default": "dokument",
+                },
+            },
+            "required": ["source"],
+        },
+    },
 }
 
 
@@ -2519,6 +2617,16 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         )
         return result.text if result.success else f"Fehler: {result.error}"
 
+    async def _typst_render(
+        source: str,
+        filename: str = "dokument",
+        **_: Any,
+    ) -> str:
+        result = await pipeline.typst_render(source, filename=filename)
+        if result.success:
+            return result.output_path or result.text
+        return f"Fehler: {result.error}"
+
     handlers = {
         "media_transcribe_audio": _transcribe,
         "media_analyze_image": _analyze_image,
@@ -2533,6 +2641,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         "read_ppt": _read_ppt,
         "read_docx": _read_docx,
         "read_xlsx": _read_xlsx,
+        "typst_render": _typst_render,
     }
 
     for name, schema in MEDIA_TOOL_SCHEMAS.items():
