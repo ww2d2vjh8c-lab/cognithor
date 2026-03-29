@@ -21,7 +21,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Ruff
-        run: pip install ruff
+        run: pip install ruff==0.12.12
 
       - name: Ruff check (critical errors)
         run: ruff check src/ tests/ --select=F821,F811 --no-fix
