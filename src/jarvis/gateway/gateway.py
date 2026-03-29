@@ -3212,7 +3212,8 @@ class Gateway:
                     and self._evolution_loop
                 ):
                     try:
-                        user_msg = msg.text[:200] if hasattr(msg, "text") else ""
+                        user_msg = (session.messages[-1].content[:200]
+                                    if session.messages else "")[:200]
                         gap_description = (
                             f"Schwache Antwort (Score {reflection.success_score:.1f}) "
                             f"auf: {user_msg}"

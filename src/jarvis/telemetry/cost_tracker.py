@@ -10,7 +10,7 @@ import sqlite3
 from datetime import UTC, date, datetime
 
 from jarvis.db import SQLITE_BUSY_TIMEOUT_MS
-from jarvis.models import BudgetStatus, CostRecord, CostReport
+from jarvis.models import AgentBudgetStatus, BudgetStatus, CostRecord, CostReport
 from jarvis.security.encrypted_db import encrypted_connect
 from jarvis.utils.logging import get_logger
 
