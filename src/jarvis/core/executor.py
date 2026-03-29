@@ -143,6 +143,8 @@ class Executor:
         self._ctx_tokens: list[contextvars.Token] = []
         # Status callback (set by Gateway for progress feedback)
         self._status_callback: Any = None
+        # Tactical Memory (wired by gateway after init)
+        self._tactical_memory: Any = None
 
     def reload_config(self, config: JarvisConfig) -> None:
         """Update executor limits from new config (live reload).
@@ -316,6 +318,19 @@ class Executor:
                 duration_ms=result.duration_ms,
                 content_length=len(result.content),
             )
+
+            if self._tactical_memory is not None:
+                with contextlib.suppress(Exception):
+                    self._tactical_memory.record_outcome(
+                        tool=action.tool,
+                        params=action.params or {},
+                        success=result.success,
+                        duration_ms=int(getattr(result, "duration_ms", 0)),
+                        context="",
+                        error=result.content[:100]
+                        if not result.success and result.content
+                        else None,
+                    )
 
         while True:
             ready = [

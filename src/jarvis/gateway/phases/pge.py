@@ -242,6 +242,16 @@ async def init_pge(
         log.error("executor_init_failed", exc_info=True)
         raise
 
+    # Wire TacticalMemory into Executor (best-effort)
+    if result.get("executor") is not None and memory_manager is not None:
+        tactical = getattr(memory_manager, "tactical", None)
+        if tactical is not None:
+            try:
+                result["executor"]._tactical_memory = tactical
+                log.debug("tactical_memory_wired_to_executor")
+            except Exception:
+                log.debug("tactical_memory_wire_failed", exc_info=True)
+
     # Planner (uses UnifiedLLMClient + optional causal suggestions + task profiler)
     try:
         result["planner"] = Planner(

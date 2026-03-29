@@ -481,6 +481,7 @@ class WorkingMemory(BaseModel):
     tool_results: list[ToolResult] = Field(default_factory=list)
     injected_memories: list[MemorySearchResult] = Field(default_factory=list)
     injected_procedures: list[str] = Field(default_factory=list)  # Relevante Prozeduren als Text
+    injected_tactical: str = ""  # Taktische Einsichten (TacticalMemory)
     core_memory_text: str = ""  # CORE.md Inhalt
     token_count: int = 0
     max_tokens: int = 32768  # Qwen3-32B Default

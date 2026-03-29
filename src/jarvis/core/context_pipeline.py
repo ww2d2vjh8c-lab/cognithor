@@ -213,6 +213,20 @@ class ContextPipeline:
             except Exception:
                 log.debug("correction_reminder_failed", exc_info=True)
 
+        # Wave 3: Tactical Memory insights
+        tactical = getattr(self._memory_manager, "tactical", None)
+        if tactical is not None:
+            try:
+                _budget = 400
+                _tcfg = getattr(self._config, "tactical_memory", None)
+                if _tcfg and hasattr(_tcfg, "budget_tokens"):
+                    _budget = _tcfg.budget_tokens
+                tactical_text = tactical.get_insights_for_llm(user_message, max_chars=_budget)
+                if tactical_text:
+                    wm.injected_tactical = tactical_text
+            except Exception:
+                log.debug("context_pipeline_tactical_failed", exc_info=True)
+
         duration_ms = (time.perf_counter() - t0) * 1000
 
         log.info(

@@ -30,6 +30,7 @@ _DEFAULT_BUDGET_PROCEDURES = 600
 _DEFAULT_BUDGET_INJECTED_MEMORIES = 2500
 _DEFAULT_BUDGET_TOOL_DESCRIPTIONS = 1200
 _DEFAULT_BUDGET_RESPONSE_RESERVE = 3000
+_DEFAULT_BUDGET_TACTICAL = 400
 
 # Backward-kompatible Aliase
 BUDGET_CORE_MEMORY = _DEFAULT_BUDGET_CORE_MEMORY
@@ -99,6 +100,9 @@ class WorkingMemoryManager:
         self._budget_response = getattr(
             self._config, "budget_response_reserve", _DEFAULT_BUDGET_RESPONSE_RESERVE
         )
+        self._budget_tactical = getattr(
+            self._config, "budget_tactical_insights", _DEFAULT_BUDGET_TACTICAL
+        )
         self._static_budget = (
             self._budget_core
             + self._budget_system
@@ -106,6 +110,7 @@ class WorkingMemoryManager:
             + self._budget_memories
             + self._budget_tools
             + self._budget_response
+            + self._budget_tactical
         )
 
     @property
@@ -255,6 +260,9 @@ class WorkingMemoryManager:
                 source = PurePath(mr.chunk.source_path).name or mr.chunk.source_path
                 memory_texts.append(f"[{source} | Score: {mr.score:.2f}]\n{mr.chunk.text}")
             parts["memories"] = "\n\n---\n\n".join(memory_texts)
+
+        if self._memory.injected_tactical:
+            parts["tactical"] = "\n[Taktische Einsichten]\n" + self._memory.injected_tactical
 
         return parts
 

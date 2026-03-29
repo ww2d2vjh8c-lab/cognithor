@@ -151,6 +151,38 @@ class MemoryManager:
             max_tokens=self._mc.compaction_keep_last_n * 4000,  # Grobe Schätzung
         )
 
+        # Tactical Memory (optional — must not break startup)
+        self._tactical: Any = None
+        try:
+            from jarvis.memory.tactical import TacticalMemory
+
+            _tcfg = getattr(config, "tactical_memory", None)
+            if _tcfg is None or getattr(_tcfg, "enabled", True):
+                _db_name = (
+                    getattr(_tcfg, "db_name", "tactical_memory.db")
+                    if _tcfg
+                    else "tactical_memory.db"
+                )
+                _db_path = self._config.jarvis_home / "db" / _db_name
+                _db_path.parent.mkdir(parents=True, exist_ok=True)
+                self._tactical = TacticalMemory(
+                    db_path=str(_db_path),
+                    ttl_hours=getattr(_tcfg, "ttl_hours", 24.0) if _tcfg else 24.0,
+                    flush_threshold=getattr(_tcfg, "flush_threshold", 0.7) if _tcfg else 0.7,
+                    max_outcomes=getattr(_tcfg, "max_outcomes", 50_000) if _tcfg else 50_000,
+                    avoidance_consecutive_failures=getattr(
+                        _tcfg, "avoidance_consecutive_failures", 3
+                    )
+                    if _tcfg
+                    else 3,
+                )
+                self._tactical.load_from_db()
+                logger.info("tactical_memory_initialized", db=str(_db_path)[-40:])
+        except ImportError:
+            logger.debug("tactical_memory_init_skipped: module not available")
+        except Exception as _tc_exc:
+            logger.warning("tactical_memory_init_failed: %s", _tc_exc)
+
         self._initialized = False
 
         # Identity Layer (Immortal Mind Protocol) — injected via set_identity_layer()
@@ -232,6 +264,11 @@ class MemoryManager:
     def vector_index(self) -> VectorIndex:
         """Zugriff auf den Vector-Index (FAISS oder BruteForce)."""
         return self._vector_index
+
+    @property
+    def tactical(self) -> Any:
+        """Zugriff auf Tactical Memory (optional)."""
+        return self._tactical
 
     @property
     def embeddings(self) -> EmbeddingClient:
@@ -711,6 +748,11 @@ class MemoryManager:
             self._episodic_store.close()
         if self._weight_optimizer:
             self._weight_optimizer.close()
+        if self._tactical:
+            try:
+                self._tactical.close()
+            except Exception:
+                logger.debug("tactical_memory_close_failed", exc_info=True)
         await self._embeddings.close()
         logger.info("Memory-System geschlossen")
 
@@ -721,3 +763,8 @@ class MemoryManager:
             self._episodic_store.close()
         if self._weight_optimizer:
             self._weight_optimizer.close()
+        if self._tactical:
+            try:
+                self._tactical.close()
+            except Exception:
+                logger.debug("tactical_memory_close_failed", exc_info=True)

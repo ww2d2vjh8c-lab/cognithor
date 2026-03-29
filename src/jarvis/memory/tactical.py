@@ -18,10 +18,10 @@ from typing import Any
 from jarvis.utils.logging import get_logger
 
 __all__ = [
-    "ToolOutcome",
-    "ToolEffectiveness",
     "AvoidanceRule",
     "TacticalMemory",
+    "ToolEffectiveness",
+    "ToolOutcome",
 ]
 
 log = get_logger(__name__)
@@ -356,11 +356,11 @@ class TacticalMemory:
     def _hash_params(self, params: dict[str, Any]) -> str:
         """MD5 of JSON-serialised params (first 12 chars)."""
         raw = json.dumps(params, sort_keys=True, default=str)
-        return hashlib.md5(raw.encode()).hexdigest()[:12]  # noqa: S324
+        return hashlib.md5(raw.encode()).hexdigest()[:12]
 
     def _hash_context(self, context: str) -> str:
         """MD5 of context string (first 12 chars)."""
-        return hashlib.md5(context.encode()).hexdigest()[:12]  # noqa: S324
+        return hashlib.md5(context.encode()).hexdigest()[:12]
 
     def _maybe_add_avoidance(self, tool: str, count: int, error: str | None) -> None:
         """Create or refresh an avoidance rule after repeated failures."""
