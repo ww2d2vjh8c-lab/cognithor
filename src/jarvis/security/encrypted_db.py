@@ -189,6 +189,7 @@ def encrypted_connect(
     db_path: str,
     key: str | None = None,
     check_same_thread: bool = False,
+    timeout: float = 5.0,
 ) -> sqlite3.Connection:
     """Open a database connection, encrypted if SQLCipher is available.
 
@@ -196,6 +197,7 @@ def encrypted_connect(
         db_path: Path to the SQLite database file
         key: Encryption key. If None, auto-detected from env/keyring/credential store.
         check_same_thread: sqlite3 check_same_thread parameter
+        timeout: How many seconds to wait for the database lock (default 5.0)
 
     Returns:
         sqlite3.Connection (either encrypted or standard)
@@ -206,7 +208,9 @@ def encrypted_connect(
     if _sqlcipher_available and key:
         hex_key = key.encode().hex()
         try:
-            conn = sqlcipher.connect(db_path, check_same_thread=check_same_thread)
+            conn = sqlcipher.connect(
+                db_path, check_same_thread=check_same_thread, timeout=timeout
+            )
             conn.execute(f"PRAGMA key = \"x'{hex_key}'\"")  # noqa: S608
             conn.execute("PRAGMA journal_mode=WAL")
             # Test that the key works
@@ -228,7 +232,9 @@ def encrypted_connect(
             # New empty DB — create encrypted from scratch
             elif not os.path.exists(db_path) or os.path.getsize(db_path) == 0:
                 try:
-                    conn = sqlcipher.connect(db_path, check_same_thread=check_same_thread)
+                    conn = sqlcipher.connect(
+                        db_path, check_same_thread=check_same_thread, timeout=timeout
+                    )
                     conn.execute(f"PRAGMA key = \"x'{hex_key}'\"")  # noqa: S608
                     conn.execute("PRAGMA journal_mode=WAL")
                     log.debug("encrypted_db_created", path=db_path[-30:])
@@ -249,6 +255,6 @@ def encrypted_connect(
         )
 
     # Fallback: standard sqlite3 (unencrypted)
-    conn = sqlite3.connect(db_path, check_same_thread=check_same_thread)
+    conn = sqlite3.connect(db_path, check_same_thread=check_same_thread, timeout=timeout)
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
