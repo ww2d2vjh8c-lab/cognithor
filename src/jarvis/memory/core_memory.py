@@ -7,6 +7,7 @@ No recency decay.
 
 from __future__ import annotations
 
+import contextlib
 import re
 from pathlib import Path
 
@@ -56,6 +57,11 @@ class CoreMemory:
 
         if _efile is not None:
             self._content = _efile.read(self._path)
+            # Opportunistic migration: if the file was plaintext and encryption
+            # is available, silently encrypt it in-place on first read.
+            if _efile.is_available and not _efile.is_encrypted(self._path):
+                with contextlib.suppress(Exception):
+                    _efile.migrate(self._path)
         else:
             self._content = self._path.read_text(encoding="utf-8")
         self._sections = self._parse_sections(self._content)

@@ -2657,7 +2657,62 @@ def load_config(config_path: Path | None = None) -> JarvisConfig:
                 data["models"][role] = {"name": val}
 
     # 5. Pydantic validates and fills defaults
-    return JarvisConfig(**data)
+    cfg = JarvisConfig(**data)
+
+    # 6. Keyring fallback: fill empty API-key fields from OS Keyring
+    _resolve_secrets(cfg)
+
+    return cfg
+
+
+def _resolve_secrets(config: JarvisConfig) -> None:
+    """Replace empty API-key fields with values retrieved from OS Keyring.
+
+    Called by :func:`load_config` after the config object is built.
+    Completely non-throwing: if keyring is unavailable the config is
+    returned unchanged.
+
+    This is the counterpart to :class:`jarvis.security.secret_store.SecretStore`
+    which migrates secrets *out of* config.yaml *into* the keyring.
+    """
+    _SECRET_FIELDS = (
+        "openai_api_key",
+        "anthropic_api_key",
+        "gemini_api_key",
+        "groq_api_key",
+        "deepseek_api_key",
+        "mistral_api_key",
+        "together_api_key",
+        "openrouter_api_key",
+        "xai_api_key",
+        "cerebras_api_key",
+        "github_api_key",
+        "bedrock_api_key",
+        "huggingface_api_key",
+        "moonshot_api_key",
+        "elevenlabs_api_key",
+        "brave_api_key",
+        "google_cse_api_key",
+        "jina_api_key",
+        "whatsapp_verify_token",
+        "mattermost_token",
+        "twitch_token",
+        "github_token",
+    )
+    try:
+        from jarvis.security.secret_store import SecretStore
+
+        store = SecretStore()
+        if not store.is_available:
+            return
+        for field_name in _SECRET_FIELDS:
+            current = getattr(config, field_name, "")
+            if not current:
+                stored = store.retrieve(field_name)
+                if stored:
+                    object.__setattr__(config, field_name, stored)
+    except Exception:
+        pass  # Keyring not available — use config values as-is
 
 
 # ============================================================================

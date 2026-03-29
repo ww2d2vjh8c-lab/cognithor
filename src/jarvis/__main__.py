@@ -210,6 +210,35 @@ def main() -> None:
     if getattr(args, "arc", False):
         config.arc.enabled = True
 
+    # 1.9 Auto-migrate plaintext API keys from config.yaml / .env to OS Keyring
+    try:
+        from jarvis.security.secret_store import SecretStore as _SecretStore
+
+        _store = _SecretStore()
+        if _store.is_available:
+            _config_path = (
+                Path(args.config) if args.config else Path.home() / ".jarvis" / "config.yaml"
+            )
+            if _config_path.exists():
+                _migrated = _store.migrate_from_config(_config_path)
+                if _migrated > 0:
+                    # Re-resolve so the live config reflects the keyring values
+                    from jarvis.config import _resolve_secrets as _rs
+
+                    _rs(config)
+
+            _env_path = Path.home() / ".jarvis" / ".env"
+            if _env_path.exists():
+                _env_migrated = _store.migrate_from_env(_env_path)
+                # .env secrets are already in env vars (loaded above by dotenv),
+                # so no re-resolve needed for the running process.
+                del _env_migrated
+
+            del _migrated, _config_path, _env_path
+        del _store, _SecretStore
+    except Exception:
+        pass  # Never block startup on keyring errors
+
     # 2. Verzeichnisstruktur sicherstellen
     created = ensure_directory_structure(config)
 

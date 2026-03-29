@@ -73,6 +73,7 @@ from jarvis.security.sanitizer import (
     validate_model_path_containment,
     validate_voice_name,
 )
+from jarvis.security.secret_store import SecretStore
 from jarvis.security.token_store import (
     SecureTokenStore,
     create_ssl_context,
@@ -114,6 +115,7 @@ __all__ = [
     "SandboxProfile",
     "SandboxResult",
     "ScanScheduler",
+    "SecretStore",
     "SecureTokenStore",
     "SecurityGate",
     "SecurityMetrics",
