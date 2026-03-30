@@ -69,6 +69,12 @@ _GARBAGE_PATTERNS = re.compile(
     r"|Wiktionary|Wikibooks|Wikiquote|Wikisource|Wikiversity|Wikivoyage|Commons"  # Wikimedia siblings
     r"|Wikimedia Foundation"  # Wikimedia meta
     r"|Wikipedia"  # Wikipedia itself (not useful as entity)
+    r"|Catalog|Pages|Stream|Metadata"  # PDF internal structure objects
+    r"|FlateDecode|DeviceRGB|DeviceCMYK|ObjStm"  # PDF codec/colorspace internals
+    r"|ArialMT|TimesNewRomanPSMT|Helvetica"  # Embedded font names
+    r"|Image"  # Generic PDF image reference
+    r"|Uniform Resource Locator"  # URL as entity — too generic
+    r"|Administrator|Löschkriterien"  # Wikipedia admin/deletion noise
     r")$",
     re.IGNORECASE,
 )
@@ -95,6 +101,12 @@ _TOO_GENERIC = {
     "download",
     "suche",
     "startseite",
+    "artikel",
+    "image",
+    "catalog",
+    "pages",
+    "stream",
+    "metadata",
 }
 
 
