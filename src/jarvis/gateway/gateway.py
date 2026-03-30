@@ -714,6 +714,28 @@ class Gateway:
                         operation_mode=op_mode,
                     )
                     self._evolution_loop._deep_learner = self._deep_learner
+
+                    # Wire a lightweight LLM for entity extraction (qwen3:8b)
+                    # to avoid blocking the 27B planner model for 10+ minutes.
+                    if self._llm and self._model_router:
+
+                        async def _entity_llm_call(prompt: str) -> str:
+                            resp = await self._llm.chat(
+                                model="qwen3:8b",
+                                messages=[{"role": "user", "content": prompt}],
+                                temperature=0.3,
+                                options={"num_predict": 2000},
+                            )
+                            content = resp.get("message", {}).get("content", "")
+                            # Strip Qwen3 think tags
+                            import re
+
+                            return re.sub(
+                                r"<think>.*?</think>", "", content, flags=re.DOTALL
+                            ).strip()
+
+                        self._deep_learner._entity_llm_fn = _entity_llm_call
+
                     log.info("deep_learner_initialized")
                 except Exception:
                     log.debug("deep_learner_init_failed", exc_info=True)

@@ -186,9 +186,14 @@ class KnowledgeBuilder:
         goal_slug: str = "",
         knowledge_validator: Any = None,
         goal_index: Any = None,
+        entity_llm_fn: Optional[Callable] = None,
     ) -> None:
         self._mcp = mcp_client
         self._llm_fn = llm_fn
+        # Entity extraction uses a smaller/faster model (e.g. qwen3:8b)
+        # to avoid blocking the GPU for 10+ minutes per document.
+        # Falls back to the main llm_fn if not provided.
+        self._entity_llm_fn = entity_llm_fn or llm_fn
         self._goal_slug = goal_slug
         self._validator = knowledge_validator
         self._goal_index = goal_index
@@ -446,13 +451,13 @@ class KnowledgeBuilder:
         Returns (entities, relations). Falls back to empty lists if the
         LLM does not produce valid JSON.
         """
-        if self._llm_fn is None:
+        if self._entity_llm_fn is None:
             return [], []
 
         prompt = _ENTITY_EXTRACTION_PROMPT.format(text=text[:4000])
 
         try:
-            raw = await self._llm_fn(prompt)
+            raw = await self._entity_llm_fn(prompt)
         except Exception as exc:
             log.warning("LLM call failed during entity extraction: %s", exc)
             return [], []

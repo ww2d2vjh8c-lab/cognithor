@@ -90,6 +90,7 @@ class DeepLearner:
             log.debug("knowledge_validator_init_failed", exc_info=True)
 
         self._llm_fn = llm_fn
+        self._entity_llm_fn: Callable | None = None  # Set by gateway (qwen3:8b)
         self._mcp_client = mcp_client
         self._memory_manager = memory_manager
         self._skill_registry = skill_registry
@@ -251,6 +252,7 @@ class DeepLearner:
             goal_slug=plan.goal_slug,
             knowledge_validator=self._knowledge_validator,
             goal_index=goal_index,
+            entity_llm_fn=self._entity_llm_fn,
         )
 
         # ── Iterative deep research loop ──────────────────────────────
