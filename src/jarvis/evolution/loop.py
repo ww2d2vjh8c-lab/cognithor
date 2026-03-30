@@ -312,6 +312,32 @@ class EvolutionLoop:
             entries = self._atl_journal.recent(days=2)
             recent = "\n".join(entries[:1])[:1000] if entries else ""
 
+        # Build goal knowledge from DeepLearner progress + Memory search
+        goal_knowledge_parts: list[str] = []
+        if self._deep_learner:
+            for plan in self._deep_learner.list_plans():
+                coverage = getattr(plan, "coverage", 0.0)
+                chunks = getattr(plan, "total_chunks", 0)
+                if coverage > 0 or chunks > 0:
+                    goal_knowledge_parts.append(
+                        f"- {plan.goal[:60]}: Coverage {coverage:.0%}, "
+                        f"{chunks} Chunks, Status: {plan.status}"
+                    )
+        if self._memory and hasattr(self._memory, "search_memory_sync"):
+            for g in goals[:3]:
+                try:
+                    results = self._memory.search_memory_sync(
+                        query=g.title,
+                        top_k=2,
+                    )
+                    if results:
+                        for r in results[:1]:
+                            text = getattr(r, "text", str(r))[:150]
+                            goal_knowledge_parts.append(f"- Wissen zu '{g.title[:30]}': {text}")
+                except Exception:
+                    pass
+        goal_knowledge = "\n".join(goal_knowledge_parts)[:2000]
+
         from jarvis.evolution.atl_prompt import build_atl_prompt, parse_atl_response
 
         max_actions = 3
@@ -322,7 +348,7 @@ class EvolutionLoop:
             identity="Cognithor Agent OS",
             goals_formatted=goals_fmt,
             recent_events=recent or "Keine aktuellen Ereignisse.",
-            goal_knowledge="",
+            goal_knowledge=goal_knowledge or "Noch kein Wissen aufgebaut.",
             now=_time.strftime("%Y-%m-%d %H:%M"),
             max_actions=max_actions,
         )
@@ -343,7 +369,7 @@ class EvolutionLoop:
             gid = ev.get("goal_id", "")
             delta = ev.get("progress_delta", 0.0)
             note = ev.get("note", "")
-            if gid and delta:
+            if gid and delta != 0:
                 try:
                     self._goal_manager.update_progress(gid, delta, note)
                 except (KeyError, Exception):
