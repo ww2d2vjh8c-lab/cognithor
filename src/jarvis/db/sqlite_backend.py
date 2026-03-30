@@ -77,6 +77,11 @@ class SQLiteBackend:
 
             def _run_pragmas() -> None:
                 assert self._conn is not None
+                # Disable VirtualLock to prevent Windows quota exhaustion
+                try:
+                    self._conn.execute("PRAGMA cipher_memory_security = OFF")
+                except Exception:
+                    pass  # Not a SQLCipher connection — ignore
                 self._conn.execute("PRAGMA journal_mode=WAL")
                 self._conn.execute("PRAGMA synchronous=NORMAL")
                 self._conn.execute(f"PRAGMA busy_timeout={SQLITE_BUSY_TIMEOUT_MS}")
