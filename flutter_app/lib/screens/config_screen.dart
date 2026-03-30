@@ -33,6 +33,7 @@ import 'package:jarvis_ui/screens/config/evolution_page.dart';
 import 'package:jarvis_ui/screens/config/tools_page.dart';
 import 'package:jarvis_ui/screens/config/audit_page.dart';
 import 'package:jarvis_ui/screens/config/vault_page.dart';
+import 'package:jarvis_ui/screens/config/atl_page.dart';
 
 // ── Category definition ──────────────────────────────────────────────────────
 
@@ -115,6 +116,8 @@ final _pageRegistry = <String, _SubPageDef>{
       (l) => l.configPageBudget, () => const BudgetPage()),
   'evolution': _SubPageDef(Icons.auto_awesome,
       (l) => l.configPageEvolution, () => const EvolutionPage()),
+  'atl': _SubPageDef(Icons.psychology,
+      (l) => 'Autonomous Thinking', () => const AtlPage()),
   'vault': _SubPageDef(
       Icons.lock_outlined, (l) => 'Vault', () => const VaultPage()),
   'system': _SubPageDef(

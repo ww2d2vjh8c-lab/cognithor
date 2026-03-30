@@ -110,6 +110,7 @@ _EDITABLE_SECTIONS = frozenset(
         "identity",
         "personality",
         "evolution",
+        "atl",
     }
 )
 
