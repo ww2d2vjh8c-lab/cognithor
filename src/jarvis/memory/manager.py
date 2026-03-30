@@ -177,7 +177,7 @@ class MemoryManager:
                     else 3,
                 )
                 self._tactical.load_from_db()
-                logger.info("tactical_memory_initialized", db=str(_db_path)[-40:])
+                logger.info("tactical_memory_initialized: %s", str(_db_path)[-40:])
         except ImportError:
             logger.debug("tactical_memory_init_skipped: module not available")
         except Exception as _tc_exc:

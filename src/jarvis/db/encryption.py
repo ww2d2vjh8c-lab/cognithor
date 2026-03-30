@@ -50,6 +50,8 @@ def open_sqlite(
             # PRAGMA key cannot use parameterized queries; escape single quotes
             safe_key = encryption_key.replace("'", "''")
             conn.execute(f"PRAGMA key='{safe_key}'")
+            # Disable VirtualLock to prevent Windows quota exhaustion
+            conn.execute("PRAGMA cipher_memory_security = OFF")
             log.info("SQLCipher-Verbindung hergestellt: %s", db_path)
             return conn
         except ImportError:
