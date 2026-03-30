@@ -77,7 +77,7 @@ class _AtlPageState extends State<AtlPage> {
                 value: ((atl['interval_minutes'] as num?) ?? 15).toDouble(),
                 min: 5,
                 max: 60,
-                divisions: 11,
+                step: 5,
                 onChanged: (v) =>
                     cfg.set('atl.interval_minutes', v.round()),
               ),
