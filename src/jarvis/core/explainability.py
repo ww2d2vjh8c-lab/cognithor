@@ -471,6 +471,45 @@ class ExplainabilityEngine:
 
         return trail, breakdown
 
+    def record_decision(
+        self,
+        trail_id: str,
+        *,
+        tool_name: str,
+        gate_status: str,
+        risk_level: str,
+        reason: str,
+        outcome: str,
+        duration_ms: int = 0,
+        success: bool = True,
+    ) -> None:
+        """Record a gatekeeper decision + execution outcome into a trail.
+
+        Called from the PGE loop after each tool execution. Creates a
+        :class:`TrailStep` that captures both the gatekeeper verdict and
+        the runtime result, making every decision auditable and explainable.
+        """
+        trail = self._trails.get(trail_id)
+        if trail is None:
+            return
+
+        if gate_status == "block":
+            step_type = StepType.APPROVAL_DENIED
+        elif not success:
+            step_type = StepType.ERROR
+        else:
+            step_type = StepType.TOOL_CALLED
+
+        trail.add_step(
+            step_type,
+            description=tool_name,
+            duration_ms=duration_ms,
+            confidence=1.0 if success else 0.0,
+            inputs={"gate_status": gate_status, "risk_level": risk_level},
+            outputs={"outcome": outcome[:500]},
+            metadata={"reason": reason[:200]},
+        )
+
     def recent_trails(self, limit: int = 20) -> list[DecisionTrail]:
         trails = list(self._trails.values())
         return trails[-limit:]

@@ -2338,6 +2338,13 @@ class Gateway:
         )
         await self._run_post_processing(session, wm, agent_result, active_skill, run_id)
 
+        # Complete explainability trail
+        if getattr(self, "_explainability", None) and _expl_trail_id:
+            try:
+                self._explainability.complete_trail(_expl_trail_id)
+            except Exception:
+                pass
+
         # Phase 5: Session persistieren
         await self._persist_session(session, wm)
 
@@ -2410,6 +2417,18 @@ class Gateway:
 
         wm = self._get_or_create_working_memory(session)
         wm.clear_for_new_request()
+
+        # Start explainability trail for this request
+        _expl_trail_id: str | None = None
+        if getattr(self, "_explainability", None) is not None:
+            try:
+                _trail = self._explainability.start_trail(
+                    request_id=session.session_id,
+                    agent_id=agent_name,
+                )
+                _expl_trail_id = _trail.trail_id
+            except Exception:
+                pass
 
         if self._audit_logger:
             self._audit_logger.log_user_input(
@@ -3224,6 +3243,28 @@ class Gateway:
                         channel=msg.channel,
                         error_type="tool_error",
                     )
+
+            # Explainability: record gatekeeper decision + execution outcome
+            if getattr(self, "_explainability", None) and _expl_trail_id:
+                for step, decision, result in zip(
+                    plan.steps,
+                    approved_decisions,
+                    results,
+                    strict=False,
+                ):
+                    try:
+                        self._explainability.record_decision(
+                            _expl_trail_id,
+                            tool_name=result.tool_name,
+                            gate_status=decision.status.value,
+                            risk_level=decision.risk_level.value,
+                            reason=decision.reason,
+                            outcome="ok" if result.success else (result.error_message or "error"),
+                            duration_ms=getattr(result, "duration_ms", 0) or 0,
+                            success=result.success,
+                        )
+                    except Exception:
+                        log.debug("explainability_record_failed", exc_info=True)
 
             for result in results:
                 wm.add_tool_result(result)
