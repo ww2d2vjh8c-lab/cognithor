@@ -124,11 +124,7 @@ class ContextPipeline:
         # ── Wave 1: Memory, Vault, Episodes (parallel) ──────────
         w1_start = time.perf_counter()
 
-        memory_task = asyncio.get_running_loop().run_in_executor(
-            None,
-            self._search_memory,
-            user_message,
-        )
+        memory_task = self._search_memory_async(user_message)
         vault_task = self._search_vault(user_message)
         episode_task = asyncio.get_running_loop().run_in_executor(
             None,
@@ -256,8 +252,28 @@ class ContextPipeline:
             return True
         return normalized in self._config.smalltalk_patterns
 
+    async def _search_memory_async(self, query: str) -> list[MemorySearchResult]:
+        """Full hybrid search (BM25 + Vector + Graph) via MemoryManager."""
+        if not self._memory_manager:
+            return []
+        try:
+            if hasattr(self._memory_manager, "search_memory"):
+                return await self._memory_manager.search_memory(
+                    query=query,
+                    top_k=self._config.memory_top_k,
+                    enhanced=True,
+                )
+            # Fallback: sync BM25-only (legacy)
+            return self._memory_manager.search_memory_sync(
+                query=query,
+                top_k=self._config.memory_top_k,
+            )
+        except Exception:
+            log.debug("context_memory_search_failed", exc_info=True)
+            return []
+
     def _search_memory(self, query: str) -> list[MemorySearchResult]:
-        """BM25-only search via MemoryManager.search_memory_sync() -- sync, ~5-20ms."""
+        """BM25-only search — sync fallback, kept for backward compatibility."""
         if not self._memory_manager:
             return []
         try:

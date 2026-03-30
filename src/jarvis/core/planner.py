@@ -1078,6 +1078,12 @@ class Planner:
                         f"### Relevante Prozedur (folge diesem Ablauf!)\n{proc[:proc_skill_budget]}"
                     )
 
+        # Taktische Einsichten (Tier 6 — Tool-Effektivitaet, Vermeidungsregeln)
+        if working_memory.injected_tactical:
+            context_parts.append(
+                f"### Taktische Einsichten\n{working_memory.injected_tactical}"
+            )
+
         # Causal-Learning-Vorschlaege (wenn verfuegbar)
         if self._causal_analyzer is not None:
             try:

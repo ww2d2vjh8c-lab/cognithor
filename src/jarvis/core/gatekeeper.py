@@ -257,6 +257,8 @@ class Gatekeeper:
         self,
         action: PlannedAction,
         context: SessionContext,
+        *,
+        risk_ceiling: str | None = None,
     ) -> GateDecision:
         """Check a single PlannedAction against all policies. [B§3.2]
 
@@ -389,6 +391,24 @@ class Gatekeeper:
 
         # --- Step 6: Default risk classification ---
         risk = self._classify_risk(action)
+
+        # --- Step 6b: Risk ceiling enforcement (ATL) ---
+        if risk_ceiling is not None:
+            _risk_order = {
+                RiskLevel.GREEN: 0, RiskLevel.YELLOW: 1,
+                RiskLevel.ORANGE: 2, RiskLevel.RED: 3,
+            }
+            _ceiling_map = {"GREEN": RiskLevel.GREEN, "YELLOW": RiskLevel.YELLOW}
+            ceiling_level = _ceiling_map.get(risk_ceiling.upper())
+            if ceiling_level is not None and _risk_order.get(risk, 3) > _risk_order[ceiling_level]:
+                decision = GateDecision(
+                    status=GateStatus.BLOCK,
+                    risk_level=risk,
+                    reason=f"Aktion ueberschreitet Risk-Ceiling ({risk_ceiling}): {risk.name}",
+                )
+                self._write_audit(action, decision, context)
+                return decision
+
         status = self._risk_to_status(risk)
 
         # --- Step 7: Pre-execution confidence check (advisory) ---
@@ -433,13 +453,18 @@ class Gatekeeper:
         self,
         steps: list[PlannedAction],
         context: SessionContext,
+        *,
+        risk_ceiling: str | None = None,
     ) -> list[GateDecision]:
         """Check all steps of a plan.
+
+        Args:
+            risk_ceiling: Optional max risk level (e.g. "YELLOW" for ATL).
 
         Returns:
             Liste von GateDecisions, eine pro Step.
         """
-        return [self.evaluate(step, context) for step in steps]
+        return [self.evaluate(step, context, risk_ceiling=risk_ceiling) for step in steps]
 
     # =========================================================================
     # Private Methoden
@@ -588,6 +613,9 @@ class Gatekeeper:
             # ARC-AGI-3 (read-only)
             "arc_status",
             "arc_replay",
+            # ATL (read-only)
+            "atl_status",
+            "atl_journal",
         }
         if tool in green_tools:
             return RiskLevel.GREEN
@@ -633,6 +661,8 @@ class Gatekeeper:
             "stop_background_job",
             # ARC-AGI-3 (state-changing)
             "arc_play",
+            # ATL (goal management)
+            "atl_goals",
         }
         if tool in yellow_tools:
             return RiskLevel.YELLOW
@@ -653,6 +683,7 @@ class Gatekeeper:
             "browse_click",
             "browse_fill",
             "browse_execute_js",
+            "browser_solve_captcha",
             # OSINT (privacy-sensitive investigations)
             "investigate_person",
             "investigate_project",

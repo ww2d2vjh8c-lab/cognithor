@@ -49,8 +49,9 @@ class EvolutionCycleResult:
     research_topic: str = ""
     skill_created: str = ""
     duration_ms: int = 0
-    source: str = ""  # "curiosity" | "user" | "self_analysis"
+    source: str = ""  # "curiosity" | "user" | "self_analysis" | "atl"
     steps_completed: list[str] = field(default_factory=list)
+    thought: str = ""
 
 
 class EvolutionLoop:
@@ -99,6 +100,11 @@ class EvolutionLoop:
         self._total_skills_created = 0
         self._paused_for_resources = False
         self._results: list[EvolutionCycleResult] = []
+        self._atl_config: Any = None  # Set by gateway: ATLConfig
+        self._goal_manager: Any = None  # Set by gateway: GoalManager
+        self._atl_journal: Any = None  # Set by gateway: ATLJournal
+        self._atl_cycle_count = 0
+        self._last_thinking_time = time.monotonic()
 
     async def start(self) -> None:
         """Start the evolution background loop."""
@@ -258,6 +264,204 @@ class EvolutionLoop:
         )
 
         return result
+
+    # -- ATL Thinking Cycle ----------------------------------------------
+
+    async def thinking_cycle(self) -> EvolutionCycleResult:
+        """Run one ATL thinking cycle: evaluate goals, propose actions, journal."""
+        import time as _time
+
+        self._atl_cycle_count += 1
+        result = EvolutionCycleResult(cycle_id=self._atl_cycle_count)
+
+        # Pre-checks
+        if self._atl_config and not self._atl_config.enabled:
+            result.skipped = True
+            result.reason = "atl_disabled"
+            return result
+
+        if not self._idle.is_idle:
+            result.skipped = True
+            result.reason = "not_idle"
+            return result
+
+        if self._in_quiet_hours():
+            result.skipped = True
+            result.reason = "quiet_hours"
+            return result
+
+        if not self._llm_fn:
+            result.skipped = True
+            result.reason = "no_llm"
+            return result
+
+        if not self._goal_manager:
+            result.skipped = True
+            result.reason = "no_goals"
+            return result
+
+        # Build context
+        goals = self._goal_manager.active_goals()
+        goals_fmt = "\n".join(
+            f"- {g.id}: {g.title} ({g.progress:.0%}) [P{g.priority}]"
+            for g in goals
+        ) or "Keine aktiven Ziele."
+
+        recent = ""
+        if self._atl_journal:
+            entries = self._atl_journal.recent(days=2)
+            recent = "\n".join(entries[:1])[:1000] if entries else ""
+
+        from jarvis.evolution.atl_prompt import build_atl_prompt, parse_atl_response
+
+        max_actions = 3
+        if self._atl_config:
+            max_actions = self._atl_config.max_actions_per_cycle
+
+        prompt = build_atl_prompt(
+            identity="Cognithor Agent OS",
+            goals_formatted=goals_fmt,
+            recent_events=recent or "Keine aktuellen Ereignisse.",
+            goal_knowledge="",
+            now=_time.strftime("%Y-%m-%d %H:%M"),
+            max_actions=max_actions,
+        )
+
+        # Call LLM
+        try:
+            raw = await self._llm_fn(prompt)
+        except Exception:
+            log.debug("atl_llm_call_failed", exc_info=True)
+            raw = ""
+
+        thought = parse_atl_response(raw or "")
+        result.thought = thought.summary
+        result.research_topic = thought.summary[:100]
+
+        # Apply goal evaluations
+        for ev in thought.goal_evaluations:
+            gid = ev.get("goal_id", "")
+            delta = ev.get("progress_delta", 0.0)
+            note = ev.get("note", "")
+            if gid and delta:
+                try:
+                    self._goal_manager.update_progress(gid, delta, note)
+                except (KeyError, Exception):
+                    log.debug("atl_goal_update_failed", goal_id=gid)
+
+        # Dispatch proposed actions through ActionQueue + MCP
+        executed_actions: list[str] = []
+        if thought.proposed_actions and self._mcp_client:
+            from jarvis.evolution.action_queue import ActionQueue, ATLAction
+
+            blocked = set()
+            if self._atl_config:
+                blocked = set(self._atl_config.blocked_action_types)
+            queue = ActionQueue(
+                max_actions=self._atl_config.max_actions_per_cycle if self._atl_config else 3,
+                blocked_types=blocked,
+            )
+            for a in thought.proposed_actions:
+                queue.enqueue(ATLAction(
+                    type=a.get("type", "unknown"),
+                    params=a.get("params", {}),
+                    priority=a.get("priority", 3),
+                    rationale=a.get("rationale", ""),
+                ))
+
+            _action_map = {
+                "research": "search_and_read",
+                "memory_update": "save_to_memory",
+                "notification": "send_notification",
+            }
+            while not queue.empty():
+                action = queue.dequeue()
+                if not action:
+                    break
+                tool_name = _action_map.get(action.type, action.type)
+                # Normalize params for known tools
+                params = dict(action.params)
+                if tool_name == "search_and_read" and "query" not in params:
+                    # LLM may put the search topic in various keys
+                    query = (
+                        params.pop("topic", "")
+                        or params.pop("search", "")
+                        or params.pop("q", "")
+                        or action.rationale[:100]
+                    )
+                    params = {"query": query, "num_results": 3}
+                elif tool_name == "save_to_memory" and "content" not in params:
+                    params.setdefault("content", action.rationale[:500])
+                    params.setdefault("tier", "semantic")
+                try:
+                    await self._mcp_client.call_tool(tool_name, params)
+                    executed_actions.append(
+                        f"[OK] {action.type}: {action.rationale[:60]}"
+                    )
+                    log.info("atl_action_executed", type=action.type, tool=tool_name)
+                except Exception as exc:
+                    executed_actions.append(
+                        f"[FAIL] {action.type}: {exc!s:.60}"
+                    )
+                    log.debug("atl_action_failed", type=action.type, error=str(exc)[:80])
+
+        # Journal
+        if self._atl_journal:
+            try:
+                actions_desc = executed_actions or [
+                    f"{a.get('type', '?')}: {a.get('rationale', '')}"
+                    for a in thought.proposed_actions
+                ]
+                await self._atl_journal.log_cycle(
+                    cycle=self._atl_cycle_count,
+                    summary=thought.summary,
+                    goal_updates=thought.goal_evaluations,
+                    actions=actions_desc,
+                )
+            except Exception:
+                log.debug("atl_journal_failed", exc_info=True)
+
+        # Only reset timer on meaningful cycle (not failed LLM)
+        if thought.summary:
+            self._last_thinking_time = _time.monotonic()
+
+        # Set result fields
+        result.source = "atl"
+        result.steps_completed = ["think", "evaluate", "dispatch", "journal"]
+
+        log.info(
+            "atl_thinking_cycle_complete",
+            cycle=self._atl_cycle_count,
+            summary=thought.summary[:50],
+            goal_evals=len(thought.goal_evaluations),
+            actions_proposed=len(thought.proposed_actions),
+            actions_executed=len(executed_actions),
+        )
+
+        return result
+
+    def _in_quiet_hours(self) -> bool:
+        """Check if current time is within ATL quiet hours."""
+        if not self._atl_config:
+            return False
+        from datetime import datetime
+
+        now = datetime.now().strftime("%H:%M")
+        start = self._atl_config.quiet_hours_start
+        end = self._atl_config.quiet_hours_end
+        if start <= end:
+            return start <= now <= end
+        # Wrap around midnight (e.g., 23:00 to 07:00)
+        return now >= start or now <= end
+
+    def _should_think(self) -> bool:
+        """Check if it's time for a thinking cycle vs learning cycle."""
+        import time as _time
+
+        if not self._atl_config or not self._atl_config.enabled:
+            return False
+        interval = self._atl_config.interval_minutes * 60
+        return (_time.monotonic() - self._last_thinking_time) >= interval
 
     # -- Checkpointing ---------------------------------------------------
 
@@ -683,8 +887,13 @@ class EvolutionLoop:
         while self._running:
             try:
                 if self._idle.is_idle and self._can_run_cycle():
-                    log.info("evolution_cycle_starting", cycle=self._total_cycles + 1)
-                    result = await self.run_cycle()
+                    # ATL thinking cycle (interleaved with learning)
+                    if self._atl_config and self._atl_config.enabled and self._should_think():
+                        log.info("atl_thinking_cycle_starting", cycle=self._atl_cycle_count + 1)
+                        result = await self.thinking_cycle()
+                    else:
+                        log.info("evolution_cycle_starting", cycle=self._total_cycles + 1)
+                        result = await self.run_cycle()
                     self._cycles_today += 1
                     self._results.append(result)
                     if result.skipped:
@@ -734,6 +943,8 @@ class EvolutionLoop:
             "total_cycles": self._total_cycles,
             "cycles_today": self._cycles_today,
             "total_skills_created": self._total_skills_created,
+            "atl_thinking_cycles": self._atl_cycle_count,
+            "atl_enabled": bool(self._atl_config and self._atl_config.enabled),
             "checkpoint": self._current_checkpoint.to_dict() if self._current_checkpoint else None,
             "resources": resource_info,
             "recent_results": [

@@ -165,6 +165,39 @@ async def _run_mcp_server_mode(config: Any) -> None:
         sys.exit(1)
 
 
+def _expand_working_set(min_mb: int = 128, max_mb: int = 512) -> None:
+    """Increase the Windows process working-set quota.
+
+    SQLCipher uses VirtualLock() to protect encryption keys in RAM.
+    With many concurrent encrypted databases, the default working-set
+    quota (~20 MB) is quickly exhausted, causing Error 1453 warnings.
+    Expanding to 128/512 MB eliminates these warnings entirely.
+    """
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        kernel32.SetProcessWorkingSetSize.argtypes = [
+            wintypes.HANDLE,
+            ctypes.c_size_t,
+            ctypes.c_size_t,
+        ]
+        kernel32.SetProcessWorkingSetSize.restype = wintypes.BOOL
+
+        handle = kernel32.GetCurrentProcess()
+        min_bytes = ctypes.c_size_t(min_mb * 1024 * 1024)
+        max_bytes = ctypes.c_size_t(max_mb * 1024 * 1024)
+        success = kernel32.SetProcessWorkingSetSize(handle, min_bytes, max_bytes)
+        if not success:
+            err = ctypes.get_last_error()
+            print(f"  [WARN] SetProcessWorkingSetSize failed (error {err})", file=sys.stderr)
+    except Exception:
+        pass  # Not on Windows, or insufficient privileges
+
+
 def main() -> None:
     """Main entry point for Jarvis."""
     _check_python_version()
@@ -176,6 +209,11 @@ def main() -> None:
             if hasattr(stream, "reconfigure"):
                 with contextlib.suppress(Exception):
                     stream.reconfigure(encoding="utf-8", errors="replace")
+
+        # Windows: increase process working-set quota so SQLCipher's
+        # VirtualLock() calls succeed instead of failing with Error 1453.
+        # 128 MB min / 512 MB max is enough for ~40 encrypted DBs.
+        _expand_working_set(min_mb=128, max_mb=512)
 
     args = parse_args()
 

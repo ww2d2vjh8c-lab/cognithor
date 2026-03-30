@@ -122,6 +122,19 @@ class BrowserAgent:
             if self._config.proxy:
                 launch_opts["proxy"] = {"server": self._config.proxy}
 
+            # Stealth: anti-bot-detection
+            try:
+                from jarvis.browser.captcha.stealth import (
+                    STEALTH_ARGS,
+                    STEALTH_JS,
+                    get_stealth_context_opts,
+                )
+
+                launch_opts.setdefault("args", []).extend(STEALTH_ARGS)
+                _stealth_available = True
+            except ImportError:
+                _stealth_available = False
+
             self._browser = await self._playwright.chromium.launch(**launch_opts)
 
             context_opts: dict[str, Any] = {
@@ -136,6 +149,10 @@ class BrowserAgent:
                 context_opts["user_agent"] = self._config.user_agent
 
             self._context = await self._browser.new_context(**context_opts)
+
+            # Inject stealth JS on every new page
+            if _stealth_available:
+                await self._context.add_init_script(STEALTH_JS)
 
             # Restore session
             if session_id and self._config.persist_cookies:

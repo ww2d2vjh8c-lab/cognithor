@@ -37,7 +37,7 @@
 
 Most AI assistants send your data to the cloud. Cognithor runs entirely on your machine — with Ollama or LM Studio, no API keys required. Cloud providers are optional, not mandatory.
 
-It replaces a patchwork of tools with one integrated system: 17 channels, 122 MCP tools, 6-tier memory, knowledge vault, voice, browser automation, and more — all wired together from day one. 11,769+ tests at 89% coverage keep it honest. See [Status & Maturity](#status--maturity) for what that does and does not guarantee.
+It replaces a patchwork of tools with one integrated system: 17 channels, 125 MCP tools, 6-tier memory, knowledge vault, voice, browser automation, and more — all wired together from day one. 11,769+ tests at 89% coverage keep it honest. See [Status & Maturity](#status--maturity) for what that does and does not guarantee.
 
 ---
 
@@ -130,6 +130,50 @@ It replaces a patchwork of tools with one integrated system: 17 channels, 122 MC
 - Learns which tools work best in which context
 - Auto-creates avoidance rules after 3 consecutive failures (24h TTL)
 - Injects tactical insights into Planner context
+
+### What's New in v0.69.0
+
+**Autonomous Thinking Loop (ATL)** — Cognithor now thinks proactively without user input:
+
+- **GoalManager** — Structured YAML-persisted goals with progress tracking, priority, sub-goals, and success criteria. Migrates existing `learning_goals` automatically.
+- **Thinking Cycles** — Every 5 minutes (configurable), the agent evaluates its goals, proposes and executes research actions, and writes a daily Markdown journal.
+- **ActionQueue** — Priority-based action dispatch with blocked-type filtering. Actions routed through `search_and_read` with automatic parameter normalization.
+- **Risk Ceiling** — Gatekeeper enforces per-context risk limits. ATL is capped at YELLOW (no destructive operations).
+- **3 new MCP tools**: `atl_status`, `atl_goals`, `atl_journal`
+- **Quiet Hours** — No autonomous thinking between 23:00-07:00 (configurable)
+
+**CAPTCHA Solver** — Browser automation can now detect and solve CAPTCHAs:
+
+- **7 types supported**: Text, reCAPTCHA v2 (checkbox + image grid), reCAPTCHA v3, hCaptcha, Cloudflare Turnstile, FunCaptcha
+- **Vision-LLM solving** — Local models only (minicpm-v4.5 for simple, qwen3-vl:32b for complex). No external services.
+- **Browser Stealth** — Anti-bot-detection: `navigator.webdriver=false`, realistic user-agent, plugin spoofing
+- **Gatekeeper ORANGE** — Requires explicit user approval before solving
+- **1 new MCP tool**: `browser_solve_captcha`
+
+**AACS Phase 1 — Capability Tokens** — Cryptographic access control foundation:
+
+- **Ed25519-signed tokens** — Unforgeable, short-lived (10s-1h), attenuation-only (child tokens can never exceed parent rights)
+- **Token Issuer + Validator** — Full PGE delegation chain: Planner issues root → Gatekeeper delegates → Executor validates
+- **Replay protection** — Nonce cache prevents token reuse
+- **Revocation** — Instant token invalidation
+- **Feature-flagged** — `log_only` mode for gradual rollout (Phases 2-6 coming)
+
+**Dead Path Fixes** — Critical wiring issues found and fixed via deep audit:
+
+- **SessionAnalyzer**: Improvements now applied automatically (was: proposed but discarded)
+- **Hybrid Search**: Context Pipeline now uses BM25 + Vector + Graph search (was: BM25-only, ignoring 7000+ Knowledge Graph entities)
+- **EpisodicCompressor**: Daily background task compresses episodes older than 30 days (was: never called)
+- **Tactical Memory**: Now injected into Planner system prompt as "Taktische Einsichten" (was: populated but silently dropped)
+- **PersonalityEngine.enhance_response()**: Method now exists (was: called but missing, failing silently)
+
+**Production Fixes**:
+
+- **VirtualLock elimination**: `SetProcessWorkingSetSize` expands Windows memory quota; `encrypted_connect()` respects `encryption_enabled` config
+- **LLM Timeout**: 600s dynamic (was: 120s with artificial caps on embeddings)
+- **PDF garbage entities**: Extended filter blocks XRef, Object/Root/Info IDs, font names, PDF structure markers
+- **Corrupt sessions.db**: Graceful fallback when SQLCipher DB was encrypted with a different key
+
+**126 new tests** (45 ATL + 45 CAPTCHA + 36 AACS), **125+ MCP tools** (was 122).
 
 ### What's New in v0.67.0
 

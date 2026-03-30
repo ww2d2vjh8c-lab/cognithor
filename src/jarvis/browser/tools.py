@@ -403,6 +403,68 @@ def register_browser_use_tools(
         handler=_vision_screenshot,
     )
 
-    tool_count = 13 if vision_analyzer else 10
+    # ── browser_solve_captcha ──────────────────────────────────────
+    async def _solve_captcha(params: dict[str, Any]) -> str:
+        if not agent.is_running:
+            return json.dumps(
+                {"error": "Browser nicht gestartet. Zuerst browser_navigate verwenden."}
+            )
+        from jarvis.browser.captcha.solver import CaptchaConfig, CaptchaSolver
+
+        cfg = CaptchaConfig(
+            enabled=True,
+            max_retries=int(params.get("max_retries", 3)),
+        )
+        solver = CaptchaSolver(vision_fn=None, config=cfg)
+        # Wire vision if available
+        if vision_analyzer and getattr(vision_analyzer, "is_enabled", False):
+
+            async def _vision_bridge(screenshot_b64: str, prompt: str) -> str:
+                r = await vision_analyzer.analyze_screenshot(screenshot_b64, prompt)
+                return r.description if hasattr(r, "description") else str(r)
+
+            solver._vision_fn = _vision_bridge
+
+        result = await solver.solve(agent.current_page)
+        if result.success:
+            return json.dumps(
+                {
+                    "success": True,
+                    "message": (
+                        f"CAPTCHA geloest: {result.captcha_type.value} "
+                        f"(Modell: {result.model_used}, "
+                        f"{result.attempts} Versuch(e), {result.duration_ms}ms)"
+                    ),
+                },
+                ensure_ascii=False,
+            )
+        return json.dumps(
+            {
+                "success": False,
+                "error": (
+                    f"CAPTCHA-Loesung fehlgeschlagen: {result.captcha_type.value} "
+                    f"— {result.error} ({result.attempts} Versuche)"
+                ),
+            },
+            ensure_ascii=False,
+        )
+
+    mcp_client.register_builtin_handler(
+        tool_name="browser_solve_captcha",
+        description=(
+            "Erkennt und loest ein CAPTCHA auf der aktuellen "
+            "Browser-Seite via Vision-LLM."
+        ),
+        input_schema={
+            "max_retries": {
+                "type": "integer",
+                "default": 3,
+                "description": "Maximale Anzahl Loesungsversuche",
+            },
+        },
+        handler=_solve_captcha,
+    )
+
+    tool_count = 14 if vision_analyzer else 11
     log.info("browser_use_tools_registered", tool_count=tool_count)
     return agent

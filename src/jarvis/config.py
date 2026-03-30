@@ -2205,6 +2205,10 @@ class JarvisConfig(BaseModel):
     session: SessionConfig = Field(default_factory=SessionConfig)
     evolution: EvolutionConfig = Field(default_factory=EvolutionConfig)
     arc: ArcConfig = Field(default_factory=ArcConfig)
+    atl: dict[str, Any] = Field(
+        default_factory=dict,
+        description="ATL (Autonomous Thinking Loop) config — parsed into ATLConfig at runtime",
+    )
 
     # Heartbeat- und Plugin-Konfigurationen
     # Die HeartbeatConfig steuert einen periodischen Check (Heartbeat), der

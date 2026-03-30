@@ -282,7 +282,7 @@ class OllamaClient:
             resp = await client.post(
                 "/api/embed",
                 json={"model": model, "input": text},
-                timeout=min(float(self._timeout), 120.0),
+                timeout=float(self._timeout),
             )
 
             if resp.status_code != 200:
@@ -321,7 +321,7 @@ class OllamaClient:
             resp = await client.post(
                 "/api/embed",
                 json={"model": model, "input": texts},
-                timeout=min(float(self._timeout), 180.0),
+                timeout=float(self._timeout),
             )
 
             if resp.status_code != 200:

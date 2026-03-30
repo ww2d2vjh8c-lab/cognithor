@@ -82,6 +82,14 @@ class PersonalityEngine:
 
         return "\n".join(directives)
 
+    def enhance_response(self, text: str, context: dict | None = None) -> str:
+        """Post-process a response with personality touches.
+
+        Currently a pass-through. Can be extended to add greeting
+        fragments or success celebration when appropriate.
+        """
+        return text
+
     def build_personality_block(self) -> str:
         """Builds the complete personality block for SYSTEM_PROMPT injection.
 

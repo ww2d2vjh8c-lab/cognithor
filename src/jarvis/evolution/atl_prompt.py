@@ -1,0 +1,148 @@
+"""ATL system prompt builder and JSON response parser."""
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass, field
+
+# ---------------------------------------------------------------------------
+# System prompt template (German, targeting Qwen3.5)
+# ---------------------------------------------------------------------------
+
+ATL_SYSTEM_PROMPT = """\
+Du befindest dich im autonomen Denkmodus (ATL — Autonomous Thought Loop).
+
+{identity}
+
+Aktueller Zeitpunkt: {now}
+
+## Deine aktiven Ziele
+
+{goals_formatted}
+
+## Jüngste Ereignisse
+
+{recent_events}
+
+## Vorhandenes Wissen zu den Zielen
+
+{goal_knowledge}
+
+## Deine Aufgabe
+
+Analysiere den aktuellen Stand deiner Ziele und der jüngsten Ereignisse.
+Überlege, ob du Fortschritte erkennen kannst, ob neue Informationen
+relevant sind, und ob du eigenständig Aktionen vorschlagen solltest.
+
+Du darfst maximal {max_actions} Aktionen vorschlagen.
+
+Antworte ausschließlich mit einem JSON-Objekt im folgenden Format
+(keine Erklärungen außerhalb des JSON):
+
+{{
+  "summary": "Kurze Zusammenfassung deiner Überlegungen",
+  "goal_evaluations": [
+    {{"goal_id": "g_XXX", "progress_delta": 0.0, "note": "..."}}
+  ],
+  "proposed_actions": [
+    {{"type": "research|notify|tool", "params": {{}}, "rationale": "..."}}
+  ],
+  "wants_to_notify": false,
+  "notification": null,
+  "priority": "low|medium|high"
+}}
+"""
+
+
+# ---------------------------------------------------------------------------
+# build_atl_prompt
+# ---------------------------------------------------------------------------
+
+def build_atl_prompt(
+    identity: str,
+    goals_formatted: str,
+    recent_events: str,
+    goal_knowledge: str,
+    now: str,
+    max_actions: int,
+) -> str:
+    """Format the ATL system prompt with the given context."""
+    return ATL_SYSTEM_PROMPT.format(
+        identity=identity,
+        goals_formatted=goals_formatted,
+        recent_events=recent_events,
+        goal_knowledge=goal_knowledge,
+        now=now,
+        max_actions=max_actions,
+    )
+
+
+# ---------------------------------------------------------------------------
+# AutonomousThought dataclass
+# ---------------------------------------------------------------------------
+
+@dataclass
+class AutonomousThought:
+    """Parsed result of one ATL thinking cycle."""
+
+    summary: str = ""
+    goal_evaluations: list[dict] = field(default_factory=list)
+    proposed_actions: list[dict] = field(default_factory=list)
+    wants_to_notify: bool = False
+    notification: str | None = None
+    priority: str = "low"
+
+
+# ---------------------------------------------------------------------------
+# parse_atl_response
+# ---------------------------------------------------------------------------
+
+_THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL)
+_CODE_BLOCK_RE = re.compile(r"```(?:json)?\s*\n?(.*?)\n?```", re.DOTALL)
+_JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
+
+
+def parse_atl_response(raw: str) -> AutonomousThought:
+    """Parse an LLM response into an *AutonomousThought*.
+
+    Handles:
+    - Qwen3 ``<think>...</think>`` tags
+    - Markdown ````` json ```` code blocks
+    - Bare JSON objects
+    - Partial / missing keys (filled with defaults)
+    - Complete parse failure (returns empty thought)
+    """
+    # 1. Strip think tags
+    text = _THINK_RE.sub("", raw).strip()
+
+    # 2. Strip markdown code blocks
+    m = _CODE_BLOCK_RE.search(text)
+    if m:
+        text = m.group(1).strip()
+
+    # 3. Try direct parse
+    import contextlib
+
+    data: dict | None = None
+    with contextlib.suppress(json.JSONDecodeError, ValueError):
+        data = json.loads(text)
+
+    # 4. Fallback: extract first { ... } block
+    if data is None:
+        m2 = _JSON_OBJECT_RE.search(text)
+        if m2:
+            with contextlib.suppress(json.JSONDecodeError, ValueError):
+                data = json.loads(m2.group(0))
+
+    # 5. Build dataclass with defaults for missing keys
+    if not isinstance(data, dict):
+        return AutonomousThought()
+
+    return AutonomousThought(
+        summary=data.get("summary", ""),
+        goal_evaluations=data.get("goal_evaluations", []),
+        proposed_actions=data.get("proposed_actions", []),
+        wants_to_notify=data.get("wants_to_notify", False),
+        notification=data.get("notification"),
+        priority=data.get("priority", "low"),
+    )

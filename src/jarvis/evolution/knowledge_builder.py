@@ -75,6 +75,13 @@ _GARBAGE_PATTERNS = re.compile(
     r"|Image"  # Generic PDF image reference
     r"|Uniform Resource Locator"  # URL as entity — too generic
     r"|Administrator|Löschkriterien"  # Wikipedia admin/deletion noise
+    r"|XRef"  # PDF cross-reference table
+    r"|Objekt \d+"  # PDF object references (e.g. "Objekt 4759")
+    r"|Root \d+"  # PDF root object references (e.g. "Root 4760")
+    r"|Info \d+"  # PDF info object references (e.g. "Info 1562")
+    r"|obj \d+"  # PDF object IDs
+    r"|endobj|endstream|xref"  # PDF structure markers
+    r"|Type1|TrueType|CIDFont"  # PDF font type names
     r")$",
     re.IGNORECASE,
 )
@@ -107,6 +114,12 @@ _TOO_GENERIC = {
     "pages",
     "stream",
     "metadata",
+    "xref",
+    "root",
+    "info",
+    "objekt",
+    "endobj",
+    "trailer",
 }
 
 

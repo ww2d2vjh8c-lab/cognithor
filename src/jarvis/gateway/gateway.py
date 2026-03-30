@@ -708,6 +708,62 @@ class Gateway:
                 except Exception:
                     log.debug("deep_learner_init_failed", exc_info=True)
 
+        # ATL (Autonomous Thinking Loop) wiring
+        if self._evolution_loop:
+            try:
+                from jarvis.evolution.atl_config import ATLConfig
+
+                atl_raw = getattr(self._config, "atl", None) or {}
+                if isinstance(atl_raw, ATLConfig):
+                    atl_cfg = atl_raw
+                elif isinstance(atl_raw, dict) and atl_raw:
+                    atl_cfg = ATLConfig(**atl_raw)
+                else:
+                    atl_cfg = ATLConfig()
+
+                self._evolution_loop._atl_config = atl_cfg
+
+                if atl_cfg.enabled:
+                    from jarvis.evolution.goal_manager import GoalManager
+                    from jarvis.evolution.atl_journal import ATLJournal
+
+                    goals_path = self._config.jarvis_home / "evolution" / "goals.yaml"
+                    journal_dir = self._config.jarvis_home / "evolution" / "journal"
+
+                    gm = GoalManager(goals_path=goals_path)
+
+                    # One-time migration of learning_goals -> Goal objects
+                    if not goals_path.exists():
+                        old_goals: list[str] = []
+                        if hasattr(self._config, "evolution") and self._config.evolution:
+                            old_goals = list(
+                                getattr(self._config.evolution, "learning_goals", []) or []
+                            )
+                        if old_goals:
+                            gm.migrate_learning_goals(old_goals)
+                            log.info("atl_goals_migrated", count=len(old_goals))
+
+                    self._evolution_loop._goal_manager = gm
+                    self._evolution_loop._atl_journal = ATLJournal(journal_dir=journal_dir)
+                    log.info("atl_initialized", goals=len(gm.active_goals()))
+
+                    # Register ATL MCP tools
+                    try:
+                        from jarvis.mcp.atl_tools import set_atl_context, register_atl_tools
+
+                        set_atl_context(
+                            goal_manager=self._evolution_loop._goal_manager,
+                            journal=self._evolution_loop._atl_journal,
+                            config=atl_cfg,
+                            loop=self._evolution_loop,
+                        )
+                        register_atl_tools(self._mcp_client)
+                        log.info("atl_tools_registered")
+                    except Exception:
+                        log.debug("atl_tools_registration_failed", exc_info=True)
+            except Exception:
+                log.debug("atl_wiring_failed", exc_info=True)
+
         log.info(
             "gateway_init_complete",
             llm_available=llm_ok,
@@ -1252,6 +1308,57 @@ class Gateway:
                 log.info("skill_lifecycle_periodic_started", interval_hours=interval_h)
         except Exception:
             log.debug("skill_lifecycle_init_failed", exc_info=True)
+
+        # Episodic Compression (daily maintenance)
+        if self._memory_manager and hasattr(self._memory_manager, "compressor"):
+            try:
+                from datetime import date
+                from pathlib import Path
+
+                async def _periodic_episode_compression() -> None:
+                    await asyncio.sleep(3600)  # First run after 1 hour
+                    while True:
+                        try:
+                            compressor = self._memory_manager.compressor
+                            ep_dir = self._config.jarvis_home / "memory" / "episodes"
+                            if ep_dir.exists():
+                                dates = []
+                                for f in ep_dir.glob("*.md"):
+                                    try:
+                                        dates.append(date.fromisoformat(f.stem))
+                                    except ValueError:
+                                        pass
+                                compressible = compressor.identify_compressible(dates)
+                                if compressible:
+                                    weeks = compressor.group_into_weeks(compressible)
+                                    for start, end in weeks[:3]:  # Max 3 per run
+                                        entries = []
+                                        for d in compressible:
+                                            if start <= d <= end:
+                                                p = ep_dir / f"{d.isoformat()}.md"
+                                                if p.exists():
+                                                    entries.append(p.read_text(encoding="utf-8")[:2000])
+                                        if entries:
+                                            compressed = compressor.compress_heuristic(
+                                                entries, start.isoformat(), end.isoformat(),
+                                            )
+                                            if compressed:
+                                                log.info(
+                                                    "episodic_compression_done",
+                                                    start=start.isoformat(),
+                                                    end=end.isoformat(),
+                                                    entries=len(entries),
+                                                )
+                        except Exception:
+                            log.debug("episodic_compression_failed", exc_info=True)
+                        await asyncio.sleep(86400)  # Daily
+
+                _comp_task = asyncio.create_task(_periodic_episode_compression())
+                self._background_tasks.add(_comp_task)
+                _comp_task.add_done_callback(self._background_tasks.discard)
+                log.info("episodic_compression_scheduled")
+            except Exception:
+                log.debug("episodic_compression_init_failed", exc_info=True)
 
         # Channels starten
         tasks = []
@@ -3514,6 +3621,12 @@ class Gateway:
                         target=imp.target,
                         priority=imp.priority,
                     )
+                    try:
+                        applied = self._session_analyzer.apply_improvement(imp)
+                        if applied:
+                            log.info("session_improvement_applied", action=imp.action_type, target=imp.target)
+                    except Exception:
+                        log.debug("session_improvement_apply_failed", exc_info=True)
             except Exception:
                 log.debug("session_analysis_failed", exc_info=True)
 

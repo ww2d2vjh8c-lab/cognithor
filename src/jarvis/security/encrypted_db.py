@@ -63,6 +63,45 @@ except ImportError:
 _KEYRING_SERVICE = "cognithor"
 _KEYRING_KEY_NAME = "db_encryption_key"
 
+# Cache the encryption_enabled flag to avoid re-reading config.yaml on every connect
+_encryption_enabled_cache: bool | None = None
+
+
+def _check_encryption_enabled() -> bool:
+    """Check whether database encryption is enabled in config.yaml.
+
+    Reads the YAML file directly (no dependency on JarvisConfig) and caches
+    the result for the lifetime of the process.  Falls back to False if the
+    config cannot be read.
+    """
+    global _encryption_enabled_cache  # noqa: PLW0603
+    if _encryption_enabled_cache is not None:
+        return _encryption_enabled_cache
+
+    try:
+        from pathlib import Path
+
+        # Standard Jarvis home locations
+        candidates = [
+            Path(os.environ.get("JARVIS_HOME", "")) / "config.yaml",
+            Path.home() / ".jarvis" / "config.yaml",
+        ]
+        for cfg_path in candidates:
+            if cfg_path.is_file():
+                import yaml  # type: ignore[import-untyped]
+
+                with open(cfg_path) as f:
+                    data = yaml.safe_load(f) or {}
+                db_section = data.get("database", {})
+                _encryption_enabled_cache = bool(db_section.get("encryption_enabled", False))
+                return _encryption_enabled_cache
+    except Exception:
+        pass
+
+    # Default: encryption disabled (safe fallback — avoids VirtualLock on first run)
+    _encryption_enabled_cache = False
+    return _encryption_enabled_cache
+
 
 def is_encryption_available() -> bool:
     """Check if SQLCipher is available."""
@@ -198,13 +237,57 @@ def encrypted_connect(
     Args:
         db_path: Path to the SQLite database file
         key: Encryption key. If None, auto-detected from env/keyring/credential store.
+            Pass empty string "" to force plain sqlite3 (no encryption).
         check_same_thread: sqlite3 check_same_thread parameter
         timeout: How many seconds to wait for the database lock (default 5.0)
 
     Returns:
         sqlite3.Connection (either encrypted or standard)
     """
+    # Respect the global encryption_enabled config flag.
+    # If encryption is disabled, skip SQLCipher entirely — avoids
+    # VirtualLock quota exhaustion on Windows from dozens of open
+    # SQLCipher connections calling sqlcipher_mlock().
     if key is None:
+        _encryption_enabled = _check_encryption_enabled()
+
+        if not _encryption_enabled:
+            # Encryption disabled in config — prefer plain sqlite3.
+            # But if the DB was previously encrypted (by old code that
+            # always used SQLCipher), we must still open it with SQLCipher
+            # to avoid "file is not a database" errors.
+            try:
+                conn = sqlite3.connect(
+                    db_path, check_same_thread=check_same_thread, timeout=timeout
+                )
+                conn.execute("PRAGMA journal_mode=WAL")
+                conn.execute("SELECT count(*) FROM sqlite_master")
+                return conn
+            except sqlite3.DatabaseError:
+                # DB exists and is encrypted — open with SQLCipher + memory_security OFF
+                if _sqlcipher_available and os.path.exists(db_path) and os.path.getsize(db_path) > 0:
+                    fallback_key = _get_db_key()
+                    if fallback_key:
+                        hex_key = fallback_key.encode().hex()
+                        try:
+                            conn = sqlcipher.connect(
+                                db_path, check_same_thread=check_same_thread, timeout=timeout
+                            )
+                            conn.execute(f"PRAGMA key = \"x'{hex_key}'\"")  # noqa: S608
+                            conn.execute("PRAGMA cipher_memory_security = OFF")
+                            conn.execute("PRAGMA journal_mode=WAL")
+                            conn.execute("SELECT count(*) FROM sqlite_master")
+                            log.info(
+                                "encrypted_db_legacy_open",
+                                path=db_path[-40:],
+                                hint="DB still encrypted despite encryption_enabled=false",
+                            )
+                            return conn
+                        except Exception:
+                            pass
+                # Re-raise if nothing worked
+                raise
+
         key = _get_db_key()
 
     if _sqlcipher_available and key:
