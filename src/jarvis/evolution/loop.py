@@ -300,6 +300,9 @@ class EvolutionLoop:
             result.reason = "no_goals"
             return result
 
+        # Proactive: auto-create goals from curiosity gaps
+        self._create_goals_from_curiosity()
+
         # Build context
         goals = self._goal_manager.active_goals()
         goals_fmt = (
@@ -432,6 +435,22 @@ class EvolutionLoop:
                     executed_actions.append(f"[FAIL] {action.type}: {exc!s:.60}")
                     log.debug("atl_action_failed", type=action.type, error=str(exc)[:80])
 
+        # Verify action outcomes: did research produce real knowledge?
+        if executed_actions and self._memory and hasattr(self._memory, "search_memory_sync"):
+            verified: list[str] = []
+            for desc in executed_actions:
+                if "[OK]" in desc and "research" in desc:
+                    try:
+                        query = desc.split(":", 1)[-1].strip()[:50]
+                        hits = self._memory.search_memory_sync(query=query, top_k=1)
+                        tag = "[VERIFIED]" if hits else "[PENDING]"
+                        verified.append(f"{desc} {tag}")
+                        continue
+                    except Exception:
+                        pass
+                verified.append(desc)
+            executed_actions = verified
+
         # Journal
         if self._atl_journal:
             try:
@@ -466,6 +485,53 @@ class EvolutionLoop:
         )
 
         return result
+
+    def _create_goals_from_curiosity(self) -> int:
+        """Auto-create ATL goals from CuriosityEngine knowledge gaps.
+
+        Only creates goals for gaps with importance >= 0.6 that don't
+        already have a matching goal (by entity name in title).
+        Source is set to "curiosity" with priority 4 (below user goals at 3).
+        """
+        if not self._curiosity or not self._goal_manager:
+            return 0
+
+        try:
+            gaps = self._curiosity.propose_exploration(max_tasks=5)
+        except Exception:
+            return 0
+
+        if not gaps:
+            return 0
+
+        existing_titles = {g.title.lower() for g in self._goal_manager.active_goals()}
+        created = 0
+
+        for gap in gaps:
+            entity = getattr(gap, "entity_name", str(gap))
+            importance = getattr(gap, "importance", 0.5)
+            if importance < 0.6:
+                continue
+            if any(entity.lower() in t for t in existing_titles):
+                continue
+
+            from jarvis.evolution.goal_manager import Goal
+
+            goal = Goal(
+                title=f"Lerne {entity}",
+                description=getattr(gap, "description", f"Knowledge gap: {entity}"),
+                priority=4,
+                source="curiosity",
+            )
+            try:
+                self._goal_manager.add_goal(goal)
+                existing_titles.add(goal.title.lower())
+                created += 1
+                log.info("atl_goal_auto_created", entity=entity, importance=importance)
+            except Exception:
+                pass
+
+        return created
 
     def _in_quiet_hours(self) -> bool:
         """Check if current time is within ATL quiet hours.

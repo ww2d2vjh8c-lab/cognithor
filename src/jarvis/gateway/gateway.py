@@ -369,6 +369,10 @@ class Gateway:
         if getattr(self, "_confidence_manager", None) and getattr(self, "_reflector", None):
             self._reflector._confidence_manager = self._confidence_manager
 
+        # Wire strategy_memory to planner (meta-reasoning hints)
+        if getattr(self, "_strategy_memory", None) and getattr(self, "_planner", None):
+            self._planner._strategy_memory = self._strategy_memory
+
         # Wire prompt_evolution LLM client (meta-prompt generation)
         if getattr(self, "_prompt_evolution", None) and self._llm and self._model_router:
             try:
@@ -3490,6 +3494,40 @@ class Gateway:
                         log.debug("evolution_gap_injection_failed", exc_info=True)
             except Exception as exc:
                 log.error("reflection_error", error=str(exc))
+
+        # Meta-Reasoning: record strategy outcome
+        if getattr(self, "_strategy_memory", None):
+            try:
+                from jarvis.learning.strategy_memory import (
+                    StrategyRecord,
+                    classify_task_type,
+                )
+
+                tools_used = [r.tool_name for r in agent_result.tool_results if r.tool_name]
+                if tools_used:
+                    task_type = classify_task_type(tools_used)
+                    strategy = " -> ".join(dict.fromkeys(tools_used))
+                    success = any(r.success for r in agent_result.tool_results)
+                    total_ms = sum(
+                        getattr(r, "duration_ms", 0) or 0 for r in agent_result.tool_results
+                    )
+                    self._strategy_memory.record(
+                        StrategyRecord(
+                            task_type=task_type,
+                            strategy=strategy[:200],
+                            success=success,
+                            duration_ms=total_ms,
+                            tool_count=len(tools_used),
+                        )
+                    )
+                    log.debug(
+                        "strategy_recorded",
+                        task_type=task_type,
+                        strategy=strategy[:60],
+                        success=success,
+                    )
+            except Exception:
+                log.debug("strategy_record_failed", exc_info=True)
 
         if active_skill and self._skill_registry:
             try:

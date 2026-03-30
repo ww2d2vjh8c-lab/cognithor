@@ -50,6 +50,7 @@ def declare_advanced_attrs(config: Any) -> PhaseResult:
         "proposal_store": None,
         "evolution_orchestrator": None,
         "hashline_guard": None,
+        "strategy_memory": None,
     }
 
     # ── Enterprise Placeholders (deferred) ──────────────────────────────
@@ -120,6 +121,17 @@ def declare_advanced_attrs(config: Any) -> PhaseResult:
                 log.info("gepa_orchestrator_initialized")
     except Exception:
         log.debug("gepa_orchestrator_init_skipped", exc_info=True)
+
+    # StrategyMemory (Meta-Reasoning)
+    try:
+        from jarvis.learning.strategy_memory import StrategyMemory
+
+        jarvis_home = getattr(config, "jarvis_home", Path.home() / ".jarvis")
+        strat_db = Path(jarvis_home) / "index" / "strategy_memory.db"
+        result["strategy_memory"] = StrategyMemory(db_path=strat_db)
+        log.info("strategy_memory_initialized", db=str(strat_db))
+    except Exception:
+        log.debug("strategy_memory_init_skipped", exc_info=True)
 
     # Reflexion Memory
     try:

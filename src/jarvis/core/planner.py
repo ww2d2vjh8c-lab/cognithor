@@ -254,6 +254,7 @@ class Planner:
         self._cost_tracker = cost_tracker
         self._personality_engine = personality_engine
         self._prompt_evolution = prompt_evolution
+        self._strategy_memory = None  # Set by gateway: StrategyMemory
         self._current_prompt_version_id: str | None = None
 
         # Tool-Descriptions-Cache (#40 Optimierung)
@@ -1081,6 +1082,25 @@ class Planner:
         # Taktische Einsichten (Tier 6 — Tool-Effektivitaet, Vermeidungsregeln)
         if working_memory.injected_tactical:
             context_parts.append(f"### Taktische Einsichten\n{working_memory.injected_tactical}")
+
+        # Meta-Reasoning: strategy hints from past successes
+        if self._strategy_memory is not None:
+            try:
+                hints = []
+                for tt in [
+                    "web_research",
+                    "code_execution",
+                    "document_creation",
+                    "knowledge_management",
+                    "file_operations",
+                ]:
+                    h = self._strategy_memory.get_strategy_hint(tt)
+                    if h:
+                        hints.append(h)
+                if hints:
+                    context_parts.append("### Bewaehrte Strategien\n" + "\n".join(hints[:3]))
+            except Exception:
+                pass
 
         # Causal-Learning-Vorschlaege (wenn verfuegbar)
         if self._causal_analyzer is not None:
