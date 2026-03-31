@@ -59,6 +59,7 @@ def _make_memory_manager(
 ) -> MagicMock:
     """Erzeugt einen Mock-MemoryManager."""
     mm = MagicMock()
+    mm.search_memory = AsyncMock(return_value=search_results or [])
     mm.search_memory_sync.return_value = search_results or []
     episodic = MagicMock()
     episodic.get_recent.return_value = episodes or []
@@ -162,9 +163,10 @@ class TestMemoryInjection:
 
         await pipeline.enrich("Wie funktioniert das Backup-System?", wm)
 
-        mm.search_memory_sync.assert_called_once_with(
+        mm.search_memory.assert_called_once_with(
             query="Wie funktioniert das Backup-System?",
             top_k=8,  # default memory_top_k
+            enhanced=True,
         )
 
 
@@ -263,7 +265,7 @@ class TestDisabled:
         assert ctx.skipped is True
         assert ctx.skip_reason == "disabled"
         assert len(wm.injected_memories) == 0
-        mm.search_memory_sync.assert_not_called()
+        mm.search_memory.assert_not_called()
 
 
 class TestProceduresSlotPreserved:
@@ -371,6 +373,7 @@ class TestMemorySearchError:
         wm: WorkingMemory,
     ) -> None:
         mm = MagicMock()
+        mm.search_memory = AsyncMock(side_effect=RuntimeError("BM25 index corrupt"))
         mm.search_memory_sync.side_effect = RuntimeError("BM25 index corrupt")
         mm.episodic = MagicMock()
         mm.episodic.get_recent.return_value = []
