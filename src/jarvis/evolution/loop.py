@@ -490,7 +490,7 @@ class EvolutionLoop:
         recent = ""
         if self._atl_journal:
             entries = self._atl_journal.recent(days=2)
-            recent = "\n".join(entries[:1])[:1000] if entries else ""
+            recent = "\n".join(entries[:5])[:2000] if entries else ""
 
         # Build goal knowledge from DeepLearner progress + Memory search
         goal_knowledge_parts: list[str] = []
@@ -531,6 +531,7 @@ class EvolutionLoop:
             goal_knowledge=goal_knowledge or "Noch kein Wissen aufgebaut.",
             now=_time.strftime("%Y-%m-%d %H:%M"),
             max_actions=max_actions,
+            cycle_number=self._atl_cycle_count,
         )
 
         # Call LLM

@@ -12,6 +12,9 @@ from dataclasses import dataclass, field
 
 ATL_SYSTEM_PROMPT = """\
 Du befindest dich im autonomen Denkmodus (ATL — Autonomous Thought Loop).
+Dies ist Zyklus #{cycle_number}. Du laeuft kontinuierlich — jeder Zyklus
+baut auf den vorherigen auf. Du bist NICHT in einer Initialisierungsphase,
+es sei denn es ist tatsaechlich Zyklus #1.
 
 {identity}
 
@@ -21,7 +24,7 @@ Aktueller Zeitpunkt: {now}
 
 {goals_formatted}
 
-## Jüngste Ereignisse
+## Bisherige Aktivitaet (letzte Zyklen)
 
 {recent_events}
 
@@ -31,17 +34,19 @@ Aktueller Zeitpunkt: {now}
 
 ## Deine Aufgabe
 
-Analysiere den aktuellen Stand deiner Ziele und der jüngsten Ereignisse.
-Überlege, ob du Fortschritte erkennen kannst, ob neue Informationen
-relevant sind, und ob du eigenständig Aktionen vorschlagen solltest.
+Baue auf deiner bisherigen Arbeit auf. Wiederhole NICHT was du bereits
+recherchiert hast — suche nach NEUEN Aspekten und Luecken.
+
+Fuer jedes Ziel: Was fehlt noch? Welche Teilaspekte sind unterbelichtet?
+Schlage gezielte Recherchen vor die dein Wissen tatsaechlich erweitern.
 
 Du darfst maximal {max_actions} Aktionen vorschlagen.
 
-Antworte ausschließlich mit einem JSON-Objekt im folgenden Format
-(keine Erklärungen außerhalb des JSON):
+Antworte ausschliesslich mit einem JSON-Objekt im folgenden Format
+(keine Erklaerungen ausserhalb des JSON):
 
 {{
-  "summary": "Kurze Zusammenfassung deiner Überlegungen",
+  "summary": "Was hast du ueberlegt und was ist der naechste Schritt?",
   "goal_evaluations": [
     {{"goal_id": "g_XXX", "progress_delta": 0.0, "note": "..."}}
   ],
@@ -67,6 +72,7 @@ def build_atl_prompt(
     goal_knowledge: str,
     now: str,
     max_actions: int,
+    cycle_number: int = 1,
 ) -> str:
     """Format the ATL system prompt with the given context."""
     return ATL_SYSTEM_PROMPT.format(
@@ -76,6 +82,7 @@ def build_atl_prompt(
         goal_knowledge=goal_knowledge,
         now=now,
         max_actions=max_actions,
+        cycle_number=cycle_number,
     )
 
 
