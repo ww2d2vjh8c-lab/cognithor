@@ -134,6 +134,10 @@ class ChatProvider extends ChangeNotifier {
   // Actions
   // ---------------------------------------------------------------------------
 
+  /// True between sendMessage() and receiving the first response/status.
+  /// Used by the UI to show an immediate typing indicator.
+  bool isWaitingForResponse = false;
+
   void sendMessage(String text) {
     _log('[Chat] sendMessage: "$text" (messages.length=${messages.length})');
     messages.add(ChatMessage(role: MessageRole.user, text: text));
@@ -143,6 +147,7 @@ class ChatProvider extends ChangeNotifier {
       _log('[Chat] WARN: no WebSocket attached — message not sent');
     }
     statusText = '';
+    isWaitingForResponse = true;
     _log('[Chat] notifyListeners (messages.length=${messages.length})');
     notifyListeners();
   }
@@ -429,6 +434,7 @@ class ChatProvider extends ChangeNotifier {
     _logAgent('complete', null, 'Response complete', status: 'done');
     activeTool = null;
     statusText = '';
+    isWaitingForResponse = false;
     pipeline = [];
     _log('[Chat] notifyListeners (messages.length=${messages.length})');
     notifyListeners();
@@ -438,6 +444,7 @@ class ChatProvider extends ChangeNotifier {
     final token = msg['token'] as String? ?? '';
     if (!isStreaming) {
       isStreaming = true;
+      isWaitingForResponse = false;
       _streamBuffer.clear();
     }
     _streamBuffer.write(token);
@@ -522,6 +529,7 @@ class ChatProvider extends ChangeNotifier {
 
     statusText = text;
     if (statusText.isNotEmpty) {
+      isWaitingForResponse = false;  // Backend responded, show status instead
       _logAgent('info', null, statusText);
     }
     notifyListeners();

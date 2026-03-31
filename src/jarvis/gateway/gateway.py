@@ -1873,6 +1873,15 @@ class Gateway:
         """
         _handle_start = time.monotonic()
 
+        # Notify idle detector IMMEDIATELY so background tasks (ATL, evolution)
+        # yield the GPU to user requests. Previously this was at the END of
+        # handle_message, meaning the evolution loop kept blocking the LLM
+        # for the entire duration of the user's wait.
+        if hasattr(self, "_idle_detector") and self._idle_detector:
+            self._idle_detector.notify_activity()
+        if self._active_learner is not None:
+            self._active_learner.notify_activity()
+
         # --- Sub-Agent depth guard ---
         # The _agent_runner passes depth in msg.metadata. Enforce max depth
         # to prevent infinite recursive sub-agent delegation.

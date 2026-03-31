@@ -515,6 +515,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   bool _showTyping(ChatProvider chat) {
+    // Show typing immediately after user sends a message,
+    // even before the backend sends any status updates.
+    if (chat.isWaitingForResponse) {
+      return true;
+    }
     // Show typing when there's a status text but no streaming/tool activity
     if (chat.statusText.isNotEmpty &&
         !chat.isStreaming &&
