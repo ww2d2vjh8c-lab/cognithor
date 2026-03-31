@@ -1809,6 +1809,11 @@ def main() -> None:
             log.info("jarvis_stopped")
 
     try:
+        # On Windows, use SelectorEventLoop to avoid ProactorEventLoop's
+        # WSASend "buffer too large" crash with responses >64KB.
+        # ProactorEventLoop is the default on Windows but has this hard limit.
+        if sys.platform == "win32":
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         asyncio.run(run())
     except KeyboardInterrupt:
         log.info("jarvis_shutdown_by_user")
