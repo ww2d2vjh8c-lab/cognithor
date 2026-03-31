@@ -2376,7 +2376,7 @@ class Gateway:
             try:
                 self._explainability.complete_trail(_expl_trail_id)
             except Exception:
-                pass
+                log.debug("explainability_complete_failed", exc_info=True)
 
         # Phase 5: Session persistieren
         await self._persist_session(session, wm)
@@ -2461,7 +2461,7 @@ class Gateway:
                 )
                 _expl_trail_id = _trail.trail_id
             except Exception:
-                pass
+                log.debug("explainability_start_failed", exc_info=True)
 
         if self._audit_logger:
             self._audit_logger.log_user_input(
@@ -2535,7 +2535,15 @@ class Gateway:
                 shared=route_decision.agent.shared_workspace,
             )
 
-        return route_decision, session, wm, active_skill, agent_workspace, agent_name, _expl_trail_id
+        return (
+            route_decision,
+            session,
+            wm,
+            active_skill,
+            agent_workspace,
+            agent_name,
+            _expl_trail_id,
+        )
 
     async def _prepare_execution_context(
         self,

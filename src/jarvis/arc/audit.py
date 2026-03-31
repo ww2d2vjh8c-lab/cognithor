@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+import uuid
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -43,8 +44,8 @@ class ArcAuditTrail:
         self._hashes: list[str] = []
         self._previous_hash: str | None = None
 
-        # run_id: first 16 chars of SHA-256(game_id:timestamp:version)
-        seed = f"{game_id}:{time.time()}:{agent_version}"
+        # run_id: first 16 chars of SHA-256(game_id:timestamp:version:uuid)
+        seed = f"{game_id}:{time.time()}:{agent_version}:{uuid.uuid4().hex}"
         self.run_id = hashlib.sha256(seed.encode()).hexdigest()[:16]
 
     # ------------------------------------------------------------------
