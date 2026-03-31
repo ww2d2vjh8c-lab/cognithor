@@ -243,6 +243,7 @@ class KnowledgeBuilder:
         fetch_result: FetchResult,
         *,
         skip_entity_extraction: bool = False,
+        min_content_chars: int = 200,
     ) -> BuildResult:
         """Run the triple-write pipeline for a single FetchResult.
 
@@ -251,6 +252,9 @@ class KnowledgeBuilder:
                 extraction (step 3). Useful for cron-triggered builds where
                 the GPU should not be blocked for 2-10 minutes per document.
                 Vault save + memory chunking still run normally.
+            min_content_chars: Minimum character count for the quality gate.
+                Default 200 for web-fetched content. ATL synthesis notes
+                use a lower threshold (100) since they are pre-processed.
         """
         result = BuildResult()
 
@@ -259,7 +263,7 @@ class KnowledgeBuilder:
             return result
 
         # Content quality gate: reject PDF artifacts and too-short text
-        usable, reason = _is_usable_content(fetch_result.text)
+        usable, reason = _is_usable_content(fetch_result.text, min_chars=min_content_chars)
         if not usable:
             log.info(
                 "content_rejected",

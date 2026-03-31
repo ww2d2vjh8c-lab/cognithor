@@ -160,13 +160,17 @@ class EvolutionLoop:
             f"Recherche-Ergebnis:\n{research_text[:3000]}\n\n"
             "Aufgabe:\n"
             "1. Extrahiere die 3-5 wichtigsten Fakten die fuer das Ziel relevant sind\n"
-            "2. Formuliere eine strukturierte Notiz (deutsch, sachlich)\n"
-            "3. Wenn nichts Relevantes gefunden wurde, antworte NUR mit KEINE_RELEVANZ\n\n"
+            "2. Formuliere eine ausfuehrliche strukturierte Notiz (deutsch, sachlich, "
+            "mindestens 250 Woerter)\n"
+            "3. Erklaere jeden Fakt in 1-2 Saetzen mit Kontext und Bedeutung fuer das Ziel\n"
+            "4. Wenn nichts Relevantes gefunden wurde, antworte NUR mit KEINE_RELEVANZ\n\n"
             "Format:\n"
-            "## {Thema}\n"
-            "- Kernaussage 1 (Quelle: ...)\n"
-            "- Kernaussage 2\n"
-            "...\n"
+            "## {Thema}\n\n"
+            "### Kernaussagen\n"
+            "- **Fakt 1**: Erklaerung mit Kontext (Quelle: ...)\n"
+            "- **Fakt 2**: Erklaerung mit Kontext (Quelle: ...)\n\n"
+            "### Einordnung\n"
+            "Wie diese Erkenntnisse zum Ziel beitragen.\n"
         )
 
         try:
@@ -224,7 +228,8 @@ class EvolutionLoop:
             return
 
         # Dedup: skip if this query was already persisted this session
-        query_key = getattr(action, "params", {}).get("query", "")[:100].lower().strip()
+        _raw_q = getattr(action, "params", {}).get("query", "")[:100].lower().strip()
+        query_key = " ".join(_raw_q.split())  # normalize whitespace for dedup
         if query_key in self._atl_persisted_queries:
             log.debug("atl_persist_dedup_skip", query=query_key[:60])
             return
@@ -257,7 +262,11 @@ class EvolutionLoop:
             source_type="atl_research",
         )
         try:
-            build_result = await builder.build(fetch, skip_entity_extraction=True)
+            build_result = await builder.build(
+                fetch,
+                skip_entity_extraction=True,
+                min_content_chars=100,
+            )
             if build_result.errors:
                 log.debug("atl_persist_build_errors", errors=build_result.errors[:2])
             else:
@@ -701,7 +710,7 @@ class EvolutionLoop:
                 created += 1
                 log.info("atl_goal_auto_created", entity=entity, importance=importance)
             except Exception:
-                pass
+                log.debug("atl_goal_creation_failed", entity=entity, exc_info=True)
 
         return created
 
