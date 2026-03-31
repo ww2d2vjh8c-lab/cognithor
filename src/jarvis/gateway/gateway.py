@@ -1990,6 +1990,7 @@ class Gateway:
             active_skill,
             agent_workspace,
             agent_name,
+            _expl_trail_id,
         ) = await self._resolve_agent_route(msg)
 
         # Phase 2: Profiler, Budget, Run-Recording, Policy-Snapshot
@@ -2410,7 +2411,7 @@ class Gateway:
     async def _resolve_agent_route(
         self,
         msg: IncomingMessage,
-    ) -> tuple[RouteDecision | None, SessionContext, WorkingMemory, Any, Any, str]:
+    ) -> tuple[RouteDecision | None, SessionContext, WorkingMemory, Any, Any, str, str | None]:
         """Phase 1: Agent-Routing, Session, Working Memory, Skills, Workspace."""
         route_decision = None
         agent_workspace = None
@@ -2534,7 +2535,7 @@ class Gateway:
                 shared=route_decision.agent.shared_workspace,
             )
 
-        return route_decision, session, wm, active_skill, agent_workspace, agent_name
+        return route_decision, session, wm, active_skill, agent_workspace, agent_name, _expl_trail_id
 
     async def _prepare_execution_context(
         self,
@@ -2710,6 +2711,7 @@ class Gateway:
         all_plans: list[ActionPlan] = []
         all_audit: list[AuditEntry] = []
         final_response = ""
+        _expl_trail_id: str | None = None  # Explainability not wired into PGE loop yet
         _consecutive_no_tool_iters = 0  # Detect stuck replan loops
         _max_no_tool_iters = 2  # After 2 iters without tool execution, stop
 
