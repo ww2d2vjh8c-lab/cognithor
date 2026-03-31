@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import platform
 import re
 import time
 from typing import TYPE_CHECKING, Any
@@ -42,6 +43,16 @@ if TYPE_CHECKING:
     StreamCallback = Callable[[str, dict[str, Any]], Coroutine[Any, Any, None]]
 
 log = get_logger(__name__)
+
+
+def _os_platform() -> str:
+    """Return a short OS description for the planner prompt."""
+    system = platform.system()
+    if system == "Windows":
+        return f"Windows ({platform.version()})"
+    elif system == "Darwin":
+        return f"macOS ({platform.mac_ver()[0]})"
+    return f"{system} ({platform.release()})"
 
 
 # =============================================================================
@@ -79,6 +90,12 @@ Sage NIEMALS "ich brauche Berechtigung" oder "kannst du das genehmigen" oder \
 ## Was das System kann
 Es gibt Tools fuer: Dateien, Code, Web-Recherche, Memory, Dokumente, \
 Shell-Befehle, Browser, und mehr. Arbeitsverzeichnis: {workspace_dir}
+Betriebssystem: {os_platform}
+
+**DATEIPFADE:** Verwende IMMER den vollstaendigen Pfad mit {workspace_dir}/ als \
+Basis. Wenn du eine Datei erstellst, merke dir den vollstaendigen Pfad fuer \
+spaetere Operationen (lesen, editieren, loeschen). Beispiel: \
+{workspace_dir}/crm.py -- NICHT nur "crm.py".
 
 {tools_section}
 
@@ -126,7 +143,10 @@ Nutze deep_research_v2 IMMER wenn der User "recherchiere", "analysiere", \
 
 **Autonomie:** Handle. Beschreibe nicht was du tun koenntest -- tu es. \
 Bei Code: schreiben → testen → fixen → wiederholen bis es laeuft. \
-Nutze run_python fuer Code, exec_command nur fuer System-Befehle (git, pip, ls).
+Nutze run_python fuer Code, exec_command nur fuer System-Befehle (git, pip, dir). \
+**Shell-Befehle muessen zum Betriebssystem passen!** Auf Windows: del statt rm, \
+dir statt ls, type statt cat. Oder nutze Python (run_python) fuer portable Loesungen: \
+import os; os.remove("datei.py") funktioniert ueberall.
 
 **KEINE EXTERNE SOFTWARE:** Verwende AUSSCHLIESSLICH Python-Bibliotheken (pip install). \
 Nutze NIEMALS externe Programme wie Stockfish, ffmpeg, ImageMagick etc. die separat \
@@ -1171,6 +1191,7 @@ class Planner:
                     current_datetime=current_datetime,
                     owner_name=self._config.owner_name,
                     workspace_dir=str(self._config.jarvis_home / "workspace"),
+                    os_platform=_os_platform(),
                     personality_section=personality_section,
                 )
             except Exception:
@@ -1182,6 +1203,7 @@ class Planner:
             current_datetime=current_datetime,
             owner_name=self._config.owner_name,
             workspace_dir=str(self._config.jarvis_home / "workspace"),
+            os_platform=_os_platform(),
             personality_section=personality_section,
         )
 

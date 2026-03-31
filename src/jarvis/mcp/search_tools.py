@@ -217,11 +217,10 @@ class SearchTools:
                     continue
 
                 if match_path.is_file():
-                    try:
-                        rel = match_path.relative_to(workspace_root)
-                        matches.append(str(rel))
-                    except ValueError:
-                        matches.append(str(match_path))
+                    # Always return the full absolute path so the LLM
+                    # can use it directly in follow-up operations
+                    # (read, edit, delete).
+                    matches.append(str(match_path.resolve()))
 
                 if len(matches) >= max_results:
                     break
