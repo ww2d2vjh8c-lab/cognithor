@@ -18,7 +18,37 @@ if TYPE_CHECKING:
 
 log = get_logger(__name__)
 
-__all__ = ["EvolutionLoop", "EvolutionCycleResult"]
+__all__ = ["EvolutionLoop", "EvolutionCycleResult", "_match_goal_for_action"]
+
+
+def _match_goal_for_action(action: Any, goals: list) -> Any | None:
+    """Find the goal most relevant to an ATL action.
+
+    Uses explicit goal_id from params if available, otherwise
+    word-overlap between action text and goal titles.
+    Returns None if no confident match (< 2 word overlap).
+    """
+    # 1. Explicit goal_id in params
+    goal_id = getattr(action, "params", {}).get("goal_id", "")
+    if goal_id:
+        for g in goals:
+            if g.id == goal_id:
+                return g
+
+    # 2. Word-overlap heuristic
+    action_text = (
+        f"{getattr(action, 'rationale', '')} {getattr(action, 'params', {}).get('query', '')}"
+    ).lower()
+    action_words = set(action_text.split())
+
+    best, best_score = None, 0
+    for g in goals:
+        goal_words = set(g.title.lower().split())
+        overlap = len(goal_words & action_words)
+        if overlap > best_score:
+            best, best_score = g, overlap
+
+    return best if best_score >= 2 else None
 
 
 @dataclass
@@ -105,6 +135,46 @@ class EvolutionLoop:
         self._atl_journal: Any = None  # Set by gateway: ATLJournal
         self._atl_cycle_count = 0
         self._last_thinking_time = time.monotonic()
+
+    async def _synthesize_for_goal(
+        self,
+        research_text: str,
+        goal_title: str,
+        query: str,
+    ) -> str | None:
+        """Synthesize research findings into a structured note.
+
+        Cognithor processes information like an expert: extracting
+        what matters, connecting it to the goal, and discarding noise.
+        Returns None if nothing relevant was found or on error.
+        """
+        if not self._llm_fn:
+            return None
+
+        prompt = (
+            "Du bist ein Wissensassistent der Recherche-Ergebnisse einordnet.\n\n"
+            f"Ziel: {goal_title}\n"
+            f"Suchanfrage: {query}\n\n"
+            f"Recherche-Ergebnis:\n{research_text[:3000]}\n\n"
+            "Aufgabe:\n"
+            "1. Extrahiere die 3-5 wichtigsten Fakten die fuer das Ziel relevant sind\n"
+            "2. Formuliere eine strukturierte Notiz (deutsch, sachlich)\n"
+            "3. Wenn nichts Relevantes gefunden wurde, antworte NUR mit KEINE_RELEVANZ\n\n"
+            "Format:\n"
+            "## {Thema}\n"
+            "- Kernaussage 1 (Quelle: ...)\n"
+            "- Kernaussage 2\n"
+            "...\n"
+        )
+
+        try:
+            response = await self._llm_fn(prompt)
+            if not response or "KEINE_RELEVANZ" in response:
+                return None
+            return response.strip()
+        except Exception:
+            log.debug("atl_synthesis_failed", exc_info=True)
+            return None
 
     async def start(self) -> None:
         """Start the evolution background loop."""

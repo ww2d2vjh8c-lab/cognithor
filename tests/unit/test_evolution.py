@@ -210,3 +210,160 @@ class TestCooperativeScheduling:
         loop = EvolutionLoop(idle_detector=idle_detector)
         stats = loop.stats()
         assert stats["resources"]["available"] is True
+
+
+class TestATLGoalMatching:
+    """_match_goal_for_action finds the best goal for a research action."""
+
+    def _make_goal(self, title: str, goal_id: str = ""):
+        from dataclasses import dataclass
+
+        @dataclass
+        class _Goal:
+            title: str = ""
+            id: str = ""
+            progress: float = 0.0
+            priority: int = 3
+
+        return _Goal(title=title, id=goal_id or title[:10])
+
+    def test_matches_by_keyword_overlap(self):
+        from jarvis.evolution.loop import _match_goal_for_action
+
+        goals = [
+            self._make_goal("Werde Experte fuer Cybersecurity und Pentesting"),
+            self._make_goal("Werde Experte fuer die deutsche Versicherungswirtschaft"),
+        ]
+        action = type(
+            "A",
+            (),
+            {
+                "rationale": "OWASP Top 10 Cybersecurity Pentesting Standards",
+                "params": {"query": "OWASP"},
+            },
+        )()
+
+        result = _match_goal_for_action(action, goals)
+        assert result is not None
+        assert "Cybersecurity" in result.title
+
+    def test_matches_query_param_too(self):
+        from jarvis.evolution.loop import _match_goal_for_action
+
+        goals = [
+            self._make_goal("Werde Experte fuer AI Agent Architektur"),
+            self._make_goal("Werde Experte fuer Versicherungsrecht"),
+        ]
+        action = type(
+            "A",
+            (),
+            {
+                "rationale": "Recherche",
+                "params": {"query": "AI Agent Architecture Patterns"},
+            },
+        )()
+
+        result = _match_goal_for_action(action, goals)
+        assert result is not None
+        assert "AI Agent" in result.title
+
+    def test_returns_none_on_no_match(self):
+        from jarvis.evolution.loop import _match_goal_for_action
+
+        goals = [self._make_goal("Werde Experte fuer Kochen")]
+        action = type("A", (), {"rationale": "quantum physics research", "params": {}})()
+
+        result = _match_goal_for_action(action, goals)
+        assert result is None
+
+    def test_explicit_goal_id_in_params(self):
+        from jarvis.evolution.loop import _match_goal_for_action
+
+        goals = [
+            self._make_goal("Cybersecurity", goal_id="cyber-1"),
+            self._make_goal("Versicherung", goal_id="ins-2"),
+        ]
+        action = type("A", (), {"rationale": "", "params": {"goal_id": "ins-2"}})()
+
+        result = _match_goal_for_action(action, goals)
+        assert result is not None
+        assert result.id == "ins-2"
+
+
+class TestATLSynthesis:
+    """_synthesize_for_goal extracts relevant findings like an expert."""
+
+    @pytest.mark.asyncio
+    async def test_synthesis_returns_structured_note(self):
+        from jarvis.evolution.loop import EvolutionLoop
+
+        async def mock_llm(prompt: str) -> str:
+            return (
+                "## OWASP Top 10 Updates\n"
+                "- SQL Injection bleibt auf Platz 1 (Quelle: owasp.org)\n"
+                "- Neue Kategorie: Server-Side Request Forgery\n"
+            )
+
+        loop = EvolutionLoop.__new__(EvolutionLoop)
+        loop._llm_fn = mock_llm
+
+        result = await loop._synthesize_for_goal(
+            research_text="OWASP has updated their top 10 list...",
+            goal_title="Werde Experte fuer Cybersecurity",
+            query="OWASP Top 10 2024",
+        )
+
+        assert result is not None
+        assert "OWASP" in result
+        assert "##" in result
+
+    @pytest.mark.asyncio
+    async def test_synthesis_returns_none_for_irrelevant(self):
+        from jarvis.evolution.loop import EvolutionLoop
+
+        async def mock_llm(prompt: str) -> str:
+            return "KEINE_RELEVANZ"
+
+        loop = EvolutionLoop.__new__(EvolutionLoop)
+        loop._llm_fn = mock_llm
+
+        result = await loop._synthesize_for_goal(
+            research_text="This page is about cooking recipes...",
+            goal_title="Werde Experte fuer Cybersecurity",
+            query="OWASP Top 10",
+        )
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_synthesis_returns_none_on_llm_error(self):
+        from jarvis.evolution.loop import EvolutionLoop
+
+        async def mock_llm(prompt: str) -> str:
+            raise RuntimeError("LLM timeout")
+
+        loop = EvolutionLoop.__new__(EvolutionLoop)
+        loop._llm_fn = mock_llm
+
+        result = await loop._synthesize_for_goal(
+            research_text="Some valid text about security...",
+            goal_title="Cybersecurity",
+            query="test",
+        )
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_synthesis_without_llm_returns_none(self):
+        from jarvis.evolution.loop import EvolutionLoop
+
+        loop = EvolutionLoop.__new__(EvolutionLoop)
+        loop._llm_fn = None
+
+        result = await loop._synthesize_for_goal(
+            research_text="Some text...",
+            goal_title="Test",
+            query="test",
+        )
+
+        assert result is None
