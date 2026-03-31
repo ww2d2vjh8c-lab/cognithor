@@ -67,7 +67,7 @@ class TestEnums:
 
     def test_memory_tiers(self) -> None:
         assert MemoryTier.CORE == "core"
-        assert len(MemoryTier) == 5
+        assert len(MemoryTier) == 6
 
     def test_sandbox_levels(self) -> None:
         assert SandboxLevel.PROCESS == "process"
