@@ -399,8 +399,8 @@ if not exist "%LLAMA_MODEL%" (
     goto :eof
 )
 
-echo   [INFO] Starting llama-server (qwen3.5:27b, 128K context, KV Q8_0^)...
-start "llama-server" /MIN "%LLAMA_SERVER%" -m "%LLAMA_MODEL%" -c 131072 -ctk q8_0 -ctv q8_0 -ngl 99 -fa --port 8080 --host 0.0.0.0 -t 8
+echo   [INFO] Starting llama-server (qwen3.5:27b, 252K context, KV Q8_0^)...
+start "llama-server" /MIN "%LLAMA_SERVER%" -m "%LLAMA_MODEL%" -c 258048 -ctk q8_0 -ctv q8_0 -ngl 99 -fa --port 8080 --host 0.0.0.0 -t 8
 
 :: Wait for server to be ready (up to 60 seconds)
 echo   [INFO] Waiting for llama-server to load model...

@@ -10,7 +10,7 @@ set MODEL=C:\Users\ArtiCall\.ollama\models\blobs\sha256-d4b8b4f4c350f5d322dc8235
 REM KV-Cache Einstellungen:
 REM   -ctk q8_0    = KV-Cache Key Quantisierung (spart ~50%% VRAM vs F16)
 REM   -ctv q8_0    = KV-Cache Value Quantisierung
-REM   -c 131072    = 128K Kontextfenster (statt Ollama's 64K Limit)
+REM   -c 258048    = 252K Kontextfenster (statt Ollama's 64K Limit)
 REM   -ngl 99      = Alle Layer auf GPU (99 = alle verfuegbaren)
 REM   --port 8080  = Standard llama.cpp Port
 REM   -fa           = Flash Attention (schneller, weniger VRAM)
@@ -18,14 +18,14 @@ REM   -fa           = Flash Attention (schneller, weniger VRAM)
 echo ============================================================
 echo  Cognithor llama.cpp Server
 echo  Modell: qwen3.5:27b-Q4_K_M
-echo  Kontext: 128K (KV-Cache Q8_0)
+echo  Kontext: 252K (KV-Cache Q8_0)
 echo  GPU: Vulkan, alle Layer
 echo ============================================================
 echo.
 
 "%LLAMA_SERVER%" ^
     -m "%MODEL%" ^
-    -c 131072 ^
+    -c 258048 ^
     -ctk q8_0 ^
     -ctv q8_0 ^
     -ngl 99 ^
