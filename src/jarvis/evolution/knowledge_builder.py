@@ -20,7 +20,7 @@ from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
 
-__all__ = ["BuildResult", "KnowledgeBuilder"]
+__all__ = ["BuildResult", "KnowledgeBuilder", "_is_usable_content"]
 
 
 @dataclass
@@ -143,6 +143,41 @@ def _is_valid_entity(entity: dict) -> bool:
     return True
 
 
+# Compiled pattern for detecting PDF structural artifacts in source text.
+# Applied per-line: if >30% of lines match, the source is rejected.
+_PDF_ARTIFACT_LINE_RE = re.compile(
+    r"(\d+ \d+ obj"
+    r"|endobj|endstream|xref|trailer"
+    r"|stream\s*$"
+    r"|/Type\b|/Filter\b|/Length\b|/Pages\b|/Root\b"
+    r"|FlateDecode|MediaBox|DeviceRGB|DeviceCMYK"
+    r"|%%EOF)",
+)
+
+
+def _is_usable_content(text: str, min_chars: int = 200) -> tuple[bool, str]:
+    """Check whether fetched text is worth indexing.
+
+    Returns:
+        (usable, reason) — reason is 'ok' on success or a short tag on rejection.
+    """
+    cleaned = " ".join(text.split())
+    if len(cleaned) < min_chars:
+        return False, "too_short"
+
+    lines = text.splitlines()
+    non_empty = [l for l in lines if l.strip()]
+    if not non_empty:
+        return False, "too_short"
+
+    garbage_count = sum(1 for l in non_empty if _PDF_ARTIFACT_LINE_RE.search(l))
+    ratio = garbage_count / len(non_empty)
+    if ratio > 0.3:
+        return False, f"pdf_artifacts_{ratio:.0%}"
+
+    return True, "ok"
+
+
 _ENTITY_EXTRACTION_PROMPT = """\
 Analysiere den folgenden Text und extrahiere Entitaeten und Beziehungen.
 
@@ -221,6 +256,17 @@ class KnowledgeBuilder:
 
         if fetch_result.error or not fetch_result.text:
             result.errors.append(fetch_result.error or "Empty text in FetchResult")
+            return result
+
+        # Content quality gate: reject PDF artifacts and too-short text
+        usable, reason = _is_usable_content(fetch_result.text)
+        if not usable:
+            log.info(
+                "content_rejected",
+                url=fetch_result.url[:80],
+                reason=reason,
+            )
+            result.errors.append(f"Content rejected: {reason}")
             return result
 
         # 1. Vault save

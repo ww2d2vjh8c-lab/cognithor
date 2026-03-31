@@ -55,7 +55,13 @@ def _make_fetch_result(**kwargs):
 
     defaults = {
         "url": "https://example.com/vvg",
-        "text": "Das Versicherungsvertragsgesetz regelt das Widerrufsrecht.",
+        "text": (
+            "Das Versicherungsvertragsgesetz (VVG) regelt die Rechtsbeziehungen "
+            "zwischen Versicherungsnehmer und Versicherer. Es umfasst allgemeine "
+            "Vorschriften ueber den Abschluss und die Durchfuehrung von "
+            "Versicherungsvertraegen. Die wichtigsten Paragraphen betreffen "
+            "die Anzeigepflicht und das Widerrufsrecht."
+        ),
         "title": "VVG Uebersicht",
         "source_type": "article",
         "error": "",
@@ -187,7 +193,13 @@ class TestKnowledgeBuilder:
         for i in range(3):
             fr = _make_fetch_result(
                 url=f"https://example.com/page{i}",
-                text=f"Content for page {i} about legal matters.",
+                text=(
+                    f"Content for page {i} about legal matters. "
+                    "Das Versicherungsvertragsgesetz (VVG) regelt die Rechtsbeziehungen "
+                    "zwischen Versicherungsnehmer und Versicherer. Es umfasst allgemeine "
+                    "Vorschriften ueber den Abschluss und die Durchfuehrung von "
+                    "Versicherungsvertraegen sowie die Anzeigepflicht."
+                ),
             )
             results.append(await kb.build(fr))
 
@@ -204,3 +216,162 @@ class TestKnowledgeBuilder:
         assert br.entities_created == 0
         assert br.relations_created == 0
         assert br.errors == []
+
+
+class TestContentQualityGate:
+    """Tests for _is_usable_content — rejects PDF artifacts and too-short text."""
+
+    def test_rejects_too_short_text(self):
+        from jarvis.evolution.knowledge_builder import _is_usable_content
+
+        usable, reason = _is_usable_content("Short.")
+        assert usable is False
+        assert reason == "too_short"
+
+    def test_rejects_empty_text(self):
+        from jarvis.evolution.knowledge_builder import _is_usable_content
+
+        usable, reason = _is_usable_content("")
+        assert usable is False
+        assert reason == "too_short"
+
+    def test_rejects_whitespace_only(self):
+        from jarvis.evolution.knowledge_builder import _is_usable_content
+
+        usable, reason = _is_usable_content("   \n\n\t  \n  ")
+        assert usable is False
+        assert reason == "too_short"
+
+    def test_rejects_pdf_artifact_text(self):
+        from jarvis.evolution.knowledge_builder import _is_usable_content
+
+        # Pad with enough PDF-like lines to exceed min_chars and trigger artifact ratio
+        pdf_dump = "\n".join(
+            [
+                "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj",
+                "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj",
+                "3 0 obj << /Type /Page /MediaBox [0 0 612 792] /Contents 5 0 R >> endobj",
+                "5 0 obj",
+                "<< /Filter /FlateDecode /Length 1528 >>",
+                "stream",
+                "endstream",
+                "endobj",
+                "6 0 obj << /Type /Font /Subtype /Type1 /BaseFont /ArialMT >> endobj",
+                "xref",
+                "0 15",
+                "0000000000 65535 f",
+                "trailer",
+                "<< /Root 1 0 R /Info 2 0 R >>",
+                "%%EOF",
+                "Some actual text here that is real content.",
+            ]
+        )
+        usable, reason = _is_usable_content(pdf_dump)
+        assert usable is False
+        assert "pdf_artifacts" in reason
+
+    def test_accepts_real_article(self):
+        from jarvis.evolution.knowledge_builder import _is_usable_content
+
+        article = (
+            "Das Versicherungsvertragsgesetz (VVG) regelt die Rechtsbeziehungen "
+            "zwischen Versicherungsnehmer und Versicherer. Es umfasst allgemeine "
+            "Vorschriften ueber den Abschluss und die Durchfuehrung von "
+            "Versicherungsvertraegen. Die wichtigsten Paragraphen betreffen "
+            "die Anzeigepflicht, das Widerrufsrecht und die Leistungspflicht "
+            "des Versicherers bei Eintritt des Versicherungsfalls."
+        )
+        usable, reason = _is_usable_content(article)
+        assert usable is True
+        assert reason == "ok"
+
+    def test_accepts_content_at_boundary(self):
+        from jarvis.evolution.knowledge_builder import _is_usable_content
+
+        text = "x " * 101  # 202 chars — just above 200 threshold
+        usable, reason = _is_usable_content(text)
+        assert usable is True
+
+    def test_borderline_garbage_ratio_below_threshold(self):
+        from jarvis.evolution.knowledge_builder import _is_usable_content
+
+        lines = ["endobj", "xref", "trailer"]
+        lines += ["Dies ist ein normaler Satz ueber Versicherungsrecht."] * 8
+        text = "\n".join(lines)
+        usable, reason = _is_usable_content(text)
+        assert usable is True
+
+    def test_custom_min_chars(self):
+        from jarvis.evolution.knowledge_builder import _is_usable_content
+
+        text = "a " * 60  # 120 chars
+        usable_default, _ = _is_usable_content(text)
+        usable_low, _ = _is_usable_content(text, min_chars=100)
+        assert usable_default is False
+        assert usable_low is True
+
+
+class TestBuildRejectsGarbage:
+    """build() should skip triple-write when content is unusable."""
+
+    @pytest.mark.asyncio
+    async def test_build_skips_pdf_garbage(self):
+        from jarvis.evolution.knowledge_builder import BuildResult, KnowledgeBuilder
+
+        mcp = _make_mcp()
+        kb = KnowledgeBuilder(mcp_client=mcp, llm_fn=_mock_llm, goal_slug="test")
+        pdf_dump = "\n".join(
+            [
+                "5 0 obj",
+                "<< /Type /Page /MediaBox [0 0 612 792] >>",
+                "endobj",
+                "6 0 obj",
+                "<< /Filter /FlateDecode /Length 1528 >>",
+                "stream",
+                "xref",
+                "0 15",
+                "trailer",
+                "<< /Root 1 0 R /Info 2 0 R >>",
+                "%%EOF",
+                "Some text.",
+            ]
+        )
+        fr = _make_fetch_result(text=pdf_dump)
+        result = await kb.build(fr)
+        assert isinstance(result, BuildResult)
+        assert result.chunks_created == 0
+        assert result.vault_path == ""
+        assert len(result.errors) == 1
+        assert "Content rejected" in result.errors[0]
+        mcp.call_tool.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_build_skips_too_short(self):
+        from jarvis.evolution.knowledge_builder import BuildResult, KnowledgeBuilder
+
+        mcp = _make_mcp()
+        kb = KnowledgeBuilder(mcp_client=mcp, goal_slug="test")
+        fr = _make_fetch_result(text="Short.")
+        result = await kb.build(fr)
+        assert result.chunks_created == 0
+        assert "Content rejected" in result.errors[0]
+        mcp.call_tool.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_build_accepts_good_content(self):
+        from jarvis.evolution.knowledge_builder import BuildResult, KnowledgeBuilder
+
+        mcp = _make_mcp()
+        kb = KnowledgeBuilder(mcp_client=mcp, llm_fn=_mock_llm, goal_slug="test")
+        fr = _make_fetch_result(
+            text=(
+                "Das Versicherungsvertragsgesetz (VVG) regelt die Rechtsbeziehungen "
+                "zwischen Versicherungsnehmer und Versicherer. Es umfasst allgemeine "
+                "Vorschriften ueber den Abschluss und die Durchfuehrung von "
+                "Versicherungsvertraegen. Die wichtigsten Paragraphen betreffen "
+                "die Anzeigepflicht und das Widerrufsrecht."
+            )
+        )
+        result = await kb.build(fr)
+        assert result.vault_path != ""
+        assert result.chunks_created > 0
