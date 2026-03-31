@@ -189,10 +189,13 @@ class EvolutionLoop:
         try:
             from jarvis.evolution.goal_index import GoalScopedIndex
             from jarvis.evolution.knowledge_builder import KnowledgeBuilder
+            from jarvis.evolution.models import _slugify
 
-            # Use same index base as deep_learner
+            # Use same index base + slug scheme as deep_learner
+            # so ATL chunks land in the same GoalScopedIndex and
+            # progress metrics count them correctly.
             index_base = self._deep_learner._plans_dir.parent / "indexes"
-            goal_slug = goal.id
+            goal_slug = _slugify(goal.title)
             goal_index = GoalScopedIndex(goal_slug=goal_slug, base_dir=index_base)
 
             return KnowledgeBuilder(
