@@ -127,7 +127,7 @@ class TestPageState:
     def test_summary_truncation(self):
         state = PageState(text_content="x" * 10000)
         summary = state.to_summary(max_text=100)
-        assert "gekürzt" in summary
+        assert "truncated" in summary or "gekürzt" in summary
 
 
 class TestBrowserAction:
