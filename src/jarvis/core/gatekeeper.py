@@ -414,11 +414,16 @@ class Gatekeeper:
         status = self._risk_to_status(risk)
 
         # --- Step 7: Pre-execution confidence check (advisory) ---
+        # Skip for autonomous/cron tasks where rationale is LLM-generated
+        # (short internal reasoning, not a user message — clarity scoring
+        # produces false positives).
         confidence_score: float | None = None
-        if self._confidence_checker is not None:
+        _rationale = action.rationale or ""
+        _skip_confidence = len(_rationale.split()) < 5  # Too short = autonomous task
+        if self._confidence_checker is not None and not _skip_confidence:
             try:
                 conf_result = self._confidence_checker.assess(
-                    message=action.rationale or "",
+                    message=_rationale,
                     tool_name=action.tool,
                     context=None,  # Context injected by gateway when available
                 )

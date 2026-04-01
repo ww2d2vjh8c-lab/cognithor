@@ -294,12 +294,14 @@ class JarvisMCPClient:
         """Ruft einen eingebauten Handler auf.
 
         Strips unknown keyword arguments that the LLM may hallucinate
-        (e.g. 'search_type', 'max_results') to avoid TypeErrors.
+        (e.g. 'search_type', 'max_results') to avoid TypeErrors — but only
+        if ALL required parameters are still present after stripping.
         """
         import inspect
 
         handler = self._builtin_handlers[name]
-        # Filter params to only those the handler actually accepts
+        # Filter params to only those the handler actually accepts,
+        # but only if required params survive the filter.
         try:
             sig = inspect.signature(handler)
             has_var_keyword = any(
@@ -309,12 +311,31 @@ class JarvisMCPClient:
                 accepted = set(sig.parameters.keys())
                 unknown = set(params.keys()) - accepted
                 if unknown:
-                    log.debug(
-                        "builtin_params_stripped",
-                        tool=name,
-                        stripped=list(unknown),
-                    )
-                    params = {k: v for k, v in params.items() if k in accepted}
+                    filtered = {k: v for k, v in params.items() if k in accepted}
+                    # Check that required params are still present
+                    required = {
+                        p_name
+                        for p_name, p in sig.parameters.items()
+                        if p.default is inspect.Parameter.empty
+                        and p.kind
+                        not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+                    }
+                    if required <= set(filtered.keys()):
+                        log.debug(
+                            "builtin_params_stripped",
+                            tool=name,
+                            stripped=list(unknown),
+                        )
+                        params = filtered
+                    else:
+                        # Required params missing — don't strip, let the
+                        # TypeError propagate with the informative message
+                        log.debug(
+                            "builtin_params_strip_skipped",
+                            tool=name,
+                            unknown=list(unknown),
+                            missing_required=list(required - set(filtered.keys())),
+                        )
         except (ValueError, TypeError):
             pass  # Fallback: pass all params
 
@@ -326,7 +347,10 @@ class JarvisMCPClient:
             return ToolCallResult(content=str(result), is_error=False)
         except Exception as exc:
             log.warning(
-                "builtin_tool_error", tool=name, error=str(exc)[:200], params=list(params.keys())
+                "builtin_tool_error",
+                tool=name,
+                error=str(exc)[:200],
+                params=list(params.keys()),
             )
             return ToolCallResult(
                 content=f"Builtin-Tool-Fehler: {exc}",
