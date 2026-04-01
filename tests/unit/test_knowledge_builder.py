@@ -529,3 +529,183 @@ class TestParseLLMJson:
         )
         result = _parse_llm_json(raw, "fallback", "https://example.com")
         assert result["summary"] == "Nach dem Denken."
+
+
+_LLM_SUMMARY_JSON = json.dumps({
+    "summary": "Das VVG regelt die Rechtsbeziehungen zwischen Versicherungsnehmer und Versicherer.",
+    "memory_type": "semantic",
+    "tags": ["versicherung", "vvg", "recht"],
+    "is_useful": True,
+})
+
+
+async def _mock_summary_llm(prompt: str) -> str:
+    """Return entity JSON for entity prompts, summary JSON for summary prompts."""
+    if "Wissenskurator" in prompt:
+        return _LLM_SUMMARY_JSON
+    return _LLM_ENTITY_JSON
+
+
+class TestSummarizeForIdentity:
+    """Tests for _summarize_for_identity — Step 5 of the build pipeline."""
+
+    @pytest.mark.asyncio
+    async def test_build_calls_summarize_when_memory_manager_set(self):
+        from jarvis.evolution.knowledge_builder import KnowledgeBuilder
+        from unittest.mock import MagicMock
+
+        mcp = _make_mcp()
+        mm = MagicMock()
+        mm.sync_document_to_identity = MagicMock()
+
+        kb = KnowledgeBuilder(
+            mcp_client=mcp,
+            llm_fn=_mock_summary_llm,
+            goal_slug="versicherung",
+            memory_manager=mm,
+        )
+        fr = _make_fetch_result()
+        await kb.build(fr)
+
+        mm.sync_document_to_identity.assert_called_once()
+        call_args = mm.sync_document_to_identity.call_args
+        # Check summary contains VVG (from LLM response)
+        summary_arg = call_args.kwargs.get("summary", "") if call_args.kwargs else call_args[1].get("summary", "")
+        assert "VVG" in summary_arg
+
+    @pytest.mark.asyncio
+    async def test_build_skips_summarize_without_memory_manager(self):
+        from jarvis.evolution.knowledge_builder import KnowledgeBuilder
+
+        mcp = _make_mcp()
+        kb = KnowledgeBuilder(
+            mcp_client=mcp,
+            llm_fn=_mock_summary_llm,
+            goal_slug="test",
+        )
+        fr = _make_fetch_result()
+        result = await kb.build(fr)
+        assert result.chunks_created > 0
+
+    @pytest.mark.asyncio
+    async def test_build_skips_summarize_without_llm_fn(self):
+        from jarvis.evolution.knowledge_builder import KnowledgeBuilder
+        from unittest.mock import MagicMock
+
+        mcp = _make_mcp()
+        mm = MagicMock()
+        kb = KnowledgeBuilder(
+            mcp_client=mcp,
+            llm_fn=None,
+            goal_slug="test",
+            memory_manager=mm,
+        )
+        fr = _make_fetch_result()
+        await kb.build(fr)
+        mm.sync_document_to_identity.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_already_summarized_skips_llm_call(self):
+        from jarvis.evolution.knowledge_builder import KnowledgeBuilder
+        from unittest.mock import MagicMock
+
+        mcp = _make_mcp()
+        mm = MagicMock()
+        mm.sync_document_to_identity = MagicMock()
+
+        llm_call_count = 0
+        async def counting_llm(prompt: str) -> str:
+            nonlocal llm_call_count
+            llm_call_count += 1
+            return await _mock_summary_llm(prompt)
+
+        kb = KnowledgeBuilder(
+            mcp_client=mcp,
+            llm_fn=counting_llm,
+            goal_slug="versicherung",
+            memory_manager=mm,
+        )
+        fr = _make_fetch_result()
+        llm_call_count = 0
+        await kb.build(fr, already_summarized=True)
+
+        mm.sync_document_to_identity.assert_called_once()
+        call_args = mm.sync_document_to_identity.call_args
+        confidence = call_args.kwargs.get("confidence", 0) if call_args.kwargs else call_args[1].get("confidence", 0)
+        assert confidence == 0.5  # example.com -> default
+
+    @pytest.mark.asyncio
+    async def test_dedup_skips_duplicate_summaries(self):
+        from jarvis.evolution.knowledge_builder import KnowledgeBuilder
+        from unittest.mock import MagicMock
+
+        mcp = _make_mcp()
+        mm = MagicMock()
+        mm.sync_document_to_identity = MagicMock()
+
+        kb = KnowledgeBuilder(
+            mcp_client=mcp,
+            llm_fn=_mock_summary_llm,
+            goal_slug="test",
+            memory_manager=mm,
+        )
+
+        fr1 = _make_fetch_result(url="https://example.com/page1")
+        fr2 = _make_fetch_result(url="https://example.com/page2")
+
+        await kb.build(fr1)
+        await kb.build(fr2)
+
+        # LLM always returns same summary -> second should be deduped
+        assert mm.sync_document_to_identity.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_summarize_failure_does_not_block_pipeline(self):
+        from jarvis.evolution.knowledge_builder import KnowledgeBuilder
+        from unittest.mock import MagicMock
+
+        mcp = _make_mcp()
+        mm = MagicMock()
+        mm.sync_document_to_identity.side_effect = RuntimeError("DB error")
+
+        kb = KnowledgeBuilder(
+            mcp_client=mcp,
+            llm_fn=_mock_summary_llm,
+            goal_slug="test",
+            memory_manager=mm,
+        )
+        fr = _make_fetch_result()
+        result = await kb.build(fr)
+
+        assert result.chunks_created > 0
+        assert result.vault_path != ""
+
+    @pytest.mark.asyncio
+    async def test_is_useful_false_skips_store(self):
+        from jarvis.evolution.knowledge_builder import KnowledgeBuilder
+        from unittest.mock import MagicMock
+
+        async def useless_llm(prompt: str) -> str:
+            if "Wissenskurator" in prompt:
+                return json.dumps({
+                    "summary": "Nichts relevantes.",
+                    "memory_type": "semantic",
+                    "tags": [],
+                    "is_useful": False,
+                })
+            return _LLM_ENTITY_JSON
+
+        mcp = _make_mcp()
+        mm = MagicMock()
+        mm.sync_document_to_identity = MagicMock()
+
+        kb = KnowledgeBuilder(
+            mcp_client=mcp,
+            llm_fn=useless_llm,
+            goal_slug="test",
+            memory_manager=mm,
+        )
+        fr = _make_fetch_result()
+        await kb.build(fr)
+
+        mm.sync_document_to_identity.assert_not_called()

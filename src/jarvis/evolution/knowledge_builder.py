@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, List, Optional, Tuple
 
 from jarvis.evolution.research_agent import FetchResult
+from jarvis.memory.consolidation import ContentDeduplicator
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
@@ -342,6 +343,7 @@ class KnowledgeBuilder:
         knowledge_validator: Any = None,
         goal_index: Any = None,
         entity_llm_fn: Optional[Callable] = None,
+        memory_manager: Any = None,
     ) -> None:
         self._mcp = mcp_client
         self._llm_fn = llm_fn
@@ -353,6 +355,9 @@ class KnowledgeBuilder:
         self._validator = knowledge_validator
         self._goal_index = goal_index
         self._entity_queue: List[str] = []  # Deferred texts for entity extraction
+        self._memory_manager = memory_manager
+        self._identity_dedup = ContentDeduplicator(similarity_threshold=0.85)
+        self._identity_seen_hashes: set[str] = set()
 
     # ------------------------------------------------------------------
     # Public API
@@ -364,6 +369,7 @@ class KnowledgeBuilder:
         *,
         skip_entity_extraction: bool = False,
         min_content_chars: int = 200,
+        already_summarized: bool = False,
     ) -> BuildResult:
         """Run the triple-write pipeline for a single FetchResult.
 
@@ -507,6 +513,16 @@ class KnowledgeBuilder:
             except Exception:
                 log.debug("knowledge_claims_extraction_failed", exc_info=True)
 
+        # 5. Identity Memory: summarize + classify + store
+        try:
+            await self._summarize_for_identity(
+                text=fetch_result.text,
+                url=fetch_result.url,
+                already_summarized=already_summarized,
+            )
+        except Exception:
+            log.debug("identity_summarize_failed", exc_info=True)
+
         return result
 
     @property
@@ -584,6 +600,106 @@ class KnowledgeBuilder:
                 log.debug("entity_queue_drain_failed", exc_info=True)
                 break  # LLM likely still busy, stop draining
         return processed
+
+    # ------------------------------------------------------------------
+    # Identity Memory Summarization (Step 5)
+    # ------------------------------------------------------------------
+
+    _IDENTITY_SUMMARY_PROMPT = (
+        "Du bist ein Wissenskurator. Analysiere diesen Text und erstelle "
+        "einen strukturierten Wissensbaustein.\n\n"
+        "Themenbereich: {goal_slug}\n"
+        "Quelle: {url}\n\n"
+        "Text:\n{text}\n\n"
+        "Antworte NUR mit validem JSON:\n"
+        '{{\n'
+        '  "summary": "Praegnante Zusammenfassung in 3-8 Saetzen. Nur Fakten, kein Fuelltext.",\n'
+        '  "memory_type": "semantic|procedural|episodic",\n'
+        '  "tags": ["tag1", "tag2", "tag3"],\n'
+        '  "is_useful": true/false\n'
+        '}}\n\n'
+        "Regeln:\n"
+        '- memory_type "semantic" = Fakten, Wissen, Definitionen\n'
+        '- memory_type "procedural" = Anleitungen, Prozesse, How-To\n'
+        '- memory_type "episodic" = Ereignisse, Nachrichten, zeitgebunden\n'
+        "- is_useful: false wenn der Text keine verwertbaren Informationen enthaelt\n"
+        "- tags: 2-5 thematische Schlagwoerter, deutsch\n"
+        "- summary: Deutsch, sachlich, nur Kernaussagen\n"
+    )
+
+    async def _summarize_for_identity(
+        self,
+        text: str,
+        url: str,
+        *,
+        already_summarized: bool = False,
+    ) -> None:
+        """Summarize content and store in Identity Memory (Step 5 of pipeline).
+
+        When already_summarized=True (ATL synthesis), skips the LLM call and
+        stores the text directly with URL-based confidence.
+        """
+        if self._memory_manager is None:
+            return
+
+        min_chars = 100 if already_summarized else 200
+        usable, _reason = _is_usable_content(text, min_chars=min_chars)
+        if not usable:
+            return
+
+        confidence = _score_source_confidence(url)
+
+        if already_summarized:
+            summary = text
+            memory_type = "semantic"
+            tags = [self._goal_slug] if self._goal_slug else []
+        elif self._llm_fn is not None:
+            prompt = self._IDENTITY_SUMMARY_PROMPT.format(
+                goal_slug=self._goal_slug or "allgemein",
+                url=url[:200],
+                text=text[:4000],
+            )
+            try:
+                raw = await self._llm_fn(prompt)
+            except Exception:
+                log.debug("identity_summary_llm_failed", exc_info=True)
+                return
+
+            parsed = _parse_llm_json(raw, text, url)
+            if not parsed.get("is_useful", True):
+                log.debug("identity_summary_not_useful", url=url[:80])
+                return
+
+            summary = parsed["summary"]
+            memory_type = parsed["memory_type"]
+            tags = parsed["tags"]
+            if self._goal_slug:
+                tags = [self._goal_slug] + [t for t in tags if t != self._goal_slug]
+        else:
+            return
+
+        # Dedup check
+        content_hash = self._identity_dedup.content_hash(summary)
+        if content_hash in self._identity_seen_hashes:
+            log.debug("identity_dedup_skipped", url=url[:80])
+            return
+        self._identity_seen_hashes.add(content_hash)
+
+        # Store in Identity Memory
+        self._memory_manager.sync_document_to_identity(
+            summary=summary,
+            memory_type=memory_type,
+            confidence=confidence,
+            tags=tags,
+        )
+        log.info(
+            "identity_memory_stored",
+            url=url[:80],
+            memory_type=memory_type,
+            confidence=confidence,
+            tags=tags[:3],
+            summary_len=len(summary),
+        )
 
     # ------------------------------------------------------------------
     # Chunking
