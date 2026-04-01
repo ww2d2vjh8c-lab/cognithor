@@ -291,8 +291,33 @@ class JarvisMCPClient:
         name: str,
         params: dict[str, Any],
     ) -> ToolCallResult:
-        """Ruft einen eingebauten Handler auf."""
+        """Ruft einen eingebauten Handler auf.
+
+        Strips unknown keyword arguments that the LLM may hallucinate
+        (e.g. 'search_type', 'max_results') to avoid TypeErrors.
+        """
+        import inspect
+
         handler = self._builtin_handlers[name]
+        # Filter params to only those the handler actually accepts
+        try:
+            sig = inspect.signature(handler)
+            has_var_keyword = any(
+                p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+            )
+            if not has_var_keyword:
+                accepted = set(sig.parameters.keys())
+                unknown = set(params.keys()) - accepted
+                if unknown:
+                    log.debug(
+                        "builtin_params_stripped",
+                        tool=name,
+                        stripped=list(unknown),
+                    )
+                    params = {k: v for k, v in params.items() if k in accepted}
+        except (ValueError, TypeError):
+            pass  # Fallback: pass all params
+
         try:
             if asyncio.iscoroutinefunction(handler):
                 result = await handler(**params)
@@ -300,6 +325,7 @@ class JarvisMCPClient:
                 result = handler(**params)
             return ToolCallResult(content=str(result), is_error=False)
         except Exception as exc:
+            log.warning("builtin_tool_error", tool=name, error=str(exc)[:200], params=list(params.keys()))
             return ToolCallResult(
                 content=f"Builtin-Tool-Fehler: {exc}",
                 is_error=True,
