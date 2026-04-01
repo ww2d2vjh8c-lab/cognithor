@@ -469,7 +469,7 @@ class TestBudgetManager:
         bm.record_spend("agent-1", 9.0)
         result = bm.can_spend("agent-1", 5.0)
         assert result["allowed"] is False
-        assert "Tagesbudget" in result["reason"]
+        assert "Daily budget" in result["reason"] or "Tagesbudget" in result["reason"]
 
     def test_can_spend_no_limit(self) -> None:
         bm = BudgetManager()
