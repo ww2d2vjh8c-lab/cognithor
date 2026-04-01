@@ -253,6 +253,7 @@ class DeepLearner:
             knowledge_validator=self._knowledge_validator,
             goal_index=goal_index,
             entity_llm_fn=self._entity_llm_fn,
+            memory_manager=self._memory_manager,
         )
 
         # ── Iterative deep research loop ──────────────────────────────

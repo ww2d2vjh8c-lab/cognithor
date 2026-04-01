@@ -203,6 +203,7 @@ class EvolutionLoop:
                 llm_fn=self._llm_fn,
                 goal_slug=goal_slug,
                 goal_index=goal_index,
+                memory_manager=self._memory,
             )
         except Exception:
             log.debug("atl_builder_creation_failed", exc_info=True)
@@ -269,6 +270,7 @@ class EvolutionLoop:
                 fetch,
                 skip_entity_extraction=True,
                 min_content_chars=100,
+                already_summarized=True,
             )
             if build_result.errors:
                 log.debug("atl_persist_build_errors", errors=build_result.errors[:2])
@@ -1184,7 +1186,7 @@ class EvolutionLoop:
                 )
                 synthesis = await self._llm_fn(prompt)
                 if synthesis:
-                    return synthesis[:1000]
+                    return synthesis[:3000]
             except Exception:
                 log.debug("evolution_llm_synthesis_failed", exc_info=True)
 
