@@ -292,8 +292,16 @@ class IdentityLayer:
         content: str,
         memory_type: str = "episodic",
         importance: float = 0.5,
+        tags: list[str] | None = None,
     ) -> None:
-        """Store a Cognithor memory in Immortal Mind's VectorStore."""
+        """Store a Cognithor memory in Immortal Mind's VectorStore.
+
+        Args:
+            content: The memory text (summary, not raw content).
+            memory_type: One of episodic, semantic, emotional, relational.
+            importance: Confidence score (0.0-1.0).
+            tags: Custom tags. If None, defaults to ["cognithor", memory_type].
+        """
         if not self.available:
             return
         try:
@@ -311,6 +319,8 @@ class IdentityLayer:
             }
             mt = type_map.get(memory_type, MemoryType.EPISODIC)
 
+            record_tags = ["cognithor"] + tags if tags else ["cognithor", memory_type]
+
             record = MemoryRecord(
                 content=content,
                 memory_type=mt,
@@ -319,7 +329,7 @@ class IdentityLayer:
                 emotional_intensity=importance * 0.3,
                 emotional_valence=MemoryValence.NEUTRAL,
                 source_type="cognithor",
-                tags=["cognithor", memory_type],
+                tags=record_tags,
             )
             record.embedding = self._engine.embedder.encode(content)
             self._engine.memory_store.add(record)
