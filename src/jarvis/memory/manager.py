@@ -485,10 +485,6 @@ class MemoryManager:
 
         count = self._index.upsert_chunks(chunks)
 
-        # Identity Layer: sync to cognitive memory
-        _tier_name = tier.value if tier else "episodic"
-        self._sync_to_identity(text, memory_type=_tier_name, importance=0.5)
-
         return count
 
     async def index_with_embeddings(
@@ -692,29 +688,54 @@ class MemoryManager:
         memory_type: str = "episodic",
         importance: float = 0.5,
     ) -> None:
-        """Sync a memory entry to the Immortal Mind IdentityLayer.
+        """Sync a memory entry to Identity Memory (used by end_session).
 
-        This is a best-effort fire-and-forget sync; failures are silently
-        logged at debug level so they never disrupt core memory operations.
+        For document-level syncing, use sync_document_to_identity() instead.
+        """
+        _tier_to_im = {
+            "episodic": "episodic",
+            "semantic": "semantic",
+            "emotional": "emotional",
+            "core": "semantic",
+            "procedural": "semantic",
+        }
+        self.sync_document_to_identity(
+            summary=content,
+            memory_type=_tier_to_im.get(memory_type, "episodic"),
+            confidence=importance,
+            tags=["session"],
+        )
+
+    def sync_document_to_identity(
+        self,
+        summary: str,
+        memory_type: str = "semantic",
+        confidence: float = 0.5,
+        tags: list[str] | None = None,
+    ) -> None:
+        """Store a preprocessed document summary in Identity Memory.
+
+        This is the public API for the KnowledgeBuilder pipeline.
+        Content should already be LLM-summarized and quality-checked
+        before reaching this method — no truncation or processing here.
+
+        Args:
+            summary: LLM-generated summary text.
+            memory_type: One of semantic, procedural, episodic.
+            confidence: Source-derived confidence (0.0-1.0).
+            tags: Thematic tags from LLM classification.
         """
         if self._identity_layer is None:
             return
         try:
-            _tier_to_im = {
-                "episodic": "episodic",
-                "semantic": "semantic",
-                "emotional": "emotional",
-                "core": "semantic",
-                "procedural": "semantic",
-            }
-            _im_type = _tier_to_im.get(memory_type, "episodic")
             self._identity_layer.store_from_cognithor(
-                content=content[:1000],
-                memory_type=_im_type,
-                importance=importance,
+                content=summary,
+                memory_type=memory_type,
+                importance=confidence,
+                tags=tags,
             )
         except Exception:
-            logger.debug("identity_sync_failed", exc_info=True)
+            logger.debug("identity_sync_document_failed", exc_info=True)
 
     def stats(self) -> dict[str, Any]:
         """Gesamtstatistiken des Memory-Systems."""

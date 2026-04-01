@@ -163,3 +163,58 @@ class TestMemoryManagerProperties:
     def test_close_sync(self, manager: MemoryManager):
         manager.initialize_sync()
         manager.close_sync()  # Should not raise
+
+
+class TestSyncDocumentToIdentity:
+    """Tests for the new sync_document_to_identity public API."""
+
+    def test_passes_through_to_identity_layer(self):
+        from unittest.mock import MagicMock
+        from jarvis.memory.manager import MemoryManager
+
+        mm = MagicMock(spec=MemoryManager)
+        mm._identity_layer = MagicMock()
+        mm._identity_layer.store_from_cognithor = MagicMock()
+
+        # Call the real method
+        MemoryManager.sync_document_to_identity(
+            mm,
+            summary="Das VVG regelt Versicherungen.",
+            memory_type="semantic",
+            confidence=0.7,
+            tags=["versicherung", "recht"],
+        )
+
+        mm._identity_layer.store_from_cognithor.assert_called_once_with(
+            content="Das VVG regelt Versicherungen.",
+            memory_type="semantic",
+            importance=0.7,
+            tags=["versicherung", "recht"],
+        )
+
+    def test_no_identity_layer_is_noop(self):
+        from unittest.mock import MagicMock
+        from jarvis.memory.manager import MemoryManager
+
+        mm = MagicMock(spec=MemoryManager)
+        mm._identity_layer = None
+
+        # Should not raise
+        MemoryManager.sync_document_to_identity(
+            mm,
+            summary="Test content",
+        )
+
+    def test_exception_is_silenced(self):
+        from unittest.mock import MagicMock
+        from jarvis.memory.manager import MemoryManager
+
+        mm = MagicMock(spec=MemoryManager)
+        mm._identity_layer = MagicMock()
+        mm._identity_layer.store_from_cognithor.side_effect = RuntimeError("DB error")
+
+        # Should not raise
+        MemoryManager.sync_document_to_identity(
+            mm,
+            summary="Test content",
+        )
