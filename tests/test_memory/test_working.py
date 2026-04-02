@@ -47,7 +47,8 @@ class TestWorkingMemoryManager:
     def test_available_chat_tokens(self):
         wm = WorkingMemoryManager(max_tokens=32768)
         avail = wm.available_chat_tokens
-        assert avail == 32768 - STATIC_BUDGET
+        # Instance _static_budget includes tactical (400) which module-level STATIC_BUDGET omits
+        assert avail == 32768 - wm._static_budget
         assert avail > 0
 
     def test_usage_ratio_grows(self):
