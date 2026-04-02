@@ -75,45 +75,38 @@ class ComputerUseTools:
     def __init__(self, vision_analyzer: Any = None) -> None:
         self._vision = vision_analyzer
 
-    async def computer_screenshot(self, monitor: int = 0) -> dict[str, Any]:
+    async def computer_screenshot(self, monitor: int = 0, task_context: str = "") -> dict[str, Any]:
         """Take a screenshot and describe what's visible.
 
         Args:
             monitor: 0 = all monitors combined (default), 1 = primary, 2+ = specific.
+            task_context: What the user wants to do (helps focus element detection).
         """
         try:
             loop = asyncio.get_running_loop()
             b64, width, height = await loop.run_in_executor(
                 None, lambda: _take_screenshot_b64(monitor_index=int(monitor))
             )
-            description = ""
+            elements = []
             if self._vision:
                 try:
-                    # Try multiple vision API signatures
-                    if hasattr(self._vision, "analyze_image_b64"):
-                        description = await self._vision.analyze_image_b64(
-                            b64,
-                            prompt=(
-                                "Describe this desktop screenshot. "
-                                "List all visible windows, buttons, text fields, "
-                                "and clickable UI elements with their approximate "
-                                "pixel positions (e.g., 'Search bar at x=500, y=50'). "
-                                "Be precise about coordinates."
-                            ),
-                        )
-                    elif hasattr(self._vision, "analyze"):
-                        description = await self._vision.analyze(
-                            image_b64=b64,
-                            prompt="Describe UI elements with approximate coordinates.",
-                        )
-                    else:
-                        description = (
-                            f"Screenshot taken ({width}x{height}). "
-                            "Vision analyzer not available for element detection."
+                    result = await self._vision.analyze_desktop(
+                        b64, task_context=task_context
+                    )
+                    description = result.description if result.success else (
+                        f"Screenshot taken ({width}x{height}). "
+                        f"Vision analysis failed: {result.error}"
+                    )
+                    elements = result.elements
+                    if elements:
+                        log.info(
+                            "desktop_vision_elements",
+                            count=len(elements),
+                            names=[e["name"] for e in elements[:5]],
                         )
                 except Exception as exc:
                     description = (
-                        f"Screenshot taken ({width}x{height}). Vision analysis failed: {exc}"
+                        f"Screenshot taken ({width}x{height}). Vision error: {exc}"
                     )
             else:
                 description = (
@@ -126,6 +119,7 @@ class ComputerUseTools:
                 "width": width,
                 "height": height,
                 "description": description,
+                "elements": elements,
             }
         except Exception as exc:
             return {"success": False, "error": str(exc)}
@@ -301,6 +295,10 @@ def register_computer_use_tools(
                 "monitor": {
                     "type": "integer",
                     "description": "0=all monitors (default), 1=primary, 2+=specific monitor",
+                },
+                "task_context": {
+                    "type": "string",
+                    "description": "What the user wants to do (helps focus element detection)",
                 },
             },
         },
