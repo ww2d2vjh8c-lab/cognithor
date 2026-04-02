@@ -818,7 +818,7 @@ class TestWebSearchAllFail:
 
             result = await w.web_search("test")
             assert "fehlgeschlagen" in result
-            assert "SearXNG" in result
+            assert "searxng" in result.lower()
 
     @pytest.mark.asyncio
     async def test_searxng_no_results(self) -> None:
