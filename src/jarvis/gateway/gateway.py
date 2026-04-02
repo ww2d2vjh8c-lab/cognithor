@@ -3069,12 +3069,37 @@ class Gateway:
                         preview=_resp[:100],
                     )
                     # Computer Use: if previous iteration had successful CU tools,
-                    # don't replan — the action is done, just formulate response.
+                    # take a verification screenshot then formulate response.
+                    # This prevents double execution while still verifying success.
                     _CU_DONE = {"computer_type", "computer_click", "computer_hotkey"}
                     if all_results and any(
                         r.success and r.tool_name in _CU_DONE for r in all_results
                     ):
-                        log.info("computer_use_replan_blocked", reason="CU tools succeeded")
+                        log.info("computer_use_verify_screenshot", reason="CU tools succeeded")
+                        # Take verification screenshot so LLM can see the result
+                        _verify_desc = ""
+                        try:
+                            _cu_handler = self._mcp_client._builtin_handlers.get(
+                                "computer_screenshot"
+                            )
+                            if _cu_handler:
+                                _ss_result = await _cu_handler()
+                                _verify_desc = _ss_result.get("description", "")
+                                if _verify_desc:
+                                    all_results.append(
+                                        ToolResult(
+                                            tool_name="computer_screenshot",
+                                            content=f"Verification screenshot: {_verify_desc}",
+                                            is_error=False,
+                                        )
+                                    )
+                                    log.info(
+                                        "computer_use_verified",
+                                        description_len=len(_verify_desc),
+                                    )
+                        except Exception:
+                            log.debug("computer_use_verify_failed", exc_info=True)
+
                         await _status_cb("finishing", "Composing response...")
                         final_response = await self._formulate_response(
                             msg.text,
