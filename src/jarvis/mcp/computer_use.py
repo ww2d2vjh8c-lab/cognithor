@@ -161,28 +161,27 @@ class ComputerUseTools:
         text: str,
         interval: float = 0.03,
     ) -> dict[str, Any]:
-        """Type text using the keyboard.
+        """Type text via clipboard paste (Ctrl+V).
 
-        Uses typewrite() for ASCII text (handles special chars like *, +, =).
-        Falls back to clipboard paste for Unicode characters.
+        Always uses clipboard — typewrite() sends raw key codes which fail
+        for special chars (*, +, =) on non-US keyboards and can trigger
+        shortcuts in other applications (e.g. YouTube rewind).
         """
         try:
             gui = _get_pyautogui()
             loop = asyncio.get_running_loop()
+            import pyperclip
 
             # Brief wait to ensure target window has focus
             await asyncio.sleep(0.3)
 
-            if text.isascii():
-                await loop.run_in_executor(None, lambda: gui.typewrite(text, interval=interval))
-            else:
-                # Unicode (ae, oe, ue, etc.) — use clipboard + paste
-                import pyperclip
+            # Clipboard paste — works with ALL characters and keyboard layouts
+            await loop.run_in_executor(None, lambda: pyperclip.copy(text))
+            await asyncio.sleep(0.1)
+            await loop.run_in_executor(None, lambda: gui.hotkey("ctrl", "v"))
+            await asyncio.sleep(0.2)
 
-                await loop.run_in_executor(None, lambda: pyperclip.copy(text))
-                await loop.run_in_executor(None, lambda: gui.hotkey("ctrl", "v"))
-
-            log.info("computer_type", text_len=len(text))
+            log.info("computer_type", text_len=len(text), method="clipboard")
             return {"success": True, "action": "type", "text_length": len(text)}
         except Exception as exc:
             return {"success": False, "error": str(exc)}
