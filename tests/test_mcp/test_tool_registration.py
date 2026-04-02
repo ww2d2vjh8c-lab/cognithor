@@ -85,7 +85,7 @@ class TestRegisterMediaTools:
     def test_expected_tool_count(self) -> None:
         client = MockMCPClient()
         register_media_tools(client)
-        assert len(client.registered) == 11
+        assert len(client.registered) == 16
 
 
 # Expected web tool names
