@@ -270,24 +270,24 @@ def register_computer_use_tools(
 
     tools = ComputerUseTools(vision_analyzer=vision_analyzer)
 
-    client.register_tool(
-        name="computer_screenshot",
+    client.register_builtin_handler(
+        "computer_screenshot",
+        tools.computer_screenshot,
         description=(
             "Take a screenshot of the desktop and describe visible UI elements "
             "with their approximate pixel coordinates. "
             "Use this to see what's on screen before clicking."
         ),
-        handler=tools.computer_screenshot,
         input_schema={"type": "object", "properties": {}},
     )
 
-    client.register_tool(
-        name="computer_click",
+    client.register_builtin_handler(
+        "computer_click",
+        tools.computer_click,
         description=(
             "Click at specific pixel coordinates on the desktop. "
             "Use computer_screenshot first to identify element positions."
         ),
-        handler=tools.computer_click,
         input_schema={
             "type": "object",
             "properties": {
@@ -307,13 +307,13 @@ def register_computer_use_tools(
         },
     )
 
-    client.register_tool(
-        name="computer_type",
+    client.register_builtin_handler(
+        "computer_type",
+        tools.computer_type,
         description=(
             "Type text using the keyboard. Supports Unicode (umlauts, etc.). "
             "Click a text field first with computer_click."
         ),
-        handler=tools.computer_type,
         input_schema={
             "type": "object",
             "properties": {
@@ -327,13 +327,13 @@ def register_computer_use_tools(
         },
     )
 
-    client.register_tool(
-        name="computer_hotkey",
+    client.register_builtin_handler(
+        "computer_hotkey",
+        tools.computer_hotkey,
         description=(
             "Press a keyboard shortcut. Pass keys separated by +. "
             "Examples: 'ctrl+c', 'ctrl+v', 'alt+tab', 'enter', 'escape', 'ctrl+shift+s'."
         ),
-        handler=tools.computer_hotkey,
         input_schema={
             "type": "object",
             "properties": {
@@ -346,10 +346,10 @@ def register_computer_use_tools(
         },
     )
 
-    client.register_tool(
-        name="computer_scroll",
+    client.register_builtin_handler(
+        "computer_scroll",
+        tools.computer_scroll,
         description="Scroll at specific coordinates on the desktop.",
-        handler=tools.computer_scroll,
         input_schema={
             "type": "object",
             "properties": {
@@ -369,10 +369,10 @@ def register_computer_use_tools(
         },
     )
 
-    client.register_tool(
-        name="computer_drag",
+    client.register_builtin_handler(
+        "computer_drag",
+        tools.computer_drag,
         description="Drag from one position to another (e.g., for drag-and-drop).",
-        handler=tools.computer_drag,
         input_schema={
             "type": "object",
             "properties": {
