@@ -190,7 +190,10 @@ class TestExportDocument:
     async def test_unsupported_format(self, pipeline: MediaPipeline) -> None:
         result = await pipeline.export_document("inhalt", fmt="odt")
         assert not result.success
-        assert "unterstützt" in (result.error or "").lower() or "unsupported" in (result.error or "").lower()
+        assert (
+            "unterstützt" in (result.error or "").lower()
+            or "unsupported" in (result.error or "").lower()
+        )
 
     @pytest.mark.asyncio
     async def test_empty_content(self, pipeline: MediaPipeline) -> None:
