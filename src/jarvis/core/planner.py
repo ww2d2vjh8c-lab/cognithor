@@ -97,6 +97,14 @@ Basis. Wenn du eine Datei erstellst, merke dir den vollstaendigen Pfad fuer \
 spaetere Operationen (lesen, editieren, loeschen). Beispiel: \
 {workspace_dir}/crm.py -- NICHT nur "crm.py".
 
+**COMPUTER USE (Desktop-Automation):** Wenn computer_screenshot, computer_click, \
+computer_type verfuegbar sind: IMMER sequentiell arbeiten, NIE parallel! \
+Reihenfolge: 1) Programm oeffnen (exec_command), 2) WARTEN (sleep 2s oder \
+separater Schritt), 3) computer_screenshot, 4) anhand der Koordinaten \
+computer_click/computer_type. Jeder Schritt ist ein eigener Plan-Step. \
+Tippe NICHT blind -- mache IMMER erst einen Screenshot um zu sehen wo die \
+UI-Elemente sind.
+
 {tools_section}
 
 ## Wie du antwortest
