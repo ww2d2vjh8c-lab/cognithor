@@ -562,3 +562,37 @@ class TestAnalyzeDesktop:
 
         await v.analyze_desktop("base64data")
         assert v.stats()["calls"] == 1
+
+
+class TestExtractText:
+    """Tests for VisionAnalyzer.extract_text_from_screenshot."""
+
+    @pytest.mark.asyncio
+    async def test_extract_text_success(self):
+        llm = AsyncMock()
+        llm.chat = AsyncMock(return_value={
+            "message": {"content": "Reddit - r/locallama\nPost 1: Hello World\nPost 2: Test"},
+        })
+        cfg = VisionConfig(enabled=True, model="qwen3-vl:32b", backend_type="ollama")
+        v = VisionAnalyzer(llm, cfg)
+
+        result = await v.extract_text_from_screenshot("base64data")
+        assert result.success is True
+        assert "Reddit" in result.description
+        llm.chat.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_extract_text_disabled(self):
+        llm = AsyncMock()
+        v = VisionAnalyzer(llm, VisionConfig(enabled=False))
+        result = await v.extract_text_from_screenshot("base64data")
+        assert result.success is False
+        assert "nicht aktiviert" in result.error
+
+    @pytest.mark.asyncio
+    async def test_extract_text_empty_screenshot(self):
+        llm = AsyncMock()
+        cfg = VisionConfig(enabled=True, model="qwen3-vl:32b")
+        v = VisionAnalyzer(llm, cfg)
+        result = await v.extract_text_from_screenshot("")
+        assert result.success is False

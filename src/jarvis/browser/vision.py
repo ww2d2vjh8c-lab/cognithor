@@ -298,6 +298,29 @@ class VisionAnalyzer:
 
         return result
 
+    async def extract_text_from_screenshot(
+        self,
+        screenshot_b64: str,
+    ) -> VisionAnalysisResult:
+        """Extract all visible text from a screenshot (OCR-like).
+
+        Uses the vision model to read text from the screen, without
+        structured element detection. Optimized for content extraction.
+        """
+        if not self.is_enabled:
+            return VisionAnalysisResult(error="Vision nicht aktiviert")
+
+        if not screenshot_b64:
+            return VisionAnalysisResult(error="Kein Screenshot-Daten")
+
+        prompt = (
+            "Lies ALLEN sichtbaren Text in diesem Screenshot ab. "
+            "Gib den Text zeilenweise wieder, so wie er auf dem Bildschirm "
+            "erscheint. Antworte NUR mit dem extrahierten Text, kein JSON, "
+            "keine Erklaerungen."
+        )
+        return await self._send_vision_request(screenshot_b64, prompt)
+
     def stats(self) -> dict[str, Any]:
         return {
             "enabled": self.is_enabled,
