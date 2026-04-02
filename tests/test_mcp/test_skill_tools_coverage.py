@@ -148,7 +148,8 @@ class TestCreateSkill:
         assert "existiert bereits" in result
 
     def test_registry_reload_failure(self, skill_tools: SkillTools, registry: MagicMock) -> None:
-        registry.load_from_directories.side_effect = RuntimeError("reload error")
+        # Hot-load path: _parse_skill_file raises -> WARNUNG
+        registry._parse_skill_file.side_effect = RuntimeError("hot-load error")
         result = skill_tools.create_skill(
             name="Broken Reload",
             description="desc",
@@ -156,7 +157,7 @@ class TestCreateSkill:
             body="body",
         )
         assert "WARNUNG" in result
-        assert "Registry-Reload fehlgeschlagen" in result
+        assert "Hot-Loading fehlgeschlagen" in result
 
     def test_write_dir_created(self, registry: MagicMock, tmp_path: Path) -> None:
         deep = tmp_path / "a" / "b" / "c"
