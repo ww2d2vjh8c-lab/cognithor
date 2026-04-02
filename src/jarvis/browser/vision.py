@@ -260,6 +260,45 @@ class VisionAnalyzer:
         )
         return result.description if result.success else ""
 
+    async def analyze_desktop(
+        self,
+        screenshot_b64: str,
+        prompt: str = "",
+        task_context: str = "",
+    ) -> VisionAnalysisResult:
+        """Analyze a desktop screenshot and identify UI elements with coordinates.
+
+        Unlike analyze_screenshot (browser-focused), this method is optimized
+        for desktop environments: pixel coordinates instead of CSS selectors,
+        window detection, taskbar elements, etc.
+
+        Args:
+            screenshot_b64: Base64-encoded screenshot (PNG).
+            prompt: Optional custom prompt (default: desktop element detection).
+            task_context: Optional task description to focus the analysis.
+
+        Returns:
+            VisionAnalysisResult with description and elements list.
+        """
+        if not self.is_enabled:
+            return VisionAnalysisResult(error="Vision nicht aktiviert")
+
+        if not screenshot_b64:
+            return VisionAnalysisResult(error="Kein Screenshot-Daten")
+
+        effective_prompt = prompt or _DESKTOP_ANALYSIS_PROMPT
+        if task_context and not prompt:
+            effective_prompt += _DESKTOP_CONTEXTUAL_PROMPT_SUFFIX.format(
+                context=task_context
+            )
+
+        result = await self._send_vision_request(screenshot_b64, effective_prompt)
+
+        if result.success and result.description:
+            result.elements = _parse_desktop_elements(result.description)
+
+        return result
+
     def stats(self) -> dict[str, Any]:
         return {
             "enabled": self.is_enabled,

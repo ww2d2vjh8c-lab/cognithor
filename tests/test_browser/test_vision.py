@@ -435,3 +435,98 @@ class TestValidateElements:
         assert elements[0]["w"] == 0
         assert elements[0]["text"] == ""
         assert elements[0]["clickable"] is False
+
+
+# ============================================================================
+# analyze_desktop
+# ============================================================================
+
+
+class TestAnalyzeDesktop:
+    """Tests for VisionAnalyzer.analyze_desktop — desktop screenshot analysis."""
+
+    def _make_analyzer(self, llm_response: str) -> tuple[VisionAnalyzer, AsyncMock]:
+        llm = AsyncMock()
+        llm.chat = AsyncMock(return_value={
+            "message": {"role": "assistant", "content": llm_response},
+        })
+        cfg = VisionConfig(enabled=True, model="qwen3-vl:32b", backend_type="ollama")
+        return VisionAnalyzer(llm, cfg), llm
+
+    @pytest.mark.asyncio
+    async def test_returns_elements(self):
+        response = json.dumps({"elements": [
+            {"name": "Rechner", "type": "window", "x": 200, "y": 300,
+             "w": 400, "h": 500, "text": "", "clickable": True},
+        ]})
+        v, llm = self._make_analyzer(response)
+        result = await v.analyze_desktop("base64data")
+
+        assert result.success is True
+        assert len(result.elements) == 1
+        assert result.elements[0]["name"] == "Rechner"
+        assert result.elements[0]["x"] == 200
+        llm.chat.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_disabled_returns_error(self):
+        llm = AsyncMock()
+        v = VisionAnalyzer(llm, VisionConfig(enabled=False))
+        result = await v.analyze_desktop("base64data")
+
+        assert result.success is False
+        assert "nicht aktiviert" in result.error
+        llm.chat.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_empty_screenshot_returns_error(self):
+        v, _ = self._make_analyzer("")
+        result = await v.analyze_desktop("")
+
+        assert result.success is False
+        assert "Kein Screenshot" in result.error
+
+    @pytest.mark.asyncio
+    async def test_task_context_appended_to_prompt(self):
+        v, llm = self._make_analyzer('{"elements": []}')
+        await v.analyze_desktop("base64data", task_context="Reddit oeffnen")
+
+        call_args = llm.chat.call_args
+        messages = str(call_args)
+        assert "Reddit" in messages
+
+    @pytest.mark.asyncio
+    async def test_llm_error_handled(self):
+        llm = AsyncMock()
+        llm.chat = AsyncMock(side_effect=RuntimeError("GPU OOM"))
+        cfg = VisionConfig(enabled=True, model="qwen3-vl:32b", backend_type="ollama")
+        v = VisionAnalyzer(llm, cfg)
+
+        result = await v.analyze_desktop("base64data")
+        assert result.success is False
+        assert "fehlgeschlagen" in result.error
+
+    @pytest.mark.asyncio
+    async def test_non_json_response_returns_description_no_elements(self):
+        v, _ = self._make_analyzer("I see a calculator and a browser window.")
+        result = await v.analyze_desktop("base64data")
+
+        assert result.success is True
+        assert "calculator" in result.description
+        assert result.elements == []
+
+    @pytest.mark.asyncio
+    async def test_custom_prompt_overrides_default(self):
+        v, llm = self._make_analyzer('{"elements": []}')
+        await v.analyze_desktop("base64data", prompt="Custom prompt here")
+
+        messages = str(llm.chat.call_args)
+        assert "Custom prompt" in messages
+
+    @pytest.mark.asyncio
+    async def test_stats_updated(self):
+        v, _ = self._make_analyzer('{"elements": []}')
+        assert v.stats()["calls"] == 0
+
+        await v.analyze_desktop("base64data")
+        assert v.stats()["calls"] == 1
