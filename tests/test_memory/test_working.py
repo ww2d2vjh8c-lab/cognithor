@@ -212,8 +212,9 @@ class TestConfigurableBudgets:
             budget_response_reserve=1000,
         )
         wm = WorkingMemoryManager(config=config, max_tokens=32768)
-        assert wm._static_budget == 6000
-        assert wm.available_chat_tokens == 32768 - 6000
+        # 6x1000 custom + 400 tactical (default, not in MemoryConfig) = 6400
+        assert wm._static_budget == 6400
+        assert wm.available_chat_tokens == 32768 - 6400
 
     def test_budget_report_uses_instance_values(self) -> None:
         """Budget-Report zeigt konfigurierte Werte, nicht Modul-Konstanten."""
