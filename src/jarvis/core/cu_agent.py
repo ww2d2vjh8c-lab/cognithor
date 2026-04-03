@@ -734,7 +734,7 @@ class CUAgentExecutor:
             from jarvis.core.vision import build_vision_message, format_for_backend
             from jarvis.mcp.computer_use import _take_screenshot_b64
 
-            b64, _, _ = await asyncio.get_running_loop().run_in_executor(None, _take_screenshot_b64)
+            b64, _, _, _ = await asyncio.get_running_loop().run_in_executor(None, _take_screenshot_b64)
             msg = build_vision_message(
                 "Lies ALLEN sichtbaren Text in diesem Screenshot ab. "
                 "Gib den Text zeilenweise wieder. Antworte NUR mit dem Text.",

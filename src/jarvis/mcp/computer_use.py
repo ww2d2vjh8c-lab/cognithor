@@ -33,8 +33,8 @@ def _get_pyautogui():
     return _pyautogui
 
 
-def _take_screenshot_b64(monitor_index: int = 0) -> tuple[str, int, int]:
-    """Take a desktop screenshot, return (base64_png, width, height).
+def _take_screenshot_b64(monitor_index: int = 0) -> tuple[str, int, int, float]:
+    """Take a desktop screenshot, return (base64_png, width, height, scale_factor).
 
     Args:
         monitor_index: 0 = all monitors combined, 1 = primary, 2+ = specific monitor.
@@ -60,14 +60,15 @@ def _take_screenshot_b64(monitor_index: int = 0) -> tuple[str, int, int]:
 
         # Resize for vision model (max 2560px wide to support 4K)
         max_w = 2560
+        scale_factor = 1.0
         if pil_img.width > max_w:
-            ratio = max_w / pil_img.width
-            pil_img = pil_img.resize((max_w, int(pil_img.height * ratio)), Image.LANCZOS)
+            scale_factor = max_w / pil_img.width
+            pil_img = pil_img.resize((max_w, int(pil_img.height * scale_factor)), Image.LANCZOS)
 
         buf = io.BytesIO()
         pil_img.save(buf, format="PNG", optimize=True)
         b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-        return b64, pil_img.width, pil_img.height
+        return b64, pil_img.width, pil_img.height, scale_factor
 
 
 class ComputerUseTools:
@@ -75,6 +76,7 @@ class ComputerUseTools:
 
     def __init__(self, vision_analyzer: Any = None) -> None:
         self._vision = vision_analyzer
+        self._last_scale_factor: float = 1.0
 
     async def computer_screenshot(self, monitor: int = 0, task_context: str = "") -> dict[str, Any]:
         """Take a screenshot and describe what's visible.
@@ -85,9 +87,10 @@ class ComputerUseTools:
         """
         try:
             loop = asyncio.get_running_loop()
-            b64, width, height = await loop.run_in_executor(
+            b64, width, height, scale_factor = await loop.run_in_executor(
                 None, lambda: _take_screenshot_b64(monitor_index=int(monitor))
             )
+            self._last_scale_factor = scale_factor
             elements = []
             if self._vision:
                 try:
@@ -134,6 +137,10 @@ class ComputerUseTools:
     ) -> dict[str, Any]:
         """Click at specific coordinates on the desktop."""
         try:
+            # Scale coordinates back to actual screen pixels
+            if self._last_scale_factor != 1.0 and self._last_scale_factor > 0:
+                x = int(int(x) / self._last_scale_factor)
+                y = int(int(y) / self._last_scale_factor)
             gui = _get_pyautogui()
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(
@@ -207,6 +214,9 @@ class ComputerUseTools:
     ) -> dict[str, Any]:
         """Scroll at specific coordinates."""
         try:
+            if self._last_scale_factor != 1.0 and self._last_scale_factor > 0:
+                x = int(int(x) / self._last_scale_factor)
+                y = int(int(y) / self._last_scale_factor)
             gui = _get_pyautogui()
             loop = asyncio.get_running_loop()
             scroll_clicks = -int(amount) if direction == "down" else int(amount)
@@ -231,6 +241,11 @@ class ComputerUseTools:
     ) -> dict[str, Any]:
         """Drag from start coordinates to end coordinates."""
         try:
+            if self._last_scale_factor != 1.0 and self._last_scale_factor > 0:
+                start_x = int(int(start_x) / self._last_scale_factor)
+                start_y = int(int(start_y) / self._last_scale_factor)
+                end_x = int(int(end_x) / self._last_scale_factor)
+                end_y = int(int(end_y) / self._last_scale_factor)
             gui = _get_pyautogui()
             loop = asyncio.get_running_loop()
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -36,7 +36,7 @@ class TestComputerScreenshotWithVision:
         tools = ComputerUseTools(vision_analyzer=mock_vision)
 
         with patch(
-            "jarvis.mcp.computer_use._take_screenshot_b64", return_value=("base64", 1920, 1080)
+            "jarvis.mcp.computer_use._take_screenshot_b64", return_value=("base64", 1920, 1080, 1.0)
         ):
             result = await tools.computer_screenshot()
 
@@ -51,7 +51,7 @@ class TestComputerScreenshotWithVision:
         tools = ComputerUseTools(vision_analyzer=None)
 
         with patch(
-            "jarvis.mcp.computer_use._take_screenshot_b64", return_value=("base64", 1920, 1080)
+            "jarvis.mcp.computer_use._take_screenshot_b64", return_value=("base64", 1920, 1080, 1.0)
         ):
             result = await tools.computer_screenshot()
 
@@ -72,7 +72,7 @@ class TestComputerScreenshotWithVision:
         tools = ComputerUseTools(vision_analyzer=mock_vision)
 
         with patch(
-            "jarvis.mcp.computer_use._take_screenshot_b64", return_value=("base64", 1920, 1080)
+            "jarvis.mcp.computer_use._take_screenshot_b64", return_value=("base64", 1920, 1080, 1.0)
         ):
             result = await tools.computer_screenshot()
 
@@ -94,7 +94,7 @@ class TestComputerScreenshotWithVision:
         tools = ComputerUseTools(vision_analyzer=mock_vision)
 
         with patch(
-            "jarvis.mcp.computer_use._take_screenshot_b64", return_value=("base64", 1920, 1080)
+            "jarvis.mcp.computer_use._take_screenshot_b64", return_value=("base64", 1920, 1080, 1.0)
         ):
             await tools.computer_screenshot(task_context="Reddit oeffnen")
 
@@ -159,3 +159,54 @@ class TestGatewayCUDetection:
 
         plan = ActionPlan(goal="test", direct_response="Hello!")
         assert Gateway._is_cu_plan(plan) is False
+
+
+class TestCoordinateScaling:
+    @pytest.mark.asyncio
+    async def test_click_scales_coordinates(self):
+        tools = ComputerUseTools()
+        tools._last_scale_factor = 0.5
+
+        with patch("jarvis.mcp.computer_use._get_pyautogui") as mock_gui:
+            mock_pag = MagicMock()
+            mock_gui.return_value = mock_pag
+            await tools.computer_click(x=100, y=200)
+            call_args = mock_pag.click.call_args
+            # 100 / 0.5 = 200, 200 / 0.5 = 400
+            assert call_args.kwargs.get("x", call_args[1].get("x")) == 200
+
+    @pytest.mark.asyncio
+    async def test_click_no_scaling_when_factor_is_1(self):
+        tools = ComputerUseTools()
+        tools._last_scale_factor = 1.0
+
+        with patch("jarvis.mcp.computer_use._get_pyautogui") as mock_gui:
+            mock_pag = MagicMock()
+            mock_gui.return_value = mock_pag
+            await tools.computer_click(x=100, y=200)
+            call_args = mock_pag.click.call_args
+            assert call_args.kwargs.get("x", call_args[1].get("x")) == 100
+
+    @pytest.mark.asyncio
+    async def test_screenshot_stores_scale_factor(self):
+        tools = ComputerUseTools()
+        assert tools._last_scale_factor == 1.0
+
+        with patch("jarvis.mcp.computer_use._take_screenshot_b64") as mock_ss:
+            mock_ss.return_value = ("base64data", 2560, 1440, 0.667)
+            await tools.computer_screenshot()
+            assert tools._last_scale_factor == 0.667
+
+    @pytest.mark.asyncio
+    async def test_drag_scales_all_coordinates(self):
+        tools = ComputerUseTools()
+        tools._last_scale_factor = 0.5
+
+        with patch("jarvis.mcp.computer_use._get_pyautogui") as mock_gui:
+            mock_pag = MagicMock()
+            mock_gui.return_value = mock_pag
+            await tools.computer_drag(start_x=100, start_y=200, end_x=300, end_y=400)
+            # start_x / 0.5 = 200, start_y / 0.5 = 400
+            move_args = mock_pag.moveTo.call_args
+            assert move_args[0][0] == 200  # start_x scaled
+            assert move_args[0][1] == 400  # start_y scaled
