@@ -66,12 +66,38 @@ class EncryptedFileIO:
             log.debug("encrypted_file_no_cryptography", hint="pip install cryptography")
             return
 
+        # Respect the global encryption_enabled config flag (same as encrypted_db).
+        if not self._check_encryption_enabled():
+            return
+
         key = self._get_key()
         if key:
             # Derive a Fernet key (32 bytes, base64-encoded) from the DB key
             derived = hashlib.sha256(key.encode()).digest()
             fernet_key = base64.urlsafe_b64encode(derived)
             self._fernet = Fernet(fernet_key)
+
+    def _check_encryption_enabled(self) -> bool:
+        """Check whether file encryption is enabled in config.yaml.
+
+        Mirrors the same logic as encrypted_db._check_encryption_enabled().
+        """
+        try:
+            candidates = [
+                Path(os.environ.get("JARVIS_HOME", "")) / "config.yaml",
+                Path.home() / ".jarvis" / "config.yaml",
+            ]
+            for cfg_path in candidates:
+                if cfg_path.is_file():
+                    import yaml  # type: ignore[import-untyped]
+
+                    with open(cfg_path) as f:
+                        data = yaml.safe_load(f) or {}
+                    db_section = data.get("database", {})
+                    return bool(db_section.get("encryption_enabled", False))
+        except Exception:
+            pass
+        return False
 
     def _get_key(self) -> str:
         """Get encryption key from the same chain as encrypted_db."""

@@ -899,7 +899,7 @@ class SkillExchange:
             return InstallResult(
                 success=False,
                 package_id=package_id,
-                message="Package is quarantined (malware suspected)",
+                message="Paket ist quarantiniert (Malware vermutet)",
             )
 
         # Install

@@ -29,6 +29,7 @@ __all__ = [
     "compatible_row_factory",
     "OperationalError",
     "DatabaseError",
+    "IntegrityError",
 ]
 
 
@@ -87,9 +88,11 @@ except ImportError:
 if _sqlcipher_available and sqlcipher is not None:
     OperationalError: type[Exception] = sqlcipher.OperationalError  # type: ignore[assignment]
     DatabaseError: type[Exception] = sqlcipher.DatabaseError  # type: ignore[assignment]
+    IntegrityError: type[Exception] = sqlcipher.IntegrityError  # type: ignore[assignment]
 else:
     OperationalError = sqlite3.OperationalError  # type: ignore[assignment]
     DatabaseError = sqlite3.DatabaseError  # type: ignore[assignment]
+    IntegrityError = sqlite3.IntegrityError  # type: ignore[assignment]
 
 _KEYRING_SERVICE = "cognithor"
 _KEYRING_KEY_NAME = "db_encryption_key"

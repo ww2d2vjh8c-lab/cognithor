@@ -21,9 +21,10 @@ from jarvis.db import SQLITE_BUSY_TIMEOUT_MS
 from jarvis.security.encrypted_db import encrypted_connect
 
 try:
-    from jarvis.security.encrypted_db import compatible_row_factory
+    from jarvis.security.encrypted_db import compatible_row_factory, IntegrityError as _DbIntegrityError
 except ImportError:
     compatible_row_factory = lambda: sqlite3.Row
+    _DbIntegrityError = sqlite3.IntegrityError  # type: ignore[assignment,misc]
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
@@ -404,13 +405,19 @@ class MarketplaceStore:
         review_id = f"review_{uuid.uuid4().hex[:12]}"
         now = _now()
 
-        self.conn.execute(
-            """
-            INSERT INTO reviews (review_id, package_id, reviewer_id, rating, comment, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (review_id, package_id, reviewer_id, rating, comment, now),
-        )
+        try:
+            self.conn.execute(
+                """
+                INSERT INTO reviews (review_id, package_id, reviewer_id, rating, comment, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (review_id, package_id, reviewer_id, rating, comment, now),
+            )
+        except _DbIntegrityError as exc:
+            # Re-raise as stdlib sqlite3.IntegrityError so callers that catch
+            # sqlite3.IntegrityError work regardless of whether the DB backend
+            # is plain sqlite3 or SQLCipher (which raises its own subclass).
+            raise sqlite3.IntegrityError(str(exc)) from exc
 
         # Update listing statistics
         self.conn.execute(

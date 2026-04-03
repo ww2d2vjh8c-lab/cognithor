@@ -4053,15 +4053,20 @@ class Gateway:
                             name = "-".join(_text_words) if _text_words else f"auto-{int(now)}"
                         # Ensure uniqueness by appending short hash if file exists
                         _base_name = name
-                        if (procedural._dir / f"{name}.md").exists():
-                            _short = hashlib.sha256(
-                                f"{tools_str}:{keywords_str}".encode()
-                            ).hexdigest()[:6]
-                            name = f"{_base_name}-{_short}"
-                            # If even that exists, skip (true duplicate)
-                            if (procedural._dir / f"{name}.md").exists():
-                                log.debug("pattern_duplicate_skipped", name=name)
-                                return
+                        _proc_dir = getattr(procedural, "_dir", None)
+                        if _proc_dir is not None and isinstance(
+                            _proc_dir, (str, Path)
+                        ):
+                            _proc_dir = Path(_proc_dir)
+                            if (_proc_dir / f"{name}.md").exists():
+                                _short = hashlib.sha256(
+                                    f"{tools_str}:{keywords_str}".encode()
+                                ).hexdigest()[:6]
+                                name = f"{_base_name}-{_short}"
+                                # If even that exists, skip (true duplicate)
+                                if (_proc_dir / f"{name}.md").exists():
+                                    log.debug("pattern_duplicate_skipped", name=name)
+                                    return
 
                         procedural.save_procedure(
                             name=name,

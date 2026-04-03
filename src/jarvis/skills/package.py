@@ -905,7 +905,7 @@ class PackageInstaller:
                 return InstallResult(
                     success=False,
                     package_id=pkg_id,
-                    message="Package is not signed (require_signature=True)",
+                    message="Paket ist nicht signiert (require_signature=True)",
                 )
 
             if (
@@ -916,7 +916,7 @@ class PackageInstaller:
                 return InstallResult(
                     success=False,
                     package_id=pkg_id,
-                    message=(f"Publisher '{package.signature.signer_id}' is not trusted"),
+                    message=(f"Herausgeber '{package.signature.signer_id}' ist nicht vertrauenswürdig"),
                 )
 
         # 2. Signature integrity
