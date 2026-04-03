@@ -12,10 +12,11 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
-import logging
 from typing import Any
 
-log = logging.getLogger(__name__)
+from jarvis.utils.logging import get_logger
+
+log = get_logger(__name__)
 
 # Lazy imports to avoid startup cost
 _pyautogui = None
