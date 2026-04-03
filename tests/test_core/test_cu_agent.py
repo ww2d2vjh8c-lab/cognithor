@@ -8,7 +8,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from jarvis.core.cu_agent import CUAgentConfig, CUAgentExecutor, CUAgentResult
+from jarvis.core.cu_agent import (
+    CUAgentConfig,
+    CUAgentExecutor,
+    CUAgentResult,
+    CUSubTask,
+    CUTaskPlan,
+)
 from jarvis.models import ActionPlan, PlannedAction
 
 
@@ -44,7 +50,9 @@ class TestCUAgentAbort:
         planner._ollama = AsyncMock()
         mcp = MagicMock()
         mcp._builtin_handlers = {}
-        return CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {}, CUAgentConfig(**config_overrides))
+        return CUAgentExecutor(
+            planner, mcp, MagicMock(), MagicMock(), {}, CUAgentConfig(**config_overrides)
+        )
 
     def test_check_abort_max_iterations(self):
         agent = self._make_agent(max_iterations=5)
@@ -156,17 +164,29 @@ class TestCUAgentExecuteLoop:
         """Agent: exec → screenshot(sees window) → decide(DONE)."""
         planner = MagicMock()
         planner._ollama = AsyncMock()
-        planner._ollama.chat = AsyncMock(side_effect=[
-            {"message": {"content": '{"tool": "computer_click", "params": {"x": 200, "y": 300}, "rationale": "click window"}'}},
-            {"message": {"content": "DONE: Taschenrechner zeigt 459"}},
-        ])
+        planner._ollama.chat = AsyncMock(
+            side_effect=[
+                {
+                    "message": {
+                        "content": '{"tool": "computer_click", "params": {"x": 200, "y": 300}, "rationale": "click window"}'
+                    }
+                },
+                {"message": {"content": "DONE: Taschenrechner zeigt 459"}},
+            ]
+        )
 
         mcp = MagicMock()
-        screenshot_handler = AsyncMock(return_value={
-            "success": True, "width": 1920, "height": 1080,
-            "description": "Rechner sichtbar",
-            "elements": [{"name": "Rechner", "type": "window", "x": 200, "y": 300, "clickable": True}],
-        })
+        screenshot_handler = AsyncMock(
+            return_value={
+                "success": True,
+                "width": 1920,
+                "height": 1080,
+                "description": "Rechner sichtbar",
+                "elements": [
+                    {"name": "Rechner", "type": "window", "x": 200, "y": 300, "clickable": True}
+                ],
+            }
+        )
         click_handler = AsyncMock(return_value={"success": True})
         exec_handler = AsyncMock(return_value="OK")
         mcp._builtin_handlers = {
@@ -177,7 +197,11 @@ class TestCUAgentExecuteLoop:
 
         initial_plan = ActionPlan(
             goal="Rechner oeffnen",
-            steps=[PlannedAction(tool="exec_command", params={"command": "start calc.exe"}, rationale="start")],
+            steps=[
+                PlannedAction(
+                    tool="exec_command", params={"command": "start calc.exe"}, rationale="start"
+                )
+            ],
         )
 
         agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
@@ -194,15 +218,23 @@ class TestCUAgentExecuteLoop:
         """Agent stops after max_iterations."""
         planner = MagicMock()
         planner._ollama = AsyncMock()
-        planner._ollama.chat = AsyncMock(return_value={
-            "message": {"content": '{"tool": "computer_click", "params": {"x": 100, "y": 100}}'},
-        })
+        planner._ollama.chat = AsyncMock(
+            return_value={
+                "message": {
+                    "content": '{"tool": "computer_click", "params": {"x": 100, "y": 100}}'
+                },
+            }
+        )
 
         mcp = MagicMock()
         mcp._builtin_handlers = {
-            "computer_screenshot": AsyncMock(return_value={
-                "success": True, "description": "screen", "elements": [],
-            }),
+            "computer_screenshot": AsyncMock(
+                return_value={
+                    "success": True,
+                    "description": "screen",
+                    "elements": [],
+                }
+            ),
             "computer_click": AsyncMock(return_value={"success": True}),
         }
 
@@ -221,15 +253,21 @@ class TestCUAgentExecuteLoop:
         """Agent stops when cancel_check returns True."""
         planner = MagicMock()
         planner._ollama = AsyncMock()
-        planner._ollama.chat = AsyncMock(return_value={
-            "message": {"content": '{"tool": "computer_click", "params": {"x": 1, "y": 1}}'},
-        })
+        planner._ollama.chat = AsyncMock(
+            return_value={
+                "message": {"content": '{"tool": "computer_click", "params": {"x": 1, "y": 1}}'},
+            }
+        )
 
         mcp = MagicMock()
         mcp._builtin_handlers = {
-            "computer_screenshot": AsyncMock(return_value={
-                "success": True, "description": "screen", "elements": [],
-            }),
+            "computer_screenshot": AsyncMock(
+                return_value={
+                    "success": True,
+                    "description": "screen",
+                    "elements": [],
+                }
+            ),
             "computer_click": AsyncMock(return_value={"success": True}),
         }
 
@@ -242,3 +280,68 @@ class TestCUAgentExecuteLoop:
 
         assert result.abort_reason == "user_cancel"
         assert result.iterations <= 1
+
+
+class TestCUSubTask:
+    def test_defaults(self):
+        st = CUSubTask(name="open_app", goal="Oeffne Reddit", completion_hint="Reddit sichtbar")
+        assert st.name == "open_app"
+        assert st.goal == "Oeffne Reddit"
+        assert st.completion_hint == "Reddit sichtbar"
+        assert st.max_iterations == 10
+        assert st.available_tools == []
+        assert st.extract_content is False
+        assert st.content_key == ""
+        assert st.output_file == ""
+        assert st.status == "pending"
+
+    def test_custom(self):
+        st = CUSubTask(
+            name="scroll",
+            goal="Scrolle Posts",
+            completion_hint="10 Posts gelesen",
+            max_iterations=15,
+            available_tools=["computer_scroll", "extract_text"],
+            extract_content=True,
+            content_key="posts",
+        )
+        assert st.max_iterations == 15
+        assert st.extract_content is True
+        assert st.content_key == "posts"
+        assert "computer_scroll" in st.available_tools
+
+
+class TestCUTaskPlan:
+    def test_defaults(self):
+        plan = CUTaskPlan(original_goal="test", sub_tasks=[])
+        assert plan.original_goal == "test"
+        assert plan.sub_tasks == []
+        assert plan.output_filename == ""
+        assert plan.variables == {}
+
+    def test_with_sub_tasks(self):
+        st1 = CUSubTask(name="a", goal="g1", completion_hint="h1")
+        st2 = CUSubTask(name="b", goal="g2", completion_hint="h2")
+        plan = CUTaskPlan(
+            original_goal="do stuff",
+            sub_tasks=[st1, st2],
+            output_filename="out.txt",
+            variables={"date": "20260403"},
+        )
+        assert len(plan.sub_tasks) == 2
+        assert plan.variables["date"] == "20260403"
+
+
+class TestCUAgentResultExtended:
+    def test_new_fields_default(self):
+        r = CUAgentResult()
+        assert r.output_files == []
+        assert r.task_summary == ""
+
+    def test_new_fields_populated(self):
+        r = CUAgentResult(
+            output_files=["/home/user/docs/out.txt"],
+            task_summary="3/3 Phasen abgeschlossen.",
+        )
+        assert len(r.output_files) == 1
+        assert "3/3" in r.task_summary

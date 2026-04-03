@@ -37,6 +37,31 @@ class CUAgentConfig:
 
 
 @dataclass
+class CUSubTask:
+    """A single phase of a decomposed CU goal."""
+
+    name: str
+    goal: str
+    completion_hint: str
+    max_iterations: int = 10
+    available_tools: list[str] = field(default_factory=list)
+    extract_content: bool = False
+    content_key: str = ""
+    output_file: str = ""
+    status: str = "pending"
+
+
+@dataclass
+class CUTaskPlan:
+    """Full decomposed plan for a complex CU goal."""
+
+    original_goal: str
+    sub_tasks: list[CUSubTask]
+    output_filename: str = ""
+    variables: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
 class CUAgentResult:
     """Result of a CU Agent execution."""
 
@@ -48,6 +73,8 @@ class CUAgentResult:
     abort_reason: str = ""
     extracted_content: str = ""
     action_history: list[str] = field(default_factory=list)
+    output_files: list[str] = field(default_factory=list)
+    task_summary: str = ""
 
 
 class CUAgentExecutor:
@@ -131,8 +158,7 @@ class CUAgentExecutor:
         if not elements:
             return "(keine Elemente erkannt)"
         compact = [
-            {k: e[k] for k in ("name", "type", "x", "y", "text") if k in e}
-            for e in elements[:15]
+            {k: e[k] for k in ("name", "type", "x", "y", "text") if k in e} for e in elements[:15]
         ]
         return json.dumps(compact, ensure_ascii=False, indent=None)
 
@@ -344,9 +370,7 @@ class CUAgentExecutor:
             from jarvis.mcp.computer_use import _take_screenshot_b64
             from jarvis.core.vision import build_vision_message, format_for_backend
 
-            b64, _, _ = await asyncio.get_running_loop().run_in_executor(
-                None, _take_screenshot_b64
-            )
+            b64, _, _ = await asyncio.get_running_loop().run_in_executor(None, _take_screenshot_b64)
             msg = build_vision_message(
                 "Lies ALLEN sichtbaren Text in diesem Screenshot ab. "
                 "Gib den Text zeilenweise wieder. Antworte NUR mit dem Text.",
