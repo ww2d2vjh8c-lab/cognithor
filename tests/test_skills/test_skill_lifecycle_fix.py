@@ -121,3 +121,34 @@ class TestToolAvailabilityLogging:
 
         assert len(matches) >= 1
         assert matches[0].skill.slug == "arc_test"
+
+
+class TestLifecycleCronIntegration:
+    def test_lifecycle_manager_can_be_created(self):
+        from pathlib import Path
+
+        from jarvis.skills.lifecycle import SkillLifecycleManager
+        from jarvis.skills.registry import SkillRegistry
+
+        registry = SkillRegistry()
+        lifecycle = SkillLifecycleManager(
+            registry=registry,
+            generated_dir=Path("/tmp/test_skills"),
+        )
+        assert lifecycle is not None
+
+    def test_audit_all_returns_list(self):
+        import tempfile
+        from pathlib import Path
+
+        from jarvis.skills.lifecycle import SkillLifecycleManager
+        from jarvis.skills.registry import SkillRegistry
+
+        registry = SkillRegistry()
+        with tempfile.TemporaryDirectory() as tmp:
+            lifecycle = SkillLifecycleManager(
+                registry=registry,
+                generated_dir=Path(tmp),
+            )
+            result = lifecycle.audit_all()
+            assert isinstance(result, list)

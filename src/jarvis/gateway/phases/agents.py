@@ -26,6 +26,7 @@ def declare_agents_attrs(config: Any) -> PhaseResult:
     """
     result: PhaseResult = {
         "skill_registry": None,
+        "skill_lifecycle": None,
         "agent_router": None,
         "ingest_pipeline": None,
         "heartbeat_scheduler": None,
@@ -127,6 +128,21 @@ async def init_agents(
     except Exception as exc:
         log.warning("skill_registry_init_error", error=str(exc))
     result["skill_registry"] = skill_registry
+
+    # Create SkillLifecycleManager for periodic auditing
+    skill_lifecycle = None
+    try:
+        from jarvis.skills.lifecycle import SkillLifecycleManager
+
+        generated_dir = jarvis_home / "skills" / "generated"
+        skill_lifecycle = SkillLifecycleManager(
+            registry=skill_registry,
+            generated_dir=generated_dir,
+        )
+        log.info("skill_lifecycle_manager_created")
+    except Exception:
+        log.debug("skill_lifecycle_manager_creation_failed", exc_info=True)
+    result["skill_lifecycle"] = skill_lifecycle
 
     # Agent Router (multi-agent routing + audit)
     agents_config = jarvis_home / "config" / "agents.yaml"

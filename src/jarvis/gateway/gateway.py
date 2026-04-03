@@ -1251,6 +1251,31 @@ class Gateway:
         self._background_tasks.add(_retention_task)
         _retention_task.add_done_callback(self._background_tasks.discard)
 
+        # Skill lifecycle: daily audit
+        async def _daily_skill_lifecycle():
+            while True:
+                await asyncio.sleep(86400)  # 24 hours
+                try:
+                    if hasattr(self, "_skill_lifecycle") and self._skill_lifecycle:
+                        audit_results = self._skill_lifecycle.audit_all()
+                        healthy = sum(1 for r in audit_results if r.status == "healthy")
+                        unhealthy = len(audit_results) - healthy
+                        if unhealthy > 0:
+                            log.info(
+                                "skill_lifecycle_audit",
+                                total=len(audit_results),
+                                healthy=healthy,
+                                unhealthy=unhealthy,
+                            )
+                except Exception:
+                    log.debug("skill_lifecycle_cron_failed", exc_info=True)
+
+        _skill_lifecycle_task = asyncio.create_task(
+            _daily_skill_lifecycle(), name="daily-skill-lifecycle"
+        )
+        self._background_tasks.add(_skill_lifecycle_task)
+        _skill_lifecycle_task.add_done_callback(self._background_tasks.discard)
+
         # Start confidence decay (runs every 24 hours)
         if self._confidence_manager is not None:
 
