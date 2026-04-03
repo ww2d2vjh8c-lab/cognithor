@@ -380,13 +380,19 @@ class CUAgentExecutor:
 
     @staticmethod
     def _format_elements(elements: list[dict]) -> str:
-        """Format elements list for the decide prompt."""
+        """Format elements list for the decide prompt with source label."""
         if not elements:
             return "(keine Elemente erkannt)"
+        source = elements[0].get("source", "vision")
+        source_label = (
+            "Windows UI Automation — exakte Koordinaten"
+            if source == "uia"
+            else "Vision-Analyse — geschaetzte Koordinaten"
+        )
         compact = [
             {k: e[k] for k in ("name", "type", "x", "y", "text") if k in e} for e in elements[:15]
         ]
-        return json.dumps(compact, ensure_ascii=False, indent=None)
+        return f"(Quelle: {source_label})\n" + json.dumps(compact, ensure_ascii=False, indent=None)
 
     @staticmethod
     def _check_completion_hint(hint: str, screenshot_desc: str) -> bool:

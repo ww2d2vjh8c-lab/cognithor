@@ -487,7 +487,23 @@ async def init_tools(
             from jarvis.mcp.computer_use import register_computer_use_tools
 
             vision = getattr(gateway, "_vision_analyzer", None) if gateway else None
-            cu_tools = register_computer_use_tools(mcp_client, vision_analyzer=vision)
+
+            # Create UIA provider for exact element coordinates (Windows only)
+            uia_provider = None
+            import sys as _sys
+
+            if _sys.platform == "win32":
+                try:
+                    from jarvis.mcp.ui_automation import UIAutomationProvider
+
+                    uia_provider = UIAutomationProvider()
+                    log.info("ui_automation_provider_created")
+                except Exception:
+                    log.debug("ui_automation_not_available", exc_info=True)
+
+            cu_tools = register_computer_use_tools(
+                mcp_client, vision_analyzer=vision, uia_provider=uia_provider
+            )
             if cu_tools:
                 if gateway:
                     gateway._cu_tools = cu_tools

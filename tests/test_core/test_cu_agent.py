@@ -1597,3 +1597,34 @@ class TestDialogHint:
         assert "Dialogfenster" in CUAgentExecutor._CU_SYSTEM_PROMPT
         assert "Escape" in CUAgentExecutor._CU_SYSTEM_PROMPT
         assert "Popup" in CUAgentExecutor._CU_SYSTEM_PROMPT
+
+
+class TestFormatElementsSourceLabel:
+    def _make_agent(self):
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        mcp = MagicMock()
+        mcp._builtin_handlers = {}
+        return CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+
+    def test_uia_source_label(self):
+        agent = self._make_agent()
+        elements = [
+            {"name": "OK", "type": "Button", "x": 100, "y": 200, "text": "", "source": "uia"},
+        ]
+        result = agent._format_elements(elements)
+        assert "exakte Koordinaten" in result
+        assert "OK" in result
+
+    def test_vision_source_label(self):
+        agent = self._make_agent()
+        elements = [
+            {"name": "OK", "type": "Button", "x": 100, "y": 200, "text": ""},
+        ]
+        result = agent._format_elements(elements)
+        assert "geschaetzte Koordinaten" in result
+
+    def test_empty_elements(self):
+        agent = self._make_agent()
+        result = agent._format_elements([])
+        assert "keine Elemente" in result
