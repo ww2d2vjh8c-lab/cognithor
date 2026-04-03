@@ -1232,3 +1232,19 @@ class TestRedditScenarioIntegration:
         assert result.success is True
         assert "1/2" in result.task_summary
         assert "broken_phase" in result.task_summary
+
+
+class TestCUAllowedToolsConfig:
+    def test_default_allowed_tools(self):
+        from jarvis.config import ToolsConfig
+
+        cfg = ToolsConfig()
+        assert "computer_screenshot" in cfg.computer_use_allowed_tools
+        assert "computer_click" in cfg.computer_use_allowed_tools
+        assert "computer_type" in cfg.computer_use_allowed_tools
+        assert "computer_hotkey" in cfg.computer_use_allowed_tools
+        assert "computer_scroll" in cfg.computer_use_allowed_tools
+        assert "computer_drag" in cfg.computer_use_allowed_tools
+        assert "extract_text" in cfg.computer_use_allowed_tools
+        assert "write_file" in cfg.computer_use_allowed_tools
+        assert "exec_command" not in cfg.computer_use_allowed_tools

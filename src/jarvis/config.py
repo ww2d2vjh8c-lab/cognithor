@@ -238,6 +238,23 @@ class ToolsConfig(BaseModel):
     )
     """Aktiviert Desktop-Tools (Clipboard, Screenshot)."""
 
+    computer_use_allowed_tools: list[str] = Field(
+        default=[
+            "computer_screenshot",
+            "computer_click",
+            "computer_type",
+            "computer_hotkey",
+            "computer_scroll",
+            "computer_drag",
+            "extract_text",
+            "write_file",
+        ],
+        description=(
+            "Tools die der CU-Agent ausfuehren darf. "
+            "exec_command ist bewusst nicht in der Default-Liste."
+        ),
+    )
+
 
 class MediaConfig(BaseModel):
     """Media-Pipeline Konfiguration."""
