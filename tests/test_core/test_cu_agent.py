@@ -1480,3 +1480,112 @@ class TestPromptInjectionHardening:
         system_msg = messages[0]["content"]
         assert "Ignoriere" in system_msg
         assert "Screenshot" in system_msg or "Zieltext" in system_msg
+
+
+class TestOscillationDetection:
+    def _make_agent(self, **config_overrides) -> CUAgentExecutor:
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        mcp = MagicMock()
+        mcp._builtin_handlers = {}
+        return CUAgentExecutor(
+            planner, mcp, MagicMock(), MagicMock(), {}, CUAgentConfig(**config_overrides)
+        )
+
+    def test_oscillation_detected(self):
+        agent = self._make_agent()
+        agent._recent_actions = ["A", "B", "A", "B", "A", "B"]
+        result = CUAgentResult(iterations=6)
+        assert agent._check_abort(result, time.monotonic(), None) == "stuck_oscillation"
+
+    def test_no_oscillation_with_3_unique(self):
+        agent = self._make_agent()
+        agent._recent_actions = ["A", "B", "C", "A", "B", "C"]
+        result = CUAgentResult(iterations=6)
+        assert agent._check_abort(result, time.monotonic(), None) == ""
+
+    def test_no_oscillation_with_few_actions(self):
+        agent = self._make_agent()
+        agent._recent_actions = ["A", "B", "A"]
+        result = CUAgentResult(iterations=3)
+        assert agent._check_abort(result, time.monotonic(), None) == ""
+
+
+class TestContentLimit:
+    def test_extracted_content_capped(self):
+        from jarvis.core.cu_agent import _MAX_EXTRACTED_CONTENT
+
+        assert _MAX_EXTRACTED_CONTENT == 512_000
+
+    @pytest.mark.asyncio
+    async def test_extraction_stops_appending_at_limit(self):
+        """When extracted_content exceeds limit, new text is not appended."""
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        planner._ollama.chat = AsyncMock(
+            side_effect=[
+                # decompose
+                {
+                    "message": {
+                        "content": json.dumps(
+                            [
+                                {
+                                    "name": "read",
+                                    "goal": "Read",
+                                    "completion_hint": "done",
+                                    "max_iterations": 5,
+                                    "tools": ["extract_text"],
+                                    "extract_content": True,
+                                    "content_key": "data",
+                                },
+                            ]
+                        )
+                    }
+                },
+                # decide: extract
+                {"message": {"content": '{"tool": "extract_text", "params": {}}'}},
+                # decide: DONE
+                {"message": {"content": "DONE: fertig"}},
+            ]
+        )
+
+        mcp = MagicMock()
+        mcp._builtin_handlers = {
+            "computer_screenshot": AsyncMock(
+                return_value={
+                    "success": True,
+                    "description": "screen",
+                    "elements": [],
+                }
+            ),
+        }
+
+        from jarvis.core.cu_agent import _MAX_EXTRACTED_CONTENT
+        from jarvis.models import ActionPlan
+
+        agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+        # Pre-fill extracted_content to just under limit
+        agent_result_hack = "x" * (_MAX_EXTRACTED_CONTENT - 10)
+        agent._extract_text_from_screen = AsyncMock(return_value="A" * 1000)
+
+        result = await agent.execute(
+            goal="test limit",
+            initial_plan=ActionPlan(goal="test", steps=[]),
+        )
+
+        # Content should not grow beyond limit
+        assert len(result.extracted_content) < _MAX_EXTRACTED_CONTENT + 2000
+
+
+class TestDialogHint:
+    def _make_agent(self) -> CUAgentExecutor:
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        mcp = MagicMock()
+        mcp._builtin_handlers = {}
+        return CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+
+    def test_system_prompt_mentions_dialog(self):
+        assert "Dialogfenster" in CUAgentExecutor._CU_SYSTEM_PROMPT
+        assert "Escape" in CUAgentExecutor._CU_SYSTEM_PROMPT
+        assert "Popup" in CUAgentExecutor._CU_SYSTEM_PROMPT
