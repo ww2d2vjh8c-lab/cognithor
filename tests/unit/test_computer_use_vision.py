@@ -210,3 +210,34 @@ class TestCoordinateScaling:
             move_args = mock_pag.moveTo.call_args
             assert move_args[0][0] == 200  # start_x scaled
             assert move_args[0][1] == 400  # start_y scaled
+
+
+class TestWaitForStableScreen:
+    @pytest.mark.asyncio
+    async def test_returns_on_stable_screen(self):
+        tools = ComputerUseTools()
+
+        with patch("jarvis.mcp.computer_use._take_screenshot_b64") as mock_ss:
+            mock_ss.return_value = ("same_image_data", 1920, 1080, 1.0)
+            await tools._wait_for_stable_screen(
+                min_delay_ms=10, poll_interval_ms=10, timeout_ms=5000
+            )
+            # Should complete quickly without hitting timeout
+
+    @pytest.mark.asyncio
+    async def test_timeout_on_changing_screen(self):
+        tools = ComputerUseTools()
+        counter = {"n": 0}
+
+        def changing_screenshot(monitor_index=0):
+            counter["n"] += 1
+            return (f"different_image_{counter['n']}", 1920, 1080, 1.0)
+
+        with patch("jarvis.mcp.computer_use._take_screenshot_b64", side_effect=changing_screenshot):
+            import time as _time
+            start = _time.monotonic()
+            await tools._wait_for_stable_screen(
+                min_delay_ms=10, poll_interval_ms=10, timeout_ms=200
+            )
+            elapsed = (_time.monotonic() - start) * 1000
+            assert elapsed >= 150  # at least close to timeout

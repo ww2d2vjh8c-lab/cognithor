@@ -1248,3 +1248,19 @@ class TestCUAllowedToolsConfig:
         assert "extract_text" in cfg.computer_use_allowed_tools
         assert "write_file" in cfg.computer_use_allowed_tools
         assert "exec_command" not in cfg.computer_use_allowed_tools
+
+
+class TestCUAgentConfigDelays:
+    def test_default_action_delays(self):
+        cfg = CUAgentConfig()
+        assert cfg.action_delays_ms["computer_click"] == 400
+        assert cfg.action_delays_ms["exec_command"] == 2000
+        assert cfg.action_delays_ms["write_file"] == 100
+
+    def test_cu_tools_param_default_none(self):
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        mcp = MagicMock()
+        mcp._builtin_handlers = {}
+        agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+        assert agent._cu_tools is None

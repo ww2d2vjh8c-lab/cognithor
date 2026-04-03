@@ -40,6 +40,15 @@ class CUAgentConfig:
     vision_model: str = "qwen3-vl:32b"
     screenshot_after_action: bool = True
     stuck_detection_threshold: int = 3
+    action_delays_ms: dict[str, int] = field(default_factory=lambda: {
+        "computer_click": 400,
+        "computer_type": 300,
+        "computer_hotkey": 800,
+        "computer_scroll": 200,
+        "computer_drag": 500,
+        "exec_command": 2000,
+        "write_file": 100,
+    })
 
 
 @dataclass
@@ -280,6 +289,7 @@ class CUAgentExecutor:
         working_memory: Any,
         tool_schemas: dict[str, Any],
         config: CUAgentConfig | None = None,
+        cu_tools: Any | None = None,
     ) -> None:
         self._planner = planner
         self._mcp = mcp_client
@@ -287,6 +297,7 @@ class CUAgentExecutor:
         self._wm = working_memory
         self._tool_schemas = tool_schemas
         self._config = config or CUAgentConfig()
+        self._cu_tools = cu_tools
         self._action_history: list[str] = []
         self._recent_actions: list[str] = []
 

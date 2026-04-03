@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import hashlib
 import io
+import time
 from typing import Any
 
 from jarvis.utils.logging import get_logger
@@ -77,6 +79,38 @@ class ComputerUseTools:
     def __init__(self, vision_analyzer: Any = None) -> None:
         self._vision = vision_analyzer
         self._last_scale_factor: float = 1.0
+
+    async def _wait_for_stable_screen(
+        self,
+        min_delay_ms: int = 300,
+        poll_interval_ms: int = 300,
+        stability_threshold: int = 2,
+        timeout_ms: int = 5000,
+    ) -> None:
+        """Wait until screen content stabilizes after an action."""
+        await asyncio.sleep(min_delay_ms / 1000.0)
+
+        start = time.monotonic()
+        last_hash = ""
+        stable_count = 0
+
+        while (time.monotonic() - start) * 1000 < timeout_ms:
+            try:
+                loop = asyncio.get_running_loop()
+                b64, _, _, _ = await loop.run_in_executor(None, _take_screenshot_b64)
+                current_hash = hashlib.md5(b64.encode()).hexdigest()  # noqa: S324
+
+                if current_hash == last_hash:
+                    stable_count += 1
+                    if stable_count >= stability_threshold:
+                        return
+                else:
+                    stable_count = 0
+                    last_hash = current_hash
+            except Exception:
+                return  # Screenshot failed — don't block
+
+            await asyncio.sleep(poll_interval_ms / 1000.0)
 
     async def computer_screenshot(self, monitor: int = 0, task_context: str = "") -> dict[str, Any]:
         """Take a screenshot and describe what's visible.
