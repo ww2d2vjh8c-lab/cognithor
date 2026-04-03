@@ -361,17 +361,15 @@ class ContextPipeline:
         if not self._skill_registry:
             return ""
         try:
-            # Try to find matching skills by keywords
-            match_fn = getattr(self._skill_registry, "find_matching_skills", None)
-            if match_fn is None:
-                return ""
-            matches = match_fn(query)
+            matches = self._skill_registry.match(query, top_k=3)
             if not matches:
                 return ""
-            # Format top match as context hint
-            top = matches[0] if isinstance(matches, list) else matches
-            name = getattr(top, "name", str(top))
-            return f"Relevant skill: {name}"
+            lines = []
+            for m in matches[:3]:
+                s = m.skill
+                kw = ", ".join(s.trigger_keywords[:5]) if s.trigger_keywords else ""
+                lines.append(f"- {s.name}: {s.description} (Keywords: {kw})")
+            return "Verfuegbare Skills:\n" + "\n".join(lines)
         except Exception:
             log.debug("context_skill_lookup_failed", exc_info=True)
             return ""
