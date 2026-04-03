@@ -3037,6 +3037,11 @@ class Gateway:
                 from jarvis.core.cu_agent import CUAgentConfig, CUAgentExecutor
 
                 _vision_model = getattr(self._config, "vision_model", "qwen3-vl:32b")
+                _allowed_tools = getattr(
+                    getattr(self._config, "tools", None),
+                    "computer_use_allowed_tools",
+                    None,
+                )
                 cu_agent = CUAgentExecutor(
                     planner=self._planner,
                     mcp_client=self._mcp_client,
@@ -3048,6 +3053,9 @@ class Gateway:
                         max_duration_seconds=480,
                         vision_model=_vision_model,
                     ),
+                    allowed_tools=_allowed_tools,
+                    session_context=session,
+                    cu_tools=getattr(self, "_cu_tools", None),
                 )
                 cu_result = await cu_agent.execute(
                     goal=msg.text,

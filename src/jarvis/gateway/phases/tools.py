@@ -489,6 +489,8 @@ async def init_tools(
             vision = getattr(gateway, "_vision_analyzer", None) if gateway else None
             cu_tools = register_computer_use_tools(mcp_client, vision_analyzer=vision)
             if cu_tools:
+                if gateway:
+                    gateway._cu_tools = cu_tools
                 log.info("computer_use_tools_registered")
         except Exception:
             log.debug("computer_use_not_registered", exc_info=True)
