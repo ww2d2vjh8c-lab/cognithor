@@ -141,7 +141,10 @@ class TestCUToolExecution:
         mcp = MagicMock()
         mcp._builtin_handlers = {}
 
-        agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+        agent = CUAgentExecutor(
+            planner, mcp, MagicMock(), MagicMock(), {},
+            allowed_tools=["nonexistent"],
+        )
         result = await agent._execute_tool("nonexistent", {})
 
         assert result.is_error is True
@@ -230,7 +233,10 @@ class TestCUAgentExecuteLoop:
             ],
         )
 
-        agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+        agent = CUAgentExecutor(
+            planner, mcp, MagicMock(), MagicMock(), {},
+            allowed_tools=CUAgentExecutor.CU_DEFAULT_ALLOWED_TOOLS + ["exec_command"],
+        )
         result = await agent.execute(goal="Rechner oeffnen", initial_plan=initial_plan)
 
         assert result.success is True
@@ -1325,3 +1331,74 @@ class TestThinkStripExtractText:
 
         assert "<think>" not in text
         assert "Hello World" in text
+
+
+class TestToolEnforcement:
+    def _make_agent(
+        self,
+        allowed_tools=None,
+        gatekeeper_blocks=False,
+    ):
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        mcp = MagicMock()
+        mcp._builtin_handlers = {
+            "computer_click": AsyncMock(return_value={"success": True}),
+            "exec_command": AsyncMock(return_value="done"),
+            "write_file": AsyncMock(return_value="written"),
+        }
+
+        gatekeeper = MagicMock()
+        if gatekeeper_blocks:
+            decision = MagicMock()
+            decision.is_blocked = True
+            decision.reason = "RED: dangerous"
+            gatekeeper.evaluate.return_value = decision
+        else:
+            decision = MagicMock()
+            decision.is_blocked = False
+            gatekeeper.evaluate.return_value = decision
+
+        return CUAgentExecutor(
+            planner, mcp, gatekeeper, MagicMock(), {},
+            allowed_tools=allowed_tools or ["computer_click", "write_file"],
+            session_context=MagicMock(),
+        )
+
+    @pytest.mark.asyncio
+    async def test_allowed_tool_passes(self):
+        agent = self._make_agent(allowed_tools=["computer_click"])
+        result = await agent._execute_tool("computer_click", {"x": 100, "y": 200})
+        assert result.success is True
+
+    @pytest.mark.asyncio
+    async def test_disallowed_tool_blocked(self):
+        agent = self._make_agent(allowed_tools=["computer_click"])
+        result = await agent._execute_tool("exec_command", {"command": "rm -rf /"})
+        assert result.is_error is True
+        assert "nicht erlaubt" in result.content
+
+    @pytest.mark.asyncio
+    async def test_subtask_tools_enforced(self):
+        agent = self._make_agent(allowed_tools=["computer_click", "write_file"])
+        agent._current_subtask_tools = ["computer_click"]
+        result = await agent._execute_tool("write_file", {"path": "x", "content": "y"})
+        assert result.is_error is True
+        assert "Phase" in result.content or "nicht" in result.content
+
+    @pytest.mark.asyncio
+    async def test_gatekeeper_blocks_tool(self):
+        agent = self._make_agent(
+            allowed_tools=["computer_click"],
+            gatekeeper_blocks=True,
+        )
+        result = await agent._execute_tool("computer_click", {"x": 1, "y": 1})
+        assert result.is_error is True
+        assert "Gatekeeper" in result.content
+
+    @pytest.mark.asyncio
+    async def test_empty_subtask_tools_allows_all_from_allowlist(self):
+        agent = self._make_agent(allowed_tools=["computer_click", "write_file"])
+        agent._current_subtask_tools = []
+        result = await agent._execute_tool("write_file", {"path": "x", "content": "y"})
+        assert result.success is True

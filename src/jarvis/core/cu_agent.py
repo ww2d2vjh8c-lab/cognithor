@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from jarvis.models import ActionPlan, ToolResult
+from jarvis.models import ActionPlan, PlannedAction, ToolResult
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
@@ -275,6 +275,17 @@ class CUAgentExecutor:
     for both planning and screenshot analysis — zero model swaps.
     """
 
+    CU_DEFAULT_ALLOWED_TOOLS = [
+        "computer_screenshot",
+        "computer_click",
+        "computer_type",
+        "computer_hotkey",
+        "computer_scroll",
+        "computer_drag",
+        "extract_text",
+        "write_file",
+    ]
+
     _CU_SUBTASK_CONTEXT = (
         "--- Aktuelle Phase: {phase_name} ({phase_idx}/{phase_total}) ---\n"
         "Phasenziel: {phase_goal}\n"
@@ -312,6 +323,8 @@ class CUAgentExecutor:
         tool_schemas: dict[str, Any],
         config: CUAgentConfig | None = None,
         cu_tools: Any | None = None,
+        allowed_tools: list[str] | None = None,
+        session_context: Any | None = None,
     ) -> None:
         self._planner = planner
         self._mcp = mcp_client
@@ -320,6 +333,9 @@ class CUAgentExecutor:
         self._tool_schemas = tool_schemas
         self._config = config or CUAgentConfig()
         self._cu_tools = cu_tools
+        self._allowed_tools = allowed_tools or self.CU_DEFAULT_ALLOWED_TOOLS
+        self._session_context = session_context
+        self._current_subtask_tools: list[str] = []
         self._action_history: list[str] = []
         self._recent_actions: list[str] = []
 
@@ -433,6 +449,7 @@ class CUAgentExecutor:
         # Sub-task-driven loop
         for st_idx, sub_task in enumerate(task_plan.sub_tasks):
             sub_task.status = "running"
+            self._current_subtask_tools = sub_task.available_tools
             sub_iter = 0
             consecutive_failures = 0
             last_failure = ""
@@ -621,6 +638,7 @@ class CUAgentExecutor:
                 break
 
             # Reset per-sub-task state
+            self._current_subtask_tools = []
             self._recent_actions.clear()
 
         # Build task summary
@@ -698,7 +716,38 @@ class CUAgentExecutor:
         return None
 
     async def _execute_tool(self, tool: str, params: dict) -> ToolResult:
-        """Execute a single CU tool via MCP client."""
+        """Execute a single CU tool with 3-layer enforcement."""
+        # Layer 1: Global allowlist
+        if tool not in self._allowed_tools:
+            return ToolResult(
+                tool_name=tool,
+                content=f"Tool '{tool}' nicht erlaubt (nicht in CU-Allowlist)",
+                is_error=True,
+            )
+
+        # Layer 2: Sub-task available_tools (if set)
+        if self._current_subtask_tools and tool not in self._current_subtask_tools:
+            return ToolResult(
+                tool_name=tool,
+                content=f"Tool '{tool}' in dieser Phase nicht verfuegbar",
+                is_error=True,
+            )
+
+        # Layer 3: Gatekeeper risk check
+        if self._gatekeeper and self._session_context:
+            try:
+                action = PlannedAction(tool=tool, params=params, rationale="CU agent action")
+                decision = self._gatekeeper.evaluate(action, self._session_context)
+                if decision.is_blocked:
+                    return ToolResult(
+                        tool_name=tool,
+                        content=f"Gatekeeper: {decision.reason}",
+                        is_error=True,
+                    )
+            except Exception as exc:
+                log.debug("cu_gatekeeper_check_failed", tool=tool, error=str(exc)[:100])
+
+        # Execute
         handler = self._mcp._builtin_handlers.get(tool)
         if not handler:
             return ToolResult(
@@ -709,17 +758,29 @@ class CUAgentExecutor:
         try:
             result = await handler(**params)
             content = str(result) if not isinstance(result, str) else result
-            return ToolResult(
+            tool_result = ToolResult(
                 tool_name=tool,
                 content=content[:5000],
                 is_error=False,
             )
         except Exception as exc:
-            return ToolResult(
+            tool_result = ToolResult(
                 tool_name=tool,
                 content=f"Error: {exc}",
                 is_error=True,
             )
+
+        # Wait for UI to stabilize after action
+        if (
+            not tool_result.is_error
+            and tool != "computer_screenshot"
+            and self._cu_tools
+        ):
+            min_delay = self._config.action_delays_ms.get(tool, 300)
+            with contextlib.suppress(Exception):
+                await self._cu_tools._wait_for_stable_screen(min_delay_ms=min_delay)
+
+        return tool_result
 
     async def _take_and_analyze_screenshot(self) -> dict | None:
         """Take screenshot via CU tool and return result with elements."""
