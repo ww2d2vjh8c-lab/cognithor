@@ -283,6 +283,11 @@ class Gateway:
         apply_phase(self, pge_result)
         apply_phase(self, agents_result)
 
+        # Wire skill registry into context pipeline for proactive skill suggestions
+        if self._context_pipeline and self._skill_registry:
+            self._context_pipeline.set_skill_registry(self._skill_registry)
+            log.info("skill_registry_wired_to_context_pipeline")
+
         # Wire Orchestrator runner (Sub-Agent execution via handle_message)
         if getattr(self, "_orchestrator", None):
             try:

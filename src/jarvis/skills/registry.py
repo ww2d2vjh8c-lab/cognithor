@@ -449,6 +449,8 @@ class SkillRegistry:
                 and skill.tools_required
                 and not all(t in available_tools for t in skill.tools_required)
             ):
+                missing = [t for t in skill.tools_required if t not in available_tools]
+                log.debug("skill_skipped_missing_tools", skill=skill.slug, missing=missing)
                 continue
 
             score = 0.0
