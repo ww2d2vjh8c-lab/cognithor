@@ -246,6 +246,16 @@ class CUAgentExecutor:
     for both planning and screenshot analysis — zero model swaps.
     """
 
+    _CU_SUBTASK_CONTEXT = (
+        "--- Aktuelle Phase: {phase_name} ({phase_idx}/{phase_total}) ---\n"
+        "Phasenziel: {phase_goal}\n"
+        "Abschlusskriterium: {completion_hint}\n"
+        "{extraction_status}"
+        "{failure_hint}"
+        "{content_preview}"
+        "---\n\n"
+    )
+
     _CU_DECIDE_PROMPT = (
         "Du steuerst den Desktop des Users. Ziel: {goal}\n\n"
         "Bisherige Aktionen:\n{action_history}\n\n"
@@ -367,9 +377,11 @@ class CUAgentExecutor:
         status_callback: Callable | None = None,
         cancel_check: Callable | None = None,
     ) -> CUAgentResult:
-        """Run the CU agent loop until done or aborted."""
+        """Run the CU agent loop with sub-task decomposition."""
         result = CUAgentResult()
         start = time.monotonic()
+        content_bag: dict[str, list[str]] = {}
+        global_iteration = 0
 
         async def _status(phase: str, msg: str) -> None:
             if status_callback:
@@ -388,63 +400,224 @@ class CUAgentExecutor:
                 f"-> {'OK' if tool_result.success else 'FAIL'}"
             )
 
-        # Main agent loop: screenshot → decide → act
-        while True:
-            result.iterations += 1
+        # Decompose goal into sub-tasks
+        decomposer = CUTaskDecomposer(self._planner, self._config)
+        task_plan = await decomposer.decompose(goal)
 
-            abort = self._check_abort(result, start, cancel_check)
-            if abort:
-                result.abort_reason = abort
-                break
+        # Sub-task-driven loop
+        for st_idx, sub_task in enumerate(task_plan.sub_tasks):
+            sub_task.status = "running"
+            sub_iter = 0
+            consecutive_failures = 0
+            last_failure = ""
+            extraction_count = 0
+            prev_screenshot_desc = ""
+            stale_screen_count = 0
 
             await _status(
                 "computer_use",
-                f"Schritt {result.iterations}/{self._config.max_iterations}: "
-                f"Analysiere Bildschirm...",
+                f"Phase {st_idx + 1}/{len(task_plan.sub_tasks)}: {sub_task.goal[:50]}...",
             )
 
-            screenshot = await self._take_and_analyze_screenshot()
-            if not screenshot:
-                self._action_history.append("computer_screenshot() -> FAIL")
-                continue
+            while sub_iter < sub_task.max_iterations:
+                sub_iter += 1
+                global_iteration += 1
+                result.iterations = global_iteration
 
-            result.final_screenshot_description = screenshot.get("description", "")
+                # Global abort check
+                abort = self._check_abort(result, start, cancel_check)
+                if abort:
+                    result.abort_reason = abort
+                    sub_task.status = "failed"
+                    for remaining in task_plan.sub_tasks[st_idx + 1:]:
+                        remaining.status = "failed"
+                    break
 
-            decision = await self._decide_next_step(goal, screenshot)
+                await _status(
+                    "computer_use",
+                    f"Phase {st_idx + 1}/{len(task_plan.sub_tasks)}, "
+                    f"Schritt {sub_iter}/{sub_task.max_iterations}: Analysiere...",
+                )
 
-            if decision is None:
-                self._action_history.append("decide() -> no valid action")
-                continue
+                screenshot = await self._take_and_analyze_screenshot()
+                if not screenshot:
+                    self._action_history.append("computer_screenshot() -> FAIL")
+                    continue
 
-            if decision.get("done"):
-                result.success = True
-                result.abort_reason = "done"
-                summary = decision.get("summary", "")
-                self._action_history.append(f"DONE: {summary}")
+                screenshot_desc = screenshot.get("description", "")
+                result.final_screenshot_description = screenshot_desc
+
+                # Completion hint check
+                if self._check_completion_hint(sub_task.completion_hint, screenshot_desc):
+                    sub_task.status = "done"
+                    self._action_history.append(
+                        f"[Phase {st_idx + 1} '{sub_task.name}': "
+                        f"Hint matched -> abgeschlossen]"
+                    )
+                    break
+
+                # Stale screen detection
+                if prev_screenshot_desc:
+                    sim = self._screenshot_similarity(prev_screenshot_desc, screenshot_desc)
+                    if sim > 0.9:
+                        stale_screen_count += 1
+                        if stale_screen_count >= 2:
+                            last_failure = "Bildschirm hat sich nicht veraendert."
+                            consecutive_failures += 1
+                    else:
+                        stale_screen_count = 0
+                prev_screenshot_desc = screenshot_desc
+
+                # Build sub-task context for prompt
+                extraction_status = ""
+                if sub_task.extract_content and extraction_count > 0:
+                    extraction_status = f"Du hast {extraction_count} Eintraege extrahiert.\n"
+
+                failure_hint = self._build_failure_hint(last_failure, consecutive_failures)
+                if failure_hint:
+                    failure_hint += "\n"
+
+                content_preview = ""
+                bag_key = sub_task.content_key
+                if bag_key and bag_key in content_bag and content_bag[bag_key]:
+                    preview = "\n".join(content_bag[bag_key])[-500:]
+                    content_preview = f"Bisheriger Inhalt:\n{preview}\n"
+
+                # File-writing sub-task: inject content bag into prompt
+                file_context = ""
+                if sub_task.output_file and content_bag:
+                    all_content = []
+                    for key, entries in content_bag.items():
+                        all_content.extend(entries)
+                    full_text = "\n\n".join(all_content)
+                    file_context = (
+                        f"\nGesammelter Inhalt ({len(all_content)} Eintraege):\n"
+                        f"---\n{full_text[:3000]}\n---\n"
+                        f"Schreibe diesen Inhalt mit write_file in die Datei: "
+                        f"{sub_task.output_file}\n"
+                    )
+
+                subtask_context = self._CU_SUBTASK_CONTEXT.format(
+                    phase_name=sub_task.name,
+                    phase_idx=st_idx + 1,
+                    phase_total=len(task_plan.sub_tasks),
+                    phase_goal=sub_task.goal,
+                    completion_hint=sub_task.completion_hint,
+                    extraction_status=extraction_status,
+                    failure_hint=failure_hint,
+                    content_preview=content_preview + file_context,
+                )
+
+                decision = await self._decide_next_step(
+                    goal, screenshot, subtask_context=subtask_context
+                )
+
+                if decision is None:
+                    self._action_history.append("decide() -> no valid action")
+                    continue
+
+                if decision.get("done"):
+                    sub_task.status = "done"
+                    summary = decision.get("summary", "")
+                    self._action_history.append(
+                        f"[Phase {st_idx + 1} '{sub_task.name}': DONE: {summary}]"
+                    )
+                    break
+
+                if decision.get("tool") == "extract_text":
+                    text = await self._extract_text_from_screen()
+                    if text:
+                        extraction_count += 1
+                        label = f"## {sub_task.content_key or 'content'} {extraction_count}"
+                        labeled_text = f"{label}\n{text}"
+                        result.extracted_content += labeled_text + "\n\n"
+                        if bag_key:
+                            content_bag.setdefault(bag_key, []).append(labeled_text)
+                        self._action_history.append(
+                            f"extract_text() -> {len(text)} chars [{extraction_count}]"
+                        )
+                    continue
+
+                tool = decision["tool"]
+                params = decision.get("params", {})
+                await _status(
+                    "computer_use",
+                    f"Phase {st_idx + 1}, Schritt {sub_iter}: {tool}...",
+                )
+
+                tool_result = await self._execute_tool(tool, params)
+                result.tool_results.append(tool_result)
+
+                action_desc = (
+                    f"{tool}({self._format_params(params)}) "
+                    f"-> {'OK' if tool_result.success else 'FAIL'}"
+                )
+                self._action_history.append(action_desc)
+
+                # Track output files from write_file
+                if tool == "write_file" and tool_result.success:
+                    path = params.get("path", sub_task.output_file)
+                    if path:
+                        result.output_files.append(path)
+
+                # Failure tracking
+                if tool_result.is_error:
+                    last_failure = (
+                        f"{tool}({self._format_params(params)}) -> "
+                        f"{tool_result.content[:200]}"
+                    )
+                    consecutive_failures += 1
+                    if consecutive_failures >= 4:
+                        sub_task.status = "failed"
+                        self._action_history.append(
+                            f"[Phase {st_idx + 1} '{sub_task.name}': "
+                            f"4 Fehler -> uebersprungen]"
+                        )
+                        break
+                else:
+                    last_failure = ""
+                    consecutive_failures = 0
+
+                # Stuck-loop tracking
+                action_key = f"{tool}:{sorted(params.items())}"
+                self._recent_actions.append(action_key)
+                if len(self._recent_actions) > self._config.stuck_detection_threshold:
+                    self._recent_actions.pop(0)
+
+            else:
+                # Sub-task exhausted its iteration budget
+                if sub_task.status == "running":
+                    sub_task.status = "partial"
+                    self._action_history.append(
+                        f"[Phase {st_idx + 1} '{sub_task.name}': "
+                        f"max_iterations erreicht -> partial]"
+                    )
+
+            # Global abort triggered — stop all sub-tasks
+            if result.abort_reason:
                 break
 
-            if decision.get("tool") == "extract_text":
-                text = await self._extract_text_from_screen()
-                if text:
-                    result.extracted_content += text + "\n\n"
-                    self._action_history.append(f"extract_text() -> {len(text)} chars")
-                continue
+            # Reset per-sub-task state
+            self._recent_actions.clear()
 
-            tool = decision["tool"]
-            params = decision.get("params", {})
-            await _status("computer_use", f"Schritt {result.iterations}: {tool}...")
+        # Build task summary
+        completed = [st for st in task_plan.sub_tasks if st.status == "done"]
+        failed = [st for st in task_plan.sub_tasks if st.status in ("failed", "partial")]
 
-            tool_result = await self._execute_tool(tool, params)
-            result.tool_results.append(tool_result)
-            self._action_history.append(
-                f"{tool}({self._format_params(params)}) "
-                f"-> {'OK' if tool_result.success else 'FAIL'}"
+        result.task_summary = (
+            f"{len(completed)}/{len(task_plan.sub_tasks)} Phasen abgeschlossen."
+            + (f" Fehlgeschlagen: {', '.join(f.name for f in failed)}." if failed else "")
+            + (
+                f" Dateien erstellt: {', '.join(result.output_files)}."
+                if result.output_files
+                else ""
             )
+            + f" Gesammelter Inhalt: {len(result.extracted_content)} Zeichen."
+        )
 
-            action_key = f"{tool}:{sorted(params.items())}"
-            self._recent_actions.append(action_key)
-            if len(self._recent_actions) > self._config.stuck_detection_threshold:
-                self._recent_actions.pop(0)
+        if not result.abort_reason:
+            result.success = len(completed) > 0
+            result.abort_reason = "done" if result.success else "all_phases_failed"
 
         result.duration_ms = int((time.monotonic() - start) * 1000)
         result.action_history = list(self._action_history)
@@ -454,7 +627,8 @@ class CUAgentExecutor:
             iterations=result.iterations,
             duration_ms=result.duration_ms,
             abort_reason=result.abort_reason,
-            actions=len(self._action_history),
+            phases_completed=len(completed),
+            phases_total=len(task_plan.sub_tasks),
         )
         return result
 
@@ -525,7 +699,9 @@ class CUAgentExecutor:
             log.debug("cu_agent_screenshot_failed", exc_info=True)
             return None
 
-    async def _decide_next_step(self, goal: str, screenshot: dict) -> dict | None:
+    async def _decide_next_step(
+        self, goal: str, screenshot: dict, subtask_context: str = ""
+    ) -> dict | None:
         """Ask the planner what to do next based on the screenshot.
 
         Returns:
@@ -533,7 +709,7 @@ class CUAgentExecutor:
             {"done": True, "summary": "..."} for completion
             None if parsing failed
         """
-        prompt = self._CU_DECIDE_PROMPT.format(
+        prompt = subtask_context + self._CU_DECIDE_PROMPT.format(
             goal=goal,
             action_history="\n".join(self._action_history[-10:]) or "(keine)",
             screenshot_description=screenshot.get("description", "")[:1000],

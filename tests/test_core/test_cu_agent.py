@@ -167,11 +167,19 @@ class TestCUAgentExecuteLoop:
         planner._ollama = AsyncMock()
         planner._ollama.chat = AsyncMock(
             side_effect=[
+                # decompose call
+                {"message": {"content": json.dumps([
+                    {"name": "full_task", "goal": "Rechner oeffnen",
+                     "completion_hint": "Taschenrechner sichtbar", "max_iterations": 10,
+                     "tools": ["computer_click", "computer_type", "exec_command"]},
+                ])}},
+                # decide: click
                 {
                     "message": {
                         "content": '{"tool": "computer_click", "params": {"x": 200, "y": 300}, "rationale": "click window"}'
                     }
                 },
+                # decide: DONE
                 {"message": {"content": "DONE: Taschenrechner zeigt 459"}},
             ]
         )
@@ -220,11 +228,15 @@ class TestCUAgentExecuteLoop:
         planner = MagicMock()
         planner._ollama = AsyncMock()
         planner._ollama.chat = AsyncMock(
-            return_value={
-                "message": {
-                    "content": '{"tool": "computer_click", "params": {"x": 100, "y": 100}}'
-                },
-            }
+            side_effect=[
+                # decompose call
+                {"message": {"content": json.dumps([
+                    {"name": "full_task", "goal": "test", "completion_hint": "",
+                     "max_iterations": 30, "tools": ["computer_click"]},
+                ])}},
+            ] + [
+                {"message": {"content": '{"tool": "computer_click", "params": {"x": 100, "y": 100}}'}},
+            ] * 10
         )
 
         mcp = MagicMock()
@@ -255,9 +267,14 @@ class TestCUAgentExecuteLoop:
         planner = MagicMock()
         planner._ollama = AsyncMock()
         planner._ollama.chat = AsyncMock(
-            return_value={
-                "message": {"content": '{"tool": "computer_click", "params": {"x": 1, "y": 1}}'},
-            }
+            side_effect=[
+                # decompose call
+                {"message": {"content": json.dumps([
+                    {"name": "full_task", "goal": "test", "completion_hint": "",
+                     "max_iterations": 30, "tools": ["computer_click"]},
+                ])}},
+                {"message": {"content": '{"tool": "computer_click", "params": {"x": 1, "y": 1}}'}},
+            ]
         )
 
         mcp = MagicMock()
@@ -618,3 +635,163 @@ class TestCUTaskDecomposerDecompose:
         plan = await d.decompose("Test")
         assert len(plan.sub_tasks) == 1
         assert plan.sub_tasks[0].name == "step1"
+
+
+class TestSubTaskLoop:
+    @pytest.mark.asyncio
+    async def test_two_subtasks_both_complete_via_done(self):
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        planner._ollama.chat = AsyncMock(side_effect=[
+            {"message": {"content": json.dumps([
+                {"name": "phase1", "goal": "Klicke Button", "completion_hint": "Button geklickt",
+                 "max_iterations": 5, "tools": ["computer_click"]},
+                {"name": "phase2", "goal": "Tippe Text", "completion_hint": "Text sichtbar",
+                 "max_iterations": 5, "tools": ["computer_type"]},
+            ])}},
+            {"message": {"content": '{"tool": "computer_click", "params": {"x": 100, "y": 200}}'}},
+            {"message": {"content": "DONE: Button wurde geklickt"}},
+            {"message": {"content": '{"tool": "computer_type", "params": {"text": "hello"}}'}},
+            {"message": {"content": "DONE: Text wurde eingegeben"}},
+        ])
+
+        mcp = MagicMock()
+        mcp._builtin_handlers = {
+            "computer_screenshot": AsyncMock(return_value={
+                "success": True, "description": "screen", "elements": [],
+            }),
+            "computer_click": AsyncMock(return_value={"success": True}),
+            "computer_type": AsyncMock(return_value={"success": True}),
+        }
+
+        agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+        result = await agent.execute(
+            goal="Klicke und tippe",
+            initial_plan=ActionPlan(goal="test", steps=[]),
+        )
+
+        assert result.success is True
+        assert "2/2" in result.task_summary
+
+    @pytest.mark.asyncio
+    async def test_subtask_completes_via_hint_match(self):
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        planner._ollama.chat = AsyncMock(side_effect=[
+            {"message": {"content": json.dumps([
+                {"name": "open_reddit", "goal": "Oeffne Reddit",
+                 "completion_hint": "Reddit Seite locallama sichtbar",
+                 "max_iterations": 10, "tools": ["computer_click"]},
+            ])}},
+            {"message": {"content": '{"tool": "computer_click", "params": {"x": 50, "y": 50}}'}},
+        ])
+
+        mcp = MagicMock()
+        mcp._builtin_handlers = {
+            "computer_screenshot": AsyncMock(return_value={
+                "success": True,
+                "description": "Browser Reddit Seite mit locallama Posts sichtbar",
+                "elements": [],
+            }),
+            "computer_click": AsyncMock(return_value={"success": True}),
+        }
+
+        agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+        result = await agent.execute(
+            goal="Oeffne Reddit",
+            initial_plan=ActionPlan(goal="test", steps=[]),
+        )
+
+        assert result.success is True
+        assert "1/1" in result.task_summary
+
+    @pytest.mark.asyncio
+    async def test_subtask_fails_after_max_iterations_continues_next(self):
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        planner._ollama.chat = AsyncMock(side_effect=[
+            {"message": {"content": json.dumps([
+                {"name": "fail_phase", "goal": "Will fail", "completion_hint": "impossible",
+                 "max_iterations": 2, "tools": ["computer_click"]},
+                {"name": "ok_phase", "goal": "Will succeed", "completion_hint": "done",
+                 "max_iterations": 5, "tools": ["computer_click"]},
+            ])}},
+            {"message": {"content": '{"tool": "computer_click", "params": {"x": 1, "y": 1}}'}},
+            {"message": {"content": '{"tool": "computer_click", "params": {"x": 1, "y": 1}}'}},
+            {"message": {"content": "DONE: OK phase done"}},
+        ])
+
+        mcp = MagicMock()
+        mcp._builtin_handlers = {
+            "computer_screenshot": AsyncMock(return_value={
+                "success": True, "description": "screen", "elements": [],
+            }),
+            "computer_click": AsyncMock(return_value={"success": True}),
+        }
+
+        config = CUAgentConfig(max_iterations=30)
+        agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {}, config)
+        result = await agent.execute(
+            goal="test phases",
+            initial_plan=ActionPlan(goal="test", steps=[]),
+        )
+
+        assert "1/2" in result.task_summary or "Fehlgeschlagen" in result.task_summary
+
+    @pytest.mark.asyncio
+    async def test_content_extraction_accumulates_in_bag(self):
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        planner._ollama.chat = AsyncMock(side_effect=[
+            {"message": {"content": json.dumps([
+                {"name": "read_posts", "goal": "Lies Posts", "completion_hint": "done",
+                 "max_iterations": 5, "tools": ["extract_text"],
+                 "extract_content": True, "content_key": "posts"},
+            ])}},
+            {"message": {"content": '{"tool": "extract_text", "params": {}}'}},
+            {"message": {"content": "DONE: Posts gelesen"}},
+        ])
+
+        mcp = MagicMock()
+        mcp._builtin_handlers = {
+            "computer_screenshot": AsyncMock(return_value={
+                "success": True, "description": "screen with posts", "elements": [],
+            }),
+        }
+
+        agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+        agent._extract_text_from_screen = AsyncMock(return_value="Post about LLMs on local hardware")
+
+        result = await agent.execute(
+            goal="Lies Posts",
+            initial_plan=ActionPlan(goal="test", steps=[]),
+        )
+
+        assert result.success is True
+        assert "Post about LLMs" in result.extracted_content
+        assert "## posts 1" in result.extracted_content
+
+    @pytest.mark.asyncio
+    async def test_decompose_failure_degrades_to_flat_loop(self):
+        planner = MagicMock()
+        planner._ollama = AsyncMock()
+        planner._ollama.chat = AsyncMock(side_effect=[
+            RuntimeError("LLM down"),
+            {"message": {"content": "DONE: Aufgabe erledigt"}},
+        ])
+
+        mcp = MagicMock()
+        mcp._builtin_handlers = {
+            "computer_screenshot": AsyncMock(return_value={
+                "success": True, "description": "screen", "elements": [],
+            }),
+        }
+
+        agent = CUAgentExecutor(planner, mcp, MagicMock(), MagicMock(), {})
+        result = await agent.execute(
+            goal="Einfache Aufgabe",
+            initial_plan=ActionPlan(goal="test", steps=[]),
+        )
+
+        assert result.success is True
+        assert "1/1" in result.task_summary
