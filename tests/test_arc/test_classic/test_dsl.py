@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from jarvis.arc.dsl import (
+from jarvis.arc.classic.dsl import (
     crop_to_content,
     flip_h,
     flip_v,

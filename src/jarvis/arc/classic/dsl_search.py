@@ -10,8 +10,8 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 
-from jarvis.arc import dsl
-from jarvis.arc.task_parser import ArcTask, Grid, Solution
+from jarvis.arc.classic import dsl
+from jarvis.arc.classic.task_parser import ArcTask, Grid, Solution
 
 __all__ = ["build_candidates", "search"]
 

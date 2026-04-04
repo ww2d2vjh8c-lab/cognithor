@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from jarvis.arc.dsl_search import search as dsl_search
-from jarvis.arc.llm_solver import LLMSolver
+from jarvis.arc.classic.dsl_search import search as dsl_search
+from jarvis.arc.classic.llm_solver import LLMSolver
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
-    from jarvis.arc.task_parser import ArcTask, Solution
+    from jarvis.arc.classic.task_parser import ArcTask, Solution
 
 __all__ = ["ArcSolver"]
 

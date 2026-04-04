@@ -11,7 +11,7 @@ import re
 import textwrap
 from typing import Any
 
-from jarvis.arc.task_parser import ArcTask, Grid, Solution
+from jarvis.arc.classic.task_parser import ArcTask, Grid, Solution
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)

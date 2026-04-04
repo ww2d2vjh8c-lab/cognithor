@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import time
 
-from jarvis.arc.dsl_search import (
+from jarvis.arc.classic.dsl_search import (
     _grids_equal,
     build_candidates,
     search,
 )
-from jarvis.arc.task_parser import ArcTask
+from jarvis.arc.classic.task_parser import ArcTask
 
 # ---------------------------------------------------------------------------
 # Helpers
