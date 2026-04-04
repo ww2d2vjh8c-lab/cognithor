@@ -701,4 +701,135 @@ class PerGameSolver:
 
                     queue.append(new_seq)
 
+        # BFS exhausted — try greedy effect-chasing as fallback
+        return self._greedy_effect_solve(env, replay_prefix, action_set,
+                                          current_levels, timeout - (time.monotonic() - t0))
+
+    def _greedy_effect_solve(
+        self,
+        env: Any,
+        replay_prefix: list[tuple[int, int]],
+        action_set: list[tuple[int, int]],
+        current_levels: int,
+        timeout: float,
+    ) -> list[tuple[int, int]] | None:
+        """Greedy fallback: repeatedly click the valve with the largest puzzle effect.
+
+        Learns an effect matrix (which click produces how much change) and
+        iteratively applies the best action. Re-scans after sub-level transitions.
+        """
+        import time
+
+        from arcengine.enums import GameState
+
+        if timeout <= 0 or not action_set:
+            return None
+
+        t0 = time.monotonic()
+        max_clicks = 100  # safety limit
+        solution: list[tuple[int, int]] = []
+
+        # Build initial effect matrix: click each valve once, measure diff
+        effects: dict[tuple[int, int], int] = {}
+        for cx, cy in action_set:
+            obs = env.reset()
+            for rx, ry in replay_prefix:
+                obs = env.step(6, data={"x": rx, "y": ry})
+            g_before = safe_frame_extract(obs)
+            obs = env.step(6, data={"x": cx, "y": cy})
+            if obs.state == GameState.GAME_OVER:
+                effects[(cx, cy)] = -1  # poison
+                continue
+            g_after = safe_frame_extract(obs)
+            effects[(cx, cy)] = int(np.sum(g_before[1:] != g_after[1:]))
+
+        log.info("arc.effect_matrix", effects={f"{x},{y}": d for (x, y), d in effects.items()})
+
+        # Round-robin index for cycling through valves
+        valve_cycle_idx = 0
+        stagnation_count = 0
+        last_levels = current_levels
+
+        for click_num in range(max_clicks):
+            if time.monotonic() - t0 > timeout:
+                break
+
+            # Sort valves by effect, pick next in round-robin
+            active_valves = sorted(
+                [c for c in action_set if effects.get(c, 0) > 0],
+                key=lambda c: -effects[c],
+            )
+            if not active_valves:
+                break
+
+            # Cycle through valves: after 3 clicks on same valve, try next
+            best_click = active_valves[valve_cycle_idx % len(active_valves)]
+            if stagnation_count >= 3:
+                valve_cycle_idx += 1
+                stagnation_count = 0
+                best_click = active_valves[valve_cycle_idx % len(active_valves)]
+
+            solution.append(best_click)
+            full_seq = replay_prefix + solution
+
+            # Execute and check
+            obs = env.reset()
+            for rx, ry in full_seq:
+                obs = env.step(6, data={"x": rx, "y": ry})
+                if obs.state == GameState.GAME_OVER:
+                    # Last click was bad — remove it and blacklist
+                    solution.pop()
+                    effects[best_click] = -1
+                    break
+            else:
+                if obs.levels_completed > current_levels:
+                    log.info("arc.greedy_solved", clicks=len(solution))
+                    return solution
+
+                stagnation_count += 1
+
+                # Re-measure effects from current state (they may change)
+                grid_now = safe_frame_extract(obs)
+                new_effects: dict[tuple[int, int], int] = {}
+                for cx, cy in action_set:
+                    if effects.get((cx, cy), 0) < 0:
+                        new_effects[(cx, cy)] = -1
+                        continue
+                    obs2 = env.reset()
+                    for rx, ry in full_seq:
+                        obs2 = env.step(6, data={"x": rx, "y": ry})
+                    g_b = safe_frame_extract(obs2)
+                    obs2 = env.step(6, data={"x": cx, "y": cy})
+                    if obs2.state == GameState.GAME_OVER:
+                        new_effects[(cx, cy)] = -1
+                        continue
+                    g_a = safe_frame_extract(obs2)
+                    new_effects[(cx, cy)] = int(np.sum(g_b[1:] != g_a[1:]))
+
+                    # Check if this click would solve it
+                    if obs2.levels_completed > current_levels:
+                        solution.append((cx, cy))
+                        log.info("arc.greedy_solved", clicks=len(solution))
+                        return solution
+
+                # Check for sub-level (new valves may appear)
+                if any(new_effects[c] != effects.get(c, 0) for c in action_set if new_effects.get(c, 0) > 0):
+                    # Effects changed — re-scan positions
+                    new_positions = self._scan_effective_positions(env, full_seq)
+                    if new_positions:
+                        for p in new_positions:
+                            if p not in action_set:
+                                action_set.append(p)
+                                # Measure new valve
+                                obs3 = env.reset()
+                                for rx, ry in full_seq:
+                                    obs3 = env.step(6, data={"x": rx, "y": ry})
+                                g_b3 = safe_frame_extract(obs3)
+                                obs3 = env.step(6, data={"x": p[0], "y": p[1]})
+                                if obs3.state != GameState.GAME_OVER:
+                                    g_a3 = safe_frame_extract(obs3)
+                                    new_effects[p] = int(np.sum(g_b3[1:] != g_a3[1:]))
+
+                effects = new_effects
+
         return None
