@@ -626,38 +626,102 @@ class PerGameSolver:
 
         t0 = time.monotonic()
 
-        # Scan effective positions
-        action_set = self._scan_effective_positions(env, replay_prefix)
-        if not action_set:
+        # Scan effective positions and classify into valves vs triggers
+        all_positions = self._scan_effective_positions(env, replay_prefix)
+        if not all_positions:
             return None
 
-        # Get initial state
+        # Classify: measure each position's effect to separate triggers from valves
         obs = env.reset()
         for x, y in replay_prefix:
             obs = env.step(6, data={"x": x, "y": y})
         initial_grid = safe_frame_extract(obs)
         current_levels = obs.levels_completed
 
-        # BFS
+        valves: list[tuple[int, int]] = []
+        triggers: list[tuple[int, int]] = []
+
+        for cx, cy in all_positions:
+            obs = env.reset()
+            for rx, ry in replay_prefix:
+                obs = env.step(6, data={"x": rx, "y": ry})
+            g_before = safe_frame_extract(obs)
+            obs = env.step(6, data={"x": cx, "y": cy})
+            if obs.state == GameState.GAME_OVER:
+                continue
+            if obs.levels_completed > current_levels:
+                return [(cx, cy)]  # instant win
+            g_after = safe_frame_extract(obs)
+            diff = int(np.sum(g_before[1:] != g_after[1:]))
+            if diff > sub_level_threshold:
+                triggers.append((cx, cy))
+            else:
+                valves.append((cx, cy))
+
+        log.info("arc.bfs_classified", valves=len(valves), triggers=len(triggers))
+
+        # Phase 1: BFS with valves only (no triggers) — "pump first"
+        result = self._bfs_valves_only(
+            env, replay_prefix, valves, initial_grid, current_levels,
+            t0, timeout, max_depth, max_states,
+        )
+        if result is not None:
+            return result
+
+        # Phase 2: For each trigger, try pre-pumping then triggering
+        if triggers and max_sub_levels > 0:
+            result = self._pump_then_trigger(
+                env, replay_prefix, valves, triggers, initial_grid,
+                current_levels, t0, timeout, max_depth, max_sub_levels,
+                sub_level_threshold, max_states,
+            )
+            if result is not None:
+                return result
+
+        # Phase 3: Greedy fallback
+        action_set = valves + triggers
+        return self._greedy_effect_solve(env, replay_prefix, action_set,
+                                          current_levels, timeout - (time.monotonic() - t0))
+
+    def _bfs_valves_only(
+        self,
+        env: Any,
+        replay_prefix: list[tuple[int, int]],
+        valves: list[tuple[int, int]],
+        initial_grid: np.ndarray,
+        current_levels: int,
+        t0: float,
+        timeout: float,
+        max_depth: int,
+        max_states: int,
+    ) -> list[tuple[int, int]] | None:
+        """BFS using only valve clicks (no sub-level triggers)."""
+        import time
+        from collections import deque
+
+        from arcengine.enums import GameState
+
+        if not valves:
+            return None
+
         queue: deque[list[tuple[int, int]]] = deque()
         queue.append([])
         visited: set[int] = {hash(initial_grid[1:].tobytes())}
 
         while queue:
-            if time.monotonic() - t0 > timeout:
+            if time.monotonic() - t0 > timeout / 2:  # use half timeout for phase 1
                 break
-            if len(visited) > max_states:
+            if len(visited) > max_states // 2:
                 break
 
             seq = queue.popleft()
             if len(seq) >= max_depth:
                 continue
 
-            for cx, cy in action_set:
+            for cx, cy in valves:
                 new_seq = seq + [(cx, cy)]
                 full_seq = replay_prefix + new_seq
 
-                # Replay
                 obs = env.reset()
                 game_over = False
                 for rx, ry in full_seq:
@@ -669,7 +733,6 @@ class PerGameSolver:
                 if game_over:
                     continue
 
-                # Check win
                 if obs.levels_completed > current_levels:
                     return new_seq
 
@@ -678,32 +741,142 @@ class PerGameSolver:
 
                 if state_hash not in visited:
                     visited.add(state_hash)
-
-                    # Sub-level detection: massive grid change from initial
-                    puzzle_diff = int(np.sum(grid[1:] != initial_grid[1:]))
-
-                    if puzzle_diff > sub_level_threshold and max_sub_levels > 0:
-                        # Sub-level transition — re-scan and recurse
-                        remaining_timeout = timeout - (time.monotonic() - t0)
-                        if remaining_timeout <= 0:
-                            break
-                        sub_result = self._bfs_find_sequence(
-                            env,
-                            replay_prefix=full_seq,
-                            timeout=remaining_timeout,
-                            max_depth=max_depth,
-                            max_sub_levels=max_sub_levels - 1,
-                            sub_level_threshold=sub_level_threshold,
-                            max_states=max_states - len(visited),
-                        )
-                        if sub_result is not None:
-                            return new_seq + sub_result
-
                     queue.append(new_seq)
 
-        # BFS exhausted — try greedy effect-chasing as fallback
-        return self._greedy_effect_solve(env, replay_prefix, action_set,
-                                          current_levels, timeout - (time.monotonic() - t0))
+        return None
+
+    def _pump_then_trigger(
+        self,
+        env: Any,
+        replay_prefix: list[tuple[int, int]],
+        valves: list[tuple[int, int]],
+        triggers: list[tuple[int, int]],
+        initial_grid: np.ndarray,
+        current_levels: int,
+        t0: float,
+        timeout: float,
+        max_depth: int,
+        max_sub_levels: int,
+        sub_level_threshold: int,
+        max_states: int,
+    ) -> list[tuple[int, int]] | None:
+        """Try various amounts of pre-pumping before each trigger.
+
+        For each trigger, try: 0 pre-pumps, then 1, then 2, ... up to max_depth.
+        After triggering, recursively solve the post-trigger state.
+        """
+        import time
+        from collections import deque
+
+        from arcengine.enums import GameState
+
+        if not triggers:
+            return None
+
+        # Collect all reachable pre-pump states via BFS on valves
+        # Each state is (click_sequence, grid_hash)
+        pre_pump_seqs: list[list[tuple[int, int]]] = [[]]  # start with 0 pumps
+        visited: set[int] = {hash(initial_grid[1:].tobytes())}
+
+        if valves:
+            queue: deque[list[tuple[int, int]]] = deque()
+            queue.append([])
+
+            while queue:
+                if time.monotonic() - t0 > timeout * 0.6:
+                    break
+                if len(visited) > max_states // 3:
+                    break
+
+                seq = queue.popleft()
+                if len(seq) >= max_depth // 2:  # limit pre-pump depth
+                    continue
+
+                for cx, cy in valves:
+                    new_seq = seq + [(cx, cy)]
+                    full_seq = replay_prefix + new_seq
+
+                    obs = env.reset()
+                    game_over = False
+                    for rx, ry in full_seq:
+                        obs = env.step(6, data={"x": rx, "y": ry})
+                        if obs.state == GameState.GAME_OVER:
+                            game_over = True
+                            break
+
+                    if game_over:
+                        continue
+
+                    if obs.levels_completed > current_levels:
+                        return new_seq  # solved without trigger!
+
+                    grid = safe_frame_extract(obs)
+                    state_hash = hash(grid[1:].tobytes())
+
+                    if state_hash not in visited:
+                        visited.add(state_hash)
+                        pre_pump_seqs.append(new_seq)
+                        queue.append(new_seq)
+
+        log.info("arc.pump_then_trigger", pre_pump_states=len(pre_pump_seqs),
+                 triggers=len(triggers))
+
+        # For each pre-pump state, try each trigger, then recurse
+        for pre_seq in pre_pump_seqs:
+            if time.monotonic() - t0 > timeout * 0.8:
+                break
+
+            for tx, ty in triggers:
+                trigger_seq = pre_seq + [(tx, ty)]
+                full_trigger_seq = replay_prefix + trigger_seq
+
+                # Execute trigger
+                obs = env.reset()
+                game_over = False
+                for rx, ry in full_trigger_seq:
+                    obs = env.step(6, data={"x": rx, "y": ry})
+                    if obs.state == GameState.GAME_OVER:
+                        game_over = True
+                        break
+
+                if game_over:
+                    continue
+
+                if obs.levels_completed > current_levels:
+                    return trigger_seq
+
+                # After trigger: try height-space planner
+                remaining = timeout - (time.monotonic() - t0)
+                if remaining <= 0:
+                    break
+
+                action_set_post = self._scan_effective_positions(env, full_trigger_seq)
+                if not action_set_post:
+                    continue
+
+                # Try height-space A* on post-trigger state
+                height_result = self._height_space_solve(
+                    env, full_trigger_seq, action_set_post,
+                    current_levels, remaining * 0.5,
+                )
+                if height_result is not None:
+                    return trigger_seq + height_result
+
+                # Try BFS on post-trigger state
+                obs2 = env.reset()
+                for rx, ry in full_trigger_seq:
+                    obs2 = env.step(6, data={"x": rx, "y": ry})
+                post_grid = safe_frame_extract(obs2)
+
+                post_result = self._bfs_valves_only(
+                    env, full_trigger_seq, action_set_post, post_grid,
+                    current_levels, t0, timeout, max_depth,
+                    max_states // 3,
+                )
+                if post_result is not None:
+                    return trigger_seq + post_result
+
+        return None
 
     def _greedy_effect_solve(
         self,
@@ -949,23 +1122,14 @@ class PerGameSolver:
 
         target_heights = tuple(target_heights_list)
 
-        # Reduce to only containers that need changes
-        active_indices = [i for i in range(len(containers))
-                          if current_heights[i] != target_heights[i]]
-        if not active_indices:
+        if current_heights == target_heights:
             return []  # already solved
 
-        # Project heights to active-only dimensions for faster search
-        def project(full: tuple[int, ...]) -> tuple[int, ...]:
-            return tuple(full[i] for i in active_indices)
-
-        projected_current = project(current_heights)
-        projected_target = project(target_heights)
+        # Include ALL containers affected by any valve, not just targets
+        # (intermediate containers are needed for water routing chains)
 
         log.info("arc.height_space_plan",
                  current=current_heights, target=target_heights,
-                 active=active_indices, projected_current=projected_current,
-                 projected_target=projected_target,
                  n_containers=len(containers), n_valves=len(action_set))
 
         # --- Step 4: Learn effect matrix ---
@@ -1000,22 +1164,11 @@ class PerGameSolver:
         log.info("arc.height_space_effects",
                  valves={f"{x},{y}": list(d) for (x, y), d in valve_effects.items()})
 
-        # --- Step 5: A* search in projected height space ---
-        # Project valve effects to active dimensions only
-        projected_effects: dict[tuple[int, int], tuple[int, ...]] = {}
-        for (vx, vy), delta in valve_effects.items():
-            proj_delta = project(delta)
-            if any(d != 0 for d in proj_delta):
-                projected_effects[(vx, vy)] = proj_delta
-
-        if not projected_effects:
-            log.debug("arc.height_space_no_active_effects")
-            return None
-
+        # --- Step 5: A* search in full height space ---
         def heuristic(state: tuple[int, ...]) -> int:
-            return sum(abs(s - t) for s, t in zip(state, projected_target))
+            return sum(abs(s - t) for s, t in zip(state, target_heights))
 
-        start_state = projected_current
+        start_state = current_heights
         pq: list[tuple[int, int, tuple[int, ...], list[tuple[int, int]]]] = [
             (heuristic(start_state), 0, start_state, [])
         ]
@@ -1030,7 +1183,7 @@ class PerGameSolver:
                 break
 
             est, depth, state, path = heapq.heappop(pq)
-            if state == projected_target:
+            if state == target_heights:
                 # Verify on actual env
                 full_seq = replay_prefix + path
                 obs = env.reset()
@@ -1046,9 +1199,9 @@ class PerGameSolver:
             if depth >= max_depth:
                 continue
 
-            for (vx, vy), proj_delta in projected_effects.items():
+            for (vx, vy), delta in valve_effects.items():
                 new_state = tuple(
-                    max(0, s + d) for s, d in zip(state, proj_delta)
+                    max(0, s + d) for s, d in zip(state, delta)
                 )
                 new_depth = depth + 1
 
