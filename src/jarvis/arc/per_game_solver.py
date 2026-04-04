@@ -94,13 +94,17 @@ class PerGameSolver:
         target_color: int | None,
         max_actions: int,
     ) -> StrategyOutcome:
-        """Cluster-based click: delegates to ClusterSolver.find_solution() level by level."""
+        """Smart cluster-click: elimination-based search, then brute-force fallback."""
+        import time
+
+        from arcengine.enums import GameState
+
         from jarvis.arc.cluster_solver import ClusterSolver
 
         outcome = StrategyOutcome()
+        timeout = 60.0  # per level timeout (seconds)
 
         if target_color is None:
-            # Auto-detect: try each non-background color
             unique_colors = [int(c) for c in np.unique(initial_grid) if c != 0]
             if not unique_colors:
                 return outcome
@@ -110,23 +114,16 @@ class PerGameSolver:
             )
             target_color = best_color
 
-        solver = ClusterSolver(target_color=target_color, max_skip=6)
         game_id = self._profile.game_id
-
-        def env_factory():
-            return self._arcade.make(game_id)
-
         prev_solutions: list[list[tuple[int, int]]] = []
         max_levels = 10
 
         for level in range(max_levels):
-            solution = solver.find_solution(
-                env_factory=env_factory,
-                action_id=6,
-                prev_solutions=prev_solutions,
-                target_level=level,
+            t0 = time.monotonic()
+            solution = self._smart_find_solution(
+                game_id, target_color, prev_solutions, level, timeout,
             )
-            outcome.steps += 1  # count each level attempt
+            outcome.steps += 1
 
             if solution is None:
                 break
@@ -135,9 +132,109 @@ class PerGameSolver:
             outcome.levels_solved += 1
             outcome.won = True
             outcome.winning_clicks = solution
+            log.info(
+                "arc.analyzer_level_solved",
+                game_id=game_id,
+                level=level,
+                clicks=len(solution),
+                time_s=round(time.monotonic() - t0, 1),
+            )
 
         outcome.budget_ratio = 1.0
         return outcome
+
+    def _smart_find_solution(
+        self,
+        game_id: str,
+        target_color: int,
+        prev_solutions: list[list[tuple[int, int]]],
+        target_level: int,
+        timeout: float,
+    ) -> list[tuple[int, int]] | None:
+        """Smart elimination search: O(n) for common cases, brute-force fallback for small n."""
+        import itertools
+        import time
+
+        from arcengine.enums import GameState
+
+        from jarvis.arc.cluster_solver import ClusterSolver
+
+        t0 = time.monotonic()
+        solver = ClusterSolver(target_color=target_color, max_skip=0)
+
+        def make_env_at_level():
+            """Create env and replay to target level."""
+            env = self._arcade.make(game_id)
+            obs = env.reset()
+            for sol in prev_solutions:
+                for cx, cy in sol:
+                    obs = env.step(6, data={"x": cx, "y": cy})
+            return env, obs
+
+        # Get current level grid
+        env, obs = make_env_at_level()
+        grid = np.array(obs.frame)
+        if grid.ndim == 3:
+            grid = grid[0]
+        centers = solver.find_clusters(grid)
+        n = len(centers)
+
+        if n == 0:
+            return None
+
+        current_levels = obs.levels_completed
+
+        def test_combo(click_indices: list[int]) -> bool:
+            """Test a click combo. Returns True if level advances."""
+            env2, obs2 = make_env_at_level()
+            for idx in click_indices:
+                cx, cy = centers[idx]
+                obs2 = env2.step(6, data={"x": cx, "y": cy})
+                if obs2.state == GameState.GAME_OVER:
+                    return False
+            return obs2.levels_completed > current_levels
+
+        # Phase 1: Try clicking ALL clusters
+        all_idx = list(range(n))
+        if test_combo(all_idx):
+            return [centers[i] for i in all_idx]
+
+        # Phase 2: Single elimination — remove each cluster one at a time
+        # Find which removals lead to a win
+        winning_removals: list[int] = []
+        for skip_idx in range(n):
+            if time.monotonic() - t0 > timeout:
+                break
+            combo = [i for i in range(n) if i != skip_idx]
+            if test_combo(combo):
+                return [centers[i] for i in combo]
+            # Track if removing this cluster doesn't cause GAME_OVER
+            # (might be part of the solution)
+
+        # Phase 3: Progressive elimination — try removing pairs
+        # Only test pairs where individual removal didn't win but wasn't harmful
+        if n <= 15 and time.monotonic() - t0 < timeout:
+            for skip_count in range(2, min(n, 7)):
+                if time.monotonic() - t0 > timeout:
+                    break
+                for skip_combo in itertools.combinations(range(n), skip_count):
+                    if time.monotonic() - t0 > timeout:
+                        break
+                    combo = [i for i in range(n) if i not in skip_combo]
+                    if test_combo(combo):
+                        return [centers[i] for i in combo]
+
+        # Phase 4: For small n (≤10), full brute-force via find_solution
+        if n <= 10 and time.monotonic() - t0 < timeout:
+            full_solver = ClusterSolver(target_color=target_color, max_skip=6)
+            return full_solver.find_solution(
+                env_factory=lambda: self._arcade.make(game_id),
+                action_id=6,
+                prev_solutions=prev_solutions,
+                target_level=target_level,
+            )
+
+        return None
 
     def _execute_strategy(
         self, env: Any, strategy: str, max_actions: int
