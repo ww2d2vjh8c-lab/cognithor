@@ -158,8 +158,10 @@ class TestWave2Parallel:
     ) -> None:
         skill_reg = MagicMock()
         skill_match = MagicMock()
-        skill_match.name = "web-research"
-        skill_reg.find_matching_skills.return_value = [skill_match]
+        skill_match.skill.name = "web-research"
+        skill_match.skill.description = "Web research skill"
+        skill_match.skill.trigger_keywords = ["web", "search"]
+        skill_reg.match.return_value = [skill_match]
         pipeline.set_skill_registry(skill_reg)
 
         ctx = await pipeline.enrich("Search the web for news", wm)
@@ -183,7 +185,7 @@ class TestWave2Parallel:
         self, pipeline: ContextPipeline, wm: WorkingMemory
     ) -> None:
         skill_reg = MagicMock()
-        skill_reg.find_matching_skills.side_effect = RuntimeError("Registry down")
+        skill_reg.match.side_effect = RuntimeError("Registry down")
         pipeline.set_skill_registry(skill_reg)
 
         pref_store = MagicMock()
@@ -203,8 +205,10 @@ class TestWave2Parallel:
     ) -> None:
         skill_reg = MagicMock()
         skill_match = MagicMock()
-        skill_match.name = "code-review"
-        skill_reg.find_matching_skills.return_value = [skill_match]
+        skill_match.skill.name = "code-review"
+        skill_match.skill.description = "Code review skill"
+        skill_match.skill.trigger_keywords = ["code", "review"]
+        skill_reg.match.return_value = [skill_match]
         pipeline.set_skill_registry(skill_reg)
 
         pref_store = MagicMock()
