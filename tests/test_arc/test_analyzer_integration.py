@@ -156,3 +156,74 @@ class TestFullPipeline:
         assert m.wins == 2
         assert m.total_levels_solved == 3
         assert m.avg_steps_to_win == pytest.approx(40.0)
+
+
+class TestSequenceClickPipeline:
+    def test_no_toggle_game_uses_sequence_click(self, tmp_path):
+        """Games without toggles should prefer sequence_click strategy."""
+        from jarvis.arc.game_profile import GameProfile
+
+        profile = GameProfile(
+            game_id="no_toggle_game",
+            game_type="click",
+            available_actions=[6],
+            click_zones=[],
+            target_colors=[],
+            movement_effects={},
+            win_condition="unknown",
+            vision_description="test",
+            vision_strategy="test",
+            strategy_metrics={},
+            analyzed_at="2026-04-05",
+            has_toggles=False,
+        )
+
+        defaults = profile.default_strategies()
+        assert defaults[0][0] == "sequence_click"
+        assert defaults[0][1] == 0.6
+
+    def test_toggle_game_uses_cluster_click(self, tmp_path):
+        """Games with toggles should prefer cluster_click strategy."""
+        from jarvis.arc.game_profile import GameProfile
+
+        profile = GameProfile(
+            game_id="toggle_game",
+            game_type="click",
+            available_actions=[6],
+            click_zones=[(10, 10)],
+            target_colors=[3],
+            movement_effects={},
+            win_condition="clear_board",
+            vision_description="test",
+            vision_strategy="test",
+            strategy_metrics={},
+            analyzed_at="2026-04-05",
+            has_toggles=True,
+        )
+
+        defaults = profile.default_strategies()
+        assert defaults[0][0] == "cluster_click"
+        assert defaults[0][1] == 0.6
+
+    def test_profile_has_toggles_persists(self, tmp_path):
+        """has_toggles should survive save/load cycle."""
+        from jarvis.arc.game_profile import GameProfile
+
+        for val in [True, False]:
+            p = GameProfile(
+                game_id=f"persist_{val}",
+                game_type="click",
+                available_actions=[6],
+                click_zones=[],
+                target_colors=[],
+                movement_effects={},
+                win_condition="unknown",
+                vision_description="",
+                vision_strategy="",
+                strategy_metrics={},
+                analyzed_at="",
+                has_toggles=val,
+            )
+            p.save(base_dir=tmp_path)
+            loaded = GameProfile.load(f"persist_{val}", base_dir=tmp_path)
+            assert loaded.has_toggles is val

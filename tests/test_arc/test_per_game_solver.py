@@ -16,7 +16,7 @@ from jarvis.arc.per_game_solver import (
 )
 
 
-def _make_profile(game_type="click", metrics=None) -> GameProfile:
+def _make_profile(game_type="click", metrics=None, has_toggles=False) -> GameProfile:
     return GameProfile(
         game_id="test_game",
         game_type=game_type,
@@ -29,22 +29,24 @@ def _make_profile(game_type="click", metrics=None) -> GameProfile:
         vision_strategy="test",
         strategy_metrics=metrics or {},
         analyzed_at="2026-04-04",
+        has_toggles=has_toggles,
     )
 
 
 class TestBudgetAllocation:
     def test_default_click_allocation(self):
         profile = _make_profile("click")
+        # Default has_toggles=False → sequence_click first
         solver = PerGameSolver(profile, arcade=MagicMock())
         slots = solver._allocate_budget(level_num=0)
 
         assert len(slots) == 3
-        assert slots[0].strategy == "cluster_click"
-        assert slots[0].max_actions == 100  # 50% of 200
-        assert slots[1].strategy == "targeted_click"
+        assert slots[0].strategy == "sequence_click"
+        assert slots[0].max_actions == 120  # 60% of 200
+        assert slots[1].strategy == "cluster_click"
         assert slots[1].max_actions == 60   # 30% of 200
-        assert slots[2].strategy == "hybrid"
-        assert slots[2].max_actions == 40   # 20% of 200
+        assert slots[2].strategy == "targeted_click"
+        assert slots[2].max_actions == 20   # 10% of 200
 
     def test_default_keyboard_allocation(self):
         profile = _make_profile("keyboard")

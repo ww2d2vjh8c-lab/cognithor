@@ -281,6 +281,10 @@ class PerGameSolver:
             last_grid = safe_frame_extract(obs_peek)
             return self._execute_cluster_click(last_grid, target_color, max_actions)
 
+        # Special handling for sequence_click: BFS through click sequences
+        if strategy == "sequence_click":
+            return self._execute_sequence_click(max_actions)
+
         outcome = StrategyOutcome()
         frame_history: list[np.ndarray] = []
         initial_levels = None
