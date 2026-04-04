@@ -116,10 +116,18 @@ class PerGameSolver:
             target_color = best_color
 
         solver = ClusterSolver(target_color=target_color, max_skip=6)
-        centers = solver.find_clusters(initial_grid)
+
+        # Scan clusters from a fresh env (each level has different layout)
+        scan_env = self._arcade.make(self._profile.game_id)
+        scan_obs = scan_env.reset()
+        level_grid = safe_frame_extract(scan_obs)
+        centers = solver.find_clusters(level_grid)
 
         if not centers:
-            return outcome
+            # Fallback: try from the provided grid
+            centers = solver.find_clusters(initial_grid)
+            if not centers:
+                return outcome
 
         n = len(centers)
         max_skip = min(n, 6)
