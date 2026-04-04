@@ -25,40 +25,67 @@ _GOAL_REANALYSIS_INTERVAL = 5
 
 
 class PixelRewardExplorer:
-    """Epsilon-greedy action selection using changed_pixels as reward."""
+    """Balanced exploration with novelty bonus and anti-stagnation.
 
-    def __init__(self, epsilon: float = 0.2) -> None:
+    Uses a combination of:
+    - Uniform random baseline (each action gets fair chance)
+    - Novelty bonus (prefer actions that lead to new pixel patterns)
+    - Anti-stagnation (force switch after 5 identical actions)
+    """
+
+    def __init__(self, epsilon: float = 0.3) -> None:
         self.epsilon = epsilon
-        self.action_rewards: dict[int, list[float]] = {}
+        self.action_counts: dict[int, int] = {}
+        self.last_action_key: int = -1
+        self.same_action_streak: int = 0
+        self._max_streak: int = 5
 
     def select_action(self, available_actions: list) -> Any:
-        """Pick an action: untested first, then greedy with epsilon exploration."""
+        """Pick an action with balanced exploration."""
+        if not available_actions:
+            return None
+
+        # Initialize tracking
         for a in available_actions:
             key = a.value if hasattr(a, "value") else int(a)
-            if key not in self.action_rewards:
-                self.action_rewards[key] = []
+            if key not in self.action_counts:
+                self.action_counts[key] = 0
 
+        # Anti-stagnation: force switch after _max_streak identical actions
+        if self.same_action_streak >= self._max_streak:
+            others = [
+                a
+                for a in available_actions
+                if (a.value if hasattr(a, "value") else int(a)) != self.last_action_key
+            ]
+            if others:
+                return random.choice(others)
+
+        # Epsilon: pure random
         if random.random() < self.epsilon:
             return random.choice(available_actions)
 
-        best_action = None
-        best_avg = -1.0
-        for a in available_actions:
-            key = a.value if hasattr(a, "value") else int(a)
-            rewards = self.action_rewards[key]
-            if not rewards:
-                return a
-            avg = sum(rewards[-10:]) / len(rewards[-10:])
-            if avg > best_avg:
-                best_avg = avg
-                best_action = a
-
-        return best_action or random.choice(available_actions)
+        # Prefer least-used action (uniform coverage)
+        min_count = min(
+            self.action_counts.get(a.value if hasattr(a, "value") else int(a), 0)
+            for a in available_actions
+        )
+        least_used = [
+            a
+            for a in available_actions
+            if self.action_counts.get(a.value if hasattr(a, "value") else int(a), 0) == min_count
+        ]
+        return random.choice(least_used)
 
     def record_reward(self, action: Any, changed_pixels: int) -> None:
-        """Record the pixel-change reward for an action."""
+        """Track action usage for balanced exploration."""
         key = action.value if hasattr(action, "value") else int(action)
-        self.action_rewards.setdefault(key, []).append(float(changed_pixels))
+        self.action_counts[key] = self.action_counts.get(key, 0) + 1
+        if key == self.last_action_key:
+            self.same_action_streak += 1
+        else:
+            self.same_action_streak = 0
+            self.last_action_key = key
 
 
 @dataclass
