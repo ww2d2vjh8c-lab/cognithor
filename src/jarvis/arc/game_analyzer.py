@@ -146,6 +146,11 @@ class GameAnalyzer:
                         report.unique_states_seen = len(seen_states)
                         return report
 
+                    if hasattr(obs, "state") and obs.state == GameState.WIN:
+                        report.game_over_trigger = "win_during_sacrifice"
+                        report.unique_states_seen = len(seen_states)
+                        return report
+
                 report.movements_tested[action_id] = total_diff
 
         # Phase 2: Test clicks on cluster centers
@@ -174,6 +179,11 @@ class GameAnalyzer:
 
                     if hasattr(obs, "state") and obs.state == GameState.GAME_OVER:
                         report.game_over_trigger = f"click_at_{cx}_{cy}"
+                        report.unique_states_seen = len(seen_states)
+                        return report
+
+                    if hasattr(obs, "state") and obs.state == GameState.WIN:
+                        report.game_over_trigger = "win_during_sacrifice"
                         report.unique_states_seen = len(seen_states)
                         return report
 

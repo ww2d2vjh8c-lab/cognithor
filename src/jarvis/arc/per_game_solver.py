@@ -41,6 +41,7 @@ class StrategyOutcome:
     steps: int = 0
     levels_solved: int = 0
     budget_ratio: float = 0.0
+    winning_clicks: list[tuple[int, int]] | None = None
 
 
 @dataclass
@@ -144,6 +145,7 @@ class PerGameSolver:
                     outcome.won = True
                     outcome.levels_solved = 1
                     outcome.budget_ratio = combos_tried / max_actions
+                    outcome.winning_clicks = [centers[i] for i in click_idx]
                     return outcome
 
         outcome.budget_ratio = 1.0
@@ -158,13 +160,21 @@ class PerGameSolver:
         # Special handling for cluster_click: uses arcade.make() per combo
         if strategy == "cluster_click":
             target_color = self._profile.target_colors[0] if self._profile.target_colors else None
-            obs = env.reset()
-            last_grid = safe_frame_extract(obs)
-            return self._execute_cluster_click(last_grid, target_color, max_actions)
+            # Get current grid without resetting — use a no-op interact action
+            obs_peek = env.step(5)
+            last_grid = safe_frame_extract(obs_peek)
+            if obs_peek.state == GameState.GAME_OVER:
+                return StrategyOutcome(game_over=True, steps=1, budget_ratio=1.0 / max_actions)
+            result = self._execute_cluster_click(last_grid, target_color, max_actions)
+            # Replay winning clicks on the main env so it advances
+            if result.won and result.winning_clicks:
+                for cx, cy in result.winning_clicks:
+                    env.step(6, data={"x": cx, "y": cy})
+            return result
 
         outcome = StrategyOutcome()
         frame_history: list[np.ndarray] = []
-        initial_levels = 0
+        initial_levels = None
 
         for step in range(max_actions):
             action_id, data = self._pick_action(strategy, frame_history)
@@ -173,14 +183,14 @@ class PerGameSolver:
             frame_history.append(grid)
             outcome.steps += 1
 
-            if hasattr(obs, "levels_completed"):
-                initial_levels = initial_levels or obs.levels_completed
+            if initial_levels is None and hasattr(obs, "levels_completed"):
+                initial_levels = obs.levels_completed
 
             # Check terminal states
             if obs.state == GameState.WIN:
                 outcome.won = True
                 outcome.levels_solved = (
-                    getattr(obs, "levels_completed", 0) - initial_levels + 1
+                    getattr(obs, "levels_completed", 0) - (initial_levels or 0) + 1
                 )
                 outcome.budget_ratio = outcome.steps / max_actions
                 return outcome
@@ -223,11 +233,12 @@ class PerGameSolver:
             return 1, None
 
         if strategy == "keyboard_sequence":
-            # Use directions in order, repeat
+            # Structured sequences: repeat each direction 4 times before switching
             directions = [a for a in profile.available_actions if a in (1, 2, 3, 4)]
             if directions:
-                idx = len(frame_history) % len(directions)
-                return directions[idx], None
+                repeat = 4
+                dir_idx = (len(frame_history) // repeat) % len(directions)
+                return directions[dir_idx], None
             return 5, None  # interact as fallback
 
         if strategy == "hybrid":
