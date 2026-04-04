@@ -356,3 +356,114 @@ class TestCLIIntegration:
         args = parser.parse_args(["--mode", "analyzer"])
         assert args.mode == "analyzer"
         assert args.game == ""
+
+
+class TestHasTogglesDetection:
+    def test_analyze_sets_has_toggles_true_when_toggles_found(self, tmp_path):
+        """Profile should have has_toggles=True when sacrifice level detects toggles."""
+        initial_grid = np.zeros((64, 64), dtype=np.int8)
+        initial_grid[10:15, 10:15] = 3
+
+        toggled_grid = initial_grid.copy()
+        toggled_grid[10:15, 10:15] = 5  # toggle 3->5
+
+        not_finished = _make_mock_game_state("NOT_FINISHED")
+        game_over = _make_mock_game_state("GAME_OVER")
+
+        mock_env = MagicMock()
+        step_count = [0]
+
+        def mock_step(action, data=None):
+            step_count[0] += 1
+            if step_count[0] > 5:
+                return _make_mock_obs(
+                    grid=np.expand_dims(initial_grid, 0),
+                    state=game_over,
+                    actions=[MagicMock(value=6)],
+                )
+            return _make_mock_obs(
+                grid=np.expand_dims(toggled_grid, 0),
+                state=not_finished,
+                actions=[MagicMock(value=6)],
+            )
+
+        mock_env.step = mock_step
+        mock_env.reset.return_value = _make_mock_obs(
+            grid=np.expand_dims(initial_grid, 0),
+            state=not_finished,
+            actions=[MagicMock(value=a) for a in [5, 6]],
+        )
+
+        mock_arcade = MagicMock()
+        mock_arcade.make.return_value = mock_env
+
+        vision_resp = {
+            "message": {
+                "content": json.dumps({
+                    "game_type": "click",
+                    "target_color": 3,
+                    "strategy": "test",
+                    "description": "test",
+                })
+            }
+        }
+
+        analyzer = GameAnalyzer(arcade=mock_arcade)
+        with patch("jarvis.arc.game_analyzer.ollama") as mock_ollama:
+            mock_ollama.chat.return_value = vision_resp
+            profile = analyzer.analyze("toggle_test", force=True, base_dir=tmp_path)
+
+        assert profile.has_toggles is True
+
+    def test_analyze_sets_has_toggles_false_when_no_toggles(self, tmp_path):
+        """Profile should have has_toggles=False when no toggles detected."""
+        initial_grid = np.zeros((64, 64), dtype=np.int8)
+        initial_grid[10:15, 10:15] = 3
+
+        not_finished = _make_mock_game_state("NOT_FINISHED")
+        game_over = _make_mock_game_state("GAME_OVER")
+
+        mock_env = MagicMock()
+        step_count = [0]
+
+        def mock_step(action, data=None):
+            step_count[0] += 1
+            if step_count[0] > 3:
+                return _make_mock_obs(
+                    grid=np.expand_dims(initial_grid, 0),
+                    state=game_over,
+                    actions=[MagicMock(value=6)],
+                )
+            return _make_mock_obs(
+                grid=np.expand_dims(initial_grid, 0),
+                state=not_finished,
+                actions=[MagicMock(value=6)],
+            )
+
+        mock_env.step = mock_step
+        mock_env.reset.return_value = _make_mock_obs(
+            grid=np.expand_dims(initial_grid, 0),
+            state=not_finished,
+            actions=[MagicMock(value=a) for a in [5, 6]],
+        )
+
+        mock_arcade = MagicMock()
+        mock_arcade.make.return_value = mock_env
+
+        vision_resp = {
+            "message": {
+                "content": json.dumps({
+                    "game_type": "click",
+                    "target_color": 3,
+                    "strategy": "test",
+                    "description": "test",
+                })
+            }
+        }
+
+        analyzer = GameAnalyzer(arcade=mock_arcade)
+        with patch("jarvis.arc.game_analyzer.ollama") as mock_ollama:
+            mock_ollama.chat.return_value = vision_resp
+            profile = analyzer.analyze("no_toggle_test", force=True, base_dir=tmp_path)
+
+        assert profile.has_toggles is False

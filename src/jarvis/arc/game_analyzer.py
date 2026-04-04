@@ -376,6 +376,7 @@ class GameAnalyzer:
             vision_description=vision1.get("description", "") if vision1 else "unavailable",
             vision_strategy=vision1.get("strategy", "") if vision1 else "unavailable",
             strategy_metrics={},
+            has_toggles=len(report.toggle_pairs) > 0,
             analyzed_at=datetime.now(timezone.utc).isoformat(),
         )
 
