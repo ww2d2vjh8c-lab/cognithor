@@ -97,6 +97,7 @@ class SacrificeReport:
     movements_tested: dict[int, int] = field(default_factory=dict)
     unique_states_seen: int = 0
     game_over_trigger: str | None = None
+    toggle_pairs: list[tuple[int, int]] = field(default_factory=list)  # (source, target) color pairs
     frames: list[np.ndarray] = field(default_factory=list)
 
 
@@ -170,6 +171,19 @@ class GameAnalyzer:
                     diff = int(np.sum(new_grid != current_grid))
                     effect = "changed" if diff > 0 else "no_effect"
                     report.clicks_tested.append((cx, cy, effect))
+
+                    # Detect toggle pair: what color changed to what
+                    if diff > 0:
+                        changed_mask = new_grid != current_grid
+                        old_vals = current_grid[changed_mask]
+                        new_vals = new_grid[changed_mask]
+                        if len(old_vals) > 0:
+                            # Most common source→target transition
+                            from collections import Counter
+                            pairs = Counter(zip(old_vals.tolist(), new_vals.tolist()))
+                            src, tgt = pairs.most_common(1)[0][0]
+                            if (src, tgt) not in report.toggle_pairs:
+                                report.toggle_pairs.append((src, tgt))
 
                     state_hash = hash(new_grid.tobytes())
                     if state_hash not in seen_states:
@@ -327,10 +341,13 @@ class GameAnalyzer:
             if correction in ("click", "keyboard", "mixed"):
                 game_type = correction
 
-        # Extract target colors from clicks that had effects
+        # Extract target colors: prefer vision, fallback to sacrifice level toggle detection
         target_colors: list[int] = []
         if vision1 and vision1.get("target_color") is not None:
             target_colors = [int(vision1["target_color"])]
+        elif report.toggle_pairs:
+            # Use source colors from detected toggle pairs (the color you click on)
+            target_colors = list({src for src, _tgt in report.toggle_pairs})
 
         # Extract click zones from report
         click_zones = [(x, y) for x, y, effect in report.clicks_tested if effect == "changed"]
