@@ -57,6 +57,7 @@ class GameProfile:
     # Meta
     analyzed_at: str = ""
     profile_version: int = 1
+    has_toggles: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         d = {
@@ -76,6 +77,7 @@ class GameProfile:
             "best_score": self.best_score,
             "analyzed_at": self.analyzed_at,
             "profile_version": self.profile_version,
+            "has_toggles": self.has_toggles,
         }
         return d
 
@@ -101,6 +103,7 @@ class GameProfile:
             best_score=d.get("best_score", 0),
             analyzed_at=d.get("analyzed_at", ""),
             profile_version=d.get("profile_version", 1),
+            has_toggles=d.get("has_toggles", False),
         )
 
     def save(self, base_dir: Path | None = None) -> None:
@@ -167,7 +170,9 @@ class GameProfile:
 
     def default_strategies(self) -> list[tuple[str, float]]:
         if self.game_type == "click":
-            return [("cluster_click", 0.5), ("targeted_click", 0.3), ("hybrid", 0.2)]
+            if self.has_toggles:
+                return [("cluster_click", 0.6), ("sequence_click", 0.3), ("targeted_click", 0.1)]
+            return [("sequence_click", 0.6), ("cluster_click", 0.3), ("targeted_click", 0.1)]
         if self.game_type == "keyboard":
             return [("keyboard_explore", 0.5), ("keyboard_sequence", 0.3), ("hybrid", 0.2)]
         return [("hybrid", 0.5), ("targeted_click", 0.3), ("keyboard_explore", 0.2)]

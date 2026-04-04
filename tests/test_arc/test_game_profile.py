@@ -201,9 +201,9 @@ class TestRankedStrategies:
         p.game_type = "click"
         defaults = p.default_strategies()
         assert defaults == [
-            ("cluster_click", 0.5),
-            ("targeted_click", 0.3),
-            ("hybrid", 0.2),
+            ("sequence_click", 0.6),
+            ("cluster_click", 0.3),
+            ("targeted_click", 0.1),
         ]
 
     def test_default_strategies_for_keyboard(self):
@@ -225,3 +225,72 @@ class TestRankedStrategies:
             ("targeted_click", 0.3),
             ("keyboard_explore", 0.2),
         ]
+
+
+class TestHasToggles:
+    def _make_profile(self, has_toggles=False, **overrides) -> GameProfile:
+        defaults = dict(
+            game_id="test",
+            game_type="click",
+            available_actions=[6],
+            click_zones=[],
+            target_colors=[],
+            movement_effects={},
+            win_condition="unknown",
+            vision_description="",
+            vision_strategy="",
+            strategy_metrics={},
+            analyzed_at="",
+            has_toggles=has_toggles,
+        )
+        defaults.update(overrides)
+        return GameProfile(**defaults)
+
+    def test_has_toggles_default_false(self):
+        p = self._make_profile()
+        assert p.has_toggles is False
+
+    def test_has_toggles_serialization(self, tmp_path):
+        p = self._make_profile(has_toggles=True)
+        p.save(base_dir=tmp_path)
+        loaded = GameProfile.load("test", base_dir=tmp_path)
+        assert loaded is not None
+        assert loaded.has_toggles is True
+
+    def test_has_toggles_backward_compat(self, tmp_path):
+        """Old profiles without has_toggles should load with False."""
+        import json
+        profile_dir = tmp_path / "game_profiles"
+        profile_dir.mkdir(parents=True)
+        old_data = {
+            "game_id": "old_game",
+            "game_type": "click",
+            "available_actions": [6],
+            "click_zones": [],
+            "target_colors": [],
+            "movement_effects": {},
+            "win_condition": "unknown",
+            "vision_description": "",
+            "vision_strategy": "",
+            "strategy_metrics": {},
+            "total_runs": 0,
+            "best_score": 0,
+            "analyzed_at": "",
+            "profile_version": 1,
+        }
+        (profile_dir / "old_game.json").write_text(json.dumps(old_data))
+        loaded = GameProfile.load("old_game", base_dir=tmp_path)
+        assert loaded is not None
+        assert loaded.has_toggles is False
+
+    def test_default_strategies_with_toggles(self):
+        p = self._make_profile(has_toggles=True)
+        defaults = p.default_strategies()
+        assert defaults[0][0] == "cluster_click"
+        assert defaults[1][0] == "sequence_click"
+
+    def test_default_strategies_without_toggles(self):
+        p = self._make_profile(has_toggles=False)
+        defaults = p.default_strategies()
+        assert defaults[0][0] == "sequence_click"
+        assert defaults[1][0] == "cluster_click"
