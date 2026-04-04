@@ -194,37 +194,61 @@ class PerGameSolver:
                     return False
             return obs2.levels_completed > current_levels
 
+        def find_poison_clusters(all_indices: list[int]) -> set[int]:
+            """Click all clusters and identify which click triggers GAME_OVER."""
+            env2, obs2 = make_env_at_level()
+            for idx in all_indices:
+                cx, cy = centers[idx]
+                obs2 = env2.step(6, data={"x": cx, "y": cy})
+                if obs2.state == GameState.GAME_OVER:
+                    return {idx}  # This cluster is poison
+            return set()
+
         # Phase 1: Try clicking ALL clusters
         all_idx = list(range(n))
         if test_combo(all_idx):
             return [centers[i] for i in all_idx]
 
-        # Phase 2: Single elimination — remove each cluster one at a time
-        # Find which removals lead to a win
-        winning_removals: list[int] = []
+        # Phase 2: Identify poison clusters — which clicks cause GAME_OVER?
+        poison = find_poison_clusters(all_idx)
+        if poison:
+            # Remove poison clusters and try again
+            safe_idx = [i for i in all_idx if i not in poison]
+            if test_combo(safe_idx):
+                return [centers[i] for i in safe_idx]
+
+            # Maybe there are more poison clusters after the first
+            # Iteratively remove poison until we win or run out
+            for _ in range(min(n, 5)):
+                if time.monotonic() - t0 > timeout:
+                    break
+                more_poison = find_poison_clusters(safe_idx)
+                if not more_poison:
+                    break
+                safe_idx = [i for i in safe_idx if i not in more_poison]
+                if test_combo(safe_idx):
+                    return [centers[i] for i in safe_idx]
+
+        # Phase 3: Single elimination — remove each cluster one at a time
         for skip_idx in range(n):
             if time.monotonic() - t0 > timeout:
                 break
             combo = [i for i in range(n) if i != skip_idx]
             if test_combo(combo):
                 return [centers[i] for i in combo]
-            # Track if removing this cluster doesn't cause GAME_OVER
-            # (might be part of the solution)
 
-        # Phase 3: Progressive elimination — try removing pairs
-        # Only test pairs where individual removal didn't win but wasn't harmful
-        if n <= 15 and time.monotonic() - t0 < timeout:
-            for skip_count in range(2, min(n, 7)):
+        # Phase 4: Progressive elimination — try removing pairs, triples
+        for skip_count in range(2, min(n, 7)):
+            if time.monotonic() - t0 > timeout:
+                break
+            for skip_combo in itertools.combinations(range(n), skip_count):
                 if time.monotonic() - t0 > timeout:
                     break
-                for skip_combo in itertools.combinations(range(n), skip_count):
-                    if time.monotonic() - t0 > timeout:
-                        break
-                    combo = [i for i in range(n) if i not in skip_combo]
-                    if test_combo(combo):
-                        return [centers[i] for i in combo]
+                combo = [i for i in range(n) if i not in skip_combo]
+                if test_combo(combo):
+                    return [centers[i] for i in combo]
 
-        # Phase 4: For small n (≤10), full brute-force via find_solution
+        # Phase 5: For small n (≤10), full brute-force via find_solution
         if n <= 10 and time.monotonic() - t0 < timeout:
             full_solver = ClusterSolver(target_color=target_color, max_skip=6)
             return full_solver.find_solution(
