@@ -365,3 +365,145 @@ class TestClusterClickStrategy:
 
         assert outcome.won is False
         assert outcome.steps == 0
+
+
+class TestEffectivePositionScanner:
+    def test_finds_effective_positions(self):
+        """Scan should find positions where clicks change the puzzle grid."""
+        from arcengine.enums import GameState
+
+        grid_initial = np.zeros((64, 64), dtype=np.int8)
+        grid_initial[0, :] = 7  # orange bar at row 0
+
+        grid_changed = grid_initial.copy()
+        grid_changed[10:20, 10:20] = 5  # big change at certain region
+
+        def mock_step(action, data=None):
+            x = data.get("x", 0) if data else 0
+            y = data.get("y", 0) if data else 0
+            # Only clicks near (10,10) cause a puzzle change
+            if 8 <= x <= 22 and 8 <= y <= 22:
+                grid_out = grid_changed.copy()
+                grid_out[0, 63] = 4  # bar change
+            else:
+                grid_out = grid_initial.copy()
+                grid_out[0, 63] = 4  # bar-only change
+            obs = MagicMock()
+            obs.frame = np.expand_dims(grid_out, 0)
+            obs.state = GameState.NOT_FINISHED
+            obs.levels_completed = 0
+            return obs
+
+        mock_env = MagicMock()
+        mock_env.step = mock_step
+        obs0 = MagicMock()
+        obs0.frame = np.expand_dims(grid_initial, 0)
+        obs0.state = GameState.NOT_FINISHED
+        obs0.levels_completed = 0
+        mock_env.reset.return_value = obs0
+
+        solver = PerGameSolver(_make_profile("click"), arcade=MagicMock())
+        positions = solver._scan_effective_positions(mock_env, replay_sequence=[])
+
+        assert len(positions) > 0
+        # All found positions should be in the effective region
+        for x, y in positions:
+            assert 6 <= x <= 24 and 6 <= y <= 24, f"Unexpected position ({x},{y})"
+
+    def test_returns_empty_when_no_effective(self):
+        """Scan returns empty list when no clicks cause puzzle changes."""
+        from arcengine.enums import GameState
+
+        grid = np.zeros((64, 64), dtype=np.int8)
+        grid[0, :] = 7
+
+        def mock_step(action, data=None):
+            grid_out = grid.copy()
+            grid_out[0, 63] = 4  # bar-only change
+            obs = MagicMock()
+            obs.frame = np.expand_dims(grid_out, 0)
+            obs.state = GameState.NOT_FINISHED
+            obs.levels_completed = 0
+            return obs
+
+        mock_env = MagicMock()
+        mock_env.step = mock_step
+        obs0 = MagicMock()
+        obs0.frame = np.expand_dims(grid, 0)
+        obs0.state = GameState.NOT_FINISHED
+        obs0.levels_completed = 0
+        mock_env.reset.return_value = obs0
+
+        solver = PerGameSolver(_make_profile("click"), arcade=MagicMock())
+        positions = solver._scan_effective_positions(mock_env, replay_sequence=[])
+
+        assert positions == []
+
+    def test_groups_nearby_positions(self):
+        """Positions with same effect and close proximity should be grouped."""
+        from arcengine.enums import GameState
+
+        grid = np.zeros((64, 64), dtype=np.int8)
+        grid[0, :] = 7
+
+        def mock_step(action, data=None):
+            x = data.get("x", 0) if data else 0
+            y = data.get("y", 0) if data else 0
+            grid_out = grid.copy()
+            grid_out[0, 63] = 4
+            # Two separate valve regions with different diffs
+            if 8 <= x <= 12 and 8 <= y <= 12:
+                grid_out[20:30, 20:30] = 3  # 100 px change
+            elif 40 <= x <= 44 and 40 <= y <= 44:
+                grid_out[50:55, 50:55] = 5  # 25 px change
+            obs = MagicMock()
+            obs.frame = np.expand_dims(grid_out, 0)
+            obs.state = GameState.NOT_FINISHED
+            obs.levels_completed = 0
+            return obs
+
+        mock_env = MagicMock()
+        mock_env.step = mock_step
+        obs0 = MagicMock()
+        obs0.frame = np.expand_dims(grid, 0)
+        obs0.state = GameState.NOT_FINISHED
+        obs0.levels_completed = 0
+        mock_env.reset.return_value = obs0
+
+        solver = PerGameSolver(_make_profile("click"), arcade=MagicMock())
+        positions = solver._scan_effective_positions(mock_env, replay_sequence=[])
+
+        # Should find 2 groups (not 9+ individual positions)
+        assert len(positions) == 2
+
+    def test_max_six_groups(self):
+        """Scanner should return at most 6 groups."""
+        from arcengine.enums import GameState
+
+        grid = np.zeros((64, 64), dtype=np.int8)
+
+        def mock_step(action, data=None):
+            x = data.get("x", 0) if data else 0
+            grid_out = grid.copy()
+            # Every 8-pixel column is a different "valve" with a unique diff
+            col_group = x // 8
+            diff_size = (col_group + 1) * 10
+            grid_out[10 : 10 + diff_size, 0] = col_group + 1
+            obs = MagicMock()
+            obs.frame = np.expand_dims(grid_out, 0)
+            obs.state = GameState.NOT_FINISHED
+            obs.levels_completed = 0
+            return obs
+
+        mock_env = MagicMock()
+        mock_env.step = mock_step
+        obs0 = MagicMock()
+        obs0.frame = np.expand_dims(grid, 0)
+        obs0.state = GameState.NOT_FINISHED
+        obs0.levels_completed = 0
+        mock_env.reset.return_value = obs0
+
+        solver = PerGameSolver(_make_profile("click"), arcade=MagicMock())
+        positions = solver._scan_effective_positions(mock_env, replay_sequence=[])
+
+        assert len(positions) <= 6

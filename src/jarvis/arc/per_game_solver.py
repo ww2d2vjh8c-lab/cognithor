@@ -491,3 +491,83 @@ class PerGameSolver:
                 return False
 
         return True
+
+    def _scan_effective_positions(
+        self,
+        env: Any,
+        replay_sequence: list[tuple[int, int]],
+    ) -> list[tuple[int, int]]:
+        """Scan 2px grid to find click positions that change the puzzle grid.
+
+        Returns deduplicated representative positions, max 6 groups,
+        sorted by puzzle_diff descending.
+        """
+        from arcengine.enums import GameState
+
+        def replay_and_get_grid() -> np.ndarray:
+            obs = env.reset()
+            for x, y in replay_sequence:
+                obs = env.step(6, data={"x": x, "y": y})
+            return safe_frame_extract(obs)
+
+        base_grid = replay_and_get_grid()
+
+        # Scan every 2nd pixel
+        raw_hits: list[tuple[int, int, int]] = []  # (x, y, puzzle_diff)
+        for y in range(0, 64, 2):
+            for x in range(0, 64, 2):
+                obs = env.reset()
+                for rx, ry in replay_sequence:
+                    obs = env.step(6, data={"x": rx, "y": ry})
+                g_before = safe_frame_extract(obs)
+
+                obs = env.step(6, data={"x": x, "y": y})
+
+                if obs.state == GameState.GAME_OVER:
+                    continue
+
+                g_after = safe_frame_extract(obs)
+                puzzle_diff = int(np.sum(g_before[1:] != g_after[1:]))
+
+                if puzzle_diff > 0:
+                    raw_hits.append((x, y, puzzle_diff))
+
+        if not raw_hits:
+            return []
+
+        # Group by (puzzle_diff within 10%) AND (spatial proximity < 8 Manhattan)
+        groups: list[list[tuple[int, int, int]]] = []
+        used = [False] * len(raw_hits)
+
+        for i, (x1, y1, d1) in enumerate(raw_hits):
+            if used[i]:
+                continue
+            group = [(x1, y1, d1)]
+            used[i] = True
+            changed = True
+            while changed:
+                changed = False
+                for j, (x2, y2, d2) in enumerate(raw_hits):
+                    if used[j]:
+                        continue
+                    # Check proximity against any existing group member
+                    for gx, gy, gd in group:
+                        if abs(gd - d2) <= max(gd, d2) * 0.1 and abs(gx - x2) + abs(gy - y2) < 8:
+                            group.append((x2, y2, d2))
+                            used[j] = True
+                            changed = True
+                            break
+            groups.append(group)
+
+        # Pick representative per group (centroid), sort by diff descending
+        representatives: list[tuple[int, int, int]] = []
+        for group in groups:
+            cx = int(np.mean([g[0] for g in group]))
+            cy = int(np.mean([g[1] for g in group]))
+            avg_diff = int(np.mean([g[2] for g in group]))
+            representatives.append((cx, cy, avg_diff))
+
+        representatives.sort(key=lambda r: -r[2])
+        representatives = representatives[:6]
+
+        return [(x, y) for x, y, _ in representatives]
