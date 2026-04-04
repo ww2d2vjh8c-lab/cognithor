@@ -344,8 +344,11 @@ class GameAnalyzer:
         # Extract target colors: prefer vision, fallback to sacrifice level toggle detection
         target_colors: list[int] = []
         if vision1 and vision1.get("target_color") is not None:
-            target_colors = [int(vision1["target_color"])]
-        elif report.toggle_pairs:
+            try:
+                target_colors = [int(vision1["target_color"])]
+            except (ValueError, TypeError):
+                pass  # Vision returned non-numeric like "green"
+        if not target_colors and report.toggle_pairs:
             # Use source colors from detected toggle pairs (the color you click on)
             target_colors = list({src for src, _tgt in report.toggle_pairs})
 
