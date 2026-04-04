@@ -124,6 +124,54 @@ class GameProfile:
             log.warning("arc.profile_load_failed", game_id=game_id, error=str(exc))
             return None
 
+    def update_metrics(
+        self,
+        strategy_name: str,
+        *,
+        won: bool,
+        levels_solved: int,
+        steps: int,
+        budget_ratio: float,
+    ) -> None:
+        if strategy_name not in self.strategy_metrics:
+            self.strategy_metrics[strategy_name] = StrategyMetrics()
+        m = self.strategy_metrics[strategy_name]
+        m.attempts += 1
+        m.total_levels_solved += levels_solved
+        if won:
+            m.wins += 1
+            if m.wins == 1:
+                m.avg_steps_to_win = float(steps)
+                m.avg_budget_ratio = budget_ratio
+            else:
+                n = m.wins
+                m.avg_steps_to_win = m.avg_steps_to_win * (n - 1) / n + steps / n
+                m.avg_budget_ratio = m.avg_budget_ratio * (n - 1) / n + budget_ratio / n
+
+    def update_run(self, score: int) -> None:
+        self.total_runs += 1
+        if score > self.best_score:
+            self.best_score = score
+
+    def ranked_strategies(self) -> list[str]:
+        if not self.strategy_metrics:
+            return []
+
+        def score(name: str) -> float:
+            m = self.strategy_metrics[name]
+            if m.attempts == 0:
+                return 1.0  # exploration bonus
+            return m.win_rate
+
+        return sorted(self.strategy_metrics.keys(), key=score, reverse=True)
+
+    def default_strategies(self) -> list[tuple[str, float]]:
+        if self.game_type == "click":
+            return [("cluster_click", 0.5), ("targeted_click", 0.3), ("hybrid", 0.2)]
+        if self.game_type == "keyboard":
+            return [("keyboard_explore", 0.5), ("keyboard_sequence", 0.3), ("hybrid", 0.2)]
+        return [("hybrid", 0.5), ("targeted_click", 0.3), ("keyboard_explore", 0.2)]
+
     @classmethod
     def exists(cls, game_id: str, base_dir: Path | None = None) -> bool:
         base = base_dir or _DEFAULT_BASE_DIR
