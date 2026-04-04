@@ -113,6 +113,7 @@ class MechanicDiscovery:
         """Fully analyze the current level."""
         t0 = time.time()
         self._test_clicks_used = 0
+        self._last_click_obs = obs
         grid = obs_to_grid(obs)
         profile = MechanicProfile(level=level)
 
@@ -217,13 +218,13 @@ class MechanicDiscovery:
 
     def _click(self, x: int, y: int) -> Any:
         """Click at (x, y). arc_agi SDK: env.step(6, data={x, y})."""
-        return self.env.step(6, data={"x": int(x), "y": int(y)})
+        obs = self.env.step(6, data={"x": int(x), "y": int(y)})
+        self._last_click_obs = obs
+        return obs
 
     def _get_obs(self) -> Any:
-        """Get current observation without taking a step."""
-        if hasattr(self.env, "_last_response"):
-            return self.env._last_response
-        return None
+        """Get current observation."""
+        return getattr(self, "_last_click_obs", None)
 
     def _log(self, msg: str) -> None:
         if self.verbose:

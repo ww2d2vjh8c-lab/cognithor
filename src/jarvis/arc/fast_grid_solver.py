@@ -209,6 +209,7 @@ class FastGridSolver:
         self.max_combos_per_level = max_combos_per_level
         self._env: Any = None
         self._arcade: Any = None
+        self._current_obs: Any = None
 
     def solve_all_levels(self) -> list[LevelResult]:
         """Solve all levels sequentially."""
@@ -217,6 +218,7 @@ class FastGridSolver:
         self._arcade = arc_agi.Arcade()
         self._env = self._arcade.make(self.game_id)
         obs = self._env.reset()
+        self._current_obs = obs
         results: list[LevelResult] = []
 
         for level_num in range(self.max_levels):
@@ -230,7 +232,7 @@ class FastGridSolver:
                     f"in {result.duration_s:.1f}s ({result.combos_tested} combos)"
                 )
                 # Get obs for next level
-                obs = self._last_obs
+                obs = self._current_obs
                 if self._is_game_done():
                     self._log("GAME COMPLETE!")
                     break
@@ -346,11 +348,11 @@ class FastGridSolver:
             test_cluster = max(clusters, key=lambda c: c.size)
             cr, cc = test_cluster.centroid
 
-            grid_before = obs_to_grid(self._last_obs)
+            grid_before = grid.copy()
 
             # Test click (SDK: action=6, data={x=col, y=row})
-            self._click(cc, cr)
-            grid_after = obs_to_grid(self._last_obs)
+            obs_after = self._click(cc, cr)
+            grid_after = obs_to_grid(obs_after)
 
             toggle = detect_toggle_pair(grid_before, grid_after)
 
@@ -368,16 +370,16 @@ class FastGridSolver:
 
     @property
     def _last_obs(self) -> Any:
-        """Current observation from env."""
-        if hasattr(self._env, "_last_response"):
-            return self._env._last_response
-        return None
+        """Current observation."""
+        return self._current_obs
 
     def _click(self, x: int, y: int) -> Any:
         """Click at (x, y) on the real env. arc_agi SDK format."""
         if self._env is None:
             return None
-        return self._env.step(6, data={"x": int(x), "y": int(y)})
+        obs = self._env.step(6, data={"x": int(x), "y": int(y)})
+        self._current_obs = obs
+        return obs
 
     def _execute_solution(self, click_coords: list[tuple[int, int]]) -> None:
         """Execute clicks. Coords are (row, col) from centroid, convert to (x=col, y=row)."""
