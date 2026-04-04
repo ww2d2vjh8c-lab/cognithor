@@ -104,7 +104,7 @@ def _run_single(game_id: str, use_llm: bool, verbose: bool, config: Any) -> int:
         return 1
 
     llm_call_interval = 10
-    max_steps = 500
+    max_steps = 1000
     max_resets = 5
 
     if config is not None:

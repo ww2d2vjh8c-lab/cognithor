@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import random
+from dataclasses import dataclass, field
 from typing import Any
 
 from jarvis.arc.adapter import ArcEnvironmentAdapter, ArcObservation
@@ -20,6 +22,77 @@ log = get_logger(__name__)
 
 # Number of steps between goal re-analysis
 _GOAL_REANALYSIS_INTERVAL = 5
+
+
+class PixelRewardExplorer:
+    """Epsilon-greedy action selection using changed_pixels as reward."""
+
+    def __init__(self, epsilon: float = 0.2) -> None:
+        self.epsilon = epsilon
+        self.action_rewards: dict[int, list[float]] = {}
+
+    def select_action(self, available_actions: list) -> Any:
+        """Pick an action: untested first, then greedy with epsilon exploration."""
+        for a in available_actions:
+            key = a.value if hasattr(a, "value") else int(a)
+            if key not in self.action_rewards:
+                self.action_rewards[key] = []
+
+        if random.random() < self.epsilon:
+            return random.choice(available_actions)
+
+        best_action = None
+        best_avg = -1.0
+        for a in available_actions:
+            key = a.value if hasattr(a, "value") else int(a)
+            rewards = self.action_rewards[key]
+            if not rewards:
+                return a
+            avg = sum(rewards[-10:]) / len(rewards[-10:])
+            if avg > best_avg:
+                best_avg = avg
+                best_action = a
+
+        return best_action or random.choice(available_actions)
+
+    def record_reward(self, action: Any, changed_pixels: int) -> None:
+        """Record the pixel-change reward for an action."""
+        key = action.value if hasattr(action, "value") else int(action)
+        self.action_rewards.setdefault(key, []).append(float(changed_pixels))
+
+
+@dataclass
+class ArcTelemetry:
+    """In-memory telemetry for one game run."""
+
+    actions_taken: dict[str, int] = field(default_factory=dict)
+    pixels_per_action: dict[str, list[int]] = field(default_factory=dict)
+    states_discovered: int = 0
+    stagnation_count: int = 0
+    max_stagnation: int = 0
+    game_overs: int = 0
+    levels_won: int = 0
+
+    def record_step(self, action: str, changed_pixels: int) -> None:
+        self.actions_taken[action] = self.actions_taken.get(action, 0) + 1
+        self.pixels_per_action.setdefault(action, []).append(changed_pixels)
+        if changed_pixels == 0:
+            self.stagnation_count += 1
+            self.max_stagnation = max(self.max_stagnation, self.stagnation_count)
+        else:
+            self.stagnation_count = 0
+
+    def summary(self) -> str:
+        lines = ["=== ARC Telemetry ==="]
+        lines.append(f"Actions: {self.actions_taken}")
+        for a, pxs in self.pixels_per_action.items():
+            avg = sum(pxs) / len(pxs) if pxs else 0
+            lines.append(f"  {a}: avg_pixels={avg:.0f}, count={len(pxs)}")
+        lines.append(f"States discovered: {self.states_discovered}")
+        lines.append(f"Max stagnation: {self.max_stagnation} steps")
+        lines.append(f"Game overs: {self.game_overs}")
+        lines.append(f"Levels won: {self.levels_won}")
+        return "\n".join(lines)
 
 
 class CognithorArcAgent:
@@ -41,7 +114,7 @@ class CognithorArcAgent:
         game_id: str,
         use_llm_planner: bool = False,
         llm_call_interval: int = 30,
-        max_steps_per_level: int = 500,
+        max_steps_per_level: int = 1000,
         max_resets_per_level: int = 20,
     ) -> None:
         self.game_id = game_id
@@ -66,13 +139,17 @@ class CognithorArcAgent:
         # CNN Action Predictor (online learning during gameplay)
         self._cnn_trainer: Any = None
         try:
-            from jarvis.arc.cnn_model import OnlineTrainer, _TORCH_AVAILABLE
+            from jarvis.arc.cnn_model import _TORCH_AVAILABLE, OnlineTrainer
 
             if _TORCH_AVAILABLE:
                 self._cnn_trainer = OnlineTrainer(device="cuda")
                 log.info("arc.agent.cnn_initialized", device=str(self._cnn_trainer._device))
         except Exception:
             log.debug("arc.agent.cnn_not_available", exc_info=True)
+
+        # Pixel-reward explorer (primary action selection)
+        self.pixel_explorer = PixelRewardExplorer(epsilon=0.2)
+        self.telemetry = ArcTelemetry()
 
         # Runtime state
         self.current_obs: ArcObservation | None = None
@@ -124,6 +201,7 @@ class CognithorArcAgent:
                 # Reset the level
                 self.current_obs = self.adapter.reset_level()
                 self.level_resets += 1
+                self.telemetry.game_overs += 1
                 self.memory.clear_for_new_level()
                 log.info(
                     "arc.agent.level_reset",
@@ -152,6 +230,7 @@ class CognithorArcAgent:
             "score": final_score,
         }
         log.info("arc.agent.run.done", **result_dict)
+        log.info("arc_telemetry\n%s", self.telemetry.summary())
         return result_dict
 
     # ------------------------------------------------------------------
@@ -255,9 +334,12 @@ class CognithorArcAgent:
 
                     data = {"x": random.randint(0, 63), "y": random.randint(0, 63)}
 
-        # 3. Explorer fallback
+        # 3. Pixel-reward explorer (primary fallback)
         if action_str is None:
-            action, data = self.explorer.choose_action(self.current_obs, self.memory, self.goals)
+            action = self.pixel_explorer.select_action(
+                self.current_obs.available_actions or [1, 2, 3, 4]
+            )
+            data = {}
             action_str = self._action_to_str(action, data)
 
         # LLM only rarely (disabled by default)
@@ -277,6 +359,13 @@ class CognithorArcAgent:
 
         # Record in memory + audit + graph
         self._record_step(previous_obs, action_str, data)
+
+        # Telemetry + pixel-reward feedback
+        self.pixel_explorer.record_reward(action, self.current_obs.changed_pixels)
+        self.telemetry.record_step(
+            action=action_str or str(action),
+            changed_pixels=self.current_obs.changed_pixels,
+        )
 
         # Feed CNN trainer with experience (online learning)
         if self._cnn_trainer is not None and action is not None:
@@ -368,6 +457,7 @@ class CognithorArcAgent:
 
     def _on_level_complete(self) -> None:
         """Handle post-WIN level bookkeeping and prepare for the next level."""
+        self.telemetry.levels_won += 1
         # State Graph: preserve action patterns, clear state space
         self.state_graph.prepare_for_new_level()
         self._navigation_mode = False
@@ -441,7 +531,7 @@ class CognithorArcAgent:
             )
             memory_summary = self.memory.get_summary_for_llm()
             goal_summary = self.goals.get_summary_for_llm()
-            mechanics_summary = self.mechanics.get_summary_for_llm()
+            _mechanics_summary = self.mechanics.get_summary_for_llm()
             graph_summary = self.state_graph.get_summary_for_llm()
 
             # Build available action names

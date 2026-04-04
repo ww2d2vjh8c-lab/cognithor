@@ -191,7 +191,18 @@ class ArcEnvironmentAdapter:
         win_levels: int = int(getattr(raw, "win_levels", 0) or 0)
 
         raw_actions = getattr(raw, "available_actions", None)
-        available_actions: list[Any] = list(raw_actions) if raw_actions is not None else []
+        available_actions: list[Any] = []
+        if raw_actions is not None:
+            for a in raw_actions:
+                if isinstance(a, int):
+                    try:
+                        from arcengine.enums import GameAction
+
+                        available_actions.append(GameAction(a))
+                    except (ValueError, KeyError, ImportError):
+                        available_actions.append(a)
+                else:
+                    available_actions.append(a)
 
         # Build action history from the previous obs (if any)
         prev_history: list[Any] = []
