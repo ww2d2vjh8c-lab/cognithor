@@ -745,6 +745,13 @@ class PerGameSolver:
 
         log.info("arc.effect_matrix", effects={f"{x},{y}": d for (x, y), d in effects.items()})
 
+        # Try height-space planning first (much smarter than greedy)
+        height_result = self._height_space_solve(
+            env, replay_prefix, action_set, current_levels, timeout - (time.monotonic() - t0),
+        )
+        if height_result is not None:
+            return height_result
+
         # Round-robin index for cycling through valves
         valve_cycle_idx = 0
         stagnation_count = 0
@@ -832,4 +839,227 @@ class PerGameSolver:
 
                 effects = new_effects
 
+        return None
+
+    def _height_space_solve(
+        self,
+        env: Any,
+        replay_prefix: list[tuple[int, int]],
+        action_set: list[tuple[int, int]],
+        current_levels: int,
+        timeout: float,
+    ) -> list[tuple[int, int]] | None:
+        """A* search in abstract height-space instead of full grid-space.
+
+        1. Identify container columns from the grid
+        2. Measure fill height per container (white pixel count)
+        3. Find target heights from teal markers (color 14)
+        4. Learn effect matrix: valve → height deltas per container
+        5. A* search through (h1, h2, ..., hn) states
+        """
+        import heapq
+        import time
+
+        from arcengine.enums import GameState
+
+        if timeout <= 0:
+            return None
+
+        t0 = time.monotonic()
+
+        # Get current grid
+        obs = env.reset()
+        for rx, ry in replay_prefix:
+            obs = env.step(6, data={"x": rx, "y": ry})
+        grid = safe_frame_extract(obs)
+
+        # --- Step 1: Identify container columns ---
+        # Containers are vertical regions bounded by non-white/non-background.
+        # Scan each column: count white pixels (color 0) in rows 1-57 (exclude bar and bottom border)
+        col_white = np.array([int(np.sum(grid[1:57, x] == 0)) for x in range(64)])
+
+        # Find contiguous column groups with white > 0
+        containers: list[tuple[int, int]] = []  # (col_start, col_end)
+        in_container = False
+        start = 0
+        for x in range(64):
+            if col_white[x] > 0 and not in_container:
+                start = x
+                in_container = True
+            elif col_white[x] == 0 and in_container:
+                containers.append((start, x - 1))
+                in_container = False
+        if in_container:
+            containers.append((start, 63))
+
+        if not containers:
+            log.debug("arc.height_space_no_containers")
+            return None
+
+        log.info("arc.height_space_containers", n=len(containers),
+                 cols=[f"{s}-{e}" for s, e in containers])
+
+        # --- Step 2: Measure fill height per container ---
+        def measure_heights(g: np.ndarray) -> tuple[int, ...]:
+            heights = []
+            for col_start, col_end in containers:
+                # Count white pixels in this column range (rows 1-57)
+                h = int(np.sum(g[1:57, col_start:col_end + 1] == 0))
+                heights.append(h)
+            return tuple(heights)
+
+        current_heights = measure_heights(grid)
+
+        # --- Step 3: Find target heights from teal markers (color 14) ---
+        # Target markers indicate where the water level should reach.
+        # For each container, find the closest teal marker and derive target height.
+        target_heights_list: list[int] = []
+        teal_ys, teal_xs = np.where(grid == 14)
+
+        if len(teal_ys) == 0:
+            log.debug("arc.height_space_no_targets")
+            return None
+
+        for idx, (col_start, col_end) in enumerate(containers):
+            col_center = (col_start + col_end) // 2
+            col_width = col_end - col_start + 1
+
+            # Find teal markers within or adjacent to this container
+            best_dist = 999
+            best_y = -1
+            for ty, tx in zip(teal_ys.tolist(), teal_xs.tolist()):
+                dist = abs(tx - col_center)
+                if dist < best_dist and dist < col_width + 4:
+                    best_dist = dist
+                    best_y = ty
+
+            if best_y >= 0:
+                # Count fillable cells from bottom up to the marker row
+                # This matches how measure_heights counts white pixels
+                target_h = 0
+                for r in range(56, best_y - 1, -1):
+                    for c in range(col_start, col_end + 1):
+                        # Count non-border, non-bar cells (potential water spots)
+                        if grid[r, c] in (0, 3):  # white or red = fillable space
+                            target_h += 1
+                target_heights_list.append(target_h)
+            else:
+                # No marker found — target = current height (don't change)
+                target_heights_list.append(current_heights[idx])
+
+        target_heights = tuple(target_heights_list)
+
+        # Reduce to only containers that need changes
+        active_indices = [i for i in range(len(containers))
+                          if current_heights[i] != target_heights[i]]
+        if not active_indices:
+            return []  # already solved
+
+        # Project heights to active-only dimensions for faster search
+        def project(full: tuple[int, ...]) -> tuple[int, ...]:
+            return tuple(full[i] for i in active_indices)
+
+        projected_current = project(current_heights)
+        projected_target = project(target_heights)
+
+        log.info("arc.height_space_plan",
+                 current=current_heights, target=target_heights,
+                 active=active_indices, projected_current=projected_current,
+                 projected_target=projected_target,
+                 n_containers=len(containers), n_valves=len(action_set))
+
+        # --- Step 4: Learn effect matrix ---
+        # Click each valve once, measure height delta per container
+        valve_effects: dict[tuple[int, int], tuple[int, ...]] = {}
+        for cx, cy in action_set:
+            obs = env.reset()
+            for rx, ry in replay_prefix:
+                obs = env.step(6, data={"x": rx, "y": ry})
+            g_before = safe_frame_extract(obs)
+            h_before = measure_heights(g_before)
+
+            obs = env.step(6, data={"x": cx, "y": cy})
+            if obs.state == GameState.GAME_OVER:
+                continue
+
+            # Check instant win
+            if obs.levels_completed > current_levels:
+                return [(cx, cy)]
+
+            g_after = safe_frame_extract(obs)
+            h_after = measure_heights(g_after)
+            delta = tuple(a - b for a, b in zip(h_after, h_before))
+
+            if any(d != 0 for d in delta):
+                valve_effects[(cx, cy)] = delta
+
+        if not valve_effects:
+            log.debug("arc.height_space_no_effects")
+            return None
+
+        log.info("arc.height_space_effects",
+                 valves={f"{x},{y}": list(d) for (x, y), d in valve_effects.items()})
+
+        # --- Step 5: A* search in projected height space ---
+        # Project valve effects to active dimensions only
+        projected_effects: dict[tuple[int, int], tuple[int, ...]] = {}
+        for (vx, vy), delta in valve_effects.items():
+            proj_delta = project(delta)
+            if any(d != 0 for d in proj_delta):
+                projected_effects[(vx, vy)] = proj_delta
+
+        if not projected_effects:
+            log.debug("arc.height_space_no_active_effects")
+            return None
+
+        def heuristic(state: tuple[int, ...]) -> int:
+            return sum(abs(s - t) for s, t in zip(state, projected_target))
+
+        start_state = projected_current
+        pq: list[tuple[int, int, tuple[int, ...], list[tuple[int, int]]]] = [
+            (heuristic(start_state), 0, start_state, [])
+        ]
+        visited: dict[tuple[int, ...], int] = {start_state: 0}
+        max_depth = 80
+        max_states = 500_000
+
+        while pq:
+            if time.monotonic() - t0 > timeout:
+                break
+            if len(visited) > max_states:
+                break
+
+            est, depth, state, path = heapq.heappop(pq)
+            if state == projected_target:
+                # Verify on actual env
+                full_seq = replay_prefix + path
+                obs = env.reset()
+                for rx, ry in full_seq:
+                    obs = env.step(6, data={"x": rx, "y": ry})
+                    if obs.state == GameState.GAME_OVER:
+                        break
+                if obs.levels_completed > current_levels:
+                    log.info("arc.height_space_solved", clicks=len(path), states=len(visited))
+                    return path
+                # Height-space solution didn't match reality — continue searching
+
+            if depth >= max_depth:
+                continue
+
+            for (vx, vy), proj_delta in projected_effects.items():
+                new_state = tuple(
+                    max(0, s + d) for s, d in zip(state, proj_delta)
+                )
+                new_depth = depth + 1
+
+                if visited.get(new_state, 999) <= new_depth:
+                    continue
+                visited[new_state] = new_depth
+
+                new_path = path + [(vx, vy)]
+                priority = new_depth + heuristic(new_state)
+                heapq.heappush(pq, (priority, new_depth, new_state, new_path))
+
+        log.info("arc.height_space_failed", states=len(visited),
+                 time_s=round(time.monotonic() - t0, 1))
         return None
