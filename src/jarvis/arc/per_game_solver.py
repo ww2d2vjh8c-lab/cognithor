@@ -537,7 +537,7 @@ class PerGameSolver:
                 g_after = safe_frame_extract(obs)
                 puzzle_diff = int(np.sum(g_before[1:] != g_after[1:]))
 
-                if puzzle_diff > 0:
+                if puzzle_diff > 10:  # ignore tiny diffs (timer ticks, cosmetic)
                     raw_hits.append((x, y, puzzle_diff))
 
         if not raw_hits:
@@ -556,7 +556,7 @@ class PerGameSolver:
                 if used[j]:
                     continue
                 # Same diff AND directly adjacent (same valve)
-                if d1 == d2 and abs(x1 - x2) + abs(y1 - y2) <= 4:
+                if abs(d1 - d2) <= max(d1, d2) * 0.15 and abs(x1 - x2) + abs(y1 - y2) <= 8:
                     group.append((x2, y2, d2))
                     used[j] = True
             groups.append(group)
@@ -568,7 +568,7 @@ class PerGameSolver:
             representatives.append(best)
 
         representatives.sort(key=lambda r: -r[2])
-        representatives = representatives[:6]
+        representatives = representatives[:4]
 
         return [(x, y) for x, y, _ in representatives]
 
@@ -590,7 +590,7 @@ class PerGameSolver:
 
             solution = self._bfs_find_sequence(
                 env, replay_prefix, timeout,
-                max_depth=12, max_sub_levels=5,
+                max_depth=15, max_sub_levels=5,
                 sub_level_threshold=500, max_states=50_000,
             )
 
@@ -740,7 +740,7 @@ class PerGameSolver:
         visited: set[int] = {hash(initial_grid[1:].tobytes())}
 
         while queue:
-            if time.monotonic() - t0 > timeout / 2:  # use half timeout for phase 1
+            if time.monotonic() - t0 > timeout * 0.8:  # use 80% of timeout for BFS
                 break
             if len(visited) > max_states // 2:
                 break
