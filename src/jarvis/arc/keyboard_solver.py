@@ -101,6 +101,150 @@ class KeyboardSolver:
         replay_prefix: list[int],
         timeout: float,
     ) -> list[int] | None:
+        """Try A* pathfinding first, fall back to incremental DFS."""
+        # Try A* with automatic goal detection
+        astar_result = self._astar_solve(env, replay_prefix, min(timeout, 30.0))
+        if astar_result is not None:
+            return astar_result
+
+        # Fall back to DFS
+        return self._dfs_solve(env, replay_prefix, timeout)
+
+    def _astar_solve(
+        self,
+        env: Any,
+        replay_prefix: list[int],
+        timeout: float,
+    ) -> list[int] | None:
+        """A* pathfinding: detect avatar+goal, find shortest path on grid."""
+        import heapq
+        import time
+
+        from arcengine.enums import GameState
+
+        t0 = time.monotonic()
+        kb_actions = [a for a in self._actions if a in (1, 2, 3, 4)]
+        if len(kb_actions) < 2:
+            return None
+
+        # Get initial grid and detect avatar via movement
+        obs = env.reset()
+        for a in replay_prefix:
+            obs = env.step(a)
+        grid = safe_frame_extract(obs)
+        current_levels = obs.levels_completed
+
+        # Detect avatar: pixels that change when we move
+        avatar_pixels: set[tuple[int, int]] = set()
+        for action in kb_actions[:2]:  # test 2 directions
+            obs2 = env.reset()
+            for a in replay_prefix:
+                obs2 = env.step(a)
+            g_before = safe_frame_extract(obs2)
+            obs2 = env.step(action)
+            g_after = safe_frame_extract(obs2)
+            diff = g_before != g_after
+            ys, xs = np.where(diff)
+            for y, x in zip(ys.tolist(), xs.tolist()):
+                avatar_pixels.add((x, y))
+
+        if not avatar_pixels:
+            return None
+
+        avatar_x = sum(p[0] for p in avatar_pixels) // len(avatar_pixels)
+        avatar_y = sum(p[1] for p in avatar_pixels) // len(avatar_pixels)
+
+        # Detect goal: small colored object far from avatar
+        best_goal = None
+        best_dist = 0
+        for c in range(16):
+            ys_c, xs_c = np.where(grid == c)
+            if 2 <= len(ys_c) <= 50:
+                cx, cy = int(np.mean(xs_c)), int(np.mean(ys_c))
+                dist = abs(cx - avatar_x) + abs(cy - avatar_y)
+                if dist > best_dist:
+                    best_dist = dist
+                    best_goal = (cx, cy)
+
+        if best_goal is None or best_dist < 5:
+            return None
+
+        log.info("arc.astar_start", avatar=(avatar_x, avatar_y), goal=best_goal, dist=best_dist)
+
+        # Build walkable map: downsample to blocks
+        block_size = 4
+        bh, bw = 64 // block_size, 64 // block_size
+        block_grid = np.zeros((bh, bw), dtype=int)
+        for by in range(bh):
+            for bx in range(bw):
+                block = grid[by * block_size:(by + 1) * block_size,
+                             bx * block_size:(bx + 1) * block_size]
+                colors, counts = np.unique(block, return_counts=True)
+                block_grid[by, bx] = colors[np.argmax(counts)]
+
+        # Determine walkable colors (not walls)
+        wall_color = block_grid[0, 0] if block_grid[0, 0] != 0 else 1
+        walkable = set(int(c) for c in np.unique(block_grid))
+
+        start_block = (avatar_x // block_size, avatar_y // block_size)
+        goal_block = (best_goal[0] // block_size, best_goal[1] // block_size)
+
+        # A* on block grid
+        DELTAS = [(0, -1, 1), (0, 1, 2), (-1, 0, 3), (1, 0, 4)]  # UP,DOWN,LEFT,RIGHT
+        open_set: list[tuple[int, tuple[int, int], list[int]]] = [
+            (0, start_block, [])
+        ]
+        closed: set[tuple[int, int]] = set()
+
+        while open_set:
+            if time.monotonic() - t0 > timeout:
+                break
+            cost, pos, path = heapq.heappop(open_set)
+            if pos == goal_block:
+                # Found path — try executing with different step multipliers
+                for mult in [1, 2, 3, 4, 5, 6]:
+                    obs = env.reset()
+                    for a in replay_prefix:
+                        obs = env.step(a)
+                    for a in path:
+                        for _ in range(mult):
+                            obs = env.step(a)
+                            if obs.levels_completed > current_levels:
+                                log.info("arc.astar_solved",
+                                         steps=len(path) * mult, mult=mult,
+                                         blocks=len(path))
+                                return [a for a in path for _ in range(mult)]
+                            if obs.state == GameState.GAME_OVER:
+                                break
+                        if obs.state == GameState.GAME_OVER:
+                            break
+                log.info("arc.astar_path_found_but_no_win", blocks=len(path))
+                return None
+
+            if pos in closed:
+                continue
+            closed.add(pos)
+
+            bx, by = pos
+            for dx, dy, action in DELTAS:
+                if action not in kb_actions:
+                    continue
+                nx, ny = bx + dx, by + dy
+                if 0 <= nx < bw and 0 <= ny < bh and (nx, ny) not in closed:
+                    if block_grid[ny, nx] in walkable:
+                        dist = abs(nx - goal_block[0]) + abs(ny - goal_block[1])
+                        heapq.heappush(open_set, (
+                            len(path) + 1 + dist, (nx, ny), path + [action]
+                        ))
+
+        return None
+
+    def _dfs_solve(
+        self,
+        env: Any,
+        replay_prefix: list[int],
+        timeout: float,
+    ) -> list[int] | None:
         """Incremental DFS for one level. Returns action sequence or None."""
         from arcengine.enums import GameState
 
