@@ -732,6 +732,15 @@ Apache 2.0 — see [LICENSE](LICENSE)
 
 Copyright 2026 Alexander Soellner
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=Alex8791-cyber%2Fcognithor&type=date&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Alex8791-cyber/cognithor&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Alex8791-cyber/cognithor&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Alex8791-cyber/cognithor&type=date&legend=top-left" />
+ </picture>
+</a>
 
 ---
 
