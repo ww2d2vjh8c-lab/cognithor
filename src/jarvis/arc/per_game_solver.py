@@ -1129,11 +1129,10 @@ class PerGameSolver:
                  containers=len(containers), valves=len(action_set),
                  current=current_heights, target=target)
 
-        # --- Simulation A*: real clicks, height-based dedup ---
+        # --- Simulation BFS: real clicks, height-based dedup ---
+        # Use BFS (not A*) — target heights are unreliable, rely only on levels_completed
         def heuristic(h: tuple[int, ...]) -> int:
-            if not has_markers:
-                return 0  # no markers → BFS (no heuristic bias)
-            return sum(abs(a - b) for a, b in zip(h, target))
+            return 0  # pure BFS — levels_completed is the only reliable goal signal
 
         # pq: (priority, depth, heights, click_path)
         pq: list[tuple[int, int, tuple[int, ...], list[tuple[int, int]]]] = [
@@ -1188,6 +1187,14 @@ class PerGameSolver:
                 # Prune: if heuristic increased compared to parent, lower priority
                 new_path = path + [(vx, vy)]
                 heapq.heappush(pq, (new_depth + h, new_depth, new_heights, new_path))
+
+        # Log reachable state range for debugging
+        if visited:
+            all_states = list(visited.keys())
+            for dim in range(len(containers)):
+                vals = sorted(set(s[dim] for s in all_states))
+                log.info("arc.sim_astar_dim_range", dim=dim,
+                         min=vals[0], max=vals[-1], unique=len(vals))
 
         log.info("arc.sim_astar_failed", states=len(visited),
                  time_s=round(time.monotonic() - t0, 1))
