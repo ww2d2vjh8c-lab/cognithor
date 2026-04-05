@@ -576,6 +576,8 @@ class PerGameSolver:
         """BFS-based click sequence search with sub-level detection."""
         import time
 
+        from arcengine.enums import GameState
+
         outcome = StrategyOutcome()
         game_id = self._profile.game_id
         max_levels = 10
@@ -606,6 +608,28 @@ class PerGameSolver:
                 # False positive — solution doesn't actually solve the level
                 log.info("arc.sequence_false_positive", level=level, clicks=len(solution))
                 break
+
+            # Shorten solution: remove redundant clicks
+            original_len = len(solution)
+            replay_prefix = [c for seq in prev_level_clicks for c in seq]
+            i = 0
+            while i < len(solution):
+                candidate = solution[:i] + solution[i + 1:]
+                full = replay_prefix + candidate
+                obs_s = env.reset()
+                ok = True
+                for rx, ry in full:
+                    obs_s = env.step(6, data={"x": rx, "y": ry})
+                    if obs_s.state == GameState.GAME_OVER:
+                        ok = False
+                        break
+                if ok and obs_s.levels_completed > level:
+                    solution = candidate
+                else:
+                    i += 1
+            if len(solution) < original_len:
+                log.info("arc.click_path_shortened",
+                         original=original_len, shortened=len(solution))
 
             outcome.steps += 1
             prev_level_clicks.append(solution)
