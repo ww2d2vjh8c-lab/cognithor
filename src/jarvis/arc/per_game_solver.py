@@ -699,6 +699,17 @@ class PerGameSolver:
         if result is not None:
             return result
 
+        # Phase 1.5: Incremental Click-DFS (for deep solutions BFS can't reach)
+        if valves and not triggers:
+            remaining_time = timeout - (time.monotonic() - t0)
+            if remaining_time > 10:
+                result = self._incremental_click_dfs(
+                    env, replay_prefix, valves, current_levels,
+                    remaining_time, max_depth=60,
+                )
+                if result is not None:
+                    return result
+
         # Phase 2: For each trigger, try pre-pumping then triggering
         if triggers and max_sub_levels > 0:
             result = self._pump_then_trigger(
@@ -713,6 +724,106 @@ class PerGameSolver:
         action_set = valves + triggers
         return self._greedy_effect_solve(env, replay_prefix, action_set,
                                           current_levels, timeout - (time.monotonic() - t0))
+
+    def _incremental_click_dfs(
+        self,
+        env: Any,
+        replay_prefix: list[tuple[int, int]],
+        valves: list[tuple[int, int]],
+        current_levels: int,
+        timeout: float,
+        max_depth: int = 60,
+    ) -> list[tuple[int, int]] | None:
+        """Incremental DFS for click games: step forward, reset only on backtrack."""
+        import time
+
+        from arcengine.enums import GameState
+
+        t0 = time.monotonic()
+        max_states = 200_000
+
+        obs = env.reset()
+        for x, y in replay_prefix:
+            obs = env.step(6, data={"x": x, "y": y})
+        initial_grid = safe_frame_extract(obs)
+
+        path: list[int] = []  # indices into valves
+        visited: set[int] = {hash(initial_grid[1:].tobytes())}
+        stack: list[list[int]] = [list(range(len(valves)))]
+
+        while stack:
+            if time.monotonic() - t0 > timeout:
+                break
+            if len(visited) > max_states:
+                break
+
+            remaining = stack[-1]
+            if not remaining:
+                stack.pop()
+                if path:
+                    path.pop()
+                obs = env.reset()
+                for x, y in replay_prefix:
+                    obs = env.step(6, data={"x": x, "y": y})
+                for idx in path:
+                    obs = env.step(6, data={"x": valves[idx][0], "y": valves[idx][1]})
+                continue
+
+            idx = remaining.pop()
+            if len(path) >= max_depth:
+                continue
+
+            cx, cy = valves[idx]
+            obs = env.step(6, data={"x": cx, "y": cy})
+
+            if obs.levels_completed > current_levels:
+                path.append(idx)
+                solution = [valves[i] for i in path]
+                log.info("arc.click_dfs_solved", clicks=len(solution),
+                         states=len(visited), time_s=round(time.monotonic() - t0, 1))
+                return solution
+
+            if obs.state == GameState.GAME_OVER:
+                obs = env.reset()
+                for x, y in replay_prefix:
+                    obs = env.step(6, data={"x": x, "y": y})
+                for i in path:
+                    obs = env.step(6, data={"x": valves[i][0], "y": valves[i][1]})
+                continue
+
+            grid = safe_frame_extract(obs)
+            h = hash(grid[1:].tobytes())
+
+            if h in visited:
+                # Double-click attempt
+                obs = env.step(6, data={"x": cx, "y": cy})
+                if obs.levels_completed > current_levels:
+                    path.extend([idx, idx])
+                    solution = [valves[i] for i in path]
+                    log.info("arc.click_dfs_solved", clicks=len(solution), states=len(visited))
+                    return solution
+                g2 = safe_frame_extract(obs)
+                h2 = hash(g2[1:].tobytes())
+                if h2 not in visited:
+                    visited.add(h2)
+                    path.extend([idx, idx])
+                    stack.append(list(range(len(valves))))
+                    continue
+                # Reset
+                obs = env.reset()
+                for x, y in replay_prefix:
+                    obs = env.step(6, data={"x": x, "y": y})
+                for i in path:
+                    obs = env.step(6, data={"x": valves[i][0], "y": valves[i][1]})
+                continue
+
+            visited.add(h)
+            path.append(idx)
+            stack.append(list(range(len(valves))))
+
+        log.info("arc.click_dfs_exhausted", states=len(visited), depth=len(path),
+                 time_s=round(time.monotonic() - t0, 1))
+        return None
 
     def _bfs_valves_only(
         self,
