@@ -118,8 +118,20 @@ class KeyboardSolver:
 
         path: list[int] = []
         visited: set[int] = {self._grid_hash(initial_grid)}
+
+        def smart_action_order(last_action: int | None) -> list[int]:
+            """Order actions: avoid immediate reversal of last action."""
+            if last_action is None:
+                return list(self._actions)
+            reverse = _UNDO.get(last_action)
+            # Put reverse last (popped first = tried last)
+            ordered = [a for a in self._actions if a != reverse]
+            if reverse in self._actions:
+                ordered.insert(0, reverse)  # reverse tried last (.pop() from end)
+            return ordered
+
         # Stack of remaining actions to try at each depth
-        stack: list[list[int]] = [list(self._actions)]
+        stack: list[list[int]] = [smart_action_order(None)]
 
         while stack:
             if time.monotonic() - t0 > timeout:
@@ -189,7 +201,7 @@ class KeyboardSolver:
             # New state — go deeper
             visited.add(h)
             path.extend(actions_taken)
-            stack.append(list(self._actions))
+            stack.append(smart_action_order(actions_taken[0]))
 
             # Try INTERACT if available
             if 5 in self._actions:
