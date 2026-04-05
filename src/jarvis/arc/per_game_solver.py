@@ -593,6 +593,16 @@ class PerGameSolver:
             if solution is None:
                 break
 
+            # Verify the solution actually advances levels_completed
+            full_verify = [c for seq in prev_level_clicks for c in seq] + solution
+            obs_verify = env.reset()
+            for rx, ry in full_verify:
+                obs_verify = env.step(6, data={"x": rx, "y": ry})
+            if obs_verify.levels_completed <= level:
+                # False positive — solution doesn't actually solve the level
+                log.info("arc.sequence_false_positive", level=level, clicks=len(solution))
+                break
+
             outcome.steps += 1
             prev_level_clicks.append(solution)
             outcome.levels_solved += 1
