@@ -5,6 +5,42 @@ All notable changes to Cognithor are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.74.0] -- 2026-04-05
+
+### Added
+- **SmartExplorer** (`src/jarvis/arc/smart_explorer.py`) — systematic state-action graph exploration
+  - Tracks tested/untested actions per state node in a directed graph
+  - Navigates to nearest frontier state (with untested actions) via BFS on known transitions
+  - Prunes actions that don't change state (no wasted exploration budget)
+  - Click targets detected per-state via connected components (small salient objects first)
+  - Inspired by [3rd-place ARC-AGI-3 Preview solution](https://arxiv.org/abs/2512.24156)
+  - **7 new games solved**: TR87, BP35, CD82, TU93, KA59, SU15, TN36
+- **VisionAgent** (`src/jarvis/arc/vision_agent.py`) — qwen3-vl guided step-by-step gameplay prototype
+  - Per-step vision calls with action parsing and strategy context
+  - Action history tracking to prevent navigation loops
+- **Incremental click-DFS** for deep click puzzles (LP85 L2)
+- **Click path shortening** — removes redundant clicks from solutions
+- **Clicks as regular DFS actions** — enables multi-click sequences in mixed games
+
+### Changed
+- SmartExplorer runs before KeyboardSolver DFS as faster alternative
+- Action 7 now included in keyboard solver (was completely dropped)
+- Click positions scanned and passed to KeyboardSolver for mixed games
+- BFS depth raised to 15, timeout to 80% of budget
+
+### Fixed
+- Action 7 dropped from keyboard DFS filter (affected BP35, SK48, SB26, AR25, LF52)
+- Negative action indices (encoded clicks) crashing env.step() in double-step/undo
+- Click-only at (32,32) instead of detected object positions
+- GameState import missing in _execute_sequence_click path shortening
+
+### Benchmark Results (24 levels across 13/25 games)
+```
+FT09: 10/10  VC33: 2/7   LP85: 2/8   SP80: 1/6   CN04: 1/6
+M0R0: 1/6   TR87: 1/6   BP35: 1/9   CD82: 1/6   TU93: 1/9
+KA59: 1/7   SU15: 1/9   TN36: 1/7
+```
+
 ## [0.73.0] -- 2026-04-05
 
 ### Added
