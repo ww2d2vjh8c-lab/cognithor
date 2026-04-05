@@ -31,6 +31,7 @@
     "retry_exhausted": "我已尝试「{friendly}」{attempts} 次，但每次都失败了。{detail}",
     "no_details": "无详细信息。",
     "all_actions_blocked": "我无法执行任何计划步骤。Gatekeeper 阻止了所有操作。敏感操作可能需要审批。",
+    "context_window_exceeded": "上下文对于 {model} 来说太大了（{estimated} / {limit} 令牌）。请开始新会话或切换到具有更大上下文窗口的模型。",
     "processing_error": "处理过程中发生错误。",
     "invalid_json": "无效的 JSON",
     "invalid_token": "无效的令牌",

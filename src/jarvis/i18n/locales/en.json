@@ -31,6 +31,7 @@
     "retry_exhausted": "I tried \"{friendly}\" {attempts} times, but it failed each time. {detail}",
     "no_details": "No details available.",
     "all_actions_blocked": "I couldn't execute any of my planned steps. The Gatekeeper blocked all actions. This can happen with sensitive operations that require approval.",
+    "context_window_exceeded": "The context is too large for {model} ({estimated} of {limit} tokens). Please start a new session or switch to a model with a larger context window.",
     "processing_error": "A processing error occurred.",
     "invalid_json": "Invalid JSON",
     "invalid_token": "Invalid token",
