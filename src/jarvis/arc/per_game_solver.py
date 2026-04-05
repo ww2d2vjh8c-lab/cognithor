@@ -287,6 +287,11 @@ class PerGameSolver:
 
         # Special handling for keyboard strategies: incremental DFS
         if strategy in ("keyboard_explore", "keyboard_sequence"):
+            # Try Smart Explorer first (systematic graph exploration)
+            smart_result = self._execute_smart_explore(max_actions)
+            if smart_result.won:
+                return smart_result
+            # Fall back to keyboard DFS
             return self._execute_keyboard(max_actions)
 
         outcome = StrategyOutcome()
@@ -645,6 +650,21 @@ class PerGameSolver:
 
         outcome.budget_ratio = 1.0
         return outcome
+
+    def _execute_smart_explore(self, max_actions: int) -> StrategyOutcome:
+        """Systematic state-action graph exploration."""
+        from jarvis.arc.smart_explorer import SmartExplorer
+
+        se = SmartExplorer(
+            self._arcade, self._profile.game_id,
+            self._profile.available_actions,
+        )
+        result = se.solve(max_levels=10, timeout_s=300.0)
+        return StrategyOutcome(
+            won=result.levels_completed > 0,
+            levels_solved=result.levels_completed,
+            steps=result.total_steps,
+        )
 
     def _execute_keyboard(self, max_actions: int) -> StrategyOutcome:
         """Delegate to KeyboardSolver for incremental DFS on keyboard games."""
