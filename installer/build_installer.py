@@ -154,20 +154,30 @@ def step_ollama() -> Path:
 
 
 def step_flutter_ui() -> Path | None:
-    """Step 3: Build Flutter web UI (if flutter_app exists)."""
+    """Step 3: Copy Flutter web UI into build dir."""
     print("\n=== Step 3: Flutter UI ===")
 
+    # Target in build dir
+    flutter_build_dest = BUILD_DIR / "flutter_web"
+    if flutter_build_dest.exists():
+        print("  [SKIP] flutter_web/ already in build dir")
+        return flutter_build_dest
+
+    # Source: pre-built Flutter web
     flutter_app = PROJECT_ROOT / "flutter_app"
+    web_build = flutter_app / "build" / "web"
+
+    if web_build.exists() and (web_build / "index.html").exists():
+        print("  Copying pre-built Flutter web to build dir...")
+        shutil.copytree(web_build, flutter_build_dest)
+        print(f"  [OK] Flutter web copied ({sum(1 for _ in flutter_build_dest.rglob('*'))} files)")
+        return flutter_build_dest
+
+    # Try building if flutter available
     if not flutter_app.exists():
         print("  [SKIP] No flutter_app/ directory")
         return None
 
-    web_build = flutter_app / "build" / "web"
-    if web_build.exists():
-        print("  [SKIP] Flutter web build already exists")
-        return web_build
-
-    # Check if flutter is available
     if shutil.which("flutter") is None:
         print("  [WARN] flutter not in PATH, skipping UI build")
         return None
@@ -202,6 +212,14 @@ def step_launcher() -> Path:
         '    echo Please reinstall Cognithor.\r\n'
         '    pause\r\n'
         '    exit /b 1\r\n'
+        ')\r\n'
+        '\r\n'
+        'REM First-run setup (downloads skills, installs default agents)\r\n'
+        'if not exist "%USERPROFILE%\\.jarvis\\.cognithor_initialized" (\r\n'
+        '    if exist "%COGNITHOR_HOME%first_run.py" (\r\n'
+        '        echo Running first-time setup...\r\n'
+        '        "%PYTHON%" "%COGNITHOR_HOME%first_run.py"\r\n'
+        '    )\r\n'
         ')\r\n'
         '\r\n'
         'REM Start Ollama if not running\r\n'

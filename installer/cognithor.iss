@@ -75,12 +75,14 @@ Source: "{#BuildDir}\cognithor.bat"; DestDir: "{app}"; Components: core; Flags: 
 ; Ollama
 Source: "{#OllamaDir}\*"; DestDir: "{app}\ollama"; Components: ollama; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Flutter UI (if built)
-#ifdef FlutterDir
-  #if FlutterDir != ""
-Source: "{#FlutterDir}\*"; DestDir: "{app}\flutter_app\web"; Components: flutter; Flags: ignoreversion recursesubdirs createallsubdirs
-  #endif
-#endif
+; Flutter UI — always include from build dir if present
+Source: "{#BuildDir}\flutter_web\*"; DestDir: "{app}\flutter_app\web"; Components: flutter; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+
+; First-run setup script
+Source: "{#ProjectRoot}\installer\first_run.py"; DestDir: "{app}"; Components: core; Flags: ignoreversion
+
+; Default agents config
+Source: "{#ProjectRoot}\installer\agents.yaml.default"; DestDir: "{app}"; Components: core; Flags: ignoreversion
 
 ; Config template
 Source: "{#ProjectRoot}\config.yaml.example"; DestDir: "{app}"; DestName: "config.yaml"; Flags: onlyifdoesntexist
@@ -99,8 +101,8 @@ Root: HKCU; Subkey: "Environment"; \
 
 [Run]
 ; Post-install: offer to start Cognithor
-Filename: "{cmd}"; Parameters: "/c ""{app}\cognithor.bat"" --ui"; Description: "Start Cognithor"; \
-    Flags: nowait postinstall skipifsilent runhidden
+Filename: "{cmd}"; Parameters: "/k ""{app}\cognithor.bat"" --ui"; Description: "Start Cognithor"; \
+    Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\python\__pycache__"
