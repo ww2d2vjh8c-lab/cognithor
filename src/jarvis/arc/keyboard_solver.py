@@ -102,12 +102,12 @@ class KeyboardSolver:
         timeout: float,
     ) -> list[int] | None:
         """Try A* pathfinding first, fall back to incremental DFS."""
-        # Try A* with automatic goal detection
+        # Try A* direct execution
         astar_result = self._astar_solve(env, replay_prefix, min(timeout, 30.0))
         if astar_result is not None:
             return astar_result
 
-        # Fall back to DFS
+        # Fall back to DFS (A* path used as heuristic for action ordering)
         return self._dfs_solve(env, replay_prefix, timeout)
 
     def _astar_solve(
