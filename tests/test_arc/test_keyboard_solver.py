@@ -14,7 +14,8 @@ def _make_grid(avatar_pos=(5, 5), size=16):
     """Create a simple grid with avatar at given position."""
     g = np.full((64, 64), 1, dtype=np.int8)  # background
     r, c = avatar_pos
-    g[r, c] = 3  # avatar
+    # 4x4 avatar block so downsampled hash still detects movement
+    g[r:r+4, c:c+4] = 3
     return g
 
 
