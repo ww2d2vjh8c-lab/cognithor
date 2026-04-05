@@ -108,13 +108,17 @@ class CredentialStore:
         self._entries: dict[str, _StoredCredential] = {}
         self._loaded = False
 
+    _passphrase_warned: bool = False
+
     def _init_fernet(self) -> Any:
         """Initializes Fernet encryption."""
         if not self._passphrase:
-            log.warning(
-                "credential_store_no_passphrase: Credentials are NOT encrypted! "
-                "Set JARVIS_CREDENTIAL_KEY env var for encryption."
-            )
+            if not CredentialStore._passphrase_warned:
+                CredentialStore._passphrase_warned = True
+                log.warning(
+                    "credential_store_no_passphrase: Credentials are NOT encrypted! "
+                    "Set JARVIS_CREDENTIAL_KEY env var for encryption."
+                )
             return None
         if not _HAS_CRYPTO:
             raise RuntimeError(

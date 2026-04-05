@@ -47,7 +47,7 @@ _IMPORT_NAME_MAP: dict[str, str] = {
     "piper-tts": "piper",
     "fpdf2": "fpdf",
     "python-docx": "docx",
-    "ddgs": "duckduckgo_search",
+    "ddgs": "ddgs",
     "sqlite-vec": "sqlite_vec",
     "faiss-cpu": "faiss",
     "uvicorn": "uvicorn",

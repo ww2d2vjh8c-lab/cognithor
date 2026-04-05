@@ -367,16 +367,19 @@ def encrypted_connect(
                     pass
 
     if _sqlcipher_available and not key:
-        log.warning(
-            "sqlcipher_available_but_no_key",
-            path=db_path[-30:],
-            hint="Install 'keyring' package or set JARVIS_DB_KEY env var",
-        )
+        if not getattr(encrypted_connect, "_warned_no_key", False):
+            encrypted_connect._warned_no_key = True  # type: ignore[attr-defined]
+            log.warning(
+                "sqlcipher_available_but_no_key",
+                hint="Install 'keyring' package or set JARVIS_DB_KEY env var",
+            )
     elif not _sqlcipher_available:
-        log.warning(
-            "sqlcipher_not_installed",
-            hint="pip install pysqlcipher3 keyring",
-        )
+        if not getattr(encrypted_connect, "_warned", False):
+            encrypted_connect._warned = True  # type: ignore[attr-defined]
+            log.warning(
+                "sqlcipher_not_installed",
+                hint="pip install pysqlcipher3 keyring",
+            )
 
     # Fallback: standard sqlite3 (unencrypted)
     conn = sqlite3.connect(db_path, check_same_thread=check_same_thread, timeout=timeout)

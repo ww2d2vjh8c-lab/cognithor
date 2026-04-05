@@ -126,10 +126,19 @@ class ProceduralMemory:
             return []
 
         results: list[ProcedureMetadata] = []
+        skipped_encrypted = 0
         for f in sorted(self._dir.glob("*.md")):
-            parsed = self._parse_file(f)
+            parsed = self._parse_file(f, quiet=True)
             if parsed:
                 results.append(parsed[0])
+            elif parsed is None and f.exists():
+                skipped_encrypted += 1
+
+        if skipped_encrypted:
+            logger.info(
+                "Skipped %d encrypted procedures (no decryption key)",
+                skipped_encrypted,
+            )
 
         return results
 
@@ -377,7 +386,7 @@ class ProceduralMemory:
 
     # ── Internal ─────────────────────────────────────────────────
 
-    def _parse_file(self, path: Path) -> tuple[ProcedureMetadata, str] | None:
+    def _parse_file(self, path: Path, *, quiet: bool = False) -> tuple[ProcedureMetadata, str] | None:
         """Parst eine Prozedur-Datei in Metadata + Body."""
         try:
             if _efile is not None:
@@ -385,7 +394,8 @@ class ProceduralMemory:
             else:
                 content = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError, RuntimeError) as e:
-            logger.warning("Kann %s nicht lesen: %s", path, e)
+            if not quiet:
+                logger.warning("Kann %s nicht lesen: %s", path, e)
             return None
 
         match = _FRONTMATTER_RE.match(content)
