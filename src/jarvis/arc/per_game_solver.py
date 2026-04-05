@@ -670,18 +670,6 @@ class PerGameSolver:
 
         log.info("arc.bfs_classified", valves=len(valves), triggers=len(triggers))
 
-        # For deep puzzles (many valves), skip BFS and go straight to sim-A*
-        if len(valves) >= 4 and not triggers:
-            action_set = valves + triggers
-            height_result = self._height_space_solve(
-                env, replay_prefix, action_set, current_levels, timeout * 0.9,
-            )
-            if height_result is not None:
-                return height_result
-            # Fallback to greedy
-            return self._greedy_effect_solve(env, replay_prefix, action_set,
-                                              current_levels, timeout - (time.monotonic() - t0))
-
         # Phase 1: BFS with valves only (no triggers) — "pump first"
         result = self._bfs_valves_only(
             env, replay_prefix, valves, initial_grid, current_levels,
