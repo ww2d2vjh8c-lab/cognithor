@@ -131,12 +131,7 @@ class KeyboardSolver:
                 stack.pop()
                 if path:
                     path.pop()
-                # Reset to current path position
-                obs = env.reset()
-                for a in replay_prefix:
-                    obs = env.step(a)
-                for a in path:
-                    obs = env.step(a)
+                obs = self._replay_to(env, replay_prefix, path)
                 continue
 
             action = remaining.pop()
@@ -147,64 +142,73 @@ class KeyboardSolver:
 
             # INCREMENTAL step — no reset needed!
             obs = env.step(action)
+            actions_taken = [action]
 
             # Check win
             if obs.levels_completed > current_levels:
-                path.append(action)
+                path.extend(actions_taken)
                 return path
 
             # Check game over
             if obs.state == GameState.GAME_OVER:
-                # Reset to current path position
-                obs = env.reset()
-                for a in replay_prefix:
-                    obs = env.step(a)
-                for a in path:
-                    obs = env.step(a)
+                self._replay_to(env, replay_prefix, path)
                 continue
 
             grid = safe_frame_extract(obs)
             h = self._grid_hash(grid)
 
+            # Delayed-render fix: some games need 2 steps for grid to update.
+            # If this step produced no visible change, repeat the action once.
             if h in visited:
-                # Already visited — try undo instead of full reset
+                obs = env.step(action)
+                actions_taken.append(action)
+
+                if obs.levels_completed > current_levels:
+                    path.extend(actions_taken)
+                    return path
+                if obs.state == GameState.GAME_OVER:
+                    self._replay_to(env, replay_prefix, path)
+                    continue
+
+                grid = safe_frame_extract(obs)
+                h = self._grid_hash(grid)
+
+            if h in visited:
+                # Still visited after double-step — try undo or reset
                 undo = _UNDO.get(action)
-                if undo is not None:
-                    obs = env.step(undo)
-                    # Verify undo worked (grid matches pre-step)
-                    undo_grid = safe_frame_extract(obs)
-                    if self._grid_hash(undo_grid) not in visited or len(path) == 0:
-                        # Undo didn't restore — fall back to reset
-                        obs = env.reset()
-                        for a in replay_prefix:
-                            obs = env.step(a)
-                        for a in path:
-                            obs = env.step(a)
+                if undo is not None and len(actions_taken) <= 2:
+                    for _ in actions_taken:
+                        obs = env.step(undo)
                 else:
-                    obs = env.reset()
-                    for a in replay_prefix:
-                        obs = env.step(a)
-                    for a in path:
-                        obs = env.step(a)
+                    self._replay_to(env, replay_prefix, path)
                 continue
 
             # New state — go deeper
             visited.add(h)
-            path.append(action)
+            path.extend(actions_taken)
             stack.append(list(self._actions))
 
-            # Try INTERACT if available and not a movement key
+            # Try INTERACT if available
             if 5 in self._actions:
                 obs_interact = env.step(5)
                 if obs_interact.levels_completed > current_levels:
                     path.append(5)
                     return path
-                # Undo interact (step back with opposite, or just continue)
 
         log.info("arc.keyboard_dfs_exhausted",
                  states=len(visited), path_len=len(path),
                  time_s=round(time.monotonic() - t0, 1))
         return None
+
+    @staticmethod
+    def _replay_to(env: Any, prefix: list[int], path: list[int]) -> Any:
+        """Reset env and replay prefix + path."""
+        obs = env.reset()
+        for a in prefix:
+            obs = env.step(a)
+        for a in path:
+            obs = env.step(a)
+        return obs
 
     @staticmethod
     def _grid_hash(grid: np.ndarray) -> int:
