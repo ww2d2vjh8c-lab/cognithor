@@ -368,6 +368,22 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     onTap: () =>
                         setState(() => _selectedBackend = 'anthropic'),
                   ),
+                  const SizedBox(height: 10),
+
+                  // 5. OpenRouter / Custom OpenAI-compatible
+                  _BackendCard(
+                    icon: Icons.hub,
+                    title: 'OpenRouter / Custom',
+                    subtitle: 'Any OpenAI-compatible API (OpenRouter, Together, Groq, etc.)',
+                    tint: const Color(0xFF00BFA5),
+                    selected: _selectedBackend == 'openrouter',
+                    status: _isAuthenticated('openrouter')
+                        ? l.keyConfigured
+                        : l.noKey,
+                    statusOk: _isAuthenticated('openrouter'),
+                    onTap: () =>
+                        setState(() => _selectedBackend = 'openrouter'),
+                  ),
                 ],
               ),
             ),
@@ -491,19 +507,50 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           ),
         ],
 
-        // OpenAI / Anthropic
+        // OpenAI / Anthropic / OpenRouter
         if (_selectedBackend == 'openai' ||
-            _selectedBackend == 'anthropic') ...[
+            _selectedBackend == 'anthropic' ||
+            _selectedBackend == 'openrouter') ...[
+          if (_selectedBackend == 'openrouter') ...[
+            Text('Base URL', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _ollamaUrlController,
+              decoration: const InputDecoration(
+                hintText: 'https://openrouter.ai/api/v1',
+                prefixIcon: Icon(Icons.link),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           Text(l.apiKey, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
-          TextField(
-            controller: _apiKeyController,
-            obscureText: true,
-            decoration: InputDecoration(
-              hintText: _selectedBackend == 'openai' ? 'sk-...' : 'sk-ant-...',
-              prefixIcon: const Icon(Icons.key),
+          if (_isAuthenticated(_selectedBackend))
+            Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: JarvisTheme.green, size: 18),
+                const SizedBox(width: 8),
+                Text('API key saved', style: TextStyle(color: JarvisTheme.green)),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () => setState(() {}),
+                  child: const Text('Change'),
+                ),
+              ],
+            )
+          else
+            TextField(
+              controller: _apiKeyController,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: _selectedBackend == 'openai'
+                    ? 'sk-...'
+                    : _selectedBackend == 'anthropic'
+                        ? 'sk-ant-...'
+                        : 'sk-or-...',
+                prefixIcon: const Icon(Icons.key),
+              ),
             ),
-          ),
         ],
 
         const SizedBox(height: 24),
@@ -774,16 +821,16 @@ class _BackendCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      statusOk ? Icons.check_circle : Icons.cancel,
+                      statusOk ? Icons.check_circle_outline : Icons.radio_button_unchecked,
                       size: 14,
-                      color: statusOk ? JarvisTheme.green : JarvisTheme.red,
+                      color: statusOk ? JarvisTheme.green : JarvisTheme.textTertiary,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       status,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color:
-                                statusOk ? JarvisTheme.green : JarvisTheme.red,
+                                statusOk ? JarvisTheme.green : JarvisTheme.textTertiary,
                           ),
                     ),
                   ],
