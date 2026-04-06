@@ -74,9 +74,9 @@ class KanbanStore:
                 from jarvis.security.encrypted_db import encrypted_connect
                 self._conn = encrypted_connect(self._db_path)
             except Exception:
-                self._conn = sqlite3.connect(self._db_path)
+                self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
         else:
-            self._conn = sqlite3.connect(self._db_path)
+            self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA foreign_keys = ON")
         return self._conn
