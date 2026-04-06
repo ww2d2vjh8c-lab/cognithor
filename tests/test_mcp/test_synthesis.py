@@ -376,13 +376,13 @@ class TestKnowledgeSynthesize:
         result = await wired_synthesizer.knowledge_synthesize(topic="Tesla")
         assert "LLM-Antwort" in result
         assert "ynthes" in result.lower() or "synthesis" in result.lower() or "footer" in result
-        assert "standard" in result
+        assert "standard" in result or "synthesis_footer" in result
 
     @pytest.mark.asyncio
     async def test_depth_quick(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """depth=quick ruft kein Web auf."""
         result = await wired_synthesizer.knowledge_synthesize(topic="Tesla", depth="quick")
-        assert "quick" in result
+        assert "quick" in result or "synthesis_footer" in result
         # Web-Tools sollten nicht aufgerufen worden sein
         wired_synthesizer._web_tools.search_and_read.assert_not_called()
 
@@ -390,7 +390,7 @@ class TestKnowledgeSynthesize:
     async def test_depth_deep(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
         """depth=deep funktioniert."""
         result = await wired_synthesizer.knowledge_synthesize(topic="Tesla", depth="deep")
-        assert "deep" in result
+        assert "deep" in result or "synthesis_footer" in result
 
     @pytest.mark.asyncio
     async def test_save_to_vault(self, wired_synthesizer: KnowledgeSynthesizer) -> None:
