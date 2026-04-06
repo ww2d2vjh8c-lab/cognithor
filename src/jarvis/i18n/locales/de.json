@@ -404,6 +404,11 @@
     "rate_limit_exceeded": "Rate-Limit '{name}' überschritten: {detail}",
     "forbidden_value": "enthält verbotenen Wert '{value}'"
   },
+  "privacy": {
+    "consent_prompt": "Datenschutzhinweis: Ich speichere Nachrichten, Erinnerungen und Verarbeitungsprotokolle. Details: cognithor.dev/privacy\n\nAntworte mit 'akzeptieren' oder 'ablehnen'.",
+    "consent_declined": "Ich kann deine Nachrichten ohne Datenschutz-Einwilligung nicht verarbeiten. Sende 'akzeptieren' wenn du es dir anders ueberlegst.",
+    "send_text_first": "Bitte sende zuerst eine Textnachricht und akzeptiere den Datenschutzhinweis."
+  },
   "vault": {
     "invalid_token_format": "Ungültiges Token-Format (Base64-Fehler): {error}",
     "token_too_short": "Token zu kurz für Legacy-Entschlüsselung",

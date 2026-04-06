@@ -404,6 +404,11 @@
     "rate_limit_exceeded": "Rate limit '{name}' exceeded: {detail}",
     "forbidden_value": "contains forbidden value '{value}'"
   },
+  "privacy": {
+    "consent_prompt": "Privacy notice: I store messages, reminders and processing logs. Details: cognithor.dev/privacy\n\nReply 'accept' or 'decline'.",
+    "consent_declined": "I cannot process your messages without privacy consent. Send 'accept' when you change your mind.",
+    "send_text_first": "Please send a text message first and accept the privacy notice."
+  },
   "vault": {
     "invalid_token_format": "Invalid token format (Base64 error): {error}",
     "token_too_short": "Token too short for legacy decryption",

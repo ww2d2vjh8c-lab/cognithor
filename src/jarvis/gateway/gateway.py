@@ -2043,10 +2043,8 @@ class Gateway:
                 # Return a user-friendly consent prompt
                 consent_text = str(e)
                 if "consent" in consent_text.lower():
-                    consent_text = (
-                        "Datenschutzhinweis: Ich speichere Nachrichten und Erinnerungen. "
-                        "Details: cognithor.dev/privacy\n\n"
-                        "Sende 'akzeptieren' um fortzufahren."
+                    consent_text = t(
+                        "privacy.consent_prompt"
                     )
                 return OutgoingMessage(
                     channel=msg.channel,

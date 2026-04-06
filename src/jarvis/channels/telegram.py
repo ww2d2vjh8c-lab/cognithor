@@ -22,6 +22,8 @@ Optional fuer Webhook: JARVIS_TELEGRAM_USE_WEBHOOK, JARVIS_TELEGRAM_WEBHOOK_URL
 from __future__ import annotations
 
 import asyncio
+
+from jarvis.i18n import t
 import contextlib
 import logging
 from pathlib import Path
@@ -584,7 +586,7 @@ class TelegramChannel(Channel):
         if consent_mgr and consent_mgr.requires_consent(str(user_id), "telegram"):
             await context.bot.send_message(
                 chat_id=chat_id,
-                text="Bitte sende zuerst eine Textnachricht und akzeptiere den Datenschutzhinweis.",
+                text=t("privacy.send_text_first"),
             )
             return
 
@@ -649,8 +651,7 @@ class TelegramChannel(Channel):
         if consent_mgr and consent_mgr.requires_consent(str(user_id), "telegram"):
             await context.bot.send_message(
                 chat_id=chat_id,
-                text="Datenschutzhinweis: Bitte sende zuerst eine Textnachricht "
-                "und akzeptiere den Datenschutzhinweis bevor du Bilder sendest.",
+                text=t("privacy.send_text_first"),
             )
             return
 
@@ -753,7 +754,7 @@ class TelegramChannel(Channel):
         if consent_mgr and consent_mgr.requires_consent(str(user_id), "telegram"):
             await context.bot.send_message(
                 chat_id=chat_id,
-                text="Bitte sende zuerst eine Textnachricht und akzeptiere den Datenschutzhinweis.",
+                text=t("privacy.send_text_first"),
             )
             return
 
@@ -882,16 +883,12 @@ class TelegramChannel(Channel):
                 return
             elif text_lower in ("ablehnen", "decline", "nein", "no"):
                 await update.effective_message.reply_text(
-                    "Ich kann deine Nachrichten ohne Datenschutz-Einwilligung "
-                    "nicht verarbeiten. Sende 'akzeptieren' wenn du es dir "
-                    "anders ueberlegst."
+                    t("privacy.consent_declined")
                 )
                 return
             else:
                 await update.effective_message.reply_text(
-                    "Datenschutzhinweis: Ich speichere Nachrichten, Erinnerungen "
-                    "und Verarbeitungsprotokolle. Details: cognithor.dev/privacy\n\n"
-                    "Antworte mit 'akzeptieren' oder 'ablehnen'."
+                    t("privacy.consent_prompt")
                 )
                 return
 
