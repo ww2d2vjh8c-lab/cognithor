@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
+import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/providers/kanban_provider.dart';
 import 'package:jarvis_ui/providers/chat_provider.dart';
 import 'package:jarvis_ui/widgets/kanban/kanban_board.dart';
@@ -21,7 +22,12 @@ class _KanbanScreenState extends State<KanbanScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<KanbanProvider>().fetchTasks();
+      final conn = context.read<ConnectionProvider>();
+      final kanban = context.read<KanbanProvider>();
+      if (conn.state == JarvisConnectionState.connected) {
+        kanban.setApiClient(conn.api);
+      }
+      kanban.fetchTasks();
     });
   }
 

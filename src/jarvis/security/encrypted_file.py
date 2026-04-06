@@ -66,8 +66,9 @@ class EncryptedFileIO:
             log.debug("encrypted_file_no_cryptography", hint="pip install cryptography")
             return
 
-        # Respect the global encryption_enabled config flag (same as encrypted_db).
-        if not self._check_encryption_enabled():
+        # If JARVIS_DB_KEY is explicitly set, always enable encryption.
+        # Otherwise respect the global encryption_enabled config flag.
+        if not os.environ.get("JARVIS_DB_KEY") and not self._check_encryption_enabled():
             return
 
         key = self._get_key()

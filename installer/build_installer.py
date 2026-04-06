@@ -257,7 +257,20 @@ def step_launcher() -> Path:
         "REM Start Cognithor\r\n"
         'if "%1"=="--ui" (\r\n'
         '    start "" "%PYTHON%" -m jarvis --no-cli --api-port 8741\r\n'
-        "    timeout /t 5 /nobreak >NUL\r\n"
+        "    echo Waiting for Cognithor to start...\r\n"
+        "    set RETRIES=0\r\n"
+        "    :wait_loop\r\n"
+        "    timeout /t 2 /nobreak >NUL\r\n"
+        '    curl -s -o NUL -w "%%{http_code}" http://localhost:8741/api/v1/health 2>NUL | find "200" >NUL 2>NUL\r\n'
+        "    if not errorlevel 1 (\r\n"
+        "        echo Cognithor is ready.\r\n"
+        '        start "" http://localhost:8741\r\n'
+        "        exit /b 0\r\n"
+        "    )\r\n"
+        "    set /a RETRIES+=1\r\n"
+        "    if !RETRIES! LSS 30 goto wait_loop\r\n"
+        "    echo [WARN] Cognithor did not respond within 60 seconds.\r\n"
+        "    echo Opening browser anyway...\r\n"
         '    start "" http://localhost:8741\r\n'
         "    exit /b 0\r\n"
         ") else (\r\n"

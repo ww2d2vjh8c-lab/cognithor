@@ -525,7 +525,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           ],
           Text(l.apiKey, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
-          if (_isAuthenticated(_selectedBackend))
+          if (_isAuthenticated(_selectedBackend!))
             Row(
               children: [
                 Icon(Icons.check_circle_outline, color: JarvisTheme.green, size: 18),

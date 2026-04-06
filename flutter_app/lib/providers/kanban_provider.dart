@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:jarvis_ui/services/api_client.dart';
 
@@ -127,8 +126,10 @@ class KanbanStats {
 }
 
 /// Provider managing Kanban board state with REST API and WebSocket updates.
+///
+/// Requires an [ApiClient] instance (from [ConnectionProvider]).
 class KanbanProvider extends ChangeNotifier {
-  final ApiClient _api = ApiClient();
+  ApiClient? _api;
 
   List<KanbanTask> _tasks = [];
   KanbanStats _stats = KanbanStats();
@@ -141,6 +142,11 @@ class KanbanProvider extends ChangeNotifier {
   bool get loading => _loading;
   String? get error => _error;
   bool get pipelineMode => _pipelineMode;
+
+  /// Inject the API client (called when ConnectionProvider connects).
+  void setApiClient(ApiClient api) {
+    _api = api;
+  }
 
   /// Tasks grouped by status for the board columns.
   Map<String, List<KanbanTask>> get tasksByStatus {
@@ -156,11 +162,15 @@ class KanbanProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Check if [resp] indicates an API error.
+  bool _isError(Map<String, dynamic> resp) => resp.containsKey('error');
+
   // ---------------------------------------------------------------------------
   // REST API
   // ---------------------------------------------------------------------------
 
   Future<void> fetchTasks({String? status, String? agent}) async {
+    if (_api == null) return;
     _loading = true;
     _error = null;
     notifyListeners();
@@ -171,14 +181,15 @@ class KanbanProvider extends ChangeNotifier {
       if (agent != null) params['agent'] = agent;
 
       final query = params.entries.map((e) => '${e.key}=${e.value}').join('&');
-      final url = '/api/v1/kanban/tasks${query.isNotEmpty ? '?$query' : ''}';
-      final resp = await _api.get(url);
+      final path = '/kanban/tasks${query.isNotEmpty ? '?$query' : ''}';
+      final resp = await _api!.get(path);
 
-      if (resp.statusCode == 200) {
-        final list = jsonDecode(resp.body) as List<dynamic>;
-        _tasks = list.map((j) => KanbanTask.fromJson(j as Map<String, dynamic>)).toList();
+      if (!_isError(resp)) {
+        // Backend returns {"tasks": [...]} or the list directly
+        final items = resp['tasks'] as List<dynamic>? ?? resp['items'] as List<dynamic>? ?? [];
+        _tasks = items.map((j) => KanbanTask.fromJson(j as Map<String, dynamic>)).toList();
       } else {
-        _error = 'Failed to load tasks: ${resp.statusCode}';
+        _error = 'Failed to load tasks: ${resp['error']}';
       }
     } catch (e) {
       _error = 'Network error: $e';
@@ -189,10 +200,11 @@ class KanbanProvider extends ChangeNotifier {
   }
 
   Future<void> fetchStats() async {
+    if (_api == null) return;
     try {
-      final resp = await _api.get('/api/v1/kanban/stats');
-      if (resp.statusCode == 200) {
-        _stats = KanbanStats.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+      final resp = await _api!.get('/kanban/stats');
+      if (!_isError(resp)) {
+        _stats = KanbanStats.fromJson(resp);
         notifyListeners();
       }
     } catch (_) {}
@@ -206,8 +218,9 @@ class KanbanProvider extends ChangeNotifier {
     List<String> labels = const [],
     String parentId = '',
   }) async {
+    if (_api == null) return null;
     try {
-      final resp = await _api.post('/api/v1/kanban/tasks', body: {
+      final resp = await _api!.post('/kanban/tasks', {
         'title': title,
         'description': description,
         'priority': priority,
@@ -215,8 +228,8 @@ class KanbanProvider extends ChangeNotifier {
         'labels': labels,
         'parent_id': parentId,
       });
-      if (resp.statusCode == 201) {
-        final task = KanbanTask.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+      if (!_isError(resp)) {
+        final task = KanbanTask.fromJson(resp);
         _tasks.insert(0, task);
         notifyListeners();
         return task;
@@ -226,6 +239,7 @@ class KanbanProvider extends ChangeNotifier {
   }
 
   Future<bool> moveTask(String taskId, String newStatus, {int sortOrder = 0}) async {
+    if (_api == null) return false;
     // Optimistic update
     final idx = _tasks.indexWhere((t) => t.id == taskId);
     if (idx >= 0) {
@@ -235,16 +249,14 @@ class KanbanProvider extends ChangeNotifier {
     }
 
     try {
-      final resp = await _api.post('/api/v1/kanban/tasks/$taskId/move', body: {
+      final resp = await _api!.post('/kanban/tasks/$taskId/move', {
         'status': newStatus,
         'sort_order': sortOrder,
       });
-      if (resp.statusCode == 200) {
-        // Refresh from server
+      if (!_isError(resp)) {
         await fetchTasks();
         return true;
       } else {
-        // Revert optimistic update
         await fetchTasks();
         return false;
       }
@@ -255,9 +267,10 @@ class KanbanProvider extends ChangeNotifier {
   }
 
   Future<bool> updateTask(String taskId, Map<String, dynamic> fields) async {
+    if (_api == null) return false;
     try {
-      final resp = await _api.patch('/api/v1/kanban/tasks/$taskId', body: fields);
-      if (resp.statusCode == 200) {
+      final resp = await _api!.patch('/kanban/tasks/$taskId', fields);
+      if (!_isError(resp)) {
         await fetchTasks();
         return true;
       }
@@ -266,9 +279,10 @@ class KanbanProvider extends ChangeNotifier {
   }
 
   Future<bool> deleteTask(String taskId) async {
+    if (_api == null) return false;
     try {
-      final resp = await _api.delete('/api/v1/kanban/tasks/$taskId');
-      if (resp.statusCode == 204) {
+      final resp = await _api!.delete('/kanban/tasks/$taskId');
+      if (!_isError(resp)) {
         _tasks.removeWhere((t) => t.id == taskId);
         notifyListeners();
         return true;
@@ -278,10 +292,12 @@ class KanbanProvider extends ChangeNotifier {
   }
 
   Future<List<Map<String, dynamic>>> getHistory(String taskId) async {
+    if (_api == null) return [];
     try {
-      final resp = await _api.get('/api/v1/kanban/tasks/$taskId/history');
-      if (resp.statusCode == 200) {
-        return (jsonDecode(resp.body) as List<dynamic>).cast<Map<String, dynamic>>();
+      final resp = await _api!.get('/kanban/tasks/$taskId/history');
+      if (!_isError(resp)) {
+        final items = resp['history'] as List<dynamic>? ?? [];
+        return items.cast<Map<String, dynamic>>();
       }
     } catch (_) {}
     return [];
@@ -301,7 +317,7 @@ class KanbanProvider extends ChangeNotifier {
         break;
       case 'updated':
       case 'moved':
-        fetchTasks(); // Refresh from server for consistency
+        fetchTasks();
         return;
       case 'deleted':
         final taskId = msg['task_id'] as String? ?? '';
