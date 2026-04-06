@@ -83,6 +83,32 @@ def setup_skills() -> int:
     return installed
 
 
+def setup_encryption() -> bool:
+    """Set up database encryption with auto-generated key in OS keyring."""
+    try:
+        import secrets
+        import keyring
+    except ImportError:
+        print("  [SKIP] keyring not available, encryption disabled")
+        return False
+
+    # Check if key already exists
+    existing = keyring.get_password("cognithor", "db_encryption_key")
+    if existing:
+        print("  [OK] Encryption key already in OS keyring")
+        return True
+
+    # Generate 32-byte hex key and store in OS keyring
+    key = secrets.token_hex(32)
+    try:
+        keyring.set_password("cognithor", "db_encryption_key", key)
+        print("  [OK] Encryption key generated and stored in OS keyring")
+        return True
+    except Exception as e:
+        print(f"  [WARN] Could not store encryption key: {e}")
+        return False
+
+
 def setup_directories() -> None:
     """Create standard directory structure."""
     dirs = [
@@ -98,7 +124,7 @@ def setup_directories() -> None:
         d.mkdir(parents=True, exist_ok=True)
 
 
-def run_setup_wizard() -> dict | None:
+def run_setup_wizard(encryption_ok: bool = False) -> dict | None:
     """Run interactive setup wizard: detect hardware, recommend model, write config."""
     try:
         # Import from installed cognithor package
@@ -232,6 +258,7 @@ def run_setup_wizard() -> dict | None:
     config["features"]["rag"] = preset.enable_rag
     config["features"]["federation"] = preset.enable_federation
     config["features"]["cron"] = preset.enable_cron
+    config["database"] = {"encryption_enabled": encryption_ok}
 
     # Step 6: Language
     print()
@@ -316,6 +343,9 @@ def main() -> None:
     print("  Setting up directories...")
     setup_directories()
 
+    print("  Setting up encryption...")
+    encryption_ok = setup_encryption()
+
     print("  Installing default agents...")
     setup_agents()
 
@@ -323,7 +353,7 @@ def main() -> None:
     setup_skills()
 
     # Interactive setup wizard
-    run_setup_wizard()
+    run_setup_wizard(encryption_ok=encryption_ok)
 
     mark_initialized()
 

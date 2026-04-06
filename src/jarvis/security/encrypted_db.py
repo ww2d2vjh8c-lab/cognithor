@@ -72,12 +72,12 @@ def compatible_row_factory() -> Any:
 
 _sqlcipher_available = False
 try:
-    from pysqlcipher3 import dbapi2 as sqlcipher
+    import sqlcipher3 as sqlcipher
 
     _sqlcipher_available = True
 except ImportError:
     try:
-        import sqlcipher3 as sqlcipher
+        from pysqlcipher3 import dbapi2 as sqlcipher
 
         _sqlcipher_available = True
     except ImportError:

@@ -1930,7 +1930,7 @@ class DatabaseConfig(BaseModel):
     pg_pool_min: int = Field(default=2, ge=1, le=50)
     pg_pool_max: int = Field(default=10, ge=1, le=100)
     encryption_enabled: bool = Field(
-        default=False,
+        default=True,
         description="SQLite-Datenbanken mit SQLCipher verschluesseln",
     )
     encryption_backend: str = Field(

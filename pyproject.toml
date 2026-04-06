@@ -143,7 +143,7 @@ desktop = [
     "Pillow>=10.0",
 ]
 encryption = [
-    "pysqlcipher3==1.2.0",
+    "sqlcipher3>=0.6.0",
     "keyring>=25.0",
 ]
 identity = [
@@ -166,7 +166,7 @@ arc-gpu = [
     "torch>=2.2.0",
 ]
 all = [
-    "cognithor[memory,vector,mcp,telegram,web,search,cron,documents,identity,desktop,arc]",
+    "cognithor[memory,vector,mcp,telegram,web,search,cron,documents,identity,desktop,arc,encryption]",
 ]
 full = [
     "cognithor[all,voice,elevenlabs,postgresql,google-chat,discord,slack,matrix,whatsapp,signal,teams,irc,twitch,distributed,browser,encryption,dev]",
