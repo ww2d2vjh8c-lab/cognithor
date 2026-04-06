@@ -125,7 +125,7 @@ class TestImportName:
         assert _import_name("python-docx") == "docx"
 
     def test_ddgs(self) -> None:
-        assert _import_name("ddgs") == "duckduckgo_search"
+        assert _import_name("ddgs") == "ddgs"
 
     def test_sqlite_vec(self) -> None:
         assert _import_name("sqlite-vec") == "sqlite_vec"
