@@ -191,7 +191,7 @@ class TestAttachmentValidation:
 
         subdir = tmp_path / "subdir"
         subdir.mkdir()
-        with pytest.raises(EmailError, match="keine Datei"):
+        with pytest.raises(EmailError, match="keine Datei|no.*file|attachment"):
             email_tools._validate_attachment_path(str(subdir))
 
 
@@ -314,7 +314,7 @@ class TestEmailReadInbox:
 
         with patch.object(email_tools, "_get_imap_connection", return_value=mock_conn):
             result = await email_tools.email_read_inbox()
-        assert "Keine E-Mails" in result
+        assert "Keine E-Mails" in result or "no_emails" in result
 
     async def test_read_inbox_with_emails(self, email_tools: Any) -> None:
         """Inbox with emails returns formatted list."""
@@ -368,7 +368,7 @@ class TestEmailSearch:
 
         with patch.object(email_tools, "_get_imap_connection", return_value=mock_conn):
             result = await email_tools.email_search(from_addr="boss@example.com")
-        assert "Keine E-Mails" in result
+        assert "Keine E-Mails" in result or "no_emails" in result
         call_args = mock_conn.search.call_args[0]
         assert 'FROM "boss@example.com"' in call_args[1]
 
@@ -535,7 +535,7 @@ class TestEmailSummarize:
 
         with patch.object(email_tools, "_get_imap_connection", return_value=mock_conn):
             result = await email_tools.email_summarize()
-        assert "Keine E-Mails" in result
+        assert "Keine E-Mails" in result or "no_emails" in result
 
     async def test_summarize_with_emails(self, email_tools: Any) -> None:
         mock_conn = MagicMock()

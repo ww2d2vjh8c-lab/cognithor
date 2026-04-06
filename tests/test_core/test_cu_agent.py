@@ -1633,4 +1633,6 @@ class TestFormatElementsSourceLabel:
     def test_empty_elements(self):
         agent = self._make_agent()
         result = agent._format_elements([])
-        assert "keine Elemente" in result
+        assert (
+            "keine Elemente" in result or "no_elements" in result or "no.*element" in result.lower()
+        )

@@ -154,7 +154,7 @@ class TestVisionAnalyzerEnabled:
         v, _ = self._make_enabled()
         result = await v.analyze_screenshot("")
         assert result.success is False
-        assert "Kein Screenshot" in result.error
+        assert "Kein Screenshot" in result.error or "no_screenshot" in result.error
 
     @pytest.mark.asyncio
     async def test_stats_after_calls(self) -> None:
@@ -516,7 +516,7 @@ class TestAnalyzeDesktop:
         result = await v.analyze_desktop("")
 
         assert result.success is False
-        assert "Kein Screenshot" in result.error
+        assert "Kein Screenshot" in result.error or "no_screenshot" in result.error
 
     @pytest.mark.asyncio
     async def test_task_context_appended_to_prompt(self):

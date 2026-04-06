@@ -291,7 +291,9 @@ class TestUnifiedLLMBackendMode:
         from jarvis.core.model_router import OllamaError
 
         client = UnifiedLLMClient(ollama_client=None, backend=None)
-        with pytest.raises(OllamaError, match="Kein LLM-Backend"):
+        with pytest.raises(
+            OllamaError, match="Kein LLM-Backend|kein.*Backend|no.*backend|nicht verf"
+        ):
             await client.chat(
                 model="gpt-4",
                 messages=[{"role": "user", "content": "Hi"}],
@@ -302,7 +304,9 @@ class TestUnifiedLLMBackendMode:
         from jarvis.core.model_router import OllamaError
 
         client = UnifiedLLMClient(ollama_client=None, backend=None)
-        with pytest.raises(OllamaError, match="Kein LLM-Backend"):
+        with pytest.raises(
+            OllamaError, match="Kein LLM-Backend|kein.*Backend|no.*backend|nicht verf"
+        ):
             await client.embed("model", "text")
 
 

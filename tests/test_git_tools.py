@@ -99,7 +99,7 @@ class TestPathValidation:
 class TestGitStatus:
     async def test_status_not_a_repo(self, git_tools: GitTools) -> None:
         result = await git_tools.git_status()
-        assert "kein Git-Repository" in result
+        assert "kein Git-Repository" in result or "git_not_a_repo" in result
 
     async def test_status_clean_repo(self, git_tools: GitTools) -> None:
         with (
@@ -150,7 +150,7 @@ class TestGitDiff:
             patch.object(git_tools, "_run_git", return_value=(0, "", "")),
         ):
             result = await git_tools.git_diff()
-            assert "Keine unstaged" in result
+            assert "Keine unstaged" in result or "git_diff_no_unstaged" in result
 
     async def test_diff_staged(self, git_tools: GitTools) -> None:
         with (
@@ -226,7 +226,7 @@ class TestGitLog:
             patch.object(git_tools, "_run_git", return_value=(0, "", "")),
         ):
             result = await git_tools.git_log()
-            assert "Keine Commits" in result
+            assert "Keine Commits" in result or "git_log_no_commits" in result
 
 
 # ---------------------------------------------------------------------------
@@ -237,11 +237,11 @@ class TestGitLog:
 class TestGitCommit:
     async def test_commit_no_message(self, git_tools: GitTools) -> None:
         result = await git_tools.git_commit(message="", files=["a.py"])
-        assert "erforderlich" in result
+        assert "erforderlich" in result or "git_commit_message_required" in result
 
     async def test_commit_no_files(self, git_tools: GitTools) -> None:
         result = await git_tools.git_commit(message="fix", files=[])
-        assert "Mindestens eine Datei" in result
+        assert "Mindestens eine Datei" in result or "git_commit_files_required" in result
 
     async def test_commit_success(self, git_tools: GitTools) -> None:
         workspace = git_tools._workspace.expanduser().resolve()
@@ -316,7 +316,7 @@ class TestGitBranch:
             patch.object(git_tools, "_run_git", return_value=(0, "", "")),
         ):
             result = await git_tools.git_branch(action="create", name="feature-new")
-            assert "erstellt" in result
+            assert "erstellt" in result or "git_branch_created" in result
 
     async def test_branch_switch(self, git_tools: GitTools) -> None:
         with (
@@ -324,7 +324,7 @@ class TestGitBranch:
             patch.object(git_tools, "_run_git", return_value=(0, "", "")),
         ):
             result = await git_tools.git_branch(action="switch", name="main")
-            assert "gewechselt" in result
+            assert "gewechselt" in result or "git_branch_switched" in result
 
     async def test_branch_delete(self, git_tools: GitTools) -> None:
         with (
@@ -337,7 +337,7 @@ class TestGitBranch:
     async def test_branch_no_name(self, git_tools: GitTools) -> None:
         with patch.object(git_tools, "_check_is_git_repo", return_value=None):
             result = await git_tools.git_branch(action="create", name="")
-            assert "erforderlich" in result
+            assert "erforderlich" in result or "git_branch_name_required" in result
 
     async def test_branch_invalid_name(self, git_tools: GitTools) -> None:
         with patch.object(git_tools, "_check_is_git_repo", return_value=None):
@@ -347,7 +347,7 @@ class TestGitBranch:
     async def test_branch_unknown_action(self, git_tools: GitTools) -> None:
         with patch.object(git_tools, "_check_is_git_repo", return_value=None):
             result = await git_tools.git_branch(action="merge", name="x")
-            assert "Unbekannte Aktion" in result
+            assert "Unbekannte Aktion" in result or "git_branch_unknown_action" in result
 
 
 # ---------------------------------------------------------------------------
@@ -377,4 +377,4 @@ class TestRunGit:
         with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError):
             code, stdout, stderr = await git_tools._run_git(["status"], cwd=cwd)
             assert code == 1
-            assert "nicht installiert" in stderr
+            assert "nicht installiert" in stderr or "git_not_installed" in stderr

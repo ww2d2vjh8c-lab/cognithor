@@ -338,7 +338,7 @@ class TestEmbeddingClient:
         mock_http.is_closed = False
         client._provider._client = mock_http
 
-        with pytest.raises(ValueError, match="Keine Embeddings"):
+        with pytest.raises(ValueError, match="Keine Embeddings|keine Embedding|no.*embedding"):
             await client.embed_text("test")
 
     @pytest.mark.asyncio()

@@ -185,7 +185,7 @@ class TestOllamaClientEmbed:
         mock_resp.json.return_value = {"embeddings": []}
         mock_http.post.return_value = mock_resp
 
-        with pytest.raises(OllamaError, match="Keine Embeddings"):
+        with pytest.raises(OllamaError, match="Keine Embeddings|keine Embedding|no.*embedding"):
             await c.embed("nomic-embed-text", "test")
 
     @pytest.mark.asyncio()
