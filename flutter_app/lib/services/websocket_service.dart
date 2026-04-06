@@ -52,6 +52,9 @@ abstract final class WsType {
   static const feedbackComment = 'feedback_comment';
   static const feedbackAck = 'feedback_ack';
   static const feedbackFollowup = 'feedback_followup';
+
+  // Kanban
+  static const kanbanUpdate = 'kanban_update';
 }
 
 // ---------------------------------------------------------------------------
