@@ -259,7 +259,6 @@ class TestHasToggles:
 
     def test_has_toggles_backward_compat(self, tmp_path):
         """Old profiles without has_toggles should load with False."""
-        import json
         profile_dir = tmp_path / "game_profiles"
         profile_dir.mkdir(parents=True)
         old_data = {

@@ -7,9 +7,12 @@ import io
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from jarvis.arc.game_profile import GameProfile
 
 from jarvis.utils.logging import get_logger
 
