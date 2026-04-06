@@ -199,7 +199,7 @@ class TestIngestFile:
 
         result = await pipeline.ingest_file(f)
         assert result.success is False
-        assert "zu groß" in result.error
+        assert "zu gro" in result.error.lower() or "file_too_large" in result.error
 
     @pytest.mark.asyncio
     async def test_ingest_empty_text(self, pipeline: IngestPipeline, ingest_dir: Path) -> None:

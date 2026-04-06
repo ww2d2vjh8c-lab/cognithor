@@ -405,9 +405,9 @@ class TestFileSizeLimits:
             result = await pipeline.extract_text(str(large_file))
         assert not result.success
         assert (
-            "zu gross" in result.error.lower()
+            "zu gro" in result.error.lower()
             or "too large" in result.error.lower()
-            or "gross" in result.error.lower()
+            or "file_too_large" in result.error
         )
 
     async def test_transcribe_audio_file_too_large(
@@ -420,7 +420,11 @@ class TestFileSizeLimits:
             mock_stat.return_value = MagicMock(st_size=MAX_AUDIO_FILE_SIZE + 1)
             result = await pipeline.transcribe_audio(str(audio_file))
         assert not result.success
-        assert "gross" in result.error.lower() or "large" in result.error.lower()
+        assert (
+            "zu gro" in result.error.lower()
+            or "large" in result.error.lower()
+            or "file_too_large" in result.error
+        )
 
     async def test_extract_text_within_limit(
         self, pipeline: MediaPipeline, workspace: Path

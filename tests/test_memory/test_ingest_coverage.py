@@ -196,7 +196,7 @@ class TestIngestPipeline:
         f.write_text("x" * 100, encoding="utf-8")
         result = await pipeline.ingest_file(f)
         assert not result.success
-        assert "zu groß" in result.error
+        assert "zu gro" in result.error.lower() or "file_too_large" in result.error
 
     @pytest.mark.asyncio
     async def test_ingest_duplicate(

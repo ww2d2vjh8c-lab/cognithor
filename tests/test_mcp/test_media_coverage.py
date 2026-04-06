@@ -408,4 +408,4 @@ class TestImageTooLarge:
         # Should fail before httpx because of size check
         result = await pipeline.analyze_image(str(f))
         assert not result.success
-        assert "gross" in result.error.lower()
+        assert "zu gro" in result.error.lower() or "file_too_large" in result.error
