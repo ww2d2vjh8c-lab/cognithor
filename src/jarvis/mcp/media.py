@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from jarvis.i18n import t
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
@@ -175,17 +176,17 @@ class MediaPipeline:
         path = self._validate_input_path(audio_path)
         if path is None:
             return MediaResult(
-                success=False, error=f"Datei nicht gefunden oder ungueltig: {audio_path}"
+                success=False, error=t("media.file_not_found", path=audio_path)
             )
 
         file_size = path.stat().st_size
         if file_size > self._max_audio_file_size:
             return MediaResult(
                 success=False,
-                error=(
-                    f"Audiodatei zu gross "
-                    f"({file_size / 1_048_576:.1f} MB, "
-                    f"max {self._max_audio_file_size // 1_048_576} MB)"
+                error=t(
+                    "media.audio_too_large",
+                    size_mb=f"{file_size / 1_048_576:.1f}",
+                    max_mb=self._max_audio_file_size // 1_048_576,
                 ),
             )
 
@@ -203,7 +204,7 @@ class MediaPipeline:
             text = await loop.run_in_executor(None, _transcribe)
 
             if not text.strip():
-                return MediaResult(success=True, text="[Keine Sprache erkannt]")
+                return MediaResult(success=True, text=t("media.no_speech_detected"))
 
             log.info("audio_transcribed", path=audio_path, length=len(text))
             return MediaResult(
@@ -215,11 +216,11 @@ class MediaPipeline:
         except ImportError:
             return MediaResult(
                 success=False,
-                error="faster-whisper nicht installiert. pip install faster-whisper",
+                error=t("media.whisper_not_installed"),
             )
         except Exception as exc:
             log.error("transcribe_failed", path=audio_path, error=str(exc))
-            return MediaResult(success=False, error=f"Transkription fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.transcription_failed", error=exc))
 
     # ========================================================================
     # Bild → Beschreibung (multimodales LLM)
@@ -253,12 +254,12 @@ class MediaPipeline:
         path = self._validate_input_path(image_path)
         if path is None:
             return MediaResult(
-                success=False, error=f"Bild nicht gefunden oder ungueltig: {image_path}"
+                success=False, error=t("media.image_not_found", path=image_path)
             )
 
         suffix = path.suffix.lower()
         if suffix not in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"):
-            return MediaResult(success=False, error=f"Nicht unterstütztes Bildformat: {suffix}")
+            return MediaResult(success=False, error=t("media.unsupported_image", suffix=suffix))
 
         try:
             import httpx
@@ -268,10 +269,10 @@ class MediaPipeline:
             if file_size > self._max_image_file_size:
                 return MediaResult(
                     success=False,
-                    error=(
-                        f"Bild zu gross "
-                        f"({file_size / 1_048_576:.1f} MB, "
-                        f"max {self._max_image_file_size // 1_048_576} MB)"
+                    error=t(
+                        "media.image_too_large",
+                        size_mb=f"{file_size / 1_048_576:.1f}",
+                        max_mb=self._max_image_file_size // 1_048_576,
                     ),
                 )
 
@@ -365,10 +366,10 @@ class MediaPipeline:
                 )
 
         except ImportError:
-            return MediaResult(success=False, error="httpx nicht installiert")
+            return MediaResult(success=False, error=t("media.httpx_not_installed"))
         except Exception as exc:
             log.error("image_analysis_failed", path=image_path, error=str(exc))
-            return MediaResult(success=False, error=f"Bildanalyse fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.image_analysis_failed", error=exc))
 
     # ========================================================================
     # Dokument → Text
@@ -385,17 +386,17 @@ class MediaPipeline:
         path = self._validate_input_path(file_path)
         if path is None:
             return MediaResult(
-                success=False, error=f"Datei nicht gefunden oder ungueltig: {file_path}"
+                success=False, error=t("media.file_not_found", path=file_path)
             )
 
         file_size = path.stat().st_size
         if file_size > self._max_extract_file_size:
             return MediaResult(
                 success=False,
-                error=(
-                    f"Datei zu gross "
-                    f"({file_size / 1_048_576:.1f} MB, "
-                    f"max {self._max_extract_file_size // 1_048_576} MB)"
+                error=t(
+                    "media.file_too_large_mb",
+                    size_mb=f"{file_size / 1_048_576:.1f}",
+                    max_mb=self._max_extract_file_size // 1_048_576,
                 ),
             )
 
@@ -416,26 +417,26 @@ class MediaPipeline:
             else:
                 return MediaResult(
                     success=False,
-                    error=f"Nicht unterstütztes Format: {suffix}. "
-                    f"Unterstützt: PDF, DOCX, PPTX, TXT, MD, HTML, CSV, JSON, XML",
+                    error=t("media.unsupported_format_extended", suffix=suffix),
                 )
 
+            original_length = len(text)
             if len(text) > self._max_extract_length:
                 text = (
                     text[: self._max_extract_length]
-                    + f"\n\n[... gekürzt, {len(text)} Zeichen gesamt]"
+                    + "\n\n" + t("media.text_truncated", length=original_length)
                 )
 
             log.info("text_extracted", path=file_path, length=len(text), format=suffix)
             return MediaResult(
                 success=True,
                 text=text,
-                metadata={"source": file_path, "format": suffix, "original_length": len(text)},
+                metadata={"source": file_path, "format": suffix, "original_length": original_length},
             )
 
         except Exception as exc:
             log.error("text_extraction_failed", path=file_path, error=str(exc))
-            return MediaResult(success=False, error=f"Text-Extraktion fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.text_extraction_failed", error=exc))
 
     def _extract_pdf(self, path: Path) -> str:
         """PDF-Textextraktion mit pymupdf oder pdfplumber."""
@@ -507,7 +508,7 @@ class MediaPipeline:
                 for shape in slide.shapes:
                     if hasattr(shape, "text_frame") and shape.text_frame:
                         texts.append(shape.text_frame.text)
-            return "\n\n".join(t for t in texts if t.strip())
+            return "\n\n".join(_txt for _txt in texts if _txt.strip())
         except ImportError:
             raise ImportError("python-pptx nicht installiert. pip install python-pptx") from None
 
@@ -527,17 +528,17 @@ class MediaPipeline:
         path = self._validate_input_path(file_path)
         if path is None:
             return MediaResult(
-                success=False, error=f"Datei nicht gefunden oder ungueltig: {file_path}"
+                success=False, error=t("media.file_not_found", path=file_path)
             )
 
         file_size = path.stat().st_size
         if file_size > self._max_extract_file_size:
             return MediaResult(
                 success=False,
-                error=(
-                    f"Datei zu gross "
-                    f"({file_size / 1_048_576:.1f} MB, "
-                    f"max {self._max_extract_file_size // 1_048_576} MB)"
+                error=t(
+                    "media.file_too_large_mb",
+                    size_mb=f"{file_size / 1_048_576:.1f}",
+                    max_mb=self._max_extract_file_size // 1_048_576,
                 ),
             )
 
@@ -554,7 +555,7 @@ class MediaPipeline:
             return result
         except Exception as exc:
             log.error("read_pdf_failed", path=file_path, error=str(exc))
-            return MediaResult(success=False, error=f"PDF-Lesen fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.pdf_read_failed", error=exc))
 
     def _read_pdf_structured(
         self,
@@ -668,17 +669,17 @@ class MediaPipeline:
         path = self._validate_input_path(file_path)
         if path is None:
             return MediaResult(
-                success=False, error=f"Datei nicht gefunden oder ungueltig: {file_path}"
+                success=False, error=t("media.file_not_found", path=file_path)
             )
 
         file_size = path.stat().st_size
         if file_size > self._max_extract_file_size:
             return MediaResult(
                 success=False,
-                error=(
-                    f"Datei zu gross "
-                    f"({file_size / 1_048_576:.1f} MB, "
-                    f"max {self._max_extract_file_size // 1_048_576} MB)"
+                error=t(
+                    "media.file_too_large_mb",
+                    size_mb=f"{file_size / 1_048_576:.1f}",
+                    max_mb=self._max_extract_file_size // 1_048_576,
                 ),
             )
 
@@ -690,7 +691,7 @@ class MediaPipeline:
             return result
         except Exception as exc:
             log.error("read_ppt_failed", path=file_path, error=str(exc))
-            return MediaResult(success=False, error=f"PPT-Lesen fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.ppt_read_failed", error=exc))
 
     def _read_ppt_structured(self, path: Path, extract_images: bool) -> MediaResult:
         """Synchrone strukturierte PPTX-Extraktion."""
@@ -772,17 +773,17 @@ class MediaPipeline:
         path = self._validate_input_path(file_path)
         if path is None:
             return MediaResult(
-                success=False, error=f"Datei nicht gefunden oder ungueltig: {file_path}"
+                success=False, error=t("media.file_not_found", path=file_path)
             )
 
         file_size = path.stat().st_size
         if file_size > self._max_extract_file_size:
             return MediaResult(
                 success=False,
-                error=(
-                    f"Datei zu gross "
-                    f"({file_size / 1_048_576:.1f} MB, "
-                    f"max {self._max_extract_file_size // 1_048_576} MB)"
+                error=t(
+                    "media.file_too_large_mb",
+                    size_mb=f"{file_size / 1_048_576:.1f}",
+                    max_mb=self._max_extract_file_size // 1_048_576,
                 ),
             )
 
@@ -794,7 +795,7 @@ class MediaPipeline:
             return result
         except Exception as exc:
             log.error("read_docx_failed", path=file_path, error=str(exc))
-            return MediaResult(success=False, error=f"DOCX-Lesen fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.docx_read_failed", error=exc))
 
     def _read_docx_structured(
         self, path: Path, extract_images: bool, extract_tables: bool
@@ -1007,31 +1008,21 @@ class MediaPipeline:
             Strukturierte Analyse als Markdown-Text.
         """
         if self._llm_fn is None:
-            return (
-                "Fehler: Dokument-Analyse nicht verfügbar. "
-                "Kein LLM konfiguriert. Verwende stattdessen media_extract_text."
-            )
+            return t("media.analysis_unavailable")
 
         # 1. Text extrahieren
         extract_result = await self.extract_text(path)
         if not extract_result.success:
-            return f"Fehler bei Text-Extraktion: {extract_result.error}"
+            return t("media.analysis_extraction_failed", error=extract_result.error)
 
         text = extract_result.text
         if not text.strip():
-            return (
-                "Fehler: Kein Text im Dokument gefunden. "
-                "Möglicherweise ein gescanntes PDF "
-                "(OCR erforderlich)."
-            )
+            return t("media.no_text_in_document")
 
         # Hinweis bei sehr kurzem Text
         ocr_warning = ""
         if len(text.strip()) < 100:
-            ocr_warning = (
-                "\n\n⚠ **Hinweis**: Sehr wenig Text extrahiert. "
-                "Falls es sich um ein gescanntes PDF handelt, wird OCR-Software benötigt."
-            )
+            ocr_warning = t("media.ocr_warning")
 
         # 2. Analyse-Prompt bauen
         filename = Path(path).name
@@ -1042,7 +1033,7 @@ class MediaPipeline:
             analysis = await self._llm_fn(prompt, self._llm_model)
         except Exception as exc:
             log.error("document_analysis_llm_failed", path=path, error=str(exc))
-            return f"Fehler bei LLM-Analyse: {exc}"
+            return t("media.analysis_llm_failed", error=exc)
 
         result = analysis + ocr_warning
 
@@ -1057,10 +1048,10 @@ class MediaPipeline:
                     folder="research",
                     sources=path,
                 )
-                result += f"\n\n✓ Analyse im Vault gespeichert als '{vault_title}'."
+                result += "\n\n" + t("media.vault_saved", title=vault_title)
             except Exception as vault_exc:
                 log.warning("vault_save_failed_during_analysis", error=str(vault_exc))
-                result += f"\n\n⚠ Vault-Speicherung fehlgeschlagen: {vault_exc}"
+                result += "\n\n" + t("media.vault_save_failed", error=vault_exc)
 
         log.info("document_analyzed", path=path, type=analysis_type, chars=len(result))
         return result
@@ -1089,16 +1080,17 @@ class MediaPipeline:
         if sample_rate not in self.ALLOWED_SAMPLE_RATES:
             return MediaResult(
                 success=False,
-                error=(
-                    f"Ungueltige Samplerate: {sample_rate}. "
-                    f"Erlaubt: {sorted(self.ALLOWED_SAMPLE_RATES)}"
+                error=t(
+                    "media.invalid_sample_rate",
+                    rate=sample_rate,
+                    allowed=sorted(self.ALLOWED_SAMPLE_RATES),
                 ),
             )
 
         path = self._validate_input_path(input_path)
         if path is None:
             return MediaResult(
-                success=False, error=f"Datei nicht gefunden oder ungueltig: {input_path}"
+                success=False, error=t("media.file_not_found", path=input_path)
             )
 
         output_path = self._workspace / f"{path.stem}_converted.{output_format}"
@@ -1122,13 +1114,13 @@ class MediaPipeline:
             if proc.returncode != 0:
                 return MediaResult(
                     success=False,
-                    error=f"ffmpeg Fehler: {stderr.decode()[:300]}",
+                    error=t("media.ffmpeg_error", error=stderr.decode()[:300]),
                 )
 
             log.info("audio_converted", input=input_path, output=str(output_path))
             return MediaResult(
                 success=True,
-                text=f"Konvertiert: {output_path}",
+                text=t("media.audio_converted", path=output_path),
                 output_path=str(output_path),
                 metadata={"format": output_format, "sample_rate": sample_rate},
             )
@@ -1136,7 +1128,7 @@ class MediaPipeline:
         except FileNotFoundError:
             return MediaResult(
                 success=False,
-                error="ffmpeg nicht installiert. apt install ffmpeg",
+                error=t("media.ffmpeg_not_installed"),
             )
 
     # ========================================================================
@@ -1170,7 +1162,7 @@ class MediaPipeline:
         path = self._validate_input_path(image_path)
         if path is None:
             return MediaResult(
-                success=False, error=f"Bild nicht gefunden oder ungueltig: {image_path}"
+                success=False, error=t("media.image_not_found", path=image_path)
             )
 
         try:
@@ -1192,7 +1184,7 @@ class MediaPipeline:
             log.info("image_resized", input=image_path, output=output, size=f"{w}x{h}")
             return MediaResult(
                 success=True,
-                text=f"Bild skaliert auf {w}x{h}: {output}",
+                text=t("media.image_resized", width=w, height=h, path=output),
                 output_path=output,
                 metadata={"width": w, "height": h},
             )
@@ -1200,10 +1192,10 @@ class MediaPipeline:
         except ImportError:
             return MediaResult(
                 success=False,
-                error="Pillow nicht installiert. pip install Pillow",
+                error=t("media.pillow_not_installed"),
             )
         except Exception as exc:
-            return MediaResult(success=False, error=f"Bildskalierung fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.image_resize_failed", error=exc))
 
     # ========================================================================
     # Text → Sprache (TTS)
@@ -1236,11 +1228,11 @@ class MediaPipeline:
         if fmt not in ("pdf", "docx", "xlsx", "pptx"):
             return MediaResult(
                 success=False,
-                error=f"Nicht unterstütztes Format: {fmt}. Erlaubt: pdf, docx, xlsx, pptx",
+                error=t("media.export_unsupported_format", fmt=fmt),
             )
 
         if not content.strip():
-            return MediaResult(success=False, error="Leerer Inhalt")
+            return MediaResult(success=False, error=t("media.empty_content"))
 
         # Sicheres Verzeichnis
         doc_dir = Path.home() / ".jarvis" / "workspace" / "documents"
@@ -1271,7 +1263,7 @@ class MediaPipeline:
             log.info("document_exported", path=str(output_path), format=fmt)
             return MediaResult(
                 success=True,
-                text=f"Dokument erstellt: {output_path}",
+                text=t("media.document_created", path=output_path),
                 output_path=str(output_path),
                 metadata={"format": fmt, "title": title, "filename": safe_name},
             )
@@ -1279,7 +1271,7 @@ class MediaPipeline:
             return MediaResult(success=False, error=str(exc))
         except Exception as exc:
             log.error("document_export_failed", error=str(exc))
-            return MediaResult(success=False, error=f"Dokument-Export fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.document_export_failed", error=exc))
 
     def _generate_pdf(self, output_path: Path, content: str, title: str, author: str) -> None:
         """Generiert ein PDF-Dokument mit fpdf2."""
@@ -1505,7 +1497,7 @@ class MediaPipeline:
         if fmt not in ("docx", "pdf", "pptx", "xlsx"):
             return MediaResult(
                 success=False,
-                error=f"Nicht unterstuetztes Format: {fmt}. Erlaubt: docx, pdf, pptx, xlsx",
+                error=t("media.export_unsupported_format", fmt=fmt),
             )
 
         # JSON parsen
@@ -1514,11 +1506,11 @@ class MediaPipeline:
         except json.JSONDecodeError as exc:
             return MediaResult(
                 success=False,
-                error=f"Ungueltige JSON-Struktur: {exc}",
+                error=t("media.invalid_json_variables", error=exc),
             )
 
         if not isinstance(doc_struct, dict):
-            return MediaResult(success=False, error="JSON muss ein Objekt sein")
+            return MediaResult(success=False, error=t("media.invalid_json_variables", error="JSON must be an object"))
 
         # Ausgabeverzeichnis
         doc_dir = Path.home() / ".jarvis" / "workspace" / "documents"
@@ -1542,7 +1534,7 @@ class MediaPipeline:
             log.info("document_created", path=str(output_path), format=fmt)
             return MediaResult(
                 success=True,
-                text=f"Dokument erstellt: {output_path}",
+                text=t("media.document_created", path=output_path),
                 output_path=str(output_path),
                 metadata={
                     "format": fmt,
@@ -1554,7 +1546,7 @@ class MediaPipeline:
             return MediaResult(success=False, error=str(exc))
         except Exception as exc:
             log.error("document_create_failed", error=str(exc))
-            return MediaResult(success=False, error=f"Dokument-Erstellung fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.document_create_failed", error=exc))
 
     def _build_docx(self, path: Path, doc_struct: dict[str, Any]) -> None:
         """Baut ein DOCX-Dokument aus der JSON-Struktur."""
@@ -1930,7 +1922,7 @@ class MediaPipeline:
             MediaResult with path to the generated PDF.
         """
         if not source.strip():
-            return MediaResult(success=False, error="Leerer Typst-Quellcode")
+            return MediaResult(success=False, error=t("media.empty_typst_source"))
 
         doc_dir = Path.home() / ".jarvis" / "workspace" / "documents"
         doc_dir.mkdir(parents=True, exist_ok=True)
@@ -1945,7 +1937,7 @@ class MediaPipeline:
             log.info("typst_rendered", path=str(output_path))
             return MediaResult(
                 success=True,
-                text=f"Typst-PDF erstellt: {output_path}",
+                text=t("media.typst_created", path=output_path),
                 output_path=str(output_path),
                 metadata={"filename": safe_name},
             )
@@ -1953,7 +1945,7 @@ class MediaPipeline:
             return MediaResult(success=False, error=str(exc))
         except Exception as exc:
             log.error("typst_render_failed", error=str(exc))
-            return MediaResult(success=False, error=f"Typst-Kompilierung fehlgeschlagen: {exc}")
+            return MediaResult(success=False, error=t("media.typst_failed", error=exc))
 
     def _typst_compile(self, source: str, output_path: Path) -> None:
         """Sync worker: write .typ temp file, compile, save PDF."""
@@ -1995,7 +1987,7 @@ class MediaPipeline:
             voice: Piper-Stimmenmodell.
         """
         if not text.strip():
-            return MediaResult(success=False, error="Leerer Text")
+            return MediaResult(success=False, error=t("media.empty_tts_text"))
 
         # CWE-22: Validate voice name against path traversal
         from jarvis.security.sanitizer import validate_voice_name
@@ -2003,7 +1995,7 @@ class MediaPipeline:
         try:
             validate_voice_name(voice)
         except ValueError as exc:
-            return MediaResult(success=False, error=f"Ungueltiger Voice-Name: {exc}")
+            return MediaResult(success=False, error=t("media.invalid_voice", error=exc))
 
         if output_path:
             try:
@@ -2016,7 +2008,7 @@ class MediaPipeline:
             except (ValueError, OSError):
                 return MediaResult(
                     success=False,
-                    error=f"Ausgabepfad ausserhalb des Workspace: {output_path}",
+                    error=t("media.output_outside_workspace", path=output_path),
                 )
         else:
             out = self._workspace / "tts_output.wav"
@@ -2039,7 +2031,7 @@ class MediaPipeline:
                 log.info("tts_piper_success", output=str(out), length=len(text))
                 return MediaResult(
                     success=True,
-                    text=f"Audio erzeugt: {out}",
+                    text=t("media.tts_audio_created", path=out),
                     output_path=str(out),
                     metadata={"engine": "piper", "voice": voice},
                 )
@@ -2065,7 +2057,7 @@ class MediaPipeline:
                 log.info("tts_espeak_success", output=str(out))
                 return MediaResult(
                     success=True,
-                    text=f"Audio erzeugt (eSpeak): {out}",
+                    text=t("media.tts_audio_created_espeak", path=out),
                     output_path=str(out),
                     metadata={"engine": "espeak"},
                 )
@@ -2074,7 +2066,7 @@ class MediaPipeline:
 
         return MediaResult(
             success=False,
-            error="Kein TTS-Backend verfügbar. Installiere piper oder espeak-ng.",
+            error=t("media.tts_unavailable"),
         )
 
 
@@ -2724,7 +2716,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         tm = _get_template_manager()
         templates = tm.list_as_json()
         if not templates:
-            return "Keine Dokumentvorlagen gefunden in ~/.jarvis/templates/documents/"
+            return t("media.no_templates")
         return _json.dumps(templates, ensure_ascii=False, indent=2)
 
     async def _template_render(
@@ -2739,12 +2731,12 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         try:
             vars_dict: dict[str, str] = _json.loads(variables) if variables.strip() else {}
         except Exception as exc:  # noqa: BLE001
-            return f"Fehler: Ungueltige JSON-Variablen: {exc}"
+            return t("media.invalid_json_variables", error=exc)
 
         try:
             rendered_source = tm.render_template(template_slug, vars_dict)
         except KeyError as exc:
-            return f"Fehler: {exc}"
+            return t("media.template_render_error", error=exc)
 
         result = await pipeline.typst_render(rendered_source, filename=filename)
         if result.success:

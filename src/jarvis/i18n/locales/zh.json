@@ -262,7 +262,7 @@
     "pdf_reader_required": "没有可用的 PDF 阅读器。安装：pip install pymupdf 或 pip install pdfplumber",
     "analysis_unavailable": "错误：文档分析不可用。",
     "no_text_in_document": "错误：文档中未找到文本。可能是扫描版 PDF——请尝试 OCR。",
-    "export_unsupported_format": "不支持的格式：{fmt}。允许：pdf、docx",
+    "export_unsupported_format": "不支持的格式：{fmt}。允许：pdf、docx、xlsx、pptx",
     "tts_unavailable": "没有可用的 TTS 后端。请安装 piper 或 espeak-ng。",
     "file_not_found": "文件未找到或无效：{path}",
     "audio_too_large": "音频文件过大（{size_mb} MB，最大 {max_mb} MB）",
