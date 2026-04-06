@@ -853,5 +853,5 @@ class MarketplaceStore:
             "featured_reason": row["featured_reason"],
             "recalled": bool(row["recalled"]),
             "recall_reason": row["recall_reason"],
-            "source": row.get("source", "builtin"),
+            "source": (dict(row).get("source", "builtin")),
         }
