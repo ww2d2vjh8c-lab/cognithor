@@ -346,8 +346,9 @@ def _register_system_routes(
         updated_agent = None
         for i, a in enumerate(agents):
             if a.get("name") == agent_name:
-                # Update fields (preserve name)
+                # Update fields (including name rename)
                 for key in [
+                    "name",
                     "display_name",
                     "description",
                     "system_prompt",
