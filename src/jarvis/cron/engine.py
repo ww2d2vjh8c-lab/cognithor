@@ -411,8 +411,22 @@ class CronEngine:
         )
 
         try:
-            await self._handler(msg)
+            result = await self._handler(msg)
             logger.info("Cron-Job '%s' erfolgreich", job.name)
+            # Kanban: optionally create task from cron result
+            try:
+                _kanban = getattr(self, "_kanban_engine", None)
+                _kanban_cfg = getattr(self._config, "kanban", None) if hasattr(self, "_config") else None
+                if _kanban and _kanban_cfg and _kanban_cfg.auto_create_from_cron:
+                    from jarvis.kanban.sources import CronTaskAdapter
+                    _task_data = CronTaskAdapter.build_task_data(
+                        job_name=job.name,
+                        result=str(result)[:500],
+                        follow_up=False,
+                    )
+                    _kanban.create_task(**{k: v for k, v in _task_data.items() if k != "status"})
+            except Exception:
+                pass  # Never block cron execution for kanban
         except Exception:
             logger.exception("Cron-Job '%s' fehlgeschlagen", job.name)
 

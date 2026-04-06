@@ -1028,6 +1028,16 @@ class EvolutionLoop:
                                 target_skill=getattr(skill, "slug", name),
                             )
                         )
+                        # Kanban: create task for improvement opportunity
+                        try:
+                            _kanban = getattr(self, "_kanban_engine", None)
+                            _kanban_cfg = getattr(self._config, "kanban", None) if hasattr(self, "_config") else None
+                            if _kanban and _kanban_cfg and _kanban_cfg.auto_create_from_evolution:
+                                from jarvis.kanban.sources import EvolutionTaskAdapter
+                                _task_data = EvolutionTaskAdapter.from_skill_failure(name, sr)
+                                _kanban.create_task(**{k: v for k, v in _task_data.items() if k != "status"})
+                        except Exception:
+                            pass
                     elif uses == 0 and getattr(skill, "source", "") != "builtin":
                         tasks.append(
                             _LearningGoal(

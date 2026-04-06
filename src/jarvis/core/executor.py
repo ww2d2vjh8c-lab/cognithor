@@ -646,6 +646,18 @@ class Executor:
             error=last_error,
             total_duration_ms=total_duration_ms,
         )
+        # Kanban: create investigation task for repeated failures
+        try:
+            _kanban = getattr(self, "_kanban_engine", None)
+            _kanban_cfg = getattr(self._config, "kanban", None) if hasattr(self, "_config") else None
+            if _kanban and _kanban_cfg and _kanban_cfg.auto_create_from_agents:
+                from jarvis.kanban.sources import SystemTaskAdapter
+                _task_data = SystemTaskAdapter.from_recovery_failure(
+                    tool_name, self._max_retries, last_error[:200]
+                )
+                _kanban.create_task(**{k: v for k, v in _task_data.items() if k != "status"})
+        except Exception:
+            pass
         # Report gap for auto skill generator
         if self._gap_detector:
             self._gap_detector.report_repeated_failure(
