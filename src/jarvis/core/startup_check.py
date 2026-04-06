@@ -252,8 +252,8 @@ class StartupChecker:
             log.warning("startup_check_node_error", error=str(exc))
             report.warnings.append(f"Node check skipped: {exc}")
 
-        # Log summary
-        log.info(
+        # Log summary (debug — clean startup output)
+        log.debug(
             "startup_check_complete",
             passed=len(report.checks_passed),
             fixes=len(report.fixes_applied),

@@ -22,7 +22,36 @@ warnings.filterwarnings("ignore", message=".*AVX512.*", category=UserWarning)
 warnings.filterwarnings("ignore", message=".*pkg_resources is deprecated.*", category=UserWarning)
 warnings.filterwarnings("ignore", message=".*unauthenticated requests to the HF Hub.*", category=FutureWarning)
 warnings.filterwarnings("ignore", message=".*invalid escape sequence.*", category=SyntaxWarning)
-os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")  # suppress tokenizer fork warning
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
+# Suppress FAISS C-library output (AVX512 fallback messages) on import.
+# FAISS writes to stdout via its C extension before Python has any control.
+os.environ.setdefault("FAISS_OPT_LEVEL", "avx2")  # skip AVX512 probe entirely
+
+
+def _silence_library_loggers() -> None:
+    """Silence noisy third-party loggers during startup."""
+    import logging as _logging
+
+    for name in (
+        "sentence_transformers",
+        "transformers",
+        "huggingface_hub",
+        "torch",
+        "faiss",
+        "chromadb",
+        "httpx",
+        "httpcore",
+        "onnxruntime",
+    ):
+        _logging.getLogger(name).setLevel(_logging.ERROR)
+    # transformers has its own verbosity API
+    try:
+        from transformers import logging as tf_logging
+
+        tf_logging.set_verbosity_error()
+    except Exception:
+        pass
 
 from jarvis import BANNER_ASCII, __version__
 
@@ -330,10 +359,24 @@ def main() -> None:
         return
 
     # 3.6 Startup check: automatically load missing dependencies
-    from jarvis.core.startup_check import StartupChecker
+    # Suppress FAISS/library C-level output during import checks.
+    # Must redirect OS file descriptors for C library stdout.
+    _devnull_sc = os.open(os.devnull, os.O_WRONLY)
+    _saved_fd1_sc = os.dup(1)
+    _saved_fd2_sc = os.dup(2)
+    os.dup2(_devnull_sc, 1)
+    os.dup2(_devnull_sc, 2)
+    try:
+        from jarvis.core.startup_check import StartupChecker
 
-    checker = StartupChecker(config, auto_install=getattr(args, "auto_install", False))
-    report = checker.check_and_fix_all()
+        checker = StartupChecker(config, auto_install=getattr(args, "auto_install", False))
+        report = checker.check_and_fix_all()
+    finally:
+        os.dup2(_saved_fd1_sc, 1)
+        os.dup2(_saved_fd2_sc, 2)
+        os.close(_saved_fd1_sc)
+        os.close(_saved_fd2_sc)
+        os.close(_devnull_sc)
     if report.fixes_applied:
         log.info("startup_auto_fixes", fixes=report.fixes_applied, warnings=report.warnings)
     if report.errors:
@@ -346,8 +389,8 @@ def main() -> None:
         asyncio.run(_run_mcp_server_mode(config))
         return
 
-    # 4. Startup info
-    log.info(
+    # 4. Startup info (debug — banner shows this already)
+    log.debug(
         "jarvis_starting",
         version=__version__,
         home=str(config.jarvis_home),
@@ -356,14 +399,14 @@ def main() -> None:
 
     if created:
         for path in created:
-            log.info("created_path", path=path)
+            log.debug("created_path", path=path)
 
     # 5. System-Check -- startup banner (intentional CLI output)
     _api_host = args.api_host or os.environ.get("JARVIS_API_HOST", "0.0.0.0")
     _print_banner(config, api_host=_api_host, api_port=args.api_port, lite=args.lite)
 
-    # Phase 0 Checkpoint: Setup OK
-    log.info(
+    # Phase 0 Checkpoint: Setup OK (logged at debug level — banner already shows this)
+    log.debug(
         "setup_ok",
         backend=getattr(config, "llm_backend_type", "ollama"),
         planner_model=config.models.planner.name,
@@ -375,22 +418,43 @@ def main() -> None:
 
     async def run() -> None:
         """Starts the gateway and CLI channel as asynchronous main loop."""
+        import io as _io
+        import logging as _logging
+
         from jarvis.channels.cli import CliChannel
         from jarvis.gateway.gateway import Gateway
+
+        # Silence ALL output during init — we print a clean summary after.
+        # Must set root logger to WARNING before Gateway() constructor.
+        _silence_library_loggers()
+        _root = _logging.getLogger()
+        _prev_root_level = _root.level
+        _root.setLevel(_logging.WARNING)
+
+        # Redirect OS-level fd1/fd2 to suppress C library output (SQLCipher)
+        _devnull_fd = os.open(os.devnull, os.O_WRONLY)
+        _saved_fd1 = os.dup(1)
+        _saved_fd2 = os.dup(2)
+        os.dup2(_devnull_fd, 1)
+        os.dup2(_devnull_fd, 2)
+        # Redirect Python-level stdout/stderr for tqdm etc.
+        _real_stdout = sys.stdout
+        _real_stderr = sys.stderr
+        sys.stdout = _io.StringIO()
+        sys.stderr = _io.StringIO()
 
         gateway = Gateway(config)
         api_server = None
         _bg_tasks: set[asyncio.Task[Any]] = set()
 
         # Suppress harmless ConnectionResetError from Windows ProactorEventLoop
-        # when WebSocket clients disconnect abruptly.
         _loop = asyncio.get_running_loop()
         _orig_handler = _loop.get_exception_handler()
 
         def _quiet_exception_handler(loop: asyncio.AbstractEventLoop, context: dict) -> None:
             exc = context.get("exception")
             if isinstance(exc, ConnectionResetError):
-                return  # Silently ignore WS disconnect noise
+                return
             if _orig_handler:
                 _orig_handler(loop, context)
             else:
@@ -399,9 +463,50 @@ def main() -> None:
         _loop.set_exception_handler(_quiet_exception_handler)
 
         try:
-            # Initialize all subsystems
             await gateway.initialize()
+        finally:
+            # Restore OS-level file descriptors
+            os.dup2(_saved_fd1, 1)
+            os.dup2(_saved_fd2, 2)
+            os.close(_saved_fd1)
+            os.close(_saved_fd2)
+            os.close(_devnull_fd)
+            # Restore Python streams and log level
+            sys.stdout = _real_stdout
+            sys.stderr = _real_stderr
+            _root.setLevel(_prev_root_level)
 
+        # Print clean startup summary
+        _tools = gateway._mcp_client.get_tool_list() if hasattr(gateway, "_mcp_client") else []
+        _skills = getattr(gateway, "_skill_registry", None)
+        _skill_count = _skills.count if _skills and hasattr(_skills, "count") else 0
+        _agents = getattr(gateway, "_agent_router", None)
+        _agent_count = len(_agents.agents) if _agents and hasattr(_agents, "agents") else 0
+        _cron = getattr(gateway, "_cron_engine", None)
+        _cron_count = _cron.job_count if _cron and hasattr(_cron, "job_count") else 0
+        _identity = getattr(gateway, "_identity_layer", None)
+        _mem_count = 0
+        if _identity and hasattr(_identity, "_engine"):
+            _mem_count = getattr(_identity._engine, "memory_count", 0)
+        _enc = "active" if getattr(config.database, "encryption_enabled", False) else "disabled"
+
+        print()
+        print(f"  [OK] LLM backend ready ({config.models.planner.name})")
+        print(f"  [OK] {len(_tools)} tools registered")
+        if _skill_count:
+            print(f"  [OK] {_skill_count} skills loaded")
+        if _agent_count:
+            print(f"  [OK] {_agent_count} agents ready")
+        if _mem_count:
+            print(f"  [OK] Memory initialized ({_mem_count} memories)")
+        if _cron_count:
+            print(f"  [OK] {_cron_count} cron jobs scheduled")
+        print(f"  [OK] Database encryption {_enc}")
+        print()
+        print("  Cognithor is ready.")
+        print()
+
+        try:
             # LLM-Erreichbarkeit pruefen und prominent warnen
             _llm = getattr(gateway, "_llm", None)
             if _llm and not await _llm.is_available():
