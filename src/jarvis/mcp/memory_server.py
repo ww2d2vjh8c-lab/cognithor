@@ -26,6 +26,7 @@ import json
 from datetime import date
 from typing import TYPE_CHECKING, Any
 
+from jarvis.i18n import t
 from jarvis.models import Entity, MemorySearchResult, MemoryTier, Relation
 from jarvis.utils.logging import get_logger
 
@@ -75,7 +76,7 @@ class MemoryTools:
             Formatierte Suchergebnisse mit Score, Quelle und Text.
         """
         if not query.strip():
-            return "Fehler: Leere Suchanfrage."
+            return t("memory.error_empty_query")
 
         top_k = max(1, min(20, top_k))
 
@@ -85,14 +86,14 @@ class MemoryTools:
             try:
                 tier_filter = MemoryTier(tier.lower())
             except ValueError:
-                valid = ", ".join(t.value for t in MemoryTier)
-                return f"Fehler: Unbekannter Tier '{tier}'. Gültig: {valid}"
+                valid = ", ".join(m.value for m in MemoryTier)
+                return t("memory.invalid_tier", tier=tier, valid=valid)
 
         # Synchrone BM25-Suche (immer verfuegbar, kein Embedding noetig)
         results = self._memory.search_memory_sync(query, top_k=top_k)
 
         if not results:
-            return f"Keine Ergebnisse für: '{query}'"
+            return t("memory.no_results", query=query)
 
         # Tier-Filter anwenden (post-hoc, da search_memory_sync keinen hat)
         if tier_filter:
@@ -110,7 +111,7 @@ class MemoryTools:
         Returns:
             Menschenlesbarer Text mit allen Ergebnissen.
         """
-        lines: list[str] = [f"### {len(results)} Ergebnis(se)\n"]
+        lines: list[str] = [t("memory.search_results_header", count=len(results))]
 
         for i, r in enumerate(results, 1):
             chunk = r.chunk
@@ -151,7 +152,7 @@ class MemoryTools:
             Bestaetigungsnachricht.
         """
         if not content.strip():
-            return "Fehler: Leerer Inhalt."
+            return t("memory.error_empty_content")
 
         tier_lower = tier.lower()
 
@@ -162,10 +163,10 @@ class MemoryTools:
         elif tier_lower == "procedural":
             return self._save_procedural(content, source_path)
         elif tier_lower == "core":
-            return "Fehler: Core Memory ist nicht direkt beschreibbar. Nutze die CORE.md manuell."
+            return t("memory.core_readonly")
         else:
             valid = "episodic, semantic, procedural"
-            return f"Fehler: Unbekannter Tier '{tier}'. Gültig: {valid}"
+            return t("memory.invalid_tier", tier=tier, valid=valid)
 
     def _save_episodic(self, content: str, topic: str) -> str:
         """Schreibt einen Eintrag in den heutigen Tageslog.
@@ -180,7 +181,7 @@ class MemoryTools:
         topic = topic or "Notiz"
         self._memory.episodic.append_entry(topic=topic, content=content)
         today = date.today().isoformat()
-        return f"Episodic Memory gespeichert: [{today}] {topic}"
+        return t("memory.episodic_saved", date=today, topic=topic)
 
     def _save_semantic(self, content: str, source_path: str) -> str:
         """Indexiert Text als semantisches Wissen.
@@ -196,7 +197,7 @@ class MemoryTools:
             source_path = f"knowledge/auto/{date.today().isoformat()}.md"
 
         count = self._memory.index_text(content, source_path, MemoryTier.SEMANTIC)
-        return f"Semantic Memory indexiert: {count} Chunk(s) unter '{source_path}'"
+        return t("memory.semantic_saved", count=count, source_path=source_path)
 
     def _save_procedural(self, content: str, source_path: str) -> str:
         """Speichert eine Prozedur/Skill.
@@ -221,16 +222,13 @@ class MemoryTools:
         try:
             target.relative_to(proc_dir.resolve())
         except ValueError:
-            return (
-                f"Zugriff verweigert: Pfad '{source_path}' liegt außerhalb "
-                f"des Procedural-Verzeichnisses."
-            )
+            return t("memory.access_denied", path=source_path)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
 
         # Auch indexieren
         count = self._memory.index_text(content, str(target), MemoryTier.PROCEDURAL)
-        return f"Procedural Memory gespeichert: '{source_path}' ({count} Chunk(s))"
+        return t("memory.procedural_saved", source_path=source_path, count=count)
 
     # ── Entity/Relation (Wissens-Graph) ──────────────────────────
 
@@ -244,18 +242,18 @@ class MemoryTools:
             Formatierte Entitaet mit Attributen und Relationen.
         """
         if not name.strip():
-            return "Fehler: Leerer Name."
+            return t("memory.error_empty_name")
 
         # Suche in DB
         entities = self._memory.index.search_entities(name)
 
         if not entities:
-            return f"Keine Entität gefunden für: '{name}'"
+            return t("memory.entity_not_found", name=name)
 
         lines: list[str] = []
         for entity in entities[:5]:  # Max 5 Treffer
             lines.append(f"### {entity.name}")
-            lines.append(f"- **Typ:** {entity.type}")
+            lines.append(t("memory.entity_type_label", value=entity.type))
 
             if entity.attributes:
                 attrs = entity.attributes
@@ -270,7 +268,7 @@ class MemoryTools:
             # Relationen laden
             relations = self._memory.index.get_relations_for_entity(entity.id)
             if relations:
-                lines.append("\n**Relationen:**")
+                lines.append(t("memory.entity_relations_label"))
                 for rel in relations:
                     if rel.source_entity == entity.id:
                         other_id = rel.target_entity
@@ -305,13 +303,13 @@ class MemoryTools:
             Bestaetigungsnachricht mit Entity-ID.
         """
         if not name.strip():
-            return "Fehler: Leerer Name."
+            return t("memory.error_empty_name")
 
         # Attribute parsen
         try:
             attrs = json.loads(attributes) if attributes else {}
         except json.JSONDecodeError:
-            return f"Fehler: Ungültiges JSON in attributes: {attributes}"
+            return t("memory.invalid_json", attributes=attributes)
 
         entity = Entity(
             type=entity_type or "unknown",
@@ -322,7 +320,7 @@ class MemoryTools:
         self._memory.index.upsert_entity(entity)
 
         log.info("entity_created", name=name, type=entity_type, id=entity.id)
-        return f"Entität erstellt: {name} (Typ: {entity_type}, ID: {entity.id})"
+        return t("memory.entity_created", name=name, entity_type=entity_type, id=entity.id)
 
     def add_relation(
         self,
@@ -347,16 +345,16 @@ class MemoryTools:
         # Entitaeten suchen
         sources = self._memory.index.search_entities(source_name)
         if not sources:
-            return f"Fehler: Quell-Entität '{source_name}' nicht gefunden."
+            return t("memory.source_entity_not_found", name=source_name)
 
         targets = self._memory.index.search_entities(target_name)
         if not targets:
-            return f"Fehler: Ziel-Entität '{target_name}' nicht gefunden."
+            return t("memory.target_entity_not_found", name=target_name)
 
         try:
             attrs = json.loads(attributes) if attributes else {}
         except json.JSONDecodeError:
-            return f"Fehler: Ungültiges JSON in attributes: {attributes}"
+            return t("memory.invalid_json", attributes=attributes)
 
         relation = Relation(
             source_entity=sources[0].id,
@@ -372,7 +370,7 @@ class MemoryTools:
             relation=relation_type,
             target=target_name,
         )
-        return f"Relation erstellt: {source_name} --[{relation_type}]→ {target_name}"
+        return t("memory.relation_created", source=source_name, relation=relation_type, target=target_name)
 
     # ── Delete Entity/Relation (GDPR erasure) ──────────────────
 
@@ -386,13 +384,13 @@ class MemoryTools:
             Bestaetigungsnachricht oder Fehlermeldung.
         """
         if not name.strip():
-            return "Fehler: Leerer Name."
+            return t("memory.error_empty_name")
 
         entities = self._memory.index.search_entities(name)
         # Filter to exact match (case-insensitive)
         exact = [e for e in entities if e.name.lower() == name.strip().lower()]
         if not exact:
-            return f"Entität nicht gefunden: '{name}'"
+            return t("memory.entity_not_found", name=name)
 
         deleted_count = 0
         for entity in exact:
@@ -400,7 +398,7 @@ class MemoryTools:
                 deleted_count += 1
 
         log.info("entity_deleted_gdpr", name=name, count=deleted_count)
-        return f"GDPR-Löschung: {deleted_count} Entität(en) '{name}' mit allen Relationen gelöscht."
+        return t("memory.entity_deleted", count=deleted_count, name=name)
 
     def delete_relation(
         self,
@@ -420,11 +418,11 @@ class MemoryTools:
         """
         sources = self._memory.index.search_entities(source_name)
         if not sources:
-            return f"Fehler: Quell-Entität '{source_name}' nicht gefunden."
+            return t("memory.source_entity_not_found", name=source_name)
 
         targets = self._memory.index.search_entities(target_name)
         if not targets:
-            return f"Fehler: Ziel-Entität '{target_name}' nicht gefunden."
+            return t("memory.target_entity_not_found", name=target_name)
 
         source_id = sources[0].id
         target_id = targets[0].id
@@ -439,10 +437,10 @@ class MemoryTools:
             conn.commit()
             count = cursor.rowcount
         except Exception as e:
-            return f"Löschung fehlgeschlagen: {e}"
+            return t("memory.delete_failed", error=e)
 
         if count == 0:
-            return f"Keine Relation '{relation_type}' zwischen '{source_name}' und '{target_name}' gefunden."
+            return t("memory.relation_not_found", relation=relation_type, source=source_name, target=target_name)
 
         log.info(
             "relation_deleted_gdpr",
@@ -450,7 +448,7 @@ class MemoryTools:
             relation=relation_type,
             target=target_name,
         )
-        return f"GDPR-Löschung: Relation '{source_name}' --[{relation_type}]→ '{target_name}' gelöscht."
+        return t("memory.relation_deleted", source=source_name, relation=relation_type, target=target_name)
 
     # ── Core Memory ──────────────────────────────────────────────
 
@@ -462,7 +460,7 @@ class MemoryTools:
         """
         content = self._memory.core.load()
         if not content:
-            return "(Core Memory ist leer. Erstelle CORE.md in ~/.jarvis/memory/)"
+            return t("memory.core_empty")
         return content
 
     # ── Episodic ─────────────────────────────────────────────────
@@ -481,7 +479,7 @@ class MemoryTools:
         recent = self._memory.episodic.get_recent(days=days)
 
         if not recent:
-            return f"Keine Episodic-Einträge der letzten {days} Tage."
+            return t("memory.no_episodes", days=days)
 
         lines: list[str] = []
         for d, content in recent:
@@ -504,22 +502,27 @@ class MemoryTools:
             Formatierte Liste relevanter Prozeduren.
         """
         if not query.strip():
-            return "Fehler: Leere Suchanfrage."
+            return t("memory.error_empty_query")
 
         keywords = query.strip().split()
         top_k = max(1, min(10, top_k))
         results = self._memory.procedural.find_by_keywords(keywords)
 
         if not results:
-            return f"Keine Prozeduren gefunden für: '{query}'"
+            return t("memory.no_procedures", query=query)
 
         results = results[:top_k]
 
-        lines: list[str] = [f"### {len(results)} Prozedur(en)\n"]
+        lines: list[str] = [t("memory.procedures_header", count=len(results))]
         for meta, body, score in results:
             lines.append(
-                f"**{meta.name}** · Erfolgsrate: {meta.success_rate:.0%} · "
-                f"Nutzungen: {meta.total_uses} · Relevanz: {score:.1f}"
+                t(
+                    "memory.procedure_item",
+                    name=meta.name,
+                    rate=f"{meta.success_rate:.0%}",
+                    uses=meta.total_uses,
+                    score=f"{score:.1f}",
+                )
             )
             # Body kuerzen auf 500 Zeichen
             body_short = body[:500] + "…" if len(body) > 500 else body
@@ -549,7 +552,7 @@ class MemoryTools:
             Aktualisierte Statistik der Prozedur.
         """
         if not name.strip():
-            return "Fehler: Leerer Prozedurname."
+            return t("memory.error_empty_procedure_name")
 
         result = self._memory.procedural.record_usage(
             name=name.strip(),
@@ -559,13 +562,15 @@ class MemoryTools:
         )
 
         if result is None:
-            return f"Fehler: Prozedur '{name}' nicht gefunden."
+            return t("memory.procedure_not_found", name=name)
 
-        status = "Erfolg" if success else "Fehlschlag"
-        return (
-            f"Prozedur '{name}': {status} erfasst. "
-            f"Gesamt: {result.total_uses}x, "
-            f"Erfolgsrate: {result.success_rate:.0%}"
+        status = t("memory.procedure_status_success") if success else t("memory.procedure_status_failure")
+        return t(
+            "memory.procedure_usage_recorded",
+            name=name,
+            status=status,
+            total=result.total_uses,
+            rate=f"{result.success_rate:.0%}",
         )
 
     # ── Stats ────────────────────────────────────────────────────
@@ -578,20 +583,19 @@ class MemoryTools:
         """
         stats = self._memory.stats()
 
+        yes = t("memory.stats_yes")
+        no = t("memory.stats_no")
         lines = [
-            "### Memory-System Status\n",
-            f"- **Chunks:** {stats['chunks']}",
-            f"- **Embeddings:** {stats['embeddings']}",
-            f"- **Entitäten:** {stats['entities']}",
-            f"- **Relationen:** {stats['relations']}",
-            f"- **Prozeduren:** {stats['procedures']} ({stats['procedures_reliable']} zuverlässig)",
-            f"- **Episode-Tage:** {stats['episode_dates']}",
-            f"- **Core Memory geladen:** {'Ja' if stats['core_memory_loaded'] else 'Nein'}",
-            (
-                f"- **Embedding-Cache:** {stats['embedding_cache_hits']} Hits"
-                f" / {stats['embedding_api_calls']} API-Calls"
-            ),
-            f"- **Initialisiert:** {'Ja' if stats['initialized'] else 'Nein'}",
+            t("memory.stats_header"),
+            t("memory.stats_chunks", value=stats["chunks"]),
+            t("memory.stats_embeddings", value=stats["embeddings"]),
+            t("memory.stats_entities", value=stats["entities"]),
+            t("memory.stats_relations", value=stats["relations"]),
+            t("memory.stats_procedures", value=stats["procedures"], reliable=stats["procedures_reliable"]),
+            t("memory.stats_episode_dates", value=stats["episode_dates"]),
+            t("memory.stats_core_loaded", value=yes if stats["core_memory_loaded"] else no),
+            t("memory.stats_embedding_cache", hits=stats["embedding_cache_hits"], calls=stats["embedding_api_calls"]),
+            t("memory.stats_initialized", value=yes if stats["initialized"] else no),
         ]
 
         return "\n".join(lines)
