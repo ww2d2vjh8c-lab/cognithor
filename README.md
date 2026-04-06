@@ -877,6 +877,30 @@ Inspired by the [3rd-place ARC-AGI-3 Preview solution](https://arxiv.org/abs/251
 - **105 new tests** covering all ARC subsystems
 - **Dependency groups**: `pip install cognithor[arc]` or `cognithor[arc-gpu]`
 
+### v0.77.0 Highlights
+
+#### Interactive Kanban Board
+- 6th tab in the Flutter Command Center with drag-and-drop task management
+- Tasks from 6 sources: manual, chat, cron, evolution, agents, system
+- Sub-tasks with cascade cancel and auto-verification
+- 10 REST endpoints, 3 MCP tools, SQLCipher encrypted storage
+
+#### Computer Use Phase 2
+- `computer_click_element`: Click UI elements by description (e.g., "Login button")
+- `computer_wait_for_change`: Detect screen changes after actions
+- 8 tools total for full desktop automation
+
+#### Evolution Engine — Autonomous Learning
+- Self-directed learning cycles with automatic quality exams
+- Score >= 80%: goal mastered. Stagnating: frequency reduced, Kanban task created
+- ATL (Autonomous Thinking Loop) with goal management and file management actions
+- REST API for goals, plans, journal, statistics
+
+#### i18n — Full Internationalization
+- 314+ user-facing strings migrated from hardcoded German to EN/DE/ZH
+- Flutter screens localized via AppLocalizations
+- SHA-256 integrity verification for locale packs
+
 ### v0.66.0 — Encryption at Rest, Vault Dual-Backend, GDPR 100%
 
 **Encryption at Rest — Full Disk Clone Protection**
