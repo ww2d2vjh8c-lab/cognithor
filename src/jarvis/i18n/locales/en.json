@@ -612,7 +612,9 @@
     "missing_recipient": "No recipient specified.",
     "missing_subject": "No subject specified.",
     "missing_body": "No message body specified.",
-    "invalid_date": "Invalid date: {date} (expected: YYYY-MM-DD)"
+    "invalid_date": "Invalid date: {date} (expected: YYYY-MM-DD)",
+    "no_emails_unread": "No emails in {folder} (unread).",
+    "send_success_full": "Email sent successfully to: {to}\nSubject: {subject}\nAttachments: {count}"
   },
   "email_desc": {
     "email_read_inbox": "Read emails from inbox. Returns sender, subject, date, and a preview.",

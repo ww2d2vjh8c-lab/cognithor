@@ -318,7 +318,11 @@
     "access_denied": "访问被拒绝：{path} 超出允许的目录范围",
     "not_regular_file": "不是常规文件：{path}",
     "file_too_large": "文件过大（{size} 字节）。最大：1 MB。",
-    "edit_ambiguous": "请使用更长的 old_text 片段以确保唯一匹配。"
+    "edit_ambiguous": "请使用更长的 old_text 片段以确保唯一匹配。",
+    "file_written": "文件已写入：{path}（{size} 字节）",
+    "file_edited": "文件已编辑：{path}\n已替换：{old_len} \u2192 {new_len} 个字符\n行数变化：{diff}",
+    "tree_truncated": "...（另有 {count} 个条目）",
+    "access_denied_tree": "[访问被拒绝]"
   },
   "shell": {
     "path_blocked": "命令被阻止：路径 '{path}' 超出工作区范围。"
@@ -608,7 +612,9 @@
     "missing_recipient": "未指定收件人。",
     "missing_subject": "未指定主题。",
     "missing_body": "未指定邮件正文。",
-    "invalid_date": "无效日期：{date}（期望：YYYY-MM-DD）"
+    "invalid_date": "无效日期：{date}（期望：YYYY-MM-DD）",
+    "no_emails_unread": "{folder} 中没有未读邮件。",
+    "send_success_full": "邮件已成功发送至：{to}\n主题：{subject}\n附件：{count}"
   },
   "email_desc": {
     "email_read_inbox": "从收件箱读取邮件。返回发件人、主题、日期和预览。",
@@ -731,7 +737,9 @@
     "atl_goal_completed": "目标 {id} 已完成。",
     "atl_unknown_action": "未知操作：{action}",
     "atl_no_journal_today": "今日没有日志条目。",
-    "atl_no_journal_days": "过去 {days} 天没有日志条目。"
+    "atl_no_journal_days": "过去 {days} 天没有日志条目。",
+    "chart_created": "图表已创建：{path}\n类型：{chart_type}，数据点：{count}，尺寸：{width}x{height}px",
+    "table_created": "表格图像已创建：{path}\n行数：{rows}，列数：{cols}"
   },
   "code": {
     "no_code": "未提供代码。",

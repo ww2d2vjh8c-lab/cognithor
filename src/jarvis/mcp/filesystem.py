@@ -20,6 +20,7 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from jarvis.i18n import t
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -216,7 +217,7 @@ class FileSystemTools:
 
         size = validated.stat().st_size
         log.info("file_written", path=str(validated), size=size)
-        return f"Datei geschrieben: {path} ({size:,} Bytes)"
+        return t("fs.file_written", path=path, size=f"{size:,}")
 
     # Maximum size for edit parameters (500 KB)
     MAX_EDIT_SIZE = 512_000
@@ -276,10 +277,13 @@ class FileSystemTools:
         new_lines = new_text.count("\n")
         diff = new_lines - old_lines
 
-        return (
-            f"Datei bearbeitet: {path}\n"
-            f"Ersetzt: {len(old_text)} → {len(new_text)} Zeichen\n"
-            f"Zeilen: {'+' if diff >= 0 else ''}{diff}"
+        diff_str = f"{'+' if diff >= 0 else ''}{diff}"
+        return t(
+            "fs.file_edited",
+            path=path,
+            old_len=len(old_text),
+            new_len=len(new_text),
+            diff=diff_str,
         )
 
     def list_directory(self, path: str, depth: int = 2) -> str:
@@ -306,7 +310,7 @@ class FileSystemTools:
         if len(lines) > self._max_tree_entries:
             total = len(lines)
             lines = lines[: self._max_tree_entries]
-            lines.append(f"... ({total - self._max_tree_entries} weitere Eintraege)")
+            lines.append(t("fs.tree_truncated", count=total - self._max_tree_entries))
 
         return "\n".join(lines)
 
@@ -328,7 +332,7 @@ class FileSystemTools:
                 key=lambda p: (not p.is_dir(), p.name.lower()),
             )
         except PermissionError:
-            lines.append(f"{prefix}└── [Zugriff verweigert]")
+            lines.append(f"{prefix}└── {t('fs.access_denied_tree')}")
             return
 
         # Filter out hidden files and known build directories

@@ -22,6 +22,7 @@ import re
 import subprocess
 from typing import TYPE_CHECKING, Any
 
+from jarvis.i18n import t
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -150,9 +151,9 @@ def _parse_docker_error(stderr: str) -> str:
     """Parst Docker-CLI-Fehler in benutzerfreundliche Meldungen."""
     stderr_lower = stderr.lower()
     if "no such container" in stderr_lower:
-        return "Container nicht gefunden. Pruefe den Namen oder die ID mit docker_ps."
+        return t("docker.container_not_found")
     if "no such image" in stderr_lower:
-        return "Docker-Image nicht gefunden. Pruefe den Image-Namen."
+        return t("docker.image_not_found")
     if "is already in use" in stderr_lower:
         return (
             "Ein Container mit diesem Namen existiert bereits. "

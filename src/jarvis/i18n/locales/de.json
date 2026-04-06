@@ -612,7 +612,9 @@
     "missing_recipient": "Kein Empfaenger angegeben.",
     "missing_subject": "Kein Betreff angegeben.",
     "missing_body": "Kein Nachrichtentext angegeben.",
-    "invalid_date": "Ungueltiges Datum: {date} (erwartet: JJJJ-MM-TT)"
+    "invalid_date": "Ungueltiges Datum: {date} (erwartet: JJJJ-MM-TT)",
+    "no_emails_unread": "Keine E-Mails in {folder} (ungelesen).",
+    "send_success_full": "E-Mail erfolgreich gesendet an: {to}\nBetreff: {subject}\nAnhaenge: {count}"
   },
   "email_desc": {
     "email_read_inbox": "E-Mails aus dem Posteingang lesen. Gibt Absender, Betreff, Datum und Vorschau zurueck.",
@@ -735,7 +737,9 @@
     "atl_goal_completed": "Ziel {id} abgeschlossen.",
     "atl_unknown_action": "Unbekannte Aktion: {action}",
     "atl_no_journal_today": "Kein Journal-Eintrag fuer heute.",
-    "atl_no_journal_days": "Keine Journal-Eintraege der letzten {days} Tage."
+    "atl_no_journal_days": "Keine Journal-Eintraege der letzten {days} Tage.",
+    "chart_created": "Diagramm erstellt: {path}\nTyp: {chart_type}, Datenpunkte: {count}, Abmessungen: {width}x{height}px",
+    "table_created": "Tabellen-Bild erstellt: {path}\nZeilen: {rows}, Spalten: {cols}"
   },
   "code": {
     "no_code": "Kein Code angegeben.",

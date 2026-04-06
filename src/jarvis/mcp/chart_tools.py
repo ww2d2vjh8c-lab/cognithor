@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from jarvis.i18n import t
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -377,10 +378,13 @@ class ChartTools:
             data_points=len(parsed),
         )
 
-        return (
-            f"Chart erstellt: {out_path}\n"
-            f"Typ: {chart_type}, Datenpunkte: {len(parsed)}, "
-            f"Abmessungen: {img_w}x{img_h}px"
+        return t(
+            "tools.chart_created",
+            path=str(out_path),
+            chart_type=chart_type,
+            count=len(parsed),
+            width=img_w,
+            height=img_h,
         )
 
     # ------------------------------------------------------------------ #
@@ -509,7 +513,7 @@ class ChartTools:
 
         log.info("table_image_created", path=str(out_path), rows=n_rows, cols=n_cols)
 
-        return f"Tabellen-Bild erstellt: {out_path}\nZeilen: {n_rows}, Spalten: {n_cols}"
+        return t("tools.table_created", path=str(out_path), rows=n_rows, cols=n_cols)
 
     # ------------------------------------------------------------------ #
     # chart_from_csv

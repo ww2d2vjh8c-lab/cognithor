@@ -36,6 +36,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from jarvis.i18n import t
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -352,7 +353,9 @@ class EmailTools:
         )
 
         if not emails:
-            return f"Keine E-Mails in {folder}" + (" (ungelesen)" if unread_only else "") + "."
+            if unread_only:
+                return t("email.no_emails_unread", folder=folder)
+            return t("email.no_emails", folder=folder)
 
         return _format_email_list(emails, folder, unread_only)
 
@@ -558,10 +561,11 @@ class EmailTools:
         )
 
         recipient_str = ", ".join(to_list)
-        return (
-            f"E-Mail erfolgreich gesendet an: {recipient_str}\n"
-            f"Betreff: {subject}\n"
-            f"Anhänge: {att_count}"
+        return t(
+            "email.send_success_full",
+            to=recipient_str,
+            subject=subject,
+            count=att_count,
         )
 
     async def email_summarize(
