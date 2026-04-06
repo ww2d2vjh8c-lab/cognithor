@@ -882,14 +882,10 @@ class TelegramChannel(Channel):
                 )
                 return
             elif text_lower in ("ablehnen", "decline", "nein", "no"):
-                await update.effective_message.reply_text(
-                    t("privacy.consent_declined")
-                )
+                await update.effective_message.reply_text(t("privacy.consent_declined"))
                 return
             else:
-                await update.effective_message.reply_text(
-                    t("privacy.consent_prompt")
-                )
+                await update.effective_message.reply_text(t("privacy.consent_prompt"))
                 return
 
         # Start typing indicator
