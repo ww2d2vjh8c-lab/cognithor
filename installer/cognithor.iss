@@ -44,7 +44,8 @@ WizardStyle=modern
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 SetupIconFile={#ProjectRoot}\flutter_app\windows\runner\resources\app_icon.ico
-UninstallDisplayIcon={app}\cognithor.bat
+UninstallDisplayIcon={app}\python\python.exe
+UninstallDisplayName=Cognithor {#MyAppVersion}
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
@@ -107,6 +108,13 @@ Filename: "{cmd}"; Parameters: "/k ""{app}\cognithor.bat"" --ui"; Description: "
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\python\__pycache__"
 Type: filesandordirs; Name: "{app}\python\Lib\site-packages\__pycache__"
+Type: filesandordirs; Name: "{app}\python"
+Type: filesandordirs; Name: "{app}\ollama"
+Type: filesandordirs; Name: "{app}\flutter_app"
+Type: files; Name: "{app}\cognithor.bat"
+Type: files; Name: "{app}\first_run.py"
+Type: files; Name: "{app}\agents.yaml.default"
+Type: files; Name: "{app}\config.yaml"
 
 [Code]
 // Check if directory is already in PATH
@@ -124,14 +132,16 @@ begin
   Result := Pos(';' + Param + ';', ';' + OrigPath + ';') = 0;
 end;
 
-// Remove from PATH on uninstall
+// Remove from PATH on uninstall + optional user data cleanup
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Path: string;
   AppDir: string;
+  JarvisHome: string;
 begin
   if CurUninstallStep = usPostUninstall then
   begin
+    // Remove from PATH
     AppDir := ExpandConstant('{app}');
     if RegQueryStringValue(HKEY_CURRENT_USER,
       'Environment',
@@ -144,5 +154,26 @@ begin
         'Environment',
         'Path', Path);
     end;
+
+    // Stop Ollama if running
+    Exec('taskkill', '/F /IM ollama.exe', '', SW_HIDE, ewWaitUntilTerminated, Path);
+
+    // Ask user: remove user data?
+    JarvisHome := ExpandConstant('{userprofile}\.jarvis');
+    if DirExists(JarvisHome) then
+    begin
+      if MsgBox(
+        'Do you want to remove all Cognithor user data?' + #13#10 +
+        '(Memory, Vault, Skills, Configuration, Databases)' + #13#10 + #13#10 +
+        'Location: ' + JarvisHome + #13#10 + #13#10 +
+        'Click "No" to keep your data for a future reinstallation.',
+        mbConfirmation, MB_YESNO) = IDYES then
+      begin
+        DelTree(JarvisHome, True, True, True);
+      end;
+    end;
+
+    // Clean up install directory
+    DelTree(AppDir, True, True, True);
   end;
 end;
