@@ -34,12 +34,34 @@ class HorizonScanner:
     # Public API
     # ------------------------------------------------------------------
 
+    def add_targeted_expansion(self, gap_topic: str) -> None:
+        """Queue a specific topic for the next scan cycle.
+
+        Called by CycleController when exam reveals knowledge gaps.
+        """
+        if not hasattr(self, "_targeted_gaps"):
+            self._targeted_gaps = []
+        if gap_topic not in self._targeted_gaps:
+            self._targeted_gaps.append(gap_topic)
+            logger.info("horizon_targeted_gap_added", topic=gap_topic)
+
     async def scan(self, plan: LearningPlan) -> list[dict]:
         """Run both discovery mechanisms and return deduplicated results."""
         llm_results = await self.explore_via_llm(plan)
         graph_results = await self.discover_graph_gaps(plan.goal_slug)
 
-        combined = llm_results + graph_results
+        # Add targeted gaps from CycleController exam results
+        targeted = []
+        if hasattr(self, "_targeted_gaps") and self._targeted_gaps:
+            for gap in self._targeted_gaps:
+                targeted.append({
+                    "title": gap,
+                    "reason": "Knowledge gap detected in quality exam",
+                    "source": "cycle_controller",
+                })
+            self._targeted_gaps.clear()
+
+        combined = llm_results + graph_results + targeted
 
         # Deduplicate against existing sub-goal titles (case-insensitive)
         existing_titles = {sg.title.lower() for sg in plan.sub_goals}
