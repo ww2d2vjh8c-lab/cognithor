@@ -110,7 +110,7 @@ class VaultDBBackend(VaultBackend):
                 (title, content, tag_str, folder, sources, bl_json, now, path),
             )
             self._conn.commit()
-        return f"Notiz gespeichert: {path}"
+        return t("vault.saved", title=path)
 
     def read(self, path: str) -> NoteData | None:
         notes = self._query_notes("SELECT * FROM notes WHERE path = ?", (path,))

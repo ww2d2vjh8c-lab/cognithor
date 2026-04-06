@@ -38,8 +38,8 @@ class OllamaConfig(BaseModel):
         description="'local' = Ollama on this machine (auto-start), 'remote' = external API server",
     )
     base_url: str = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-    timeout_seconds: int = Field(default=180, ge=10, le=1800)
-    keep_alive: str = "30m"  # Wie lange Modelle im VRAM bleiben
+    timeout_seconds: int = Field(default=360, ge=10, le=1800)
+    keep_alive: str = "5m"  # How long models stay in VRAM after last request
 
 
 class ModelsConfig(BaseModel):

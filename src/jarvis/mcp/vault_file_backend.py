@@ -11,6 +11,8 @@ from jarvis.i18n import t
 from jarvis.mcp.vault_backend import NoteData, VaultBackend, new_id, now_iso, parse_tags, slugify
 from jarvis.utils.logging import get_logger
 
+from jarvis.i18n import t
+
 log = get_logger(__name__)
 
 try:
@@ -179,7 +181,7 @@ class VaultFileBackend(VaultBackend):
         rel_path = str(file_path.relative_to(self._vault_root))
         self._update_index(title, rel_path, tag_list, folder_name)
         log.info("vault_note_saved", path=rel_path, title=title[:50])
-        return f"Notiz gespeichert: {rel_path}"
+        return t("vault.saved", title=rel_path)
 
     def read(self, path: str) -> NoteData | None:
         full = self._vault_root / path
