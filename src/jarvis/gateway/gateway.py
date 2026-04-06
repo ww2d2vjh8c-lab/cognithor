@@ -288,6 +288,10 @@ class Gateway:
             self._context_pipeline.set_skill_registry(self._skill_registry)
             log.info("skill_registry_wired_to_context_pipeline")
 
+        # Wire skill registry into skill generator for hot-reload after generation
+        if self._skill_registry and hasattr(self, "_skill_generator") and self._skill_generator:
+            self._skill_generator.skill_registry = self._skill_registry
+
         # Wire Orchestrator runner (Sub-Agent execution via handle_message)
         if getattr(self, "_orchestrator", None):
             try:
