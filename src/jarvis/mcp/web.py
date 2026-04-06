@@ -22,6 +22,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+
+from jarvis.i18n import t
 import re
 import time
 from html.parser import HTMLParser
@@ -1235,7 +1237,7 @@ class WebTools:
             Zusammengefasste Inhalte der Top-Ergebnisse.
         """
         if not query or not query.strip():
-            return "Fehler: 'query' ist erforderlich fuer search_and_read."
+            return t("web.error_query_required")
         search_results = await self.web_search(query, num_results, language)
 
         # URLs aus den Suchergebnissen extrahieren (begrenzt auf num_results)

@@ -188,11 +188,15 @@
     "action_skipped": "操作已跳过：{status}——{reason}",
     "deadlock": "操作已跳过：依赖未满足（死锁）",
     "deps_not_met": "操作已跳过：依赖未满足",
-    "no_mcp_client": "没有可用的 MCP 客户端"
+    "no_mcp_client": "没有可用的 MCP 客户端",
+    "tool_error": "错误：{error}",
+    "retry_exhausted_fallback": "{attempts} 次尝试后失败：{error}"
   },
   "planner": {
     "no_tools": "没有可用的工具。",
-    "output_truncated": "[... 输出已截断]"
+    "output_truncated": "[... 输出已截断]",
+    "llm_error": "无法处理您的请求——语言模型报告了错误（HTTP {status_code}）。\n\n可能原因：\n- Ollama 未启动 → `ollama serve`\n- 模型 '{model}' 未安装 → `ollama pull {model}`\n- VRAM/RAM 不足\n\n错误详情：{detail}",
+    "replan_exhausted": "无法继续执行计划——语言模型在 {attempts} 次尝试后报告错误。\n\n错误：{error}"
   },
   "prompt": {
     "respond_default": "简洁且有信息量地回答。",
@@ -232,7 +236,8 @@
     "timeout": "{url} 超时，等待 {seconds} 秒",
     "request_failed": "请求 {url} 失败：{error}",
     "search_results_for": "搜索结果：{query}",
-    "source_comparison_note": "应注意各来源之间的一致性和矛盾之处"
+    "source_comparison_note": "应注意各来源之间的一致性和矛盾之处",
+    "error_query_required": "错误：search_and_read 需要 'query' 参数。"
   },
   "verified_lookup": {
     "no_webtools": "错误：WebTools 不可用。",

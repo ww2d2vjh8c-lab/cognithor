@@ -188,11 +188,15 @@
     "action_skipped": "Action skipped: {status} — {reason}",
     "deadlock": "Action skipped: dependencies not met (deadlock)",
     "deps_not_met": "Action skipped: dependencies not met",
-    "no_mcp_client": "No MCP client available"
+    "no_mcp_client": "No MCP client available",
+    "tool_error": "Error: {error}",
+    "retry_exhausted_fallback": "Error after {attempts} attempts: {error}"
   },
   "planner": {
     "no_tools": "No tools available.",
-    "output_truncated": "[... output truncated]"
+    "output_truncated": "[... output truncated]",
+    "llm_error": "I could not process your request — the language model reported an error (HTTP {status_code}).\n\nPossible causes:\n- Ollama is not running → `ollama serve`\n- Model '{model}' is not installed → `ollama pull {model}`\n- Not enough VRAM/RAM for the model\n\nError details: {detail}",
+    "replan_exhausted": "I could not continue the plan — the language model reported errors after {attempts} attempts.\n\nError: {error}"
   },
   "prompt": {
     "respond_default": "Respond concisely and informatively.",
@@ -232,7 +236,8 @@
     "timeout": "Timeout after {seconds}s for {url}",
     "request_failed": "Request failed for {url}: {error}",
     "search_results_for": "Search results for: {query}",
-    "source_comparison_note": "Matches and contradictions between sources should be noted"
+    "source_comparison_note": "Matches and contradictions between sources should be noted",
+    "error_query_required": "Error: 'query' is required for search_and_read."
   },
   "verified_lookup": {
     "no_webtools": "Error: WebTools not available.",

@@ -18,6 +18,8 @@ import contextvars
 import time
 from typing import TYPE_CHECKING, Any
 
+from jarvis.i18n import t
+
 from jarvis.core.plan_graph import PlanGraph
 from jarvis.models import (
     ActionPlan,
@@ -605,7 +607,7 @@ class Executor:
                     )
                 return ToolResult(
                     tool_name=tool_name,
-                    content=f"Fehler: {last_error}",
+                    content=t("executor.tool_error", error=last_error),
                     is_error=True,
                     error_type=last_error_type,
                     duration_ms=duration_ms,
@@ -680,7 +682,7 @@ class Executor:
 
             friendly_msg = retry_exhausted_message(tool_name, self._max_retries, last_error)
         except Exception:
-            friendly_msg = f"Fehler nach {self._max_retries} Versuchen: {last_error}"
+            friendly_msg = t("executor.retry_exhausted_fallback", attempts=self._max_retries, error=last_error)
         return ToolResult(
             tool_name=tool_name,
             content=friendly_msg,

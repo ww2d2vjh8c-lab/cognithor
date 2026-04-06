@@ -188,11 +188,15 @@
     "action_skipped": "Aktion übersprungen: {status} -- {reason}",
     "deadlock": "Aktion übersprungen: Abhängigkeiten nicht erfüllt (Deadlock)",
     "deps_not_met": "Aktion übersprungen: Abhängigkeiten nicht erfüllt",
-    "no_mcp_client": "Kein MCP-Client verfügbar"
+    "no_mcp_client": "Kein MCP-Client verfügbar",
+    "tool_error": "Fehler: {error}",
+    "retry_exhausted_fallback": "Fehler nach {attempts} Versuchen: {error}"
   },
   "planner": {
     "no_tools": "Keine Tools verfügbar.",
-    "output_truncated": "[... Output gekürzt]"
+    "output_truncated": "[... Output gekürzt]",
+    "llm_error": "Ich konnte deine Anfrage nicht verarbeiten — das Sprachmodell hat einen Fehler gemeldet (HTTP {status_code}).\n\nMögliche Ursachen:\n- Ollama ist nicht gestartet → `ollama serve`\n- Das Modell '{model}' ist nicht installiert → `ollama pull {model}`\n- Nicht genug VRAM/RAM für das Modell\n\nFehlerdetails: {detail}",
+    "replan_exhausted": "Ich konnte den Plan nicht fortsetzen — das Sprachmodell meldet Fehler nach {attempts} Versuchen.\n\nFehler: {error}"
   },
   "prompt": {
     "respond_default": "Antworte prägnant und informativ.",
@@ -232,7 +236,8 @@
     "timeout": "Timeout nach {seconds}s für {url}",
     "request_failed": "Request fehlgeschlagen für {url}: {error}",
     "search_results_for": "Suchergebnisse für: {query}",
-    "source_comparison_note": "Übereinstimmungen und Widersprüche zwischen Quellen sollten beachtet werden"
+    "source_comparison_note": "Übereinstimmungen und Widersprüche zwischen Quellen sollten beachtet werden",
+    "error_query_required": "Fehler: 'query' ist erforderlich fuer search_and_read."
   },
   "verified_lookup": {
     "no_webtools": "Fehler: WebTools nicht verfuegbar.",
