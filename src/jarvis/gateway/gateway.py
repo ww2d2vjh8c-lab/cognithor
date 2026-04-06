@@ -823,6 +823,10 @@ class Gateway:
             except Exception:
                 log.debug("atl_wiring_failed", exc_info=True)
 
+        # V6: Wire tool registry into Gatekeeper for per-tool risk annotations
+        if self._gatekeeper and hasattr(self._mcp_client, "_tool_registry"):
+            self._gatekeeper.set_tool_registry(self._mcp_client._tool_registry)
+
         log.info(
             "gateway_init_complete",
             llm_available=llm_ok,

@@ -159,6 +159,9 @@ class Gatekeeper:
         # Aktiver Community-Skill (wird pro evaluate()-Aufruf gesetzt)
         self._active_skill: Skill | None = None
 
+        # Tool registry reference for per-tool risk annotations (V6)
+        self._tool_registry: dict[str, Any] | None = None
+
     def _build_disabled_tools(self) -> frozenset[str]:
         """Build set of tools disabled by config.tools flags."""
         disabled: set[str] = set()
@@ -178,6 +181,14 @@ class Gatekeeper:
     def reload_disabled_tools(self) -> None:
         """Re-read config.tools flags (called after runtime config change)."""
         self._disabled_tools = self._build_disabled_tools()
+
+    def set_tool_registry(self, registry: dict[str, Any]) -> None:
+        """Set the tool registry for per-tool risk level lookups.
+
+        This allows the Gatekeeper to read risk_level annotations from
+        tool registrations instead of relying solely on hardcoded lists.
+        """
+        self._tool_registry = registry
 
     def initialize(self) -> None:
         """Load policies and compile regex patterns.
@@ -514,13 +525,36 @@ class Gatekeeper:
         return None
 
     def _classify_risk(self, action: PlannedAction) -> RiskLevel:
-        """Klassifiziert das Risiko einer Aktion nach Tool-Typ. [B§3.2]"""
+        """Klassifiziert das Risiko einer Aktion nach Tool-Typ. [B§3.2]
+
+        Priority:
+        1. Config-disabled tools → RED
+        2. Per-tool risk_level annotation from registry (V6)
+        3. Hardcoded tool lists (fallback)
+        """
         tool = action.tool.lower()
 
         # Hard-block tools disabled by config.tools
         if tool in self._disabled_tools:
             return RiskLevel.RED
 
+        # V6: Check per-tool risk_level annotation from registry
+        if self._tool_registry is not None:
+            tool_info = self._tool_registry.get(tool)
+            if tool_info is not None:
+                annotated_level = getattr(tool_info, "risk_level", "")
+                if annotated_level:
+                    _level_map = {
+                        "green": RiskLevel.GREEN,
+                        "yellow": RiskLevel.YELLOW,
+                        "orange": RiskLevel.ORANGE,
+                        "red": RiskLevel.RED,
+                    }
+                    mapped = _level_map.get(annotated_level.lower())
+                    if mapped is not None:
+                        return mapped
+
+        # Fallback: hardcoded tool lists
         # GREEN: Read-Only Operationen
         green_tools = {
             "read_file",

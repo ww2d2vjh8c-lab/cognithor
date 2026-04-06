@@ -611,6 +611,7 @@ class MCPToolInfo(BaseModel, frozen=True):
     server: str
     description: str = ""
     input_schema: dict[str, Any] = Field(default_factory=dict)
+    risk_level: str = ""  # "green", "yellow", "orange", "red" — empty = use Gatekeeper fallback
 
 
 # ============================================================================

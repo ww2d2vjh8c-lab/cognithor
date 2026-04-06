@@ -125,11 +125,16 @@ class JarvisMCPClient:
         handler: Any,
         description: str = "",
         input_schema: dict[str, Any] | None = None,
+        risk_level: str = "",
     ) -> None:
         """Registriert einen eingebauten Tool-Handler (ohne MCP-Server).
 
         Nuetzlich fuer Phase 1 wo wir MCP-Server noch nicht als
         separate Prozesse starten, sondern direkt einbetten.
+
+        Args:
+            risk_level: Tool risk classification ("green", "yellow", "orange", "red").
+                Empty string = Gatekeeper uses fallback lists.
         """
         self._builtin_handlers[tool_name] = handler
         self._tool_registry[tool_name] = MCPToolInfo(
@@ -137,6 +142,7 @@ class JarvisMCPClient:
             server="builtin",
             description=description,
             input_schema=input_schema or {},
+            risk_level=risk_level,
         )
         log.debug("builtin_tool_registered", tool=tool_name)
 
