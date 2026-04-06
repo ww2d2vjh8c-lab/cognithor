@@ -283,15 +283,18 @@ class SystemDetector:
         import urllib.request
 
         internet = False
-        try:
-            urllib.request.urlopen("https://api.anthropic.com", timeout=5)
-            internet = True
-        except Exception:
+        # Use reliable, fast endpoints for connectivity check
+        for url in (
+            "https://www.google.com/generate_204",
+            "https://connectivitycheck.gstatic.com/generate_204",
+            "https://1.1.1.1",
+        ):
             try:
-                urllib.request.urlopen("https://api.openai.com", timeout=5)
+                urllib.request.urlopen(url, timeout=5)
                 internet = True
+                break
             except Exception:
-                pass
+                continue
         status = "ok" if internet else "fail"
         data = {"internet": internet}
         return DetectionResult(
