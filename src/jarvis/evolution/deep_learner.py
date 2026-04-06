@@ -505,11 +505,7 @@ class DeepLearner:
         # Update plan totals
         plan.total_chunks_indexed += subgoal.chunks_created
         plan.total_entities_created += subgoal.entities_created
-        plan.total_vault_entries += (
-            len(subgoal.vault_entries)
-            if isinstance(subgoal.vault_entries, list)
-            else subgoal.vault_entries
-        )
+        plan.total_vault_entries += subgoal.vault_entries
 
         # Check if ALL SubGoals done → horizon scan + schedules
         all_done = all(sg.status in ("passed", "failed") for sg in plan.sub_goals)

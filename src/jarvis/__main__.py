@@ -755,7 +755,7 @@ def main() -> None:
                             goal_manager=gateway._goal_manager,
                             journal=getattr(gateway, "_atl_journal", None),
                             deep_learner=getattr(gateway, "_deep_learner", None),
-                            cycle_controller=getattr(gateway._deep_learner, "_cycle_controller", None) if hasattr(gateway, "_deep_learner") and gateway._deep_learner else None,
+                            cycle_controller=getattr(getattr(gateway, "_deep_learner", None), "_cycle_controller", None),
                         ))
                         log.info("evolution_api_registered")
                 except Exception:

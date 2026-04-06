@@ -152,7 +152,17 @@ class KanbanStore:
         rows = self._get_conn().execute(query, params).fetchall()
         return [self._row_to_task(r) for r in rows]
 
+    _ALLOWED_COLUMNS = frozenset({
+        "title", "description", "status", "priority", "assigned_agent",
+        "source", "source_ref", "parent_id", "labels", "sort_order",
+        "created_at", "updated_at", "completed_at", "created_by", "result_summary",
+    })
+
     def update(self, task_id: str, **fields: Any) -> Task | None:
+        if not fields:
+            return self.get(task_id)
+        # Whitelist column names to prevent SQL injection
+        fields = {k: v for k, v in fields.items() if k in self._ALLOWED_COLUMNS}
         if not fields:
             return self.get(task_id)
         fields["updated_at"] = _now_iso()

@@ -29,6 +29,7 @@ class HorizonScanner:
     def __init__(self, llm_fn: LLMFunction, memory_manager: Any) -> None:
         self._llm_fn = llm_fn
         self._memory = memory_manager
+        self._targeted_gaps: list[str] = []
 
     # ------------------------------------------------------------------
     # Public API
@@ -39,8 +40,6 @@ class HorizonScanner:
 
         Called by CycleController when exam reveals knowledge gaps.
         """
-        if not hasattr(self, "_targeted_gaps"):
-            self._targeted_gaps = []
         if gap_topic not in self._targeted_gaps:
             self._targeted_gaps.append(gap_topic)
             logger.info("horizon_targeted_gap_added", topic=gap_topic)
@@ -52,7 +51,7 @@ class HorizonScanner:
 
         # Add targeted gaps from CycleController exam results
         targeted = []
-        if hasattr(self, "_targeted_gaps") and self._targeted_gaps:
+        if self._targeted_gaps:
             for gap in self._targeted_gaps:
                 targeted.append({
                     "title": gap,

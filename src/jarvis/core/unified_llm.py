@@ -200,21 +200,20 @@ class UnifiedLLMClient:
         # Context-Window Preflight: check before sending to provider
         if self._config is not None:
             try:
-                from jarvis.core.model_router import ModelRouter
-
-                _model_cfg = ModelRouter(self._config).get_model_config(model)
+                # Cache model router to avoid re-creating on every call
+                if not hasattr(self, "_model_router_cache"):
+                    from jarvis.core.model_router import ModelRouter
+                    self._model_router_cache = ModelRouter(self._config)
+                _model_cfg = self._model_router_cache.get_model_config(model)
                 _ctx_window = _model_cfg.get("context_window", 0)
                 if _ctx_window > 0:
                     from jarvis.core.preflight import preflight_check
 
-                    _system = ""
-                    for _m in messages:
-                        if _m.get("role") == "system":
-                            _system += _m.get("content", "")
                     _max_out = (options or {}).get("num_predict", 4096)
+                    # Don't pass system separately — it's already in messages
                     preflight_check(
                         model, messages, _ctx_window,
-                        system=_system, tools=tools,
+                        tools=tools,
                         max_output_tokens=_max_out,
                     )
             except ImportError:
