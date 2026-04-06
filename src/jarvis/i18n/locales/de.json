@@ -310,14 +310,19 @@
     "typst_failed": "Typst-Kompilierung fehlgeschlagen: {error}",
     "no_templates": "Keine Dokumentvorlagen gefunden in ~/.jarvis/templates/documents/",
     "invalid_json_variables": "Fehler: Ungültige JSON-Variablen: {error}",
-    "template_render_error": "Fehler: {error}"
+    "template_render_error": "Fehler: {error}",
+    "error_detail": "Fehler: {error}"
   },
   "fs": {
     "invalid_path": "Ungültiger Pfad: {path}",
     "access_denied": "Zugriff verweigert: {path} liegt ausserhalb erlaubter Verzeichnisse",
     "not_regular_file": "Kein reguläres File: {path}",
     "file_too_large": "Datei zu gross ({size} Bytes). Maximum: 1 MB.",
-    "edit_ambiguous": "Verwende einen längeren Ausschnitt als old_text."
+    "edit_ambiguous": "Verwende einen längeren Ausschnitt als old_text.",
+    "file_written": "Datei geschrieben: {path} ({size} Bytes)",
+    "file_edited": "Datei bearbeitet: {path}\nErsetzt: {old_len} \u2192 {new_len} Zeichen\nZeilen: {diff}",
+    "tree_truncated": "... ({count} weitere Eintraege)",
+    "access_denied_tree": "[Zugriff verweigert]"
   },
   "shell": {
     "path_blocked": "Befehl blockiert: Pfad '{path}' liegt ausserhalb des Workspace."

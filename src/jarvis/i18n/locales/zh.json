@@ -310,7 +310,8 @@
     "typst_failed": "Typst 编译失败：{error}",
     "no_templates": "在 ~/.jarvis/templates/documents/ 中未找到文档模板",
     "invalid_json_variables": "错误：JSON 变量无效：{error}",
-    "template_render_error": "错误：{error}"
+    "template_render_error": "错误：{error}",
+    "error_detail": "错误：{error}"
   },
   "fs": {
     "invalid_path": "无效路径：{path}",

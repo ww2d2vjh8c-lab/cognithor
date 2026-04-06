@@ -463,10 +463,7 @@ class MediaPipeline:
         except ImportError:
             pass
 
-        raise ImportError(
-            "Kein PDF-Reader verfügbar. Installiere: "
-            "pip install pymupdf oder pip install pdfplumber"
-        )
+        raise ImportError(t("media.pdf_reader_required"))
 
     def _extract_docx(self, path: Path) -> str:
         """DOCX-Textextraktion mit python-docx."""
@@ -2551,7 +2548,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
             language=language,
             model=model,
         )
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _analyze_image(
         image_path: str, prompt: str = DEFAULT_IMAGE_PROMPT, detail: bool = False, **_: Any
@@ -2564,11 +2561,11 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
             model=model,
             ollama_url=ollama_url,
         )
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _extract_text(file_path: str, **_: Any) -> str:
         result = await pipeline.extract_text(file_path)
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _convert_audio(
         input_path: str, output_format: str = "wav", sample_rate: int = 16000, **_: Any
@@ -2578,7 +2575,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
             output_format=output_format,
             sample_rate=sample_rate,
         )
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _resize_image(
         image_path: str, max_width: int | None = None, max_height: int | None = None, **_: Any
@@ -2588,11 +2585,11 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
             max_width=max_width,
             max_height=max_height,
         )
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _tts(text: str, voice: str = DEFAULT_PIPER_VOICE, **_: Any) -> str:
         result = await pipeline.text_to_speech(text, voice=voice)
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _analyze_document(
         path: str,
@@ -2626,7 +2623,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         )
         if result.success:
             return result.output_path or result.text
-        return f"Fehler: {result.error}"
+        return t("media.error_detail", error=result.error)
 
     async def _create_document(
         structure: str,
@@ -2641,7 +2638,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         )
         if result.success:
             return result.output_path or result.text
-        return f"Fehler: {result.error}"
+        return t("media.error_detail", error=result.error)
 
     async def _read_pdf(
         file_path: str,
@@ -2656,7 +2653,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
             extract_tables=extract_tables,
             pages=pages,
         )
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _read_ppt(
         file_path: str,
@@ -2664,7 +2661,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         **_: Any,
     ) -> str:
         result = await pipeline.read_ppt(file_path, extract_images=extract_images)
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _read_docx(
         file_path: str,
@@ -2677,7 +2674,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
             extract_images=extract_images,
             extract_tables=extract_tables,
         )
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _read_xlsx(
         file_path: str,
@@ -2690,7 +2687,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
             sheet_name=sheet_name,
             max_rows=max_rows,
         )
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("media.error_detail", error=result.error)
 
     async def _typst_render(
         source: str,
@@ -2700,7 +2697,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         result = await pipeline.typst_render(source, filename=filename)
         if result.success:
             return result.output_path or result.text
-        return f"Fehler: {result.error}"
+        return t("media.error_detail", error=result.error)
 
     def _get_template_manager() -> Any:
         """Lazy-init TemplateManager on first use."""
@@ -2741,7 +2738,7 @@ def register_media_tools(mcp_client: Any, config: Any = None) -> MediaPipeline:
         result = await pipeline.typst_render(rendered_source, filename=filename)
         if result.success:
             return result.output_path or result.text
-        return f"Fehler: {result.error}"
+        return t("media.error_detail", error=result.error)
 
     handlers = {
         "media_transcribe_audio": _transcribe,
