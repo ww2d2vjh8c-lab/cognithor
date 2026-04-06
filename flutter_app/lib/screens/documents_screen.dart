@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 
 /// Document Templates & Generation screen.
 ///
@@ -15,8 +16,9 @@ class DocumentsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Dokumente & Vorlagen')),
+      appBar: AppBar(title: Text(l.documentsTitle)),
       body: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

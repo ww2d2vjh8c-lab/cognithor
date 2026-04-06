@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/connection_provider.dart';
 import 'package:jarvis_ui/providers/device_provider.dart';
 import 'package:jarvis_ui/theme/jarvis_theme.dart';
@@ -61,13 +62,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final device = context.watch<DeviceProvider>();
     final conn = context.watch<ConnectionProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Device Settings')),
+      appBar: AppBar(title: Text(l.deviceSettings)),
       body: ListView(
         padding: const EdgeInsets.all(JarvisTheme.spacing),
         children: [
@@ -221,7 +223,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Refresh Sensors'),
+                        label: Text(l.refreshSensors),
                         onPressed: () => device.refreshAll(),
                       ),
                     ),

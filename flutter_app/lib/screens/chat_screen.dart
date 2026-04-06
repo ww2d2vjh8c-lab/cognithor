@@ -751,6 +751,7 @@ class _FeedbackFollowupBannerState extends State<_FeedbackFollowupBanner> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       padding: const EdgeInsets.all(12),
@@ -814,7 +815,7 @@ class _FeedbackFollowupBannerState extends State<_FeedbackFollowupBanner> {
                   backgroundColor: JarvisTheme.orange,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Senden'),
+                child: Text(l?.send ?? 'Send'),
               ),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:jarvis_ui/l10n/generated/app_localizations.dart';
 import 'package:jarvis_ui/providers/kanban_provider.dart';
 import 'package:jarvis_ui/providers/chat_provider.dart';
 import 'package:jarvis_ui/widgets/kanban/kanban_board.dart';
@@ -42,6 +43,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context)!;
 
     return Consumer<KanbanProvider>(
       builder: (context, kanban, _) {
@@ -63,8 +65,8 @@ class _KanbanScreenState extends State<KanbanScreen> {
                     // Toggle
                     SegmentedButton<bool>(
                       segments: const [
-                        ButtonSegment(value: false, label: Text('My Tasks')),
-                        ButtonSegment(value: true, label: Text('Live Pipeline')),
+                        ButtonSegment(value: false, label: Text(l.kanbanMyTasks)),
+                        ButtonSegment(value: true, label: Text(l.kanbanLivePipeline)),
                       ],
                       selected: {kanban.pipelineMode},
                       onSelectionChanged: (s) => kanban.togglePipelineMode(),
@@ -93,7 +95,7 @@ class _KanbanScreenState extends State<KanbanScreen> {
                       FilledButton.icon(
                         onPressed: _createTask,
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text('New Task'),
+                        label: Text(l.kanbanNewTask),
                         style: FilledButton.styleFrom(
                           visualDensity: VisualDensity.compact,
                         ),
