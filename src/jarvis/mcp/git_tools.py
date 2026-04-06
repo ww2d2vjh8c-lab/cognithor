@@ -19,6 +19,7 @@ import contextlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from jarvis.i18n import t
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -111,11 +112,11 @@ class GitTools:
                 timeout=timeout,
             )
         except FileNotFoundError:
-            return 1, "", "git ist nicht installiert oder nicht im PATH."
+            return 1, "", t("tools.git_not_installed")
         except TimeoutError:
             with contextlib.suppress(OSError, ProcessLookupError):
                 proc.kill()
-            return 1, "", f"Git-Befehl Timeout nach {timeout}s."
+            return 1, "", t("tools.git_timeout", timeout=timeout)
 
         stdout = stdout_bytes.decode("utf-8", errors="replace")
         stderr = stderr_bytes.decode("utf-8", errors="replace")
@@ -126,7 +127,7 @@ class GitTools:
     def _truncate(text: str) -> str:
         """Kuerzt Output auf maximale Laenge."""
         if len(text) > _MAX_OUTPUT_CHARS:
-            return text[:_MAX_OUTPUT_CHARS] + "\n\n[... Output gekuerzt]"
+            return text[:_MAX_OUTPUT_CHARS] + t("tools.git_output_truncated")
         return text
 
     async def _check_is_git_repo(self, cwd: Path) -> str | None:
@@ -141,10 +142,7 @@ class GitTools:
             timeout=10,
         )
         if code != 0:
-            return (
-                f"'{cwd}' ist kein Git-Repository. "
-                f"Initialisiere mit 'git init' oder navigiere in ein bestehendes Repository."
-            )
+            return t("tools.git_not_a_repo", cwd=str(cwd))
         return None
 
     async def git_status(self, path: str = "") -> str:
@@ -175,7 +173,7 @@ class GitTools:
         )
 
         if code_h != 0:
-            return f"Fehler bei git status: {stderr_h or stderr_p}"
+            return t("tools.git_status_error", stderr=stderr_h or stderr_p)
 
         parts: list[str] = []
 
@@ -200,19 +198,19 @@ class GitTools:
                         unstaged.append(f"  {worktree_status} {filename}")
 
             if staged:
-                parts.append(f"Staged ({len(staged)}):")
+                parts.append(t("tools.git_status_staged_header", count=len(staged)))
                 parts.extend(staged)
             if unstaged:
-                parts.append(f"\nUnstaged ({len(unstaged)}):")
+                parts.append(t("tools.git_status_unstaged_header", count=len(unstaged)))
                 parts.extend(unstaged)
             if untracked:
-                parts.append(f"\nUntracked ({len(untracked)}):")
+                parts.append(t("tools.git_status_untracked_header", count=len(untracked)))
                 for f in untracked:
                     parts.append(f"  ? {f}")
         else:
-            parts.append("Working tree clean -- nichts zu committen.")
+            parts.append(t("tools.git_status_clean"))
 
-        parts.append("\n--- Detailansicht ---")
+        parts.append(t("tools.git_status_detail_header"))
         parts.append(stdout_h.strip())
 
         return self._truncate("\n".join(parts))
@@ -246,20 +244,20 @@ class GitTools:
             # Validate commit hash/ref (basic sanitization)
             safe_commit = commit.strip()
             if not safe_commit or any(c in safe_commit for c in [";", "&", "|", "`", "$"]):
-                return f"Ungueltiger Commit-Bezeichner: '{commit}'"
+                return t("tools.git_diff_invalid_commit", commit=commit)
             args.append(safe_commit)
 
         code, stdout, stderr = await self._run_git(args, cwd=cwd)
 
         if code != 0:
-            return f"Fehler bei git diff: {stderr}"
+            return t("tools.git_diff_error", stderr=stderr)
 
         if not stdout.strip():
             if staged:
-                return "Keine staged Aenderungen."
+                return t("tools.git_diff_no_staged")
             if commit:
-                return f"Keine Unterschiede zu Commit '{commit}'."
-            return "Keine unstaged Aenderungen."
+                return t("tools.git_diff_no_commit_diff", commit=commit)
+            return t("tools.git_diff_no_unstaged")
 
         return self._truncate(stdout)
 
@@ -305,16 +303,16 @@ class GitTools:
         if author:
             safe_author = author.strip()
             if any(c in safe_author for c in [";", "&", "|", "`", "$"]):
-                return f"Ungueltiger Author-Filter: '{author}'"
+                return t("tools.git_log_invalid_author", author=author)
             args.extend(["--author", safe_author])
 
         code, stdout, stderr = await self._run_git(args, cwd=cwd)
 
         if code != 0:
-            return f"Fehler bei git log: {stderr}"
+            return t("tools.git_log_error", stderr=stderr)
 
         if not stdout.strip():
-            return "Keine Commits gefunden."
+            return t("tools.git_log_no_commits")
 
         return self._truncate(stdout)
 
@@ -337,10 +335,10 @@ class GitTools:
             Commit-Bestaetigungsnachricht.
         """
         if not message or not message.strip():
-            return "Fehler: Commit-Nachricht ist erforderlich."
+            return t("tools.git_commit_message_required")
 
         if not files:
-            return "Fehler: Mindestens eine Datei muss angegeben werden (kein 'git add .' erlaubt)."
+            return t("tools.git_commit_files_required")
 
         cwd = self._get_repo_path(path or None)
 
@@ -362,8 +360,10 @@ class GitTools:
                 except ValueError:
                     validated_files.append(str(resolved))
             except (ValueError, OSError):
-                return (
-                    f"Fehler: Datei '{file_path}' liegt ausserhalb des Workspace ({workspace_root})"
+                return t(
+                    "tools.git_commit_file_outside_workspace",
+                    file_path=file_path,
+                    workspace_root=str(workspace_root),
                 )
 
         # Stage files
@@ -372,7 +372,7 @@ class GitTools:
             cwd=cwd,
         )
         if code != 0:
-            return f"Fehler beim Stagen: {stderr}"
+            return t("tools.git_commit_stage_error", stderr=stderr)
 
         # Commit
         commit_args = ["commit", "-m", message.strip()]
@@ -382,7 +382,7 @@ class GitTools:
         code, stdout, stderr = await self._run_git(commit_args, cwd=cwd)
 
         if code != 0:
-            return f"Fehler beim Commit: {stderr}"
+            return t("tools.git_commit_error", stderr=stderr)
 
         log.info(
             "git_commit_created",
@@ -391,7 +391,7 @@ class GitTools:
             cwd=str(cwd),
         )
 
-        return self._truncate(stdout.strip() or "Commit erfolgreich erstellt.")
+        return self._truncate(stdout.strip() or t("tools.git_commit_success"))
 
     async def git_branch(
         self,
@@ -423,19 +423,19 @@ class GitTools:
                 cwd=cwd,
             )
             if code != 0:
-                return f"Fehler bei git branch: {stderr}"
+                return t("tools.git_branch_list_error", stderr=stderr)
             if not stdout.strip():
-                return "Keine Branches vorhanden (leeres Repository?)."
+                return t("tools.git_branch_no_branches")
             return self._truncate(stdout)
 
         # Alle anderen Aktionen brauchen einen Branch-Namen
         if not name or not name.strip():
-            return f"Fehler: Branch-Name ist erforderlich fuer Aktion '{action}'."
+            return t("tools.git_branch_name_required", action=action)
 
         safe_name = name.strip()
         # Basic sanitization
         if any(c in safe_name for c in [";", "&", "|", "`", "$", " ", "..", "~"]):
-            return f"Ungueltiger Branch-Name: '{name}'"
+            return t("tools.git_branch_invalid_name", name=name)
 
         if action == "create":
             code, stdout, stderr = await self._run_git(
@@ -443,9 +443,9 @@ class GitTools:
                 cwd=cwd,
             )
             if code != 0:
-                return f"Fehler beim Erstellen von Branch '{safe_name}': {stderr}"
+                return t("tools.git_branch_create_error", name=safe_name, stderr=stderr)
             log.info("git_branch_created", branch=safe_name, cwd=str(cwd))
-            return f"Branch '{safe_name}' erstellt und ausgecheckt."
+            return t("tools.git_branch_created", name=safe_name)
 
         if action == "switch":
             code, stdout, stderr = await self._run_git(
@@ -453,9 +453,9 @@ class GitTools:
                 cwd=cwd,
             )
             if code != 0:
-                return f"Fehler beim Wechseln zu Branch '{safe_name}': {stderr}"
+                return t("tools.git_branch_switch_error", name=safe_name, stderr=stderr)
             log.info("git_branch_switched", branch=safe_name, cwd=str(cwd))
-            return f"Zu Branch '{safe_name}' gewechselt."
+            return t("tools.git_branch_switched", name=safe_name)
 
         if action == "delete":
             # Nur sicheres Loeschen (-d, nicht -D)
@@ -464,11 +464,11 @@ class GitTools:
                 cwd=cwd,
             )
             if code != 0:
-                return f"Fehler beim Loeschen von Branch '{safe_name}': {stderr}"
+                return t("tools.git_branch_delete_error", name=safe_name, stderr=stderr)
             log.info("git_branch_deleted", branch=safe_name, cwd=str(cwd))
-            return f"Branch '{safe_name}' geloescht."
+            return t("tools.git_branch_deleted", name=safe_name)
 
-        return f"Unbekannte Aktion: '{action}'. Erlaubt: list, create, switch, delete."
+        return t("tools.git_branch_unknown_action", action=action)
 
 
 def register_git_tools(
