@@ -475,10 +475,22 @@ class _AgentEditorScreenState extends State<AgentEditorScreen> {
                     child: TextFormField(
                       controller: _modelCtrl,
                       decoration: InputDecoration(
-                        labelText: l.preferredModel,
+                        labelText: '${l.preferredModel} (optional)',
                         prefixIcon: const Icon(Icons.memory_outlined),
-                        suffixIcon: const Icon(Icons.arrow_drop_down),
-                        hintText: l.tapToSelect,
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_modelCtrl.text.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () => setState(() => _modelCtrl.clear()),
+                                tooltip: 'Use global default',
+                              ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
+                        hintText: 'Uses global model setting',
+                        helperText: 'Leave empty to use the model from Settings > Models',
                       ),
                     ),
                   ),
