@@ -462,13 +462,13 @@ class EmailTools:
             to_list = [addr.strip() for addr in to if addr.strip()]
 
         if not to_list:
-            raise EmailError("Kein Empfänger angegeben.")
+            raise EmailError(t("email.missing_recipient"))
 
         if not subject:
-            raise EmailError("Kein Betreff angegeben.")
+            raise EmailError(t("email.missing_subject"))
 
         if not body:
-            raise EmailError("Kein Nachrichtentext angegeben.")
+            raise EmailError(t("email.missing_body"))
 
         # Alle Adressen validieren
         all_addrs: list[str] = list(to_list)

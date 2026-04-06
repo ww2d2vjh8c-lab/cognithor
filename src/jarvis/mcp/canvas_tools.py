@@ -15,6 +15,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from jarvis.i18n import t
+
 logger = logging.getLogger(__name__)
 
 
@@ -139,7 +141,7 @@ class CanvasTools:
         title = arguments.get("title", "")
 
         if not html:
-            return {"error": "Kein HTML-Inhalt angegeben"}
+            return {"error": t("tools.canvas_no_html")}
 
         await self._canvas.push(session_id, html, title)
         return {
@@ -167,7 +169,7 @@ class CanvasTools:
         """Verarbeitet canvas_eval."""
         js = arguments.get("js", "")
         if not js:
-            return {"error": "Kein JavaScript-Code angegeben"}
+            return {"error": t("tools.canvas_no_js")}
 
         await self._canvas.eval_js(session_id, js)
         return {

@@ -26,6 +26,7 @@ from jarvis.core.sandbox import (
     SandboxExecutor,
     SandboxLevel,
 )
+from jarvis.i18n import t
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -224,7 +225,7 @@ class ShellTools:
             Kombinierter stdout + stderr Output.
         """
         if not command.strip():
-            return "Kein Befehl angegeben."
+            return t("shell.no_command")
 
         cwd = working_dir or self._default_cwd
 

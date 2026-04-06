@@ -27,6 +27,7 @@ from datetime import UTC, date, datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from jarvis.i18n import t
 from jarvis.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -617,10 +618,10 @@ class CalendarTools:
             Bestaetigungsnachricht.
         """
         if not title:
-            raise CalendarError("Kein Titel angegeben.")
+            raise CalendarError(t("calendar.no_title"))
 
         if not start:
-            raise CalendarError("Keine Startzeit angegeben.")
+            raise CalendarError(t("calendar.no_start_time"))
 
         try:
             dtstart = datetime.fromisoformat(start)

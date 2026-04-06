@@ -12,6 +12,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
+from jarvis.i18n import t
+
 if TYPE_CHECKING:
     from jarvis.config import JarvisConfig
     from jarvis.identity import IdentityLayer
@@ -37,7 +39,7 @@ def register_identity_tools(
         query = kwargs.get("query", "")
         top_k = kwargs.get("top_k", 5)
         if not query:
-            return "Keine Suchanfrage angegeben."
+            return t("memory.error_empty_query")
         results = identity_layer.recall_for_cognithor(query, top_k=top_k)
         if not results:
             return "Keine Erinnerungen zu diesem Thema gefunden."

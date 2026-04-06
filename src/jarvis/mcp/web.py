@@ -393,7 +393,7 @@ class WebTools:
             Formatierte Suchergebnisse als Text.
         """
         if not query.strip():
-            return "Keine Suchanfrage angegeben."
+            return t("web.error_query_required")
 
         num_results = min(max(num_results, 1), self._max_search_results)
 
@@ -873,7 +873,7 @@ class WebTools:
             Formatierte Nachrichtenergebnisse.
         """
         if not query.strip():
-            return "Keine Suchanfrage angegeben."
+            return t("web.error_query_required")
 
         num_results = min(max(num_results, 1), self._max_search_results)
 

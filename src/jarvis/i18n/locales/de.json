@@ -328,7 +328,8 @@
     "text_not_found": "Text nicht gefunden in {path}. Gesucht: '{text}...'"
   },
   "shell": {
-    "path_blocked": "Befehl blockiert: Pfad '{path}' liegt ausserhalb des Workspace."
+    "path_blocked": "Befehl blockiert: Pfad '{path}' liegt ausserhalb des Workspace.",
+    "no_command": "Kein Befehl angegeben."
   },
   "memory": {
     "invalid_tier": "Fehler: Unbekannter Tier '{tier}'. Gültig: {valid}",
@@ -604,7 +605,9 @@
     "synthesis_contradiction_error": "Fehler bei der Widerspruchsanalyse: {exc}",
     "synthesis_no_timeline_info": "Keine Informationen zu '{topic}' für eine Zeitlinie gefunden.",
     "synthesis_timeline_error": "Fehler beim Zeitlinien-Aufbau: {exc}",
-    "synthesis_gaps_error": "Fehler bei der Lückenanalyse: {exc}"
+    "synthesis_gaps_error": "Fehler bei der Lückenanalyse: {exc}",
+    "canvas_no_html": "Kein HTML-Inhalt angegeben",
+    "canvas_no_js": "Kein JavaScript-Code angegeben"
   },
   "email": {
     "read_inbox": "Posteingang lesen",
@@ -645,6 +648,8 @@
     "invalid_time": "Ungueltige Uhrzeit: {time} (erwartet: HH:MM)",
     "missing_title": "Kein Titel angegeben.",
     "missing_start": "Keine Startzeit angegeben.",
+    "no_title": "Kein Titel angegeben.",
+    "no_start_time": "Keine Startzeit angegeben.",
     "all_day": "ganztaegig"
   },
   "calendar_desc": {
