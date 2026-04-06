@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from jarvis.i18n import t
 from jarvis.utils.logging import get_logger
 
 log = get_logger(__name__)
@@ -182,12 +183,12 @@ class BrowserTool:
         try:
             parsed = urlparse(url)
         except ValueError:
-            return f"Ungueltige URL: {url}"
+            return t("browser.invalid_url", url=url)
         if parsed.scheme not in ("http", "https"):
-            return f"Nur HTTP/HTTPS erlaubt, nicht '{parsed.scheme}'"
+            return t("browser.scheme_not_allowed", scheme=parsed.scheme)
         hostname = (parsed.hostname or "").lower()
         if not hostname:
-            return f"Keine gueltige Domain: {url}"
+            return t("browser.no_valid_domain", url=url)
         _blocked = {
             "localhost",
             "127.0.0.1",
@@ -198,23 +199,23 @@ class BrowserTool:
             "169.254.169.254",
         }
         if hostname in _blocked:
-            return f"Zugriff auf {hostname} blockiert (Sicherheit)"
+            return t("browser.host_blocked", hostname=hostname)
         # Private IPv4 ranges
         parts = hostname.split(".")
         if len(parts) == 4:
             try:
                 octets = [int(p) for p in parts]
                 if octets[0] == 10:
-                    return f"Zugriff auf private Adresse blockiert: {hostname}"
+                    return t("browser.private_address_blocked", hostname=hostname)
                 if octets[0] == 172 and 16 <= octets[1] <= 31:
-                    return f"Zugriff auf private Adresse blockiert: {hostname}"
+                    return t("browser.private_address_blocked", hostname=hostname)
                 if octets[0] == 192 and octets[1] == 168:
-                    return f"Zugriff auf private Adresse blockiert: {hostname}"
+                    return t("browser.private_address_blocked", hostname=hostname)
             except ValueError:
                 pass  # Not a numeric IP address, skip private-range check
         # IPv6 private
         if hostname.startswith(("fc", "fd", "fe80")):
-            return f"Zugriff auf private Adresse blockiert: {hostname}"
+            return t("browser.private_address_blocked", hostname=hostname)
         return None
 
     async def navigate(self, url: str, *, extract_text: bool = True) -> BrowserResult:
@@ -228,7 +229,7 @@ class BrowserTool:
             BrowserResult mit Seitentext, URL und Titel.
         """
         if not self._initialized:
-            return BrowserResult(success=False, error="Browser nicht initialisiert")
+            return BrowserResult(success=False, error=t("browser.not_initialized"))
 
         # SSRF-Schutz: URL validieren
         if err := self._validate_url(url):
@@ -246,7 +247,7 @@ class BrowserTool:
                 if len(text) > self._max_text_length:
                     text = (
                         text[: self._max_text_length]
-                        + f"\n\n[... gekürzt, {len(text)} Zeichen gesamt]"
+                        + t("browser.text_truncated", total=len(text))
                     )
 
             status = response.status if response else 0
@@ -261,7 +262,7 @@ class BrowserTool:
         except Exception as exc:
             log.error("browser_navigate_failed", url=url, error=str(exc))
             return BrowserResult(
-                success=False, url=url, error=f"Navigation fehlgeschlagen: {type(exc).__name__}"
+                success=False, url=url, error=t("browser.navigate_failed", exc_type=type(exc).__name__)
             )
 
     async def screenshot(
@@ -277,7 +278,7 @@ class BrowserTool:
             BrowserResult mit Pfad zum Screenshot.
         """
         if not self._initialized:
-            return BrowserResult(success=False, error="Browser nicht initialisiert")
+            return BrowserResult(success=False, error=t("browser.not_initialized"))
 
         try:
             if path is None:
@@ -292,7 +293,7 @@ class BrowserTool:
             log.info("browser_screenshot", path=path)
             return BrowserResult(
                 success=True,
-                text=f"Screenshot gespeichert: {path}",
+                text=t("browser.screenshot_saved", path=path),
                 url=self._page.url,
                 title=title,
                 screenshot_path=path,
@@ -300,7 +301,7 @@ class BrowserTool:
         except Exception as exc:
             log.error("browser_screenshot_failed", error=str(exc))
             return BrowserResult(
-                success=False, error=f"Screenshot fehlgeschlagen: {type(exc).__name__}"
+                success=False, error=t("browser.screenshot_failed", exc_type=type(exc).__name__)
             )
 
     async def click(self, selector: str) -> BrowserResult:
@@ -313,7 +314,7 @@ class BrowserTool:
             BrowserResult mit Erfolgsstatus.
         """
         if not self._initialized:
-            return BrowserResult(success=False, error="Browser nicht initialisiert")
+            return BrowserResult(success=False, error=t("browser.not_initialized"))
 
         try:
             await self._page.click(selector)
@@ -323,13 +324,13 @@ class BrowserTool:
             log.info("browser_click", selector=selector)
             return BrowserResult(
                 success=True,
-                text=f"Klick auf '{selector}' erfolgreich",
+                text=t("browser.click_success", selector=selector),
                 url=self._page.url,
                 title=title,
             )
         except Exception as exc:
             log.error("browser_click_failed", selector=selector, error=str(exc))
-            return BrowserResult(success=False, error=f"Klick fehlgeschlagen: {type(exc).__name__}")
+            return BrowserResult(success=False, error=t("browser.click_failed", exc_type=type(exc).__name__))
 
     async def fill(self, selector: str, value: str) -> BrowserResult:
         """Fuellt ein Formularfeld aus.
@@ -342,7 +343,7 @@ class BrowserTool:
             BrowserResult mit Erfolgsstatus.
         """
         if not self._initialized:
-            return BrowserResult(success=False, error="Browser nicht initialisiert")
+            return BrowserResult(success=False, error=t("browser.not_initialized"))
 
         try:
             await self._page.fill(selector, value)
@@ -350,13 +351,13 @@ class BrowserTool:
             log.info("browser_fill", selector=selector)
             return BrowserResult(
                 success=True,
-                text=f"Feld '{selector}' ausgefüllt",
+                text=t("browser.fill_success", selector=selector),
                 url=self._page.url,
             )
         except Exception as exc:
             log.error("browser_fill_failed", selector=selector, error=str(exc))
             return BrowserResult(
-                success=False, error=f"Ausfuellen fehlgeschlagen: {type(exc).__name__}"
+                success=False, error=t("browser.fill_failed", exc_type=type(exc).__name__)
             )
 
     async def execute_js(self, script: str) -> BrowserResult:
@@ -369,12 +370,12 @@ class BrowserTool:
             BrowserResult mit dem Rueckgabewert des Scripts.
         """
         if not self._initialized:
-            return BrowserResult(success=False, error="Browser nicht initialisiert")
+            return BrowserResult(success=False, error=t("browser.not_initialized"))
 
         if len(script) > self._max_js_length:
             return BrowserResult(
                 success=False,
-                error=f"Script zu lang ({len(script)} Zeichen, max {self._max_js_length})",
+                error=t("browser.script_too_long", count=len(script), max=self._max_js_length),
             )
 
         try:
@@ -382,7 +383,7 @@ class BrowserTool:
             result_str = str(result) if result is not None else ""
 
             if len(result_str) > self._max_text_length:
-                result_str = result_str[: self._max_text_length] + " [gekürzt]"
+                result_str = result_str[: self._max_text_length] + t("browser.result_truncated")
 
             log.info("browser_js_executed", script_length=len(script))
             return BrowserResult(
@@ -392,12 +393,12 @@ class BrowserTool:
             )
         except Exception as exc:
             log.error("browser_js_failed", error=str(exc))
-            return BrowserResult(success=False, error=f"JS-Fehler: {type(exc).__name__}")
+            return BrowserResult(success=False, error=t("browser.js_failed", exc_type=type(exc).__name__))
 
     async def get_page_info(self) -> BrowserResult:
         """Gibt Informationen zur aktuellen Seite zurueck."""
         if not self._initialized:
-            return BrowserResult(success=False, error="Browser nicht initialisiert")
+            return BrowserResult(success=False, error=t("browser.not_initialized"))
 
         try:
             title = await self._page.title()
@@ -422,14 +423,14 @@ class BrowserTool:
                     }))
             """)
 
-            info_parts = [f"Titel: {title}", f"URL: {url}", ""]
+            info_parts = [t("browser.page_title", title=title), t("browser.page_url", url=url), ""]
             if links:
-                info_parts.append("Links:")
+                info_parts.append(t("browser.links_header"))
                 for link in links:
                     if link["text"]:
                         info_parts.append(f"  - [{link['text']}]({link['href']})")
             if inputs:
-                info_parts.append("\nFormular-Elemente:")
+                info_parts.append(t("browser.form_elements_header"))
                 for inp in inputs:
                     desc = f"  - <{inp['tag']}"
                     if inp["type"]:
@@ -453,7 +454,7 @@ class BrowserTool:
         except Exception as exc:
             log.error("browser_page_info_failed", error=str(exc))
             return BrowserResult(
-                success=False, error=f"Seiteninfo fehlgeschlagen: {type(exc).__name__}"
+                success=False, error=t("browser.page_info_failed", exc_type=type(exc).__name__)
             )
 
 
@@ -557,7 +558,7 @@ def register_browser_tools(mcp_client: Any, config: Any = None) -> BrowserTool:
         if not tool._initialized:
             ok = await tool.initialize()
             if not ok:
-                return "Fehler: Browser konnte nicht initialisiert werden (Playwright installiert?)"
+                return t("browser.init_failed_playwright")
         return None
 
     async def _browse_url(url: str, extract_text: bool = True, **_: _Any) -> str:
@@ -565,8 +566,8 @@ def register_browser_tools(mcp_client: Any, config: Any = None) -> BrowserTool:
             return err
         result = await tool.navigate(url, extract_text=extract_text)
         if not result.success:
-            return f"Fehler: {result.error}"
-        parts = [f"Titel: {result.title}", f"URL: {result.url}"]
+            return t("browser.error_prefix", error=result.error)
+        parts = [t("browser.page_title", title=result.title), t("browser.page_url", url=result.url)]
         if result.text:
             parts.append(f"\n{result.text}")
         return "\n".join(parts)
@@ -578,32 +579,32 @@ def register_browser_tools(mcp_client: Any, config: Any = None) -> BrowserTool:
             return err
         result = await tool.screenshot(path=path, full_page=full_page)
         if not result.success:
-            return f"Fehler: {result.error}"
-        return f"Screenshot gespeichert: {result.screenshot_path}"
+            return t("browser.error_prefix", error=result.error)
+        return t("browser.screenshot_saved", path=result.screenshot_path)
 
     async def _browse_click(selector: str, **_: _Any) -> str:
         if err := await _ensure_initialized():
             return err
         result = await tool.click(selector)
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("browser.error_prefix", error=result.error)
 
     async def _browse_fill(selector: str, value: str, **_: _Any) -> str:
         if err := await _ensure_initialized():
             return err
         result = await tool.fill(selector, value)
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("browser.error_prefix", error=result.error)
 
     async def _browse_execute_js(script: str, **_: _Any) -> str:
         if err := await _ensure_initialized():
             return err
         result = await tool.execute_js(script)
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("browser.error_prefix", error=result.error)
 
     async def _browse_page_info(**_: _Any) -> str:
         if err := await _ensure_initialized():
             return err
         result = await tool.get_page_info()
-        return result.text if result.success else f"Fehler: {result.error}"
+        return result.text if result.success else t("browser.error_prefix", error=result.error)
 
     handlers = {
         "browse_url": _browse_url,
