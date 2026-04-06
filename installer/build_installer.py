@@ -287,19 +287,22 @@ def step_inno_setup(version: str, python_dir: Path, ollama_dir: Path,
     output_dir = DIST_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Inno Setup ISCC.exe needs quoted paths when they contain spaces.
+    # Using a single command string with shell=True to handle this.
+    _defines = (
+        f'/DMyAppVersion={version} '
+        f'/DPythonDir="{python_dir}" '
+        f'/DOllamaDir="{ollama_dir}" '
+        f'/DFlutterDir="{flutter_dir or ""}" '
+        f'/DBuildDir="{BUILD_DIR}" '
+        f'/DProjectRoot="{PROJECT_ROOT}" '
+        f'/O"{output_dir}" '
+        f'"{iss_template}"'
+    )
     subprocess.run(
-        [
-            iscc,
-            f"/DMyAppVersion={version}",
-            f"/DPythonDir={python_dir}",
-            f"/DOllamaDir={ollama_dir}",
-            f"/DFlutterDir={flutter_dir or ''}",
-            f"/DBuildDir={BUILD_DIR}",
-            f"/DProjectRoot={PROJECT_ROOT}",
-            f"/O{output_dir}",
-            str(iss_template),
-        ],
+        f'"{iscc}" {_defines}',
         check=True,
+        shell=True,
     )
 
     installers = list(output_dir.glob("CognithorSetup-*.exe"))

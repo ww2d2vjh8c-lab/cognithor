@@ -138,6 +138,7 @@ var
   Path: string;
   AppDir: string;
   JarvisHome: string;
+  ResultCode: Integer;
 begin
   if CurUninstallStep = usPostUninstall then
   begin
@@ -156,7 +157,7 @@ begin
     end;
 
     // Stop Ollama if running
-    Exec('taskkill', '/F /IM ollama.exe', '', SW_HIDE, ewWaitUntilTerminated, Path);
+    Exec('taskkill', '/F /IM ollama.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
     // Ask user: remove user data?
     JarvisHome := ExpandConstant('{userprofile}\.jarvis');
