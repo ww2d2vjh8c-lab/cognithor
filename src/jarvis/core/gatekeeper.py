@@ -652,6 +652,9 @@ class Gatekeeper:
             # ATL (read-only)
             "atl_status",
             "atl_journal",
+            "kanban_create_task",
+            "kanban_update_task",
+            "kanban_list_tasks",
         }
         if tool in green_tools:
             return RiskLevel.GREEN

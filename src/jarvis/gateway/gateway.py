@@ -823,6 +823,27 @@ class Gateway:
             except Exception:
                 log.debug("atl_wiring_failed", exc_info=True)
 
+        # Kanban Board
+        try:
+            if getattr(self._config, "kanban", None) and self._config.kanban.enabled:
+                from jarvis.kanban.store import KanbanStore
+                from jarvis.kanban.engine import KanbanEngine
+                from jarvis.mcp.kanban_tools import register_kanban_tools
+
+                _kanban_db = self._config.jarvis_home / "db" / "kanban.db"
+                _kanban_store = KanbanStore(str(_kanban_db))
+                self._kanban_engine = KanbanEngine(
+                    _kanban_store,
+                    max_auto_tasks=self._config.kanban.max_auto_tasks_per_session,
+                    max_subtask_depth=self._config.kanban.max_subtask_depth,
+                    cascade_cancel=self._config.kanban.cascade_cancel_subtasks,
+                )
+                register_kanban_tools(self._mcp_client, self._kanban_engine)
+                log.info("kanban_engine_initialized", db=str(_kanban_db))
+        except Exception:
+            log.debug("kanban_init_failed", exc_info=True)
+            self._kanban_engine = None
+
         # V6: Wire tool registry into Gatekeeper for per-tool risk annotations
         if self._gatekeeper and hasattr(self._mcp_client, "_tool_registry"):
             self._gatekeeper.set_tool_registry(self._mcp_client._tool_registry)

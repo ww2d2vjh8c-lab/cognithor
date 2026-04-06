@@ -738,6 +738,15 @@ def main() -> None:
                     except Exception as _cm_exc:
                         log.warning("community_marketplace_api_failed", error=str(_cm_exc))
 
+                # Kanban Board API
+                try:
+                    if hasattr(gateway, "_kanban_engine") and gateway._kanban_engine is not None:
+                        from jarvis.kanban.api import create_kanban_router
+                        api_app.include_router(create_kanban_router(gateway._kanban_engine))
+                        log.info("kanban_api_registered")
+                except Exception:
+                    log.debug("kanban_api_registration_failed", exc_info=True)
+
                 # ── WebSocket Chat-Endpoint ──────────────────────────────
                 import json as _json
 
