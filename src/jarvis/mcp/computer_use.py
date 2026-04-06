@@ -81,6 +81,8 @@ class ComputerUseTools:
         self._vision = vision_analyzer
         self._uia_provider = uia_provider
         self._last_scale_factor: float = 1.0
+        self._last_screenshot_hash: str = ""
+        self._last_elements: list[dict[str, Any]] = []
 
     async def _wait_for_stable_screen(
         self,
@@ -184,6 +186,10 @@ class ComputerUseTools:
                 )
                 elements = []
 
+            # Cache elements + screenshot hash for click_element and change detection
+            self._last_elements = elements
+            self._last_screenshot_hash = hashlib.md5(b64.encode()).hexdigest()
+
             return {
                 "success": True,
                 "width": width,
@@ -193,6 +199,153 @@ class ComputerUseTools:
             }
         except Exception as exc:
             return {"success": False, "error": str(exc)}
+
+    async def computer_click_element(
+        self,
+        description: str,
+        button: str = "left",
+        clicks: int = 1,
+    ) -> dict[str, Any]:
+        """Click a UI element by description instead of coordinates.
+
+        Takes a fresh screenshot, uses vision to find the element matching
+        the description, and clicks its center coordinates.
+
+        Args:
+            description: Natural language description of the element to click
+                (e.g., "Login button", "the red X in the top right").
+            button: Mouse button (left, right, middle).
+            clicks: Number of clicks (1=single, 2=double).
+        """
+        try:
+            # Take fresh screenshot
+            screenshot_result = await self.computer_screenshot(task_context=description)
+            if not screenshot_result.get("success"):
+                return screenshot_result
+
+            elements = screenshot_result.get("elements", [])
+            if not elements:
+                return {
+                    "success": False,
+                    "error": f"No UI elements detected. Cannot find: '{description}'",
+                }
+
+            # Find best matching element
+            desc_lower = description.lower()
+            best_match = None
+            best_score = 0
+
+            for elem in elements:
+                score = 0
+                elem_name = (elem.get("name") or "").lower()
+                elem_text = (elem.get("text") or "").lower()
+                elem_type = (elem.get("type") or "").lower()
+
+                # Exact name match
+                if desc_lower == elem_name:
+                    score = 100
+                # Name contains description
+                elif desc_lower in elem_name:
+                    score = 80
+                # Description contains name
+                elif elem_name and elem_name in desc_lower:
+                    score = 70
+                # Text match
+                elif desc_lower in elem_text:
+                    score = 60
+                elif elem_text and elem_text in desc_lower:
+                    score = 50
+                # Type match
+                elif desc_lower in elem_type:
+                    score = 30
+
+                # Boost clickable elements
+                if elem.get("clickable"):
+                    score += 10
+
+                if score > best_score:
+                    best_score = score
+                    best_match = elem
+
+            if not best_match or best_score < 30:
+                # List available elements for the agent
+                available = [
+                    f"- {e.get('name', '?')} ({e.get('type', '?')}) at ({e.get('x')},{e.get('y')})"
+                    for e in elements[:15]
+                ]
+                return {
+                    "success": False,
+                    "error": f"No element matching '{description}' found.\n"
+                             f"Available elements:\n" + "\n".join(available),
+                }
+
+            x = best_match.get("x", 0)
+            y = best_match.get("y", 0)
+
+            # Click the found element
+            click_result = await self.computer_click(x, y, button=button, clicks=clicks)
+            click_result["matched_element"] = best_match.get("name", "")
+            click_result["match_score"] = best_score
+            return click_result
+
+        except Exception as exc:
+            return {"success": False, "error": str(exc)}
+
+    async def computer_wait_for_change(
+        self,
+        timeout_ms: int = 5000,
+        description: str = "",
+    ) -> dict[str, Any]:
+        """Wait until the screen changes after an action.
+
+        Compares the current screen against the last screenshot hash.
+        Useful after clicking a button to confirm the UI responded.
+
+        Args:
+            timeout_ms: Max time to wait for a change (default: 5000ms).
+            description: What change to expect (for better analysis).
+        """
+        if not self._last_screenshot_hash:
+            return {"changed": True, "detail": "No previous screenshot to compare"}
+
+        start = time.monotonic()
+        prev_hash = self._last_screenshot_hash
+
+        while (time.monotonic() - start) * 1000 < timeout_ms:
+            try:
+                loop = asyncio.get_running_loop()
+                b64, _, _, _ = await loop.run_in_executor(None, _take_screenshot_b64)
+                current_hash = hashlib.md5(b64.encode()).hexdigest()
+
+                if current_hash != prev_hash:
+                    self._last_screenshot_hash = current_hash
+                    detail = "Screen changed"
+                    # If vision available, describe what changed
+                    if self._vision and description:
+                        try:
+                            result = await self._vision.analyze_desktop(
+                                b64, task_context=f"Detect changes: {description}"
+                            )
+                            if result.success:
+                                detail = result.description
+                        except Exception:
+                            pass
+
+                    return {
+                        "changed": True,
+                        "elapsed_ms": int((time.monotonic() - start) * 1000),
+                        "detail": detail,
+                    }
+            except Exception:
+                pass
+
+            await asyncio.sleep(0.3)
+
+        return {
+            "changed": False,
+            "elapsed_ms": timeout_ms,
+            "detail": f"No screen change detected within {timeout_ms}ms",
+        }
 
     async def computer_click(
         self,
@@ -491,15 +644,71 @@ def register_computer_use_tools(
         },
     )
 
+    client.register_builtin_handler(
+        "computer_click_element",
+        tools.computer_click_element,
+        description=(
+            "Click a UI element by description instead of coordinates. "
+            "Takes a screenshot, finds the matching element via vision, and clicks it. "
+            "Example: 'Login button', 'the search field', 'Close icon'."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "description": "Natural language description of the element to click",
+                },
+                "button": {
+                    "type": "string",
+                    "enum": ["left", "right", "middle"],
+                    "description": "Mouse button (default: left)",
+                },
+                "clicks": {
+                    "type": "integer",
+                    "description": "Number of clicks (1=single, 2=double)",
+                },
+            },
+            "required": ["description"],
+        },
+        risk_level="yellow",
+    )
+
+    client.register_builtin_handler(
+        "computer_wait_for_change",
+        tools.computer_wait_for_change,
+        description=(
+            "Wait until the screen changes after an action. "
+            "Confirms that a click/type/hotkey had a visible effect. "
+            "Returns whether the screen changed and optionally what changed."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {
+                "timeout_ms": {
+                    "type": "integer",
+                    "description": "Max wait time in milliseconds (default: 5000)",
+                },
+                "description": {
+                    "type": "string",
+                    "description": "What change to expect (e.g., 'dialog should appear')",
+                },
+            },
+        },
+        risk_level="green",
+    )
+
     log.info(
         "computer_use_tools_registered",
         tools=[
             "computer_screenshot",
             "computer_click",
+            "computer_click_element",
             "computer_type",
             "computer_hotkey",
             "computer_scroll",
             "computer_drag",
+            "computer_wait_for_change",
         ],
     )
     return tools

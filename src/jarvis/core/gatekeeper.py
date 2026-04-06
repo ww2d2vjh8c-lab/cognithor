@@ -84,6 +84,8 @@ class Gatekeeper:
             "computer_hotkey",
             "computer_scroll",
             "computer_drag",
+            "computer_click_element",
+            "computer_wait_for_change",
         }
     )
     _DESKTOP_TOOLS = frozenset(
@@ -688,6 +690,8 @@ class Gatekeeper:
             "computer_hotkey",
             "computer_scroll",
             "computer_drag",
+            "computer_click_element",
+            "computer_wait_for_change",
             "email_read_inbox",
             "email_search",
             "email_summarize",
