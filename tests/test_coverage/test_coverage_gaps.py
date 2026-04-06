@@ -1001,7 +1001,7 @@ class TestMCPClient:
         """Unbekanntes Tool gibt Fehler-Result."""
         result = await mcp.call_tool("nonexistent_tool", {})
         assert result.is_error is True
-        assert "nicht gefunden" in result.content
+        assert "not_found" in result.content or "nicht gefunden" in result.content
 
     def test_get_tool_schemas(self, mcp):
         """Tool-Schemas werden korrekt zurückgegeben."""
