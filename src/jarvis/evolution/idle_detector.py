@@ -25,7 +25,7 @@ class IdleDetector:
     @property
     def is_idle(self) -> bool:
         """True if no activity for threshold seconds."""
-        return (time.time() - self._last_activity) > self._threshold
+        return (time.time() - self._last_activity) >= self._threshold
 
     @property
     def idle_seconds(self) -> float:
