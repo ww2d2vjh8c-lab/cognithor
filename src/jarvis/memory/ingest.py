@@ -195,16 +195,19 @@ class TextExtractor:
                 return result.text
             raise OSError(f"PDF-Extraktion fehlgeschlagen: {result.error}")
 
-        # Fallback: PyMuPDF direkt
+        # Fallback: PyMuPDF direkt (blocking I/O → thread)
         try:
             import fitz  # PyMuPDF
+        except ImportError as exc:
+            raise OSError("PDF-Extraktion benötigt PyMuPDF: pip install pymupdf") from exc
 
+        def _read_pdf() -> str:
             doc = fitz.open(str(file_path))
             texts = [page.get_text() for page in doc]
             doc.close()
             return "\n\n".join(texts)
-        except ImportError as exc:
-            raise OSError("PDF-Extraktion benötigt PyMuPDF: pip install pymupdf") from exc
+
+        return await asyncio.to_thread(_read_pdf)
 
     async def _extract_docx(self, file_path: Path) -> str:
         """Extrahiert Text aus DOCX via MediaPipeline."""
@@ -214,14 +217,17 @@ class TextExtractor:
                 return result.text
             raise OSError(f"DOCX-Extraktion fehlgeschlagen: {result.error}")
 
-        # Fallback: python-docx direkt
+        # Fallback: python-docx direkt (blocking I/O → thread)
         try:
             import docx
-
-            doc = docx.Document(str(file_path))
-            return "\n\n".join(p.text for p in doc.paragraphs if p.text.strip())
         except ImportError as exc:
             raise OSError("DOCX-Extraktion benötigt python-docx: pip install python-docx") from exc
+
+        def _read_docx() -> str:
+            doc = docx.Document(str(file_path))
+            return "\n\n".join(p.text for p in doc.paragraphs if p.text.strip())
+
+        return await asyncio.to_thread(_read_docx)
 
 
 # ============================================================================

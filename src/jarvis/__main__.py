@@ -139,6 +139,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Enable ARC-AGI-3 benchmark agent and MCP tools",
     )
+    parser.add_argument(
+        "--skip-startup-check",
+        action="store_true",
+        help="Skip startup dependency/model check (faster boot when already configured)",
+    )
     return parser.parse_args()
 
 
@@ -361,28 +366,32 @@ def main() -> None:
         return
 
     # 3.6 Startup check: automatically load missing dependencies
-    # Suppress FAISS/library C-level output during import checks.
-    # Must redirect OS file descriptors for C library stdout.
-    _devnull_sc = os.open(os.devnull, os.O_WRONLY)
-    _saved_fd1_sc = os.dup(1)
-    _saved_fd2_sc = os.dup(2)
-    os.dup2(_devnull_sc, 1)
-    os.dup2(_devnull_sc, 2)
-    try:
-        from jarvis.core.startup_check import StartupChecker
+    # --skip-startup-check: Fast-path for already-configured systems
+    if getattr(args, "skip_startup_check", False):
+        log.info("startup_check_skipped", reason="--skip-startup-check flag")
+    else:
+        # Suppress FAISS/library C-level output during import checks.
+        # Must redirect OS file descriptors for C library stdout.
+        _devnull_sc = os.open(os.devnull, os.O_WRONLY)
+        _saved_fd1_sc = os.dup(1)
+        _saved_fd2_sc = os.dup(2)
+        os.dup2(_devnull_sc, 1)
+        os.dup2(_devnull_sc, 2)
+        try:
+            from jarvis.core.startup_check import StartupChecker
 
-        checker = StartupChecker(config, auto_install=getattr(args, "auto_install", False))
-        report = checker.check_and_fix_all()
-    finally:
-        os.dup2(_saved_fd1_sc, 1)
-        os.dup2(_saved_fd2_sc, 2)
-        os.close(_saved_fd1_sc)
-        os.close(_saved_fd2_sc)
-        os.close(_devnull_sc)
-    if report.fixes_applied:
-        log.info("startup_auto_fixes", fixes=report.fixes_applied, warnings=report.warnings)
-    if report.errors:
-        log.warning("startup_check_errors", errors=report.errors)
+            checker = StartupChecker(config, auto_install=getattr(args, "auto_install", False))
+            report = checker.check_and_fix_all()
+        finally:
+            os.dup2(_saved_fd1_sc, 1)
+            os.dup2(_saved_fd2_sc, 2)
+            os.close(_saved_fd1_sc)
+            os.close(_saved_fd2_sc)
+            os.close(_devnull_sc)
+        if report.fixes_applied:
+            log.info("startup_auto_fixes", fixes=report.fixes_applied, warnings=report.warnings)
+        if report.errors:
+            log.warning("startup_check_errors", errors=report.errors)
 
     # 3.7 MCP server mode: start only MCP server on stdio, no CLI/WebUI
     if args.mcp_server:

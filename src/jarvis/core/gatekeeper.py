@@ -158,6 +158,15 @@ class Gatekeeper:
         except Exception:
             pass
 
+        # Trust-Resolver fuer Workspace-Vertrauen (Phase 2)
+        self._trust_resolver: Any = None
+        try:
+            from jarvis.security.trust_resolver import TrustResolver
+
+            self._trust_resolver = TrustResolver.from_jarvis_config(config)
+        except Exception:
+            pass
+
         # Aktiver Community-Skill (wird pro evaluate()-Aufruf gesetzt)
         self._active_skill: Skill | None = None
 

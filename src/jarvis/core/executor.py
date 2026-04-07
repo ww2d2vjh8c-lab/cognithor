@@ -120,6 +120,19 @@ class Executor:
         self._base_delay: float = getattr(_exec, "backoff_base_delay_seconds", 1.0)
         self._max_output: int = getattr(_exec, "max_output_chars", 10000)
         self._max_parallel: int = getattr(_exec, "max_parallel_tools", 4)
+        # Per-tool output limits (bytes). Falls back to _max_output.
+        self._tool_output_limits: dict[str, int] = {
+            "exec_command": 16_384,
+            "shell_exec": 16_384,
+            "shell": 16_384,
+            "search_memory": 8_192,
+            "memory_search": 8_192,
+            "web_fetch": 32_768,
+            "search_and_read": 32_768,
+            "web_search": 16_384,
+            "deep_research": 32_768,
+            "fs_read": 16_384,
+        }
         # Longer timeouts for tools that load large models (e.g. Vision 20 GB+)
         self._tool_timeouts: dict[str, int] = {
             "media_analyze_image": getattr(_exec, "media_analyze_image_timeout", 180),
@@ -146,6 +159,25 @@ class Executor:
         self._status_callback: Any = None
         # Tactical Memory (wired by gateway after init)
         self._tactical_memory: Any = None
+        # Tool-Hook-System (Pre/Post Tool-Use)
+        self._tool_hook_runner: Any = None
+        try:
+            from jarvis.core.tool_hooks import (
+                ToolHookRunner,
+                audit_logging_hook,
+                secret_redacting_hook,
+            )
+            from jarvis.core.tool_hooks import HookEvent as _HE
+
+            self._tool_hook_runner = ToolHookRunner()
+            self._tool_hook_runner.register(
+                _HE.PRE_TOOL_USE, "secret_redacting", secret_redacting_hook
+            )
+            self._tool_hook_runner.register(
+                _HE.POST_TOOL_USE, "audit_logging", audit_logging_hook
+            )
+        except Exception:
+            pass  # Hooks optional
 
     def reload_config(self, config: JarvisConfig) -> None:
         """Update executor limits from new config (live reload).
@@ -486,6 +518,23 @@ class Executor:
                     error_type="SecurityBlock",
                 )
 
+        # Pre-Tool-Use Hooks
+        if self._tool_hook_runner:
+            try:
+                _hr = self._tool_hook_runner.run_pre_tool_use(tool_name, params)
+                if _hr.denied:
+                    return ToolResult(
+                        tool_name=tool_name,
+                        content=f"Hook blocked: {_hr.deny_reason}",
+                        is_error=True,
+                        duration_ms=0,
+                        error_type="HookDenied",
+                    )
+                if _hr.updated_input is not None:
+                    params = _hr.updated_input
+            except Exception:
+                pass  # Hook-Fehler blockieren nicht
+
         for attempt in range(1, self._max_retries + 1):
             start = time.monotonic()
 
@@ -498,11 +547,12 @@ class Executor:
 
                 duration_ms = int((time.monotonic() - start) * 1000)
 
-                # Truncate output if too long
+                # Truncate output if too long (per-tool limit or global fallback)
                 content = result.content if hasattr(result, "content") else str(result)
                 truncated = False
-                if len(content) > self._max_output:
-                    content = content[: self._max_output]
+                _limit = self._tool_output_limits.get(tool_name, self._max_output)
+                if len(content) > _limit:
+                    content = content[:_limit] + f"\n\n[output truncated at {_limit} chars]"
                     truncated = True
 
                 is_error = result.is_error if hasattr(result, "is_error") else False
@@ -522,6 +572,14 @@ class Executor:
                     duration_ms=duration_ms,
                     truncated=truncated,
                 )
+                # Post-Tool-Use Hooks
+                if self._tool_hook_runner:
+                    try:
+                        self._tool_hook_runner.run_post_tool_use(
+                            tool_name, params, content, duration_ms
+                        )
+                    except Exception:
+                        pass
                 # Profiler: record tool call
                 if self._task_profiler:
                     try:
@@ -554,6 +612,15 @@ class Executor:
                 last_error = str(exc)[:500]
 
             duration_ms = int((time.monotonic() - start) * 1000)
+
+            # Post-Failure Hooks
+            if self._tool_hook_runner and last_error:
+                try:
+                    self._tool_hook_runner.run_post_failure(
+                        tool_name, params, last_error
+                    )
+                except Exception:
+                    pass
 
             # Profiler: record failed tool call
             if self._task_profiler:

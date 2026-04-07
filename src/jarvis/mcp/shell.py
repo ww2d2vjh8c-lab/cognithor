@@ -249,6 +249,39 @@ class ShellTools:
             if validation_error:
                 return validation_error
 
+        # Layer-1: Semantische Command-Validierung (6-Stufen-Pipeline)
+        try:
+            from jarvis.security.shell_validator import (
+                ValidationVerdict,
+                validate_command as validate_shell,
+            )
+
+            _perm_mode = "full_access"
+            _sec = getattr(self._config, "security", None)
+            if _sec:
+                _perm_mode = getattr(_sec, "shell_permission_mode", "full_access")
+
+            _vr = validate_shell(command, _perm_mode, str(workspace_root))
+            if _vr.verdict == ValidationVerdict.BLOCK:
+                log.warning(
+                    "shell_validation_blocked",
+                    stage=_vr.stage,
+                    reason=_vr.reason,
+                    intent=_vr.intent.value,
+                    command_prefix=command[:80],
+                )
+                return f"Befehl blockiert ({_vr.stage}): {_vr.reason}"
+            if _vr.verdict == ValidationVerdict.WARN:
+                log.info(
+                    "shell_validation_warn",
+                    stage=_vr.stage,
+                    reason=_vr.reason,
+                    intent=_vr.intent.value,
+                    command_prefix=command[:80],
+                )
+        except ImportError:
+            pass  # Validator nicht installiert — weiter ohne
+
         # Per-Agent Overrides
         network_override = None
         if _sandbox_network:

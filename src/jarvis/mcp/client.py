@@ -94,13 +94,17 @@ class JarvisMCPClient:
         """
         server_configs = self._load_server_configs()
 
-        for name, server_config in server_configs.items():
-            if not server_config.enabled:
-                log.info("mcp_server_disabled", server=name)
-                continue
+        enabled = {
+            name: cfg
+            for name, cfg in server_configs.items()
+            if cfg.enabled
+        }
+        for name in set(server_configs) - set(enabled):
+            log.info("mcp_server_disabled", server=name)
 
+        async def _connect_one(name: str, cfg: MCPServerConfig) -> None:
             try:
-                await self._connect_server(name, server_config)
+                await self._connect_server(name, cfg)
                 log.info(
                     "mcp_server_connected",
                     server=name,
@@ -112,6 +116,10 @@ class JarvisMCPClient:
                     server=name,
                     error=str(exc),
                 )
+
+        await asyncio.gather(
+            *(_connect_one(n, c) for n, c in enabled.items())
+        )
 
         log.info(
             "mcp_client_ready",

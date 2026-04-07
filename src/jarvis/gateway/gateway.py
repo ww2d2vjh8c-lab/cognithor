@@ -4248,8 +4248,24 @@ class Gateway:
             depth=delegation.depth,
         )
 
+        # Create forked session for delegated agent (provenance tracking)
+        from jarvis.models import SessionContext as _SC
+
+        sub_session = _SC(
+            user_id=session.user_id,
+            channel=session.channel,
+            agent_name=to_agent,
+            parent_session_id=session.session_id,
+            fork_reason=f"delegated from {from_agent}: {task[:200]}",
+        )
+        if self._session_store:
+            try:
+                self._session_store.save_session(sub_session)
+            except Exception:
+                log.debug("delegation_session_save_skipped", exc_info=True)
+
         # Separate working memory for delegated agent
-        sub_wm = WorkingMemory(session_id=session.session_id)
+        sub_wm = WorkingMemory(session_id=sub_session.session_id)
 
         # System-Prompt des Ziel-Agenten injizieren
         if target.system_prompt:

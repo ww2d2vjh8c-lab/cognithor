@@ -285,7 +285,8 @@ class TestExecutorRetry:
         result = await self.executor._execute_single("test_tool", {})
         assert result.success
         assert result.truncated
-        assert len(result.content) == 10000
+        assert result.content.startswith("x" * 100)
+        assert "[output truncated" in result.content
 
     @pytest.mark.asyncio
     async def test_execute_skips_blocked(self) -> None:

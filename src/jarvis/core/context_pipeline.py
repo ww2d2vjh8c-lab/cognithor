@@ -121,21 +121,23 @@ class ContextPipeline:
                 duration_ms=(time.perf_counter() - t0) * 1000,
             )
 
-        # ── Wave 1: Memory, Vault, Episodes (parallel) ──────────
+        # ── Wave 1+2: All enrichment in parallel ──────────────────
+        # Wave 1 (memory, vault, episodes) and Wave 2 (skill, prefs) are
+        # independent — run them all concurrently for lower latency.
         w1_start = time.perf_counter()
+        _loop = asyncio.get_running_loop()
 
         memory_task = self._search_memory_async(user_message)
         vault_task = self._search_vault(user_message)
-        episode_task = asyncio.get_running_loop().run_in_executor(
-            None,
-            self._get_episodes,
-        )
+        episode_task = _loop.run_in_executor(None, self._get_episodes)
+        skill_task = _loop.run_in_executor(None, self._get_skill_context, user_message)
+        pref_task = _loop.run_in_executor(None, self._get_user_pref_hint, user_id)
 
-        memory_results, vault_snippets, episode_snippets = await asyncio.gather(
-            memory_task,
-            vault_task,
-            episode_task,
-            return_exceptions=True,
+        memory_results, vault_snippets, episode_snippets, skill_context, user_pref_hint = (
+            await asyncio.gather(
+                memory_task, vault_task, episode_task, skill_task, pref_task,
+                return_exceptions=True,
+            )
         )
 
         # Handle exceptions gracefully
@@ -148,6 +150,12 @@ class ContextPipeline:
         if isinstance(episode_snippets, BaseException):
             log.debug("context_episode_gather_failed", exc_info=episode_snippets)
             episode_snippets = []
+        if isinstance(skill_context, BaseException):
+            log.debug("context_skill_gather_failed", exc_info=skill_context)
+            skill_context = ""
+        if isinstance(user_pref_hint, BaseException):
+            log.debug("context_pref_gather_failed", exc_info=user_pref_hint)
+            user_pref_hint = ""
 
         wave1_ms = (time.perf_counter() - w1_start) * 1000
 
@@ -158,34 +166,7 @@ class ContextPipeline:
             list(episode_snippets) if episode_snippets else [],
         )
 
-        # ── Wave 2: Skill injection, User preferences (parallel) ─
-        w2_start = time.perf_counter()
-
-        skill_task = asyncio.get_running_loop().run_in_executor(
-            None,
-            self._get_skill_context,
-            user_message,
-        )
-        pref_task = asyncio.get_running_loop().run_in_executor(
-            None,
-            self._get_user_pref_hint,
-            user_id,
-        )
-
-        skill_context, user_pref_hint = await asyncio.gather(
-            skill_task,
-            pref_task,
-            return_exceptions=True,
-        )
-
-        if isinstance(skill_context, BaseException):
-            log.debug("context_skill_gather_failed", exc_info=skill_context)
-            skill_context = ""
-        if isinstance(user_pref_hint, BaseException):
-            log.debug("context_pref_gather_failed", exc_info=user_pref_hint)
-            user_pref_hint = ""
-
-        wave2_ms = (time.perf_counter() - w2_start) * 1000
+        wave2_ms = 0.0  # Wave 2 now runs in parallel with Wave 1
 
         # ── Inject into WorkingMemory ────────────────────────────
         if memory_results:

@@ -369,7 +369,8 @@ class TestOutputTruncation:
         assert len(results) == 1
         assert results[0].success
         assert results[0].truncated is True
-        assert len(results[0].content) == 10_000
+        assert results[0].content.startswith("X" * 100)
+        assert "[output truncated" in results[0].content
 
 
 # ============================================================================

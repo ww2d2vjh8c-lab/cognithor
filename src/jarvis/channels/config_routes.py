@@ -1242,6 +1242,26 @@ def _register_session_routes(
         messages = store.get_session_history(session_id, limit=limit)
         return {"messages": messages, "session_id": session_id}
 
+    @app.get("/api/v1/sessions/{session_id}/lineage", dependencies=deps)
+    async def get_session_lineage(session_id: str) -> dict[str, Any]:
+        """Reconstruct session fork chain to root (Phase 2 Provenance)."""
+        store = _get_session_store()
+        if not store:
+            return {"lineage": [session_id], "session_id": session_id}
+        chain = [session_id]
+        current_id = session_id
+        for _ in range(20):  # Max depth guard
+            meta = store.get_session_metadata(current_id) if hasattr(store, "get_session_metadata") else None
+            if meta is None:
+                break
+            parent = meta.get("parent_session_id", "") if isinstance(meta, dict) else getattr(meta, "parent_session_id", "")
+            if not parent:
+                break
+            chain.append(parent)
+            current_id = parent
+        chain.reverse()
+        return {"lineage": chain, "session_id": session_id}
+
     @app.get("/api/v1/sessions/{session_id}/export", dependencies=deps)
     async def export_session(session_id: str) -> dict[str, Any]:
         """Export session chat history as JSON."""

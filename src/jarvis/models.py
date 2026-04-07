@@ -347,6 +347,9 @@ class SessionContext(BaseModel):
     incognito: bool = False  # Inkognito-Modus: kein Memory, keine Persistierung
     conversation_id: str = ""  # ConversationTree ID (for chat branching)
     active_leaf_id: str = ""  # Current leaf node in the tree
+    # Session-Fork Provenance (Phase 2)
+    parent_session_id: str = ""  # ID der Eltern-Session bei Delegation
+    fork_reason: str = ""  # Grund fuer den Fork (z.B. "delegated to research_agent")
     _blocked_tools: dict[str, int] = PrivateAttr(default_factory=dict)  # Tool → Block-Counter
 
     model_config = {"arbitrary_types_allowed": True}
